@@ -55,7 +55,7 @@ Thank you for choosing "BRAINCELL", and we look forward to seeing the exciting d
 
 ## Documentation
 
-Manual and API documentation can be found at https://github.com/LeonidSavtchenko/BrainCell
+Manual and API documentation can be found at https://github.com/LeonidSavtchenko/BrainCellNew
 
 
 
