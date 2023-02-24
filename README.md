@@ -28,22 +28,25 @@ Thank you for choosing "BRAINCELL", and we look forward to seeing the exciting d
 
 ## Experimental data or estimates desirable to build a realistic cell  model
 
-##### 1. A 3D reconstructed tree of main identifiable cell processes importable into NEURON. Alternatively, this could be an artificially generated cell arbour with the branching pattern and branch diameters representing the average (typical)  cell from the population of interest. 
-##### 2. A sample (20-50) of nanoscopic astroglial processes reconstructed using 3D (serial-section) EM, with rendered surface co-ordinates. This sample will be used to obtain statistical properties of the ultrathin processes to be generated in the model. 
-##### 3. Average tissue volume fraction occupied by astroglia, as distributed radially from the soma to the cell edges. This data set is obtained from two-photon excitation measurements in situ (or from published data). 
-##### 4. The mean membrane surface density and the surface-to-volume fraction values obtained from 3D reconstructions of nanoscopic astroglial processes.  
-##### 5. The characteristic I-V curve (somatic patch-clamp, square-pulse current injections) for the astroglia of interest, other (optional) available functional data such as electrical responses to glutamate uncaging or changes in extracellular potassium, intracellular calcium wave speed, etc. 
+##### 1. A 3D reconstructed tree of main identifiable cell processes importable into NEURON. Alternatively, this could be 
+#####    an artificially generated cell arbour with the branching pattern and branch diameters representing the average (typical)  cell from the population of interest. 
+##### 2. A sample (20-50) of nanoscopic astroglial processes and neuron spines reconstructed using 3D (serial-section) EM, with rendered surface co-ordinates. 
+#####    This sample will be used to obtain statistical properties of the ultrathin processes to be generated in the model. 
+##### 3. Average tissue volume fraction occupied by astroglia and neuron, as distributed radially from the soma to the cell edges. 
+#####    This data set is obtained from two-photon excitation measurements in situ (or from published data). 
+##### 4. The mean membrane surface density and the surface-to-volume fraction values obtained from 3D reconstructions of nanoscopic  processes.  
+##### 5. The characteristic I-V curve (somatic patch-clamp, square-pulse current injections) for the cell of interest, other (optional) available functional data such as electrical responses to glutamate uncaging or changes in extracellular potassium, intracellular calcium wave speed, etc. 
 
 
 ## Installation. 
 
-### System Requirements for ASTRO:
+### System Requirements for BRAINCELL:
 #### •	The basic languages : C++, MATLAB not older 2013 and Neuron 7.0
 #### •	Platform : Linux and Windows. 
 #### •	Type of operation : Sequential and parallel (MPI) computing
 
 
-## Setting up and running ASTRO: Main regimes of modelling 
+## Setting up and running BRAINCELL: Main regimes of modelling 
 
 
 ##### 1.	Constructing astroglial morphology ('Nano-geometry', Host computer only required). Importing the 3D main-branch morphology of astroglia into NEURON; generating, within the NEURON environment, the nanoscopic astroglial protrusions that reflect experimental data. This regime can be run separately from other parts of ASTRO, it requires a Host computer with MATLAB (2012 or later) and NEURON (7.2 or later, https://neuron.yale.edu/neuron/download) installed under Windows 7 or 10. 
@@ -55,7 +58,7 @@ Thank you for choosing "BRAINCELL", and we look forward to seeing the exciting d
 
 ## Documentation
 
-Manual and API documentation can be found at https://github.com/LeonidSavtchenko/Astro
+Manual and API documentation can be found at https://github.com/LeonidSavtchenko/BrainCell
 
 
 
