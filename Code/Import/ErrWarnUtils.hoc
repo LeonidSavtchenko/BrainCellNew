@@ -1,0 +1,50 @@
+
+// !! think about: execerror, show_errmess_always
+
+objref warnBox
+
+
+// Print message and stop
+// $s1 - The message
+proc printMsgAndStop() {
+    print $s1
+    stop
+}
+
+// Print error message and stop
+// $s1 - The message
+proc printImportFailedMsgAndStop() {
+    strdef msg
+    sprint(msg, "Import Failed: %s", $s1)
+    printMsgAndStop(msg)
+}
+
+// Report the bug, print the call stack and stop
+proc codeContractViolation() {
+    print "Bug in Importer: Code contract violation"
+    0/0     // Just to print the call stack
+    stop
+}
+
+// Show warning message box with "OK" button
+// $s1 - The first line of the message
+// $s2 (optional) - The second line of the message
+proc showWarningBox() { localobj nil
+    if (warnBox != nil) {
+        warnBox.unmap()
+    }
+    warnBox = new VBox()
+    warnBox.intercept(1)
+    {
+        xpanel("")
+        xlabel($s1)
+        if (numarg() == 2) {
+            xlabel($s2)
+        }
+        xbutton("OK", "warnBox.unmap()")
+        xpanel()
+    }
+    warnBox.dismiss_action("warnBox.unmap()")
+    warnBox.intercept(0)
+    warnBox.map("Warning", 600, 400, -1, -1)
+}

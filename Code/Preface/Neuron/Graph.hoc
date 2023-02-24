@@ -1,0 +1,191 @@
+// https://www.neuron.yale.edu/neuron/static/new_doc/visualization/shape.html#Shape.show
+objref CellGeometryShape, VoltagePlot, PotassiumPlot, VoltagePlotNew, KPlotNew
+objref scene_vector, scene_vectorGlu
+objref VectorSection, Contr[1000]
+VectorSection = new Vector(1000)
+
+strdef NameOfSection 
+
+pwman_place(0,0,0)
+
+// ******************************* Space plot voltage
+CellGeometryShape = new PlotShape(0)
+//CellGeometryShape.colormap(0, 255, 255, 0)
+CellGeometryShape.size(-268.405,434.475,-173.498,579.525)
+CellGeometryShape.variable("v")
+scene_vector = CellGeometryShape
+CellGeometryShape.view(-268.405, -173.498, 702.88, 753.022, 878, 435, 316.8, 339.4)
+CellGeometryShape.exec_menu("Shape Plot")
+fast_flush_list.append(CellGeometryShape)
+CellGeometryShape.scale(-65, 40)
+CellGeometryShape.save_name("fast_flush_list.")
+CellGeometryShape.show(0)
+CellGeometryShape.menu_tool("Position Potassium extra", "p")
+CellGeometryShape.menu_tool("Plot Voltage Dynamics",  "plotVoltage")
+
+
+VoltagePlot = new Graph(0)
+graphList[1].append(VoltagePlot)
+VoltagePlot.size(0,200,-80,40)
+VoltagePlot.view(0, -80, 200, 120, 1260, 38, 391.5, 244.9)
+// VoltagePlot.addvar("dendA5_0111111111111111111010.v( 0.5 )", 1, 1, 0.8, 0.9, 2)
+// VoltagePlot.addvar("dendA4_0.v( 0.5 )", 3, 1, 0.8, 0.9, 2)
+//VoltagePlot.addvar(" spine_head[147].v( 0.05 )", 3, 1, 0.8, 0.9, 2)
+//VoltagePlot.addvar(" spine_neck[2].v( 0.05 )", 4, 1, 0.8, 0.9, 2)
+VoltagePlot.addvar(" soma_ref.o(0).sec.v( 0.05 )", 2, 1, 0.8, 0.9, 2)
+VoltagePlot.yaxis(0)
+VoltagePlot.label(0.5, 0.09, "Time (ms)", 2, 1, 0, 1, 1)
+VoltagePlot.label(0.1, 0.9, "[Voltage (mV)", 2, 1, 0, 1, 1)
+
+// ******************************* Space plot voltage
+
+PotassiumPlot = new PlotShape(0)
+PotassiumPlot.size(-266.546,432.616,-176.63,586.313)
+PotassiumPlot.variable("ko_IKa")
+scene_vectorGlu = PotassiumPlot	
+PotassiumPlot.view(-266.546, -176.63, 699.162, 762.943, 1322, 439, 315, 343.9)
+PotassiumPlot.exec_menu("Shape Plot")
+fast_flush_list.append(PotassiumPlot)
+PotassiumPlot.scale(2.5, 5)
+PotassiumPlot.save_name("fast_flush_list.")
+PotassiumPlot.show(0)
+PotassiumPlot.menu_tool("Position Potassium extra", "p")
+PotassiumPlot.menu_tool("Plot Potassium dynamics",  "plotPotassium")
+
+
+
+proc p() {
+     print $1, $2, $3, $4
+	 x=$2
+	 y=$3
+	 z=$4
+	 ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)
+ }
+
+proc fitter_addexpr() { 
+           $o1.addexpr($s2, 3, 1, 0.8, 0.9, 2) 
+		   }
+
+proc plotVoltage() {
+	x_soma=$2
+	y_soma=$3
+	z_soma=$4
+	for i=0, 999 {
+	VectorSection.x[i]=100000
+	}
+	i=0
+	forall {	   
+	   if (sqrt((x_soma-x3d(1))^2 + (y_soma-y3d(1))^2  + (z_soma-z3d(1))^2) < 100) {
+	      i=i+1
+		  VectorSection.x[i]=sqrt((x_soma-x3d(1))^2 + (y_soma-y3d(1))^2  + (z_soma-z3d(1))^2)
+		 //secname() Contr[i] = new SectionRef()  // Contr holds a reference to the soma
+         // print i,"  ",secname(),"  ", VectorSection.x[i]," ", Contr[i].sec.diam //x3d(1), y3d(1), z3d(1), diam3d(1)	
+      }				 	
+    }
+	MinValue=VectorSection.min()
+	forall {
+       i=3 // the number 3 means single click by mouse
+       //print i,"  ", $1	   
+	   if ((sqrt((x_soma-x3d(1))^2 + (y_soma-y3d(1))^2  + (z_soma-z3d(1))^2) == MinValue) && (i==$1)) {
+	      i=i+1
+		  VectorSection.x[i]=sqrt((x_soma-x3d(1))^2 + (y_soma-y3d(1))^2  + (z_soma-z3d(1))^2)
+          secname() Contr[i] = new SectionRef()  // Contr holds a reference to the soma
+          //print i,"  ",secname(),"  ", VectorSection.x[i]," ", MinValue//x3d(1), y3d(1), z3d(1), diam3d(1)
+		  VoltagePlotNew = new Graph(0)
+		  graphList[0].append(VoltagePlotNew)  
+		  VoltagePlotNew.size(0,200,-80,40)
+		  VoltagePlotNew.view(0, -80, 200, 120, 1260, 38, 391.5, 244.9)
+		//VoltagePlotNew.addexpr("Contr[i].sec.v(0.1)", 1, 1, 0.8, 0.9, 2)
+// Define the section name for plotting************************************************* 
+		 sprint(NameOfSection, "%s.%s", secname(), "v(0.5)")
+		 fitter_addexpr(VoltagePlotNew, NameOfSection)
+		//sprint(NameOfSection,"%s",secname())
+		//print "****", NameOfSection
+// **************************************************************************************		
+		VoltagePlotNew.addvar(" soma_ref.o(0).sec.v( 0.05 )", 2, 1, 0.8, 0.9, 2)
+		//VoltagePlotNew.label(0.5, 0.2, secname(), 2, 1, 0, 1, 1)
+		VoltagePlotNew.yaxis(0)
+		VoltagePlotNew.label(0.5, 0.09, "Time (ms)", 2, 1, 0, 1, 1)
+		VoltagePlotNew.label(0.1, 0.9, "Voltage (mV)", 2, 1, 0, 1, 1)
+VoltagePlotNew.flush()		
+      }				 	
+    }
+	
+print "min=", VectorSection.min()
+print i," CONTROL ",secname(),"  ", VectorSection.x[i]," ", Contr[i].sec.diam 
+}
+
+
+proc plotPotassium() {
+	x_soma=$2
+	y_soma=$3
+	z_soma=$4
+	for i=0, 999 {
+	VectorSection.x[i]=100000
+	}
+	i=0
+	forall {	   
+	   if (sqrt((x_soma-x3d(1))^2 + (y_soma-y3d(1))^2  + (z_soma-z3d(1))^2) < 100) {
+	      i=i+1
+		  VectorSection.x[i]=sqrt((x_soma-x3d(1))^2 + (y_soma-y3d(1))^2  + (z_soma-z3d(1))^2)		 
+      }				 	
+    }
+	MinValue=VectorSection.min()	
+	forall {
+       i=3 // the number 3 means single click by mouse
+       //print i,"  ", $1	   
+	   if ((sqrt((x_soma-x3d(1))^2 + (y_soma-y3d(1))^2  + (z_soma-z3d(1))^2) == MinValue) && (i==$1)) {
+	      i=i+1
+		  VectorSection.x[i]=sqrt((x_soma-x3d(1))^2 + (y_soma-y3d(1))^2  + (z_soma-z3d(1))^2)
+          secname() Contr[i] = new SectionRef()  // Contr holds a reference to the soma
+		  KPlotNew = new Graph(0)
+		  graphList[0].append(KPlotNew)  
+		  KPlotNew.size(0,100,2,5)
+		  KPlotNew.view(0, 2, 100, 3, 1260, 38, 391.5, 244.9)
+// Define the section name for plotting************************************************* 
+		 sprint(NameOfSection, "%s.%s", secname(), "ko_IKa(0.5)")
+		 fitter_addexpr(KPlotNew, NameOfSection)
+		//sprint(NameOfSection,"%s",secname())
+		//print "****", NameOfSection
+// **************************************************************************************		
+		KPlotNew.addvar(" soma_ref.o(0).sec.ko_IKa( 0.05 )", 2, 1, 0.8, 0.9, 2)
+		//KPlotNew.label(0.5, 0.2, secname(), 2, 1, 0, 1, 1)
+		KPlotNew.yaxis(0)
+		KPlotNew.label(0.5, 0.09, "Time (ms)", 2, 1, 0, 1, 1)
+		KPlotNew.label(0.1, 0.9, "Potassium (mM)", 2, 1, 0, 1, 1)
+KPlotNew.flush()		
+      }				 	
+    }	
+print "min=", VectorSection.min()
+print i," CONTROL ",secname(),"  ", VectorSection.x[i]," ", Contr[i].sec.diam 
+}
+
+// ************** Extra code
+// s.colormap(3)
+// s.colormap(0, 255, 0, 0)
+// s.colormap(1, 255, 255, 0)
+// s.colormap(2, 200, 200, 200)
+
+	
+// Run
+// xpanel("RunControl", 0)
+// v_init = -65
+// xvalue("Init","v_init", 1,"stdinit()", 1, 1 )
+// xbutton("Init & Run","run()")
+// xbutton("Stop","stoprun=1")
+// runStopAt = 5
+// xvalue("Continue til","runStopAt", 1,"{continuerun(runStopAt) stoprun=1}", 1, 1 )
+// runStopIn = 1
+// xvalue("Continue for","runStopIn", 1,"{continuerun(t + runStopIn) stoprun=1}", 1, 1 )
+// xbutton("Single Step","steprun()")
+// t = 0
+// xvalue("t","t", 2 )
+// xvalue("Tstop","tstop", 1,"tstop_changed()", 0, 1 )
+// xvalue("dt","dt", 1,"setdt()", 0, 1 )
+// steps_per_ms = 40
+// xvalue("Points plotted/ms","steps_per_ms", 1,"setdt()", 0, 1 )
+// screen_update_invl = 0.05
+// xvalue("Scrn update invl","screen_update_invl", 1,"", 0, 1 )
+// realtime = 0
+// xvalue("Real Time","realtime", 0,"", 0, 1 )
+// xpanel(280,280)

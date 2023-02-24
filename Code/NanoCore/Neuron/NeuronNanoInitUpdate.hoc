@@ -1,0 +1,16 @@
+
+proc SeedingSpinesUniform() {
+    nanoBranchesManager.reseedBranches(1)
+}
+
+proc SeedingSpinesNormal() {
+    nanoBranchesManager.reseedBranches(0)
+}
+
+proc GeometrySpineUniform() {
+    nanoBranchesManager.updateBranches(1)
+}
+
+proc GeometrySpineNormal() {
+    nanoBranchesManager.updateBranches(0)
+}

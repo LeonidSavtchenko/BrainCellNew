@@ -1,0 +1,59 @@
+
+// !! replace "\n" with "; " where possible
+
+// Create a copy of the first "*.CNG.swc" file in just unzipped folder giving it fixed name
+// $s1 - The unzipped folder path and name
+// $s2 - The destination file name
+proc copyAndRenameFirstSwcFile() { local status
+    strdef folderPathName, outSwcFileName, pyCommandTempl, pyCommand
+    
+    folderPathName = $s1
+    outSwcFileName = $s2
+    
+    pyCommandTempl = "import glob\nimport shutil\nfor file in glob.glob('%s/*.CNG.swc'):\n    shutil.copy(file, '%s/%s')\n    break"
+    sprint(pyCommand, pyCommandTempl, folderPathName, folderPathName, outSwcFileName)
+    
+    status = nrnpython(pyCommand)
+    if (!status) {
+        printImportFailedMsgAndStop("Cannot create a copy of the first \"*.CNG.swc\" file in just unzipped folder")
+    }
+}
+
+// Copy HOC file from the temporary folder to the specified location
+// $s1 - The destination file path and name
+proc copyHocFile() { local status
+    strdef dstFilePathName, srcFilePathNameTempl, srcFilePathName, pyCommandTempl, pyCommand
+    
+    dstFilePathName = $s1
+    
+    srcFilePathNameTempl = "%sCode/Import/temp_folder/last_converted.hoc"
+    sprint(srcFilePathName, srcFilePathNameTempl, getcwd())
+    
+    pyCommandTempl = "import shutil\nshutil.copyfile('%s', '%s')"
+    sprint(pyCommand, pyCommandTempl, srcFilePathName, dstFilePathName)
+    
+    status = nrnpython(pyCommand)
+    if (!status) {
+        print "Export Failed: Cannot save HOC file to the specified location"
+        stop
+    }
+}
+
+// Convert string to lower case
+// $s1 - The input string
+// $s2 (output) - The lower case string
+proc stringToLowerCase() { localobj pyObj
+    strdef inStr, pyCommandTempl, pyCommand
+    
+    inStr = $s1
+    
+    pyCommandTempl = "outStr = '%s'.lower()"
+    sprint(pyCommand, pyCommandTempl, inStr)
+    status = nrnpython(pyCommand)
+    if (!status) {
+        printImportFailedMsgAndStop("Exception raised in Python code (caught in stringToLowerCase)")
+    }
+    
+    pyObj = new PythonObject()
+    $s2 = pyObj.outStr
+}

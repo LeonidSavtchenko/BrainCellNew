@@ -1,0 +1,38 @@
+
+objref Boxspines
+
+proc showNeuronLevelOfNanoDetailWidget() {
+    Boxspines = new VBox()
+    Boxspines.intercept(1)
+    {
+        MaxNumberSpinesPerDendrite = 10
+        xpanel("")
+        xlabel("========== Load neuron geometry files ==========")
+        xlabel("Critical parameter of neuron geometry.")
+        xlabel("")
+        xlabel("Maximum number of spines per dendrite")
+        xlabel("This number can be limitless, but if this number is significant")
+        xlabel("then the user needs a cluster of computers for calculations.")
+        xvalue("Max number of spines", "MaxNumberSpinesPerDendrite", 1, "", 0, 1)
+        xpanel(0)
+    }
+    Boxspines.intercept(0)
+    Boxspines.map("Max number of spines", 50, 300, -1, -1)
+}
+
+showNeuronLevelOfNanoDetailWidget()
+
+proc neuronPostImportHandler() {
+
+    Boxspines.unmap()
+    
+    { load_file("Code/Preface/CommonPreface.hoc") }
+    { load_file("Code/Preface/Neuron/initNew.hoc") }
+    
+    // Neuron simulation preface complete
+    prefaceCompleteHandler()
+}
+
+proc initNeuron() {
+    importHocOrSwcOrZipOrOtherFile("neuronPostImportHandler()")
+}

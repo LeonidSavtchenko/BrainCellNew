@@ -1,0 +1,173 @@
+
+{ load_file("SectionListUtils.hoc") }
+
+
+begintemplate SeededDendritesSelectionWidget
+
+    public show
+    
+    // List-s of SectionRef
+    external dendrite_ref, seededDendrite_ref
+    
+    // proc-s
+    external eachItemInList, checkIfCurrentSecIsDendrite, addThisAndAllChildSecRefsToTheList, removeAllDupSecRefsFromTheList, showMessageBox
+    
+    // template-s
+    external nanoBranchesManager
+    
+    isSelectWholeSubtree = -1
+    
+    dendriteColor = -1
+    notDendriteColor = -1
+    selectedColor = -1
+    
+    objref mainBox, plotShape
+    
+    objref selectedDendrite_ref
+    
+    
+    proc init() {
+        isSelectWholeSubtree = 0    // Keep in sync with xradiobutton
+        
+        dendriteColor = 3       // Blue
+        notDendriteColor = 1    // Black
+        selectedColor = 2       // Red
+        
+        selectedDendrite_ref = new List()
+    }
+    
+    proc colorizeCompartments() { localobj item
+        plotShape.color_all(notDendriteColor)
+        for eachItemInList(item, dendrite_ref) {
+            item.sec plotShape.color(dendriteColor)
+        }
+    }
+    
+    proc show() {
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            xlabel("Please select dendrites that will be seeded with nanostructures.")
+            xlabel("")
+            xradiobutton("Select individual sections", "isSelectWholeSubtree = 0", 1)   // Keep in sync with proc init
+            xradiobutton("Select whole subtrees", "isSelectWholeSubtree = 1")
+            xlabel("")
+            // Usage of "Ctrl" is more natural for multiselect than "Shift", but for some reason, mouseEventsHandler is not called at all when "Ctrl" is pressed
+            xlabel("Hold \"Shift\" while clicking on sections to keep the previous selection.")
+            xlabel("The sections shown in black are not dendrites, and so cannot be selected.")
+            xlabel("The number of selected sections is printed to console after each click.")
+            xbutton("Done", "doneHandler()")
+            xpanel()
+            plotShape = new PlotShape()
+            colorizeCompartments()
+            plotShape.menu_tool("Seeded Dendrite(s)", "mouseEventsHandler")
+            plotShape.exec_menu("Seeded Dendrite(s)")
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Seeded dendrite(s)")
+        plotShape.exec_menu("View = plot")
+    }
+    
+    // Mouse events handler: section selection and highlighting
+    // $1 - Event type: 1, 2, 3 means move, press, release respectively
+    // $2 - x
+    // $3 - y
+    // $4 - Keystate: reflects the state of Control (bit 1), Shift (bit 2), and Meta (bit 3) keys
+    proc mouseEventsHandler() { local eventType, x, y, keystate, isMultiselect, isDendrite localobj item
+        strdef numSeededDendsHint
+        
+        eventType = $1
+        x = $2
+        y = $3
+        keystate = $4
+        
+        if (eventType != 2) {   // LMB press
+            return
+        }
+        
+        isMultiselect = (keystate == 2) // Shift
+        if (!isMultiselect) {
+            selectedDendrite_ref.remove_all()
+            colorizeCompartments()
+        }
+        
+        // Make the nearest section currently accessed
+        plotShape.nearest(x, y)
+        plotShape.push_selected()
+        
+        // Check if the section belongs to a dendrite
+        isDendrite = checkIfCurrentSecIsDendrite()
+        if (!isDendrite) {
+            pop_section()
+            return
+        }
+        
+        if (!isSelectWholeSubtree) {
+            selectedDendrite_ref.append(new SectionRef())
+        } else {
+            addThisAndAllChildSecRefsToTheList(selectedDendrite_ref)
+        }
+        
+        pop_section()
+        
+        if (isMultiselect) {
+            removeAllDupSecRefsFromTheList(selectedDendrite_ref)
+        }
+        
+        for eachItemInList(item, selectedDendrite_ref) {
+            item.sec plotShape.color(selectedColor)
+        }
+        
+        sprint(numSeededDendsHint, "%d dendrite section(s) selected", selectedDendrite_ref.count())
+        print numSeededDendsHint
+        // plotShape.label(numSeededDendsHint) // This would be better than "print", but no idea how to delete the old label each time
+    }
+    
+    // The handler of "Done" button
+    proc doneHandler() {
+        if (selectedDendrite_ref.count() == 0) {
+            showMessageBox("Please select at least 1 dendrite section.", "Nothing selected")
+            return
+        }
+        
+        // Here is the result of selection
+        seededDendrite_ref = selectedDendrite_ref
+        
+        // !! do I need to re-calculate MaxDendriticLength using seededDendrite_ref?
+        nanoBranchesManager.reseedBranchesWithLastUsedArgs()
+        
+        mainBox.unmap()
+    }
+    
+    // The handler of "X" button
+    proc dismissHandler() {
+        // !! maybe need to inform user that we'll reseed rather than restore the old nanostructures
+        // !! do I need to re-calculate MaxDendriticLength using seededDendrite_ref?
+        nanoBranchesManager.reseedBranchesWithLastUsedArgs()
+        
+        mainBox.unmap()
+    }
+    
+endtemplate SeededDendritesSelectionWidget
+
+
+objref sdsWidget
+
+// Handler of "Reseed" button from the main UI
+// Input: isAllOrSomeDendritesSeeded (taken from the top level)
+proc seededDendritesChangedHandler() {
+    if (isAllOrSomeDendritesSeeded) {
+        seededDendrite_ref = dendrite_ref
+        // !! do I need to re-calculate MaxDendriticLength using seededDendrite_ref?
+        nanoBranchesManager.reseedBranchesWithLastUsedArgs()
+    } else {
+        // !! after the next operation and before closing sdsWidget, interaction with MainUI nanogeometry panels causes an error,
+        //    so maybe need to hide MainUI temporarily
+        nanoBranchesManager.deleteBranches()
+        
+        sdsWidget = new SeededDendritesSelectionWidget()
+        sdsWidget.show()
+    }
+}

@@ -1,0 +1,71 @@
+
+// Some declarations of the arrays that will be defined just below
+objref input[1], StimTrigger_AddSynapses[1], NetInput_AddSynapses[1]
+
+// objref DistanceDistribution  // This was not used
+
+
+// Create and connect all synapses; the number of synapses is the same as the number of spines
+// Inputs: SynapseLocationDendrite, weight, IntervalSynapticActivity, SwtichOn, noise (all taken from the top level)
+proc CreateTheSynapticInput() { local synIdx, connectionPoint
+    strdef whereConnected
+    
+    SynapseNumber = nanoDistal_ref.count()
+    
+    objref input[SynapseNumber], StimTrigger_AddSynapses[SynapseNumber], NetInput_AddSynapses[SynapseNumber]
+    // DistanceDistribution = new Vector(SynapseNumber)
+    
+    for synIdx = 0, SynapseNumber - 1 {
+        StimTrigger_AddSynapses[synIdx] = new NetStim()
+        
+        if (SynapseLocationDendrite) {
+            // Synapse is connected to the centre of spine_head
+            connectionPoint = 0.5
+            nanoDistal_ref.o(synIdx).sec input[synIdx] = new Exp2Syn(connectionPoint)
+            // Calculation of distance to synapse
+            // nanoDistal_ref.o(synIdx).sec temp = distance(connectionPoint)
+        } else {
+            // Synapse is connected to the point on dendrite where spine_neck emerges
+            nanoProximal_ref.o(synIdx).sec connectionPoint = parent_connection()
+            nanoProximal_ref.o(synIdx).parent input[synIdx] = new Exp2Syn(connectionPoint)
+            // Calculation of distance to synapse
+            // nanoProximal_ref.o(synIdx).parent temp = distance(connectionPoint)
+        }
+        // DistanceDistribution.x[synIdx] = temp
+        // print "distance = ", temp
+        // Conductance depended on distance. The formula is the same for all calculations
+        // ConDistance = 0.5125 + temp * 0.65 / 300
+        ConDistance = 1
+        
+        NetInput_AddSynapses[synIdx] = new NetCon(StimTrigger_AddSynapses[synIdx], input[synIdx], 0, 0, weight * ConDistance)
+        StimTrigger_AddSynapses[synIdx].start = 2
+        StimTrigger_AddSynapses[synIdx].interval = IntervalSynapticActivity
+        StimTrigger_AddSynapses[synIdx].number = SwtichOn
+        StimTrigger_AddSynapses[synIdx].noise = noise
+    }
+    
+    if (SynapseLocationDendrite) {
+        whereConnected = "spine_head(0.5)"
+    } else {
+        whereConnected = "dendrite(where spine_neck emerges)"
+    }
+    printf("SynapseNumber=%d; each connected to: %s\n", SynapseNumber, whereConnected)
+}
+
+// Inputs: weight, IntervalSynapticActivity, SwtichOn, noise (all taken from the top level)
+proc ChangeTheSynapticInput() { local synIdx
+    for synIdx = 0, SynapseNumber - 1 {
+        NetInput_AddSynapses[synIdx].weight = weight
+        NetInput_AddSynapses[synIdx].pre(0).interval = IntervalSynapticActivity
+        NetInput_AddSynapses[synIdx].pre(0).number = SwtichOn
+        NetInput_AddSynapses[synIdx].pre(0).noise = noise
+    }
+}
+
+// This proc will be called each time after neuron nanogeometry reseeding
+proc Neuron_AddSynapses_reseed() {
+    CreateTheSynapticInput()
+    ChangeTheSynapticInput()
+}
+
+Neuron_AddSynapses_reseed()

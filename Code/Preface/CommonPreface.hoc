@@ -1,0 +1,34 @@
+
+// This file is sourced just after successful completion of the import
+
+
+MinDistance = 1             // um
+
+// The next ones will be assigned just below
+MaxDendriticLength = -1     // um
+isAllOrSomeDendritesSeeded = -1
+objref seededDendrite_ref, nanoBranchesManager
+
+
+// Report the bug, print the call stack and stop
+// !! move to InterModularUtils
+proc codeContractViolation() {
+    print "Bug in Cell program: Code contract violation"
+    0/0     // Just to print the call stack
+    stop
+}
+
+load_file("GetMaxDendriticLength.hoc")
+
+MaxDendriticLength = getMaxDendriticLength()
+
+isAllOrSomeDendritesSeeded = 1
+seededDendrite_ref = dendrite_ref
+
+load_file("../NanoCore/NanoBranchesManager.hoc")
+
+if (isAstrocyteOrNeuron) {
+    nanoBranchesManager = new NanoBranchesManager(MaxNumberStalksPerDendrite)
+} else {
+    nanoBranchesManager = new NanoBranchesManager(MaxNumberSpinesPerDendrite)
+}

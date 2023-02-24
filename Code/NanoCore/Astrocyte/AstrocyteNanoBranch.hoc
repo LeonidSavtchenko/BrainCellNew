@@ -1,0 +1,179 @@
+
+// This one will be shared by different astrocyte nano branches
+objref randomDiamAndLen
+randomDiamAndLen = getRNG_randomDiamAndLen()
+
+// Both leaves and stalks:
+// diamStep = -1                                // Already defined in Core/NanoDistrFromFile.hoc
+currentMechanismSetup = 0                       // 0 - Electric mechanisms, 1 - Glutamate mechanisms
+DensityGluTransporters = 1e12                   // 1/um2
+// Leaves only:
+MinDimLeaves = 1                                // um
+MaxDimLeaves = 3                                // um
+MinLenLeaves = 0.1                              // um
+MaxLenLeaves = 0.12                             // um
+GPassive = 0.001                                // Ohm cm
+// Stalks only:
+MinDimStalk = 0.1                               // um
+MaxDimStalk = 0.1                               // um
+MinLenStalk = 0.1                               // um
+MaxLenStalk = 0.3                               // um
+
+
+// The next "declarations" are needed just to bind the template's external-s at the file sourcing time
+// (they will be defined after the file sourcing and before the first call)
+proc initAstrocyteBiophysics() { codeContractViolation() }
+proc updateAstrocyteBiophysics() { codeContractViolation() }
+
+// Keep this template in sync with its reduced counterpart at Export/OutHocFileSkeletons/OutHocFileSkeletonForAstrocyte.txt
+
+begintemplate AstrocyteNanoBranch
+    
+    public LargeGlia, SmallGlia
+    
+    objref root_ref     // SectionRef
+    public root_ref
+    
+    // The second public proc (the first one is init)
+    public update
+    
+    // Both leaves and stalks:
+    external NumberLeavesPerStalk, randomDiamAndLen, diamStep
+    // Leaves only:
+    external MinDimLeaves, MaxDimLeaves, MinLenLeaves, MaxLenLeaves, diamDistrLeaves
+    // Stalks only:
+    external MinDimStalk, MaxDimStalk, MinLenStalk, MaxLenStalk, diamDistrStalks
+    
+    // func
+    external getDiameterFromDistr
+    
+    // proc-s
+    external initAstrocyteBiophysics, updateAstrocyteBiophysics
+    
+    // It turns out that variable size is not allowed here: we'll get the strange error "LargeGlia not an array variable" in procs below while sourcing this file
+    // create LargeGlia[NumberLeavesPerStalk]
+    // create SmallGlia[NumberLeavesPerStalk]
+    
+    // This works just like a declaration of arrays, and we'll define them in proc init()
+    create LargeGlia[1]
+    create SmallGlia[1]
+    
+    objref this
+    
+    
+    // !!
+    proc init() { local isLeavesDiamDistrFromFileOrUniform, isStalksDiamDistrFromFileOrUniform
+        isLeavesDiamDistrFromFileOrUniform = $1
+        isStalksDiamDistrFromFileOrUniform = $2
+        
+        create LargeGlia[NumberLeavesPerStalk]
+        create SmallGlia[NumberLeavesPerStalk]
+        
+        initTopology()
+        initGeometry(isLeavesDiamDistrFromFileOrUniform, isStalksDiamDistrFromFileOrUniform)
+        initBiophysics()
+        
+        LargeGlia[0] {
+            root_ref = new SectionRef()
+        }
+    }
+    
+    // !!
+    proc update() { local isLeavesOrStalks, isDiamDistrFromFileOrUniform, isUpdateLeaves, isUpdateStalks
+        isLeavesOrStalks = $1
+        isDiamDistrFromFileOrUniform = $2
+        
+        isUpdateLeaves = isLeavesOrStalks
+        isUpdateStalks = 1 - isLeavesOrStalks
+        
+        updateGeometry(isUpdateLeaves, isUpdateStalks, isDiamDistrFromFileOrUniform, isDiamDistrFromFileOrUniform)
+        updateBiophysics(isUpdateLeaves, isUpdateStalks, isDiamDistrFromFileOrUniform, isDiamDistrFromFileOrUniform)
+    }
+    
+    // All next procs are private
+    
+    
+    // Create topology of the stalk so that it will have:
+    // * all leaves attached
+    // * the topological root at LargeGlia[0] (no connection between stalk and dendrite yet)
+    proc initTopology() { local leafIdx
+        for leafIdx = 0, NumberLeavesPerStalk - 2 {
+            connect SmallGlia[leafIdx](0), LargeGlia[leafIdx](1)
+            connect LargeGlia[leafIdx + 1](0), SmallGlia[leafIdx](1)
+        }
+        connect SmallGlia[leafIdx](0), LargeGlia[leafIdx](1)    // Here leafIdx equals NumberLeavesPerStalk - 1
+    }
+    
+    // !!
+    proc initGeometry() { local isLeavesDiamDistrFromFileOrUniform, isStalksDiamDistrFromFileOrUniform
+        isLeavesDiamDistrFromFileOrUniform = $1
+        isStalksDiamDistrFromFileOrUniform = $2
+        updateGeometry(1, 1, isLeavesDiamDistrFromFileOrUniform, isStalksDiamDistrFromFileOrUniform)
+    }
+    
+    // !!
+    proc initBiophysics() {
+        initAstrocyteBiophysics(this)
+    }
+    
+    // !!
+    proc updateGeometry() { local isUpdateLeaves, isUpdateStalks, isLeavesDiamDistrFromFileOrUniform, isStalksDiamDistrFromFileOrUniform, leafIdx
+        isUpdateLeaves = $1
+        isUpdateStalks = $2
+        isLeavesDiamDistrFromFileOrUniform = $3
+        isStalksDiamDistrFromFileOrUniform = $4
+        
+        if (!isUpdateLeaves && !isUpdateStalks) {
+            codeContractViolation()
+        }
+        
+        // All density function of membrane kinetic  must be multiply by 1+D/2L to take into account the lateral surface
+        for leafIdx = 0, NumberLeavesPerStalk - 1 {
+            if (isUpdateLeaves) {
+                // !! copied from setLeaves
+                LargeGlia[leafIdx] {
+                    if (isLeavesDiamDistrFromFileOrUniform) {
+                        diam = getDiameterFromDistr(diamDistrLeaves, diamStep)
+                    } else {
+                        diam = randomDiamAndLen.uniform(MinDimLeaves, MaxDimLeaves)
+                    }
+                    
+                    L = randomDiamAndLen.uniform(MinLenLeaves, MaxLenLeaves)
+                }
+            }
+            
+            if (isUpdateStalks) {
+                // !! copied from setStalks
+                SmallGlia[leafIdx] {
+                    if (isStalksDiamDistrFromFileOrUniform) {
+                        diam = getDiameterFromDistr(diamDistrStalks, diamStep)
+                    } else {
+                        diam = randomDiamAndLen.uniform(MinDimStalk, MaxDimStalk)
+                    }
+                    
+                    L = randomDiamAndLen.uniform(MinLenStalk, MaxLenStalk)
+                }
+            }
+        }
+    }
+    
+    // !!
+    proc updateBiophysics() { local isUpdateLeaves, isUpdateStalks
+        isUpdateLeaves = $1
+        isUpdateStalks = $2
+        
+        updateAstrocyteBiophysics(this, isUpdateLeaves, isUpdateStalks)
+    }
+    
+endtemplate AstrocyteNanoBranch
+
+
+{ load_file("Exported/AstrocyteNanoBranch_Exported.hoc") }
+
+
+obfunc createAstrocyteNanoBranch() { local isLeavesDiamDistrFromFileOrUniform, isStalksDiamDistrFromFileOrUniform
+    isLeavesDiamDistrFromFileOrUniform = $1
+    isStalksDiamDistrFromFileOrUniform = $2
+    
+    return new AstrocyteNanoBranch(isLeavesDiamDistrFromFileOrUniform, isStalksDiamDistrFromFileOrUniform)
+}

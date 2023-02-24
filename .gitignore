@@ -1,0 +1,7 @@
+# Ignored files:
+*.c
+*.o
+
+# Ignored folders:
+__pycache__/
+temp_folder/

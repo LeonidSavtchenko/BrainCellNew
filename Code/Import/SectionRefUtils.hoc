@@ -1,0 +1,75 @@
+
+// The List-s of SectionRef-s that will be used to:
+//  access the imported/created sections for soma
+objref soma_ref
+//  access the imported sections for dendrites
+objref dendrite_ref
+//  access the imported/created sections for axon (for neuron only)
+objref axon_ref
+
+// This one won't be used anywhere outside this file
+objref _secRef
+
+
+// Create references to these sections imported from HOC file or created by the importer
+// $o1 - The names, each can be either array or object (List of String-s)
+// Returns The references (List of SectionRef-s)
+obfunc createReferencesToTheseNames() { local idx localobj usedNames, list_ref
+    strdef thisName, hocCommand
+    
+    usedNames = $o1
+    
+    list_ref = new List()
+    
+    for idx = 0, usedNames.count() - 1 {
+        thisName = usedNames.o(idx).s
+        for findSecArrayOrObjectIterator(thisName, 0, 1) {
+            sprint(hocCommand, "%s _secRef = new SectionRef()", secname())
+            execute(hocCommand)
+            list_ref.append(_secRef)
+        }
+    }
+    
+    return list_ref
+}
+
+// Create references to soma, dendrite and (for neuron only) axon sections imported from HOC file or created by the importer
+// $o1 - Imported/created soma names (List of String-s)
+// $o2 - Imported dendrite names (List of String-s)
+// $o3 (optional) - Imported/created axon names (List of String-s); used only if !isAstrocyteOrNeuron
+// Other input: isAstrocyteOrNeuron (taken from the top level)
+// Output: soma_ref, dendrite_ref and (for neuron only) axon_ref (all initialized on the top level, List-s of SectionRef-s)
+proc createCompartmentReferences() { local numArg localobj usedNamesForSoma, usedNamesForDendrites, usedNamesForAxon, nil
+    strdef hocCommand
+    
+    numArg = numarg()
+    
+    usedNamesForSoma = $o1
+    usedNamesForDendrites = $o2
+    if (numArg == 3) {
+        usedNamesForAxon = $o3
+    }
+    
+    // Initialize soma_ref, dendrite_ref and (for neuron only) axon_ref
+    soma_ref = createReferencesToTheseNames(usedNamesForSoma)
+    dendrite_ref = createReferencesToTheseNames(usedNamesForDendrites)
+    if (!isAstrocyteOrNeuron) {
+        axon_ref = createReferencesToTheseNames(usedNamesForAxon)
+    } else {
+        // !! it would be better not to declare it at all
+        axon_ref = nil
+    }
+    
+    // Some cleanup on top level
+    _secRef = nil
+}
+
+// Delete all section references
+// (The names remain declared and cannot be used for anything else than creating new objects)
+proc deleteAllSectionRefs() { localobj nil
+    soma_ref = nil
+    dendrite_ref = nil
+    if (!isAstrocyteOrNeuron) {
+        axon_ref = nil
+    }
+}

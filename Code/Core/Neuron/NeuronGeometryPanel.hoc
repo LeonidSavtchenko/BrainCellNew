@@ -1,0 +1,187 @@
+
+// Neuron geometry distribution params deck panel
+objref deckLeftMiddleSubPanel
+
+
+strdef geomValueChangedUniformHandler, geomValueChangedNormalHandler
+geomValueChangedUniformHandler = "GeometrySpineUniform()"
+geomValueChangedNormalHandler = "GeometrySpineNormal()"
+
+proc UniformDistributionofSpineGeometry() {
+    xpanel("Uniform distribution")
+    xlabel("===============Uniform distribution of spine geometry====================")
+    xlabel("===============Spine Head====================")
+    xvalue("MaxRadius of spine Head","MaxRadiusHead", 1, geomValueChangedUniformHandler, 0, 1)
+    xvalue("MinRadius of spine Head","MinRadiusHead", 1, geomValueChangedUniformHandler, 0, 1)
+    xvalue("nseg in spine Head","SpineHeadNSeg", 1, geomValueChangedUniformHandler, 0, 1)
+    xlabel("===============Spine Neck====================")
+    xvalue("Max of Spine Neck Length","MaxSpineNeckLength", 1, geomValueChangedUniformHandler, 0, 1)
+    xvalue("Min of Spine Neck Length","MinSpineNeckLength", 1, geomValueChangedUniformHandler, 0, 1)
+    xvalue("Max Spine Neck Diameter","MaxSpineNeckDiameter", 1, geomValueChangedUniformHandler, 0, 1)
+    xvalue("Min Spine Neck Diameter","MinSpineNeckDiameter", 1, geomValueChangedUniformHandler, 0, 1)
+    xvalue("nseg in Spine Neck","SpineNeckNSeg", 1, geomValueChangedUniformHandler, 0, 1)
+    xlabel("===============Seeding Spines====================")
+    xlabel("Initial min. distance between spines is limit value that cannot be reduced using panel.")
+    xlabel("To decrease this value, increase value - MaxNumberSpinesPerDendrite")
+    xvalue("Min distribution over branches in um","MinDistance", 1, "SeedingSpinesUniform()", 0, 1)
+    xpanel()
+}
+
+proc NormalDistributionofSpineGeometry() {
+    xpanel("Normal distribution")
+    xlabel("===============Normal distribution of spine geometry====================")
+    xlabel("===============Spine Head====================")
+    xvalue("SDRadius of spine Head","SDRadiusHead", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("MeanRadius of spine Head","MeanRadiusHead", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("nseg in spine Head","SpineHeadNSeg", 1, geomValueChangedNormalHandler, 0, 1)
+    xlabel("===============Spine Neck====================")
+    xvalue("SD of Spine Neck Length","SDSpineNeckLength", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("Mean of Spine Neck Length","MeanSpineNeckLength", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("SD Spine Neck Diameter","SDSpineNeckDiameter", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("Mean Spine Neck Diameter","MeanSpineNeckDiameter", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("nseg in Spine Neck","SpineNeckNSeg", 1, geomValueChangedNormalHandler, 0, 1)
+    xlabel("===============Seeding Spines====================")
+    xlabel("Initial min. distance between spines is limit value that cannot be reduced using panel.")
+    xlabel("To decrease this value, increase value - MaxNumberSpinesPerDendrite")
+    xvalue("Min distribution over branches in um","MinDistance", 1, "SeedingSpinesNormal()", 0, 1)
+    xpanel()
+}
+
+proc NaturePaperControl_Init() {
+    // Spine Head Radius
+    MeanRadiusHead=0.583/2
+    SDRadiusHead = sqrt(0.2)*MeanRadiusHead
+    
+    // Spine Neck Length
+    MeanSpineNeckLength=0.689
+    SDSpineNeckLength=sqrt(0.15)*MeanSpineNeckLength
+    
+    // Spine Neck Diameter
+    MeanSpineNeckDiameter=0.15
+    SDSpineNeckDiameter=sqrt(0.2)*MeanSpineNeckDiameter
+}
+
+proc NaturePaperControl() {
+    xpanel("Nature paper Control")
+    xlabel("===============Nature paper Control====================")
+    xlabel("===============Spine Head====================")
+    xvalue("SDRadius of spine Head","SDRadiusHead", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("MeanRadius of spine Head","MeanRadiusHead", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("nseg in spine Head","SpineHeadNSeg", 1, geomValueChangedNormalHandler, 0, 1)
+    xlabel("===============Spine Neck====================")
+    xvalue("SD of Spine Neck Length","SDSpineNeckLength", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("Mean of Spine Neck Length","MeanSpineNeckLength", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("SD Spine Neck Diameter","SDSpineNeckDiameter", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("Mean Spine Neck Diameter","MeanSpineNeckDiameter", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("nseg in Spine Neck","SpineNeckNSeg", 1, geomValueChangedNormalHandler, 0, 1)
+    xlabel("===============Seeding Spines====================")
+    xlabel("Initial min. distance between spines is limit value that cannot be reduced using panel.")
+    xlabel("To decrease this value, increase value - MaxNumberSpinesPerDendrite")
+    xvalue("Min distribution over branches in um","MinDistance", 1, "SeedingSpinesNormal()", 0, 1)
+    xpanel()
+}
+
+proc NaturePaperLTP_Init() {
+    // Spine Head Radius
+    MeanRadiusHead=0.583/2 * 1.25 // 2^(1/3) where 2 is volume increase with LTP
+    SDRadiusHead = sqrt(0.2)*MeanRadiusHead
+    
+    // Spine Neck Length
+    MeanSpineNeckLength=0.689*0.7 // length decreased with LTP by 30%
+    SDSpineNeckLength=sqrt(0.15)*MeanSpineNeckLength
+    
+    // Spine Neck Diameter
+    MeanSpineNeckDiameter=0.15*1.4 // width increased by 40% with LTP
+    SDSpineNeckDiameter=sqrt(0.2)*MeanSpineNeckDiameter
+}
+
+proc NaturePaperLTP() {
+    xpanel("Nature paper LTP")
+    xlabel("===============Nature paper LTP====================")
+    xlabel("===============Spine Head====================")
+    xvalue("SDRadius of spine Head","SDRadiusHead", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("MeanRadius of spine Head","MeanRadiusHead", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("nseg in spine Head","SpineHeadNSeg", 1, geomValueChangedNormalHandler, 0, 1)
+    xlabel("===============Spine Neck====================")
+    xvalue("SD of Spine Neck Length","SDSpineNeckLength", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("Mean of Spine Neck Length","MeanSpineNeckLength", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("SD Spine Neck Diameter","SDSpineNeckDiameter", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("Mean Spine Neck Diameter","MeanSpineNeckDiameter", 1, geomValueChangedNormalHandler, 0, 1)
+    xvalue("nseg in Spine Neck","SpineNeckNSeg", 1, geomValueChangedNormalHandler, 0, 1)
+    xlabel("===============Seeding Spines====================")
+    xlabel("Initial min. distance between spines is limit value that cannot be reduced using panel.")
+    xlabel("To decrease this value, increase value - MaxNumberSpinesPerDendrite")
+    xvalue("Min distribution over branches in um","MinDistance", 1, "SeedingSpinesNormal()", 0, 1)
+    xpanel()
+}
+
+// Switch to other nanogeometry distribution for neuron
+// $1 - Integer value from 0 to 3 indicating the radiobutton on the panel
+// $2 - 0/1 flag indicating click/create mode
+proc switchToOtherNeuronGeometry() { local newChosenSpineGeometry, isCreatePanelMode
+    newChosenSpineGeometry = $1
+    isCreatePanelMode = $2
+    
+    if (newChosenSpineGeometry == 2) {
+        NaturePaperControl_Init()
+    } else if (newChosenSpineGeometry == 3) {
+        NaturePaperLTP_Init()
+    }
+    
+    if (isCreatePanelMode) {
+        return
+    }
+    
+    // Re-generate the nanogeometry
+    if (newChosenSpineGeometry == 0) {
+        execute(geomValueChangedUniformHandler)
+    } else {
+        execute(geomValueChangedNormalHandler)
+    }
+    
+    deckLeftMiddleSubPanel.flip_to(newChosenSpineGeometry)
+}
+
+proc createNeuronGeometryPanel() { local defaultChosenSpineGeometry
+
+    // Integer value from 0 to 3 indicating the default checked radiobutton on "Spine Head and Neck Geometry" panel
+    // Keep this value consistent with initialization in Preface/Neuron/initNew.hoc
+    defaultChosenSpineGeometry = 1  // 1 means normal distribution by default
+    
+    // Neuron geometry distribution switch panel
+    xpanel("Spine Head and Neck Geometry")
+    xlabel("======================= Spine Head and Neck Geometry =======================")
+    xradiobutton("Uniform distribution of spine geometry", "switchToOtherNeuronGeometry(0, 0)", defaultChosenSpineGeometry == 0)
+    xradiobutton("Normal distribution of spine geometry", "switchToOtherNeuronGeometry(1, 0)", defaultChosenSpineGeometry == 1)
+    xradiobutton("Nature paper Control", "switchToOtherNeuronGeometry(2, 0)", defaultChosenSpineGeometry == 2)
+    xradiobutton("Nature paper LTP", "switchToOtherNeuronGeometry(3, 0)", defaultChosenSpineGeometry == 3)
+    xpanel()
+    
+    // Neuron geometry distribution params deck
+    deckLeftMiddleSubPanel = new Deck()
+    deckLeftMiddleSubPanel.intercept(1)
+    {
+        switchToOtherNeuronGeometry(0, 1)
+        UniformDistributionofSpineGeometry()
+        
+        switchToOtherNeuronGeometry(1, 1)
+        NormalDistributionofSpineGeometry()
+        
+        switchToOtherNeuronGeometry(2, 1)
+        NaturePaperControl()
+        
+        switchToOtherNeuronGeometry(3, 1)
+        NaturePaperLTP()
+    }
+    deckLeftMiddleSubPanel.intercept(0)
+    deckLeftMiddleSubPanel.map()
+    
+    // Select the default card
+    if (defaultChosenSpineGeometry == 1) {
+        NormalDistributionOfSpineGeometry_setParams()
+        // execute(geomValueChangedNormalHandler)   // Already done in !!Preface/Neuron/initNew.hoc
+    } else {
+        codeContractViolation()
+    }
+    deckLeftMiddleSubPanel.flip_to(defaultChosenSpineGeometry)
+}

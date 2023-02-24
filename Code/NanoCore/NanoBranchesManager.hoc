@@ -1,0 +1,198 @@
+
+// The next "declarations" are needed just to bind the template external-s at the file sourcing time
+//  Only one of these two will be defined and used
+obfunc createNeuronNanoBranch() { codeContractViolation() }
+obfunc createAstrocyteNanoBranch() { codeContractViolation() }
+//  These proc-s will be defined after the file sourcing and before the first call
+proc Neuron_AddSynapses_reseed() { codeContractViolation() }
+proc Neuron_AddSynapses_delete() { codeContractViolation() }
+
+// !!
+isFirstReseeding = 1
+isExportedMode = 0
+
+NumberNanoBranches = -1
+
+if (isAstrocyteOrNeuron) {
+    { load_file("Astrocyte/AstrocyteNanoBranch.hoc") }
+} else {
+    { load_file("Neuron/NeuronNanoBranch.hoc") }
+}
+
+{ load_file("Exported/CreateNanoRefs_Exported.hoc") }
+
+
+begintemplate NanoBranchesManager
+    
+    public reseedBranches, reseedBranchesWithLastUsedArgs, updateBranches, deleteBranches
+    
+    external seededDendrite_ref, NumberNanoBranches
+    external isAstrocyteOrNeuron, MinDistance, MaxDendriticLength, isFirstReseeding
+    
+    external createAstrocyteNanoBranch, createNeuronNanoBranch, createRefsForNanoGeometry
+    external getRNG_randomBranchSeeder, Neuron_AddSynapses_reseed, Neuron_AddSynapses_delete
+    
+    objref nanoBranches_flat    // !! Flat List of all AstrocyteNanoBranch or NeuronNanoBranch -- need to merge this with the logic from Exported/CreateNanoRefs_Exported.hoc !!
+    objref randomBranchSeeder 
+    
+    MaxNumberBranchesPerDendrite = -1
+    
+    lastUsedArg1 = -1
+    lastUsedArg2OrMinus1 = -1
+    
+    // Initialization of this singleton template
+    proc init() {
+        MaxNumberBranchesPerDendrite = $1
+        
+        nanoBranches_flat = new List()
+        randomBranchSeeder = getRNG_randomBranchSeeder()
+    }
+    
+    // Reseed dendrites with nanobranches
+    // $1 - The 1st argument passed to *NanoBranch template
+    // $2 (optional) - The 2nd argument passed to *NanoBranch template
+    // Other inputs: seededDendrite_ref (taken from the top level) etc.
+    proc reseedBranches() { local numArg, arg1, arg2, ControlFactor, dendIdx, NormFactor, slotIdx
+        numArg = numarg()
+        if (numArg < 1 || numArg > 2) {
+            codeContractViolation()
+        }
+        
+        arg1 = $1
+        lastUsedArg1 = arg1
+        if (numArg == 2) {
+            arg2 = $2
+            if (arg2 == -1) {
+                codeContractViolation()
+            }
+            lastUsedArg2OrMinus1 = arg2
+        } else {
+            lastUsedArg2OrMinus1 = -1
+        }
+        
+        if (!isFirstReseeding) {
+            deleteBranches()
+        }
+        
+        ControlFactor=(MinDistance*MaxNumberBranchesPerDendrite)/MaxDendriticLength
+        
+        for dendIdx = 0, seededDendrite_ref.count() - 1 {
+            NormFactor=ControlFactor*MaxDendriticLength/seededDendrite_ref.o(dendIdx).sec.L
+            
+            for slotIdx = 0, MaxNumberBranchesPerDendrite - 1 {
+                
+                if (randomBranchSeeder.uniform(0,1) < 1/NormFactor) {
+                    if (numArg == 1) {
+                        createInitAndConnectOneBranch(dendIdx, slotIdx, arg1)
+                    } else {
+                        createInitAndConnectOneBranch(dendIdx, slotIdx, arg1, arg2)
+                    }
+                }
+            }
+        }
+        
+        // !! is this correct place?
+        // !! maybe it would be easier to collect references while creating sections rather than search for sections with regex afterwards
+        createRefsForNanoGeometry()
+        
+        // !!
+        if (isAstrocyteOrNeuron) {
+            v_init = -85        // mV
+            finitialize(v_init)
+        } else {
+            v_init = -64.65
+        }
+        
+        if (!isFirstReseeding && !isAstrocyteOrNeuron) {
+            Neuron_AddSynapses_reseed()
+        }
+        
+        isFirstReseeding = 0
+        NumberNanoBranches = nanoBranches_flat.count()
+    }
+    
+    // Reseed dendrites with nanobranches using the same arguments as the last time
+    // Inputs: seededDendrite_ref (taken from the top level) etc.
+    proc reseedBranchesWithLastUsedArgs() {
+        if (lastUsedArg2OrMinus1 == -1) {
+            reseedBranches(lastUsedArg1)
+        } else {
+            reseedBranches(lastUsedArg1, lastUsedArg2OrMinus1)
+        }
+    }
+    
+    // Update nanobranches geometry without reseeding
+    // $1 - The 1st argument passed to *NanoBranch template
+    // $2 (optional) - The 2nd argument passed to *NanoBranch template
+    proc updateBranches() { local numArg, arg1, arg2, branchIdx localobj nanoBranch
+        numArg = numarg()
+        if (numArg < 1 || numArg > 2) {
+            codeContractViolation()
+        }
+        
+        arg1 = $1
+        if (numArg == 2) {
+            arg2 = $2
+        }
+        
+        for branchIdx = 0, NumberNanoBranches - 1 {
+            nanoBranch = nanoBranches_flat.o(branchIdx)
+            if (numArg == 1) {
+                nanoBranch.update(arg1)
+            } else {
+                nanoBranch.update(arg1, arg2)
+            }
+        }
+    }
+    
+    // Delete all nanobranches
+    proc deleteBranches() {
+        // !! would it make sense to add some validation code to unref() procs of the destructed templates to check whether something external is connected?
+        nanoBranches_flat.remove_all()
+        
+        // !! maybe clean up all refs to nanogeometry here just for safety
+        
+        if (!isAstrocyteOrNeuron) {
+            Neuron_AddSynapses_delete()
+        }
+    }
+    
+    // All next procs are private
+    
+    
+    // Create, initialize and connect to dendrite a new nanobranch
+    // $1 - The dendrite index
+    // $2 - The index of a slot on that dendrite to connect the new nanobranch
+    // $3 - The 1st argument passed to *NanoBranch template
+    // $4 (optional) - The 2nd argument passed to *NanoBranch template
+    // Other inputs: seededDendrite_ref (taken from the top level) etc.
+    proc createInitAndConnectOneBranch() { local numArg, dendIdx, slotIdx, arg1, arg2, connectionPoint localobj newBranch
+        numArg = numarg()
+        if (numArg < 3 || numArg > 4) {
+            codeContractViolation()
+        }
+        if (isAstrocyteOrNeuron && numArg == 3) {
+            codeContractViolation()
+        }
+        
+        dendIdx = $1
+        slotIdx = $2
+        arg1 = $3
+        if (numArg == 4) {
+            arg2 = $4
+        }
+        
+        // Create and initialize one branch (sections, topology, geometry, biophysics)
+        if (isAstrocyteOrNeuron) {
+            newBranch = createAstrocyteNanoBranch(arg1, arg2)
+        } else {
+            newBranch = createNeuronNanoBranch(arg1)
+        }
+        nanoBranches_flat.append(newBranch)
+        
+        // Connect the new branch to this dendrite in this point
+        connectionPoint = (1/MaxNumberBranchesPerDendrite)*slotIdx
+        seededDendrite_ref.o(dendIdx).sec connect newBranch.root_ref.sec(0), connectionPoint
+    }
+    
+endtemplate NanoBranchesManager

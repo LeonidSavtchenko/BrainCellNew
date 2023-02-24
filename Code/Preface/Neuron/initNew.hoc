@@ -1,0 +1,49 @@
+load_file("stdrun.hoc")
+
+load_file("../../NanoCore/Neuron/NeuronNanoInitUpdate.hoc")    // !! maybe move to the caller
+
+// Keep this call consistent with defaultChosenSpineGeometry in Core/Neuron/NeuronGeometryPanel.hoc
+nanoBranchesManager.reseedBranches(0)   // 0 means normal distribution by default
+
+access soma_ref.o(0).sec    // !! is that needed?
+load_file("Biophys.hoc")
+
+load_file("Electrod.hoc")
+load_file("AddSynapses.hoc")
+load_file("Diffusion3D.hoc")
+load_file("Graph.hoc")
+finitialize()   // !! Already moved to NanoBranchesManager.hoc
+objref apc
+apc = new APCount(0.5)
+apc.thresh=0
+
+
+objref f1            //declare object references
+f1 = new File()
+proc runu() { local ii
+    f1.aopen("spikes_Cond.txt")
+    for ii = 1, $1 {
+        run()
+        print apc.n
+        f1.printf("%-6.3g", apc.n)
+    }
+    f1.close()
+}
+
+
+proc advance() {
+     
+    fadvance()
+    //f1.printf("%-6.3g", apc.n)
+    
+    
+    ExtracellularPotassium(x,y,z, DelayInter1, input1.Distance) // Diffusion3D.hoc 
+}
+
+trials = 1
+
+xpanel("")
+xvalue("trials","trials", 1, "runu(trials)", 0, 1)
+
+xbutton("run", "runu(trials)")
+xpanel()

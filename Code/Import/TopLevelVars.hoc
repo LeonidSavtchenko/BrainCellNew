@@ -1,0 +1,40 @@
+
+// The argument passed to the importer entry point
+strdef importCompleteHandler
+
+// This one is set to 1 after the first import
+isSomethingImported = 0
+
+// The importer constants (will be assigned just below)
+objref ic
+
+
+begintemplate ImporterConstants
+
+    public getDefaultSomaDiamAndLen
+    
+    external isAstrocyteOrNeuron
+    
+    // !! Neuron ignores all these values (considers them all 0) until something is assigned explicitly in proc init()
+    defaultSomaDiamAndLenForAstrocyte = -1
+    defaultSomaDiamAndLenForNeuron = -1
+    
+    // !!
+    proc init() {
+        defaultSomaDiamAndLenForAstrocyte = 10  // um
+        defaultSomaDiamAndLenForNeuron = 15     // um
+    }
+    
+    // !!
+    func getDefaultSomaDiamAndLen() {
+        if (isAstrocyteOrNeuron) {
+            return defaultSomaDiamAndLenForAstrocyte
+        } else {
+            return defaultSomaDiamAndLenForNeuron
+        }
+    }
+
+endtemplate ImporterConstants
+
+
+ic = new ImporterConstants()

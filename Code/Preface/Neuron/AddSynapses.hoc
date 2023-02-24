@@ -1,0 +1,27 @@
+
+// DelayInter = 1       // This was not used
+SwtichOn = 1000
+IntervalSynapticActivity = 100
+// SynapticWait = 1     // This was not used
+weight = 0.0002
+noise = 1
+
+// 0/1 flag indicating whether each synapse is connected to the centre of spine_head (if 1) or the point on dendrite where spine_neck emerges (if 0)
+SynapseLocationDendrite = 1
+
+
+{ load_file("Exported/AddSynapses_Exported.hoc") }
+
+// This proc will be called each time after neuron nanogeometry deletion
+proc Neuron_AddSynapses_delete() {
+    objref input[1], StimTrigger_AddSynapses[1], NetInput_AddSynapses[1]
+}
+
+xpanel("Synaptic distribution",0)
+xlabel("===============Synaptic Distribution====================")
+xvalue("weight", "weight", 1, "ChangeTheSynapticInput()", 0, 1)
+xvalue("IntervalSynapticActivity", "IntervalSynapticActivity", 1, "ChangeTheSynapticInput()", 0, 1)
+xvalue("Number", "SwtichOn", 1, "ChangeTheSynapticInput()", 0, 1)
+xvalue("Synapse Location: Spine Head = 1 or Dendrite = 0", "SynapseLocationDendrite", 1, "CreateTheSynapticInput()", 0, 1)
+xvalue("Noise = 1 or Deterministic = 0", "noise", 1, "ChangeTheSynapticInput()", 0, 1)
+xpanel()

@@ -1,0 +1,212 @@
+
+// These ones will be shared by different neuron nano branches
+objref randomSpineRadius, randomNeckLen, randomNeckDiam
+randomSpineRadius = getRNG_randomSpineRadius()  // Random Number of Spine radius
+randomNeckLen = getRNG_randomNeckLen()          // Random Number of Neck Length
+randomNeckDiam = getRNG_randomNeckDiam()        // Random Number of Spine diameter
+
+// *********************** Set of Parameters for Uniform distribution
+// Spine Head Radius
+MinRadiusHead = 0.3
+MaxRadiusHead = 3
+// Spine Neck Length
+MinSpineNeckLength = 0.5
+MaxSpineNeckLength = 1
+// Spine Neck Diameter
+MinSpineNeckDiameter = 0.5
+MaxSpineNeckDiameter = 1
+
+// *********************** Set of Parameters for Normal distribution
+proc NormalDistributionOfSpineGeometry_setParams() {
+    // Spine Head Radius
+    MeanRadiusHead = 0.3
+    SDRadiusHead = 3
+    // Spine Neck Length
+    MeanSpineNeckLength = 0.5
+    SDSpineNeckLength = 1
+    // Spine Neck Diameter
+    MeanSpineNeckDiameter = 0.5
+    SDSpineNeckDiameter = 1
+}
+
+NormalDistributionOfSpineGeometry_setParams()
+
+// *********************** Set of Parameters independent on distribution
+SpineNeckNSeg = 2
+variable_domain(&SpineNeckNSeg, 2, 1e9) // !! replace with "inf" once intermodular "math" is integrated from Mech Manager
+SpineHeadNSeg = 7
+variable_domain(&SpineHeadNSeg, 2, 1e9) // !!
+
+
+// The next "declaration" is needed just to bind the template's external at the file sourcing time
+// (it will be defined after the file sourcing and before the first call)
+proc initNeuronBiophysics() { codeContractViolation() }
+
+// Keep this template in sync with its reduced counterpart at Export/OutHocFileSkeletons/OutHocFileSkeletonForNeuron.txt
+
+begintemplate NeuronNanoBranch
+    
+    public spine_neck, spine_head
+    
+    objref root_ref     // SectionRef
+    public root_ref
+    
+    // The second public proc (the first one is init)
+    public update
+    
+    // Both uniform and normal:
+    external randomSpineRadius, randomNeckLen, randomNeckDiam, SpineHeadNSeg, SpineNeckNSeg
+    // Uniform only:
+    external MinRadiusHead, MaxRadiusHead, MinSpineNeckLength, MaxSpineNeckLength, MinSpineNeckDiameter, MaxSpineNeckDiameter
+    // Normal only:
+    external MeanRadiusHead, SDRadiusHead, MeanSpineNeckLength, SDSpineNeckLength, MeanSpineNeckDiameter, SDSpineNeckDiameter
+    
+    external isFirstReseeding
+    
+    // proc
+    external initNeuronBiophysics
+    
+    create spine_neck
+    create spine_head
+    
+    objref this
+    
+    
+    // !!
+    proc init() { local isUniformOrNormal
+        isUniformOrNormal = $1
+        
+        initTopology()
+        initGeometry(isUniformOrNormal)
+        initBiophysics()
+        
+        spine_neck {
+            root_ref = new SectionRef()
+        }
+    }
+    
+    // !!
+    proc update() { local isUniformOrNormal
+        isUniformOrNormal = $1
+        
+        updateGeometry(isUniformOrNormal)
+    }
+    
+    // All next procs are private
+    
+    
+    // Create topology of the spine so that it will have
+    // the topological root at spine_neck (no connection between spine and dendrite yet)
+    proc initTopology() {
+        // !! copied from GeometrySpineUniform (maybe there was an error in GeometrySpineNormal):
+        spine_neck connect spine_head(0), 1
+    }
+    
+    // !!
+    proc initGeometry() { local isUniformOrNormal
+        isUniformOrNormal = $1
+        
+        updateGeometry(isUniformOrNormal)
+    }
+    
+    // !!
+    proc initBiophysics() {
+        initNeuronBiophysics(this)
+    }
+    
+    // !!
+    proc updateGeometry() { local isUniformOrNormal, xData, zData, necklength, neckdiam, j, ty, R_Radius, spineradius, td
+        isUniformOrNormal = $1
+        
+        xData=0
+        zData=0
+        
+        // !! a lot of code duplication between uniform and normal
+        if (isUniformOrNormal) {
+            // !! copied from GeometrySpineUniform:
+            
+            necklength = randomNeckLen.uniform(MinSpineNeckLength, MaxSpineNeckLength) //1  /*spine neck length in um*/
+            
+            neckdiam = randomNeckDiam.uniform(MinSpineNeckDiameter, MaxSpineNeckDiameter) // 0.0394 /*spine neck diameter*/
+            spine_neck { nseg = SpineNeckNSeg
+                pt3dclear()
+                
+                for j = 0, nseg-1 {
+                    ty = (j*necklength)/(nseg-1)
+                    pt3dadd(xData,ty,zData,neckdiam)
+                }
+            }
+            
+            //access spine_head[Jitter][Iter]
+            R_Radius = randomSpineRadius.uniform(MinRadiusHead, MaxRadiusHead)
+            
+            // ** Head of spine
+            spineradius = R_Radius //0.297 // Head Radius statistic
+            
+            spine_head { nseg = SpineHeadNSeg
+                pt3dclear()
+                for i = 0, nseg-1 {
+                    ty = -(i*2*spineradius)/(nseg-1)
+                    if  (spineradius^2-(ty+spineradius)^2 > 0) {
+                        td = 2*sqrt(spineradius^2-(ty+spineradius)^2)
+                    } else {
+                        td=0
+                    }
+                    if (td<neckdiam){
+                        td = neckdiam
+                    } 
+                    pt3dadd(xData,ty+1,zData,td)
+                }
+            }
+        } else {
+            // !! copied from GeometrySpineNormal:
+            
+            necklength = randomNeckLen.normal(MeanSpineNeckLength, SDSpineNeckLength) //1  /*spine neck length in um*/
+            if (necklength < 0.2) necklength = 0.2
+            neckdiam = randomNeckDiam.normal(MeanSpineNeckDiameter, SDSpineNeckDiameter) // 0.0394 /*spine neck diameter*/
+            if (neckdiam < 0.2) neckdiam = 0.2
+            spine_neck { nseg = SpineNeckNSeg
+                pt3dclear()
+                
+                for j = 0, nseg-1 {
+                    ty = (j*necklength)/(nseg-1)
+                    pt3dadd(xData,ty,zData,neckdiam)
+                }
+            }
+            
+            //access spine_head[Jitter][Iter]
+            R_Radius = randomSpineRadius.normal(MeanRadiusHead, SDRadiusHead)
+            if (R_Radius < 0.2) R_Radius = 0.2
+            
+            // ** Head of spine
+            spineradius = R_Radius //0.297 // Head Radius statistic
+            
+            spine_head { nseg = SpineHeadNSeg
+                pt3dclear()
+                for i = 0, nseg-1 {
+                    ty = -(i*2*spineradius)/(nseg-1)
+                    if  (spineradius^2-(ty+spineradius)^2 > 0) {
+                        td = 2*sqrt(spineradius^2-(ty+spineradius)^2)
+                    } else {
+                        td=0
+                    }
+                    if (td<neckdiam){
+                        td = neckdiam
+                    } 
+                    pt3dadd(xData,ty+1,zData,td)
+                }
+            }
+        }
+    }
+    
+endtemplate NeuronNanoBranch
+
+
+{ load_file("Exported/NeuronNanoBranch_Exported.hoc") }
+
+
+obfunc createNeuronNanoBranch() { local isUniformOrNormal
+    isUniformOrNormal = $1
+    
+    return new NeuronNanoBranch(isUniformOrNormal)
+}

@@ -1,0 +1,213 @@
+// !! SizeTotal is deprecated, but used in this file many times
+
+cadifusInElectricalLeaves = 0
+cadifusInAllGlu = 0
+
+// Insert-uninsert FRAP and set its params.
+// $1 - Boolean. 1 - insert. 0 - uninsert.
+// !! private
+proc SectionInsertFRAP() {
+    if ($1 > 0) {
+        insert FRAP
+        DFree_FRAP=0.15        // um2/sm
+    } else {
+        uninsert FRAP
+    }
+}
+
+// Insert-uninsert cadifus and set its params.
+// $1 - Boolean. 1 - insert. 0 - uninsert.
+// !! private
+proc SectionInsertCadifus() {
+    if ($1 > 0) {
+        insert cadifus
+        DCa_cadifus=0.30       // um2/sm
+        ip3i=1e-5              // initial ip3 mM
+        //insert ip3diffus
+    } else {
+        uninsert cadifus
+        // uninsert ip3diffus
+    }
+}
+
+// Insert-uninsert mechanisms for electrical simulations.
+// $1 - Boolean. 1 - insert. 0 - uninsert.
+// !! public
+proc InsertElectricMechanisms() {
+    // Soma
+    soma_ref.o(0).sec {
+        SectionInsertFRAP($1)
+        SectionInsertCadifus($1)
+    }
+
+    // Dendrites
+    for i = 0, NumberDendrites-1 dendrite_ref.o(i).sec {
+        SectionInsertFRAP($1)
+        SectionInsertCadifus($1)
+    }
+
+    // Leaves / heads
+    for i = 0, SizeTotal-1 nanoDistal_ref.o(i).sec {
+        insert pas
+
+        SectionInsertFRAP($1)
+
+        if ($1 > 0) {
+            if (cadifusInElectricalLeaves == 1) {
+                SectionInsertCadifus(1)
+            }
+        } else {
+            SectionInsertCadifus(0)
+        }
+    }
+    
+    // Stalks / necks
+    for i = 0, SizeTotal-1 nanoProximal_ref.o(i).sec {
+        SectionInsertFRAP($1)
+
+        if (cadifusInElectricalLeaves == 1) {
+            SectionInsertCadifus($1)
+        }
+    }
+}
+
+// Insert-uninsert mechanisms needed for Glutamate simulation and set their params.
+// $1 - Boolean. 1 - insert. 0 - uninsert.
+// !! private
+proc SectionInsertGlutamateMechanisms() {
+    if ($1 > 0) {
+        insert CAl
+        insert kdrglia
+        insert kir
+        insert kdifl // New added
+        insert GluTrans
+        Gluout_GluTrans= 20e-6   // mM
+
+        if (cadifusInAllGlu == 1) {
+            SectionInsertCadifus(1)
+        }
+    } else {
+        uninsert CAl
+        uninsert kdrglia
+        uninsert kir
+        uninsert kdifl // New added
+        uninsert GluTrans
+        SectionInsertCadifus(0)
+    }
+}
+
+// Insert-uninsert mechanisms needed for Potasasium simulation and set their params.
+// $1 - Boolean. 1 - insert. 0 - uninsert.
+// !! private
+proc SectionInsertPotasasiumMechanisms() {
+   if ($1 > 0) {
+        //Ra = 100
+        //cm = 1
+       // insert pas
+       // g_pas = 0.001
+       // e_pas = -85
+        insert kdifl
+        D_kdifl = 0.6
+        ki0_kdifl=110
+        insert kpump
+        if (cadifusInAllGlu == 1) {
+            SectionInsertCadifus(1)
+        }
+    } else {
+       // uninsert CAl
+       // uninsert kdrglia
+       // uninsert kir
+       // uninsert GluTrans 
+       uninsert kdifl
+       // D_kdifl = 0.6
+       // ki0_kdifl=110
+       uninsert kpump
+    }
+}
+
+
+
+// Insert-uninsert mechanisms for Glutamate simulation.
+// $1 - Boolean. 1 - insert. 0 - uninsert.
+// !! public
+proc InsertGlutamateMechanisms() {
+    // Soma
+    soma_ref.o(0).sec {
+        SectionInsertGlutamateMechanisms($1)
+    }
+
+    // Dendrites
+    for i = 0, NumberDendrites-1 dendrite_ref.o(i).sec {
+        SectionInsertGlutamateMechanisms($1)
+    }
+    
+    // Leaves / heads
+    for i = 0, SizeTotal-1 nanoDistal_ref.o(i).sec {
+        SectionInsertGlutamateMechanisms($1)
+        if ($1 > 0) {
+            density_GluTrans=(1+diam/(2*L))*DensityGluTransporters
+        }
+    }
+
+    // Stalks / necks
+    for i = 0, SizeTotal-1 nanoProximal_ref.o(i).sec {
+        SectionInsertGlutamateMechanisms($1)
+    }
+}
+
+
+// Insert-uninsert mechanisms for potassium simulation.
+// $1 - Boolean. 1 - insert. 0 - uninsert.
+// !! public
+proc InsertPotassiumMechanisms() {
+    // Soma
+    soma_ref.o(0).sec {
+       SectionInsertPotasasiumMechanisms($1)
+    }
+
+    // Dendrites
+    for i = 0, NumberDendrites-1 dendrite_ref.o(i).sec {
+       SectionInsertPotasasiumMechanisms($1)
+    }
+    
+    // Leaves / heads
+    for i = 0, SizeTotal-1 nanoDistal_ref.o(i).sec {
+       SectionInsertPotasasiumMechanisms($1)
+    }
+
+    // Stalks / necks
+    for i = 0, SizeTotal-1 nanoProximal_ref.o(i).sec {
+       SectionInsertPotasasiumMechanisms($1)
+    }
+}
+
+
+
+// Updates current mechanisms.
+// !! private
+proc ResetMechanisms() {
+    if (currentMechanismSetup == 0) {
+        InsertElectricMechanisms(0)
+        InsertElectricMechanisms(1)
+    } else {
+        InsertGlutamateMechanisms(0)
+        InsertGlutamateMechanisms(1)
+    }
+}
+
+// Insert-uninsert cadifus in leaves for electrical simulations.
+// $1 - Boolean. 1 - insert. 0 - uninsert.
+// !! public
+proc InsertCadifusInElectricalLeaves() {
+    cadifusInElectricalLeaves = $1
+    ResetMechanisms()
+}
+
+// Insert-uninsert cadifus in soma, dendrites and leaves for Glutamate simulation.
+// $1 - Boolean. 1 - insert. 0 - uninsert.
+// !! public
+proc InsertCadifusInAllGlu() {
+    cadifusInAllGlu = $1
+    ResetMechanisms()
+}
+

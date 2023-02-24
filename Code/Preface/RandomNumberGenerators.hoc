@@ -1,0 +1,42 @@
+
+// Here we create all the random number generators used in the program.
+// The idea behind this file is to make sure that all the generators have different seeds.
+// We don't use a single generator for the whole program just to preserve reproducibility of results in module A independently on:
+// * the changes made to code in module B;
+// * the scenarios run with module C in the current session.
+
+obfunc getRNG_randomStretch() {
+    return new Random($1)
+}
+
+obfunc getRNG_randomDiameters() {
+    return new Random()     // The same as new Random(0)
+}
+
+obfunc getRNG_randomCalcium() {
+    return new Random(1)
+}
+
+obfunc getRNG_randomFrapCircle() {
+    return new Random(2)
+}
+
+obfunc getRNG_randomDiamAndLen() {
+    return new Random(3)
+}
+
+obfunc getRNG_randomBranchSeeder() {
+    return new Random(4)
+}
+
+obfunc getRNG_randomSpineRadius() {
+    return new Random(5)
+}
+
+obfunc getRNG_randomNeckLen() {
+    return new Random(6)
+}
+
+obfunc getRNG_randomNeckDiam() {
+    return new Random(7)
+}

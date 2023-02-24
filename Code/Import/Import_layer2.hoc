@@ -1,0 +1,77 @@
+
+// These ones must stay on the top level to be accessible from the Export module (all List-s of String-s)
+objref usedNamesForSoma, usedNamesForDendrites, usedNamesForAxon
+
+
+// Import HOC file (part 2)
+// $1 - 0/1 flag indicating whether this proc is called after the file conversion stage
+// $2 - 0/1 flag indicating whether default soma was inserted during the file conversion
+// $3 - 0/1 flag indicating whether the imported HOC file was designed to be input of Astro 1.0 and so follows the old style
+// $o4 - Soma section/section array names in the HOC file (choosen by user or importer, List of String-s)
+// $o5 - Dendrites section/section array names in the HOC file (choosen by user or importer, List of String-s)
+// $o6 - Axon section/section array names in the HOC file (choosen by user or importer, List of String-s; empty if isAstrocyteOrNeuron)
+// Other input: isAstrocyteOrNeuron (taken from the top level)
+proc importHocFile_layer2() { local isCalledAfterConversion, isSomaInsertedDuringConversion, isOldStyleAstroHocFile, isSomaMissing, isAxonMissingAndRequired, isSomaInserted, isAxonInserted localobj namesOfTopoRootsInCell, namesOfTopoRootsInSoma, namesOfTopoRootsInAxon
+    strdef createdSomaName, createdAxonName
+    
+    isCalledAfterConversion = $1
+    isSomaInsertedDuringConversion = $2
+    isOldStyleAstroHocFile = $3
+    usedNamesForSoma = $o4
+    usedNamesForDendrites = $o5
+    usedNamesForAxon = $o6
+    
+    if (!isCalledAfterConversion) {
+        isSomaMissing = (usedNamesForSoma.count() == 0)
+    } else {
+        isSomaMissing = 0
+    }
+    
+    if (isSomaMissing) {
+        // Insert default soma
+        createDefaultSomaAndConnectAllRootSectionsToIt(createdSomaName)
+        usedNamesForSoma.append(new String(createdSomaName))
+        namesOfTopoRootsInCell = new List()     // Empty means "nevermind"
+        namesOfTopoRootsInSoma = new List()     //
+    } else {
+        namesOfTopoRootsInCell = getNamesOfAllTopologicalRoots()
+        namesOfTopoRootsInSoma = getNamesOfAllTopologicalRoots(usedNamesForSoma)
+    }
+    
+    isAxonMissingAndRequired = !isAstrocyteOrNeuron && (usedNamesForAxon.count() == 0)
+    
+    if (isAxonMissingAndRequired) {
+        // Insert default axon
+        createDefaultAxonAndConnectToFirstSomaSection(usedNamesForSoma.o(0).s, createdAxonName)
+        usedNamesForAxon.append(new String(createdAxonName))
+        namesOfTopoRootsInAxon = new List()     // Empty means "nevermind"
+    } else {
+        namesOfTopoRootsInAxon = getNamesOfAllTopologicalRoots(usedNamesForAxon)
+    }
+    
+    // Initialize the top level scalar NumberDendrites
+    if (!isOldStyleAstroHocFile) {
+        NumberDendrites = getNumberOfDendrites(usedNamesForDendrites)
+    } else {
+        NumberDendrites = OriginalDendrite
+        
+        // Some cleanup
+        delete OriginalDendrite
+        delete SeedNumber
+        // We have already deleted the extra dendrites before
+    }
+    
+    // Showing geometry after soma and/or axon insertion and maximum error checks
+    showImportedGeometry()
+    
+    // Create references to soma, dendrite and (for neuron only) axon sections:
+    // soma_ref, dendrite_ref and (not always) axon_ref are initialized on the top level
+    createCompartmentReferences(usedNamesForSoma, usedNamesForDendrites, usedNamesForAxon)
+    
+    // Show all warnings and modifiers, ask user about the next steps
+    // !! maybe need to propose user to delete all sections disconnected from soma (if found)
+    importCompleteWidget = new ImportCompleteWidget()
+    isSomaInserted = isSomaInsertedDuringConversion || isSomaMissing
+    isAxonInserted = isAxonMissingAndRequired
+    importCompleteWidget.show(isCalledAfterConversion, namesOfTopoRootsInCell, namesOfTopoRootsInSoma, namesOfTopoRootsInAxon, isSomaInserted, isAxonInserted)
+}

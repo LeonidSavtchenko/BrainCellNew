@@ -1,0 +1,67 @@
+
+// User choices made with "Roadmap" widget
+isBaseOrNanoStart = -1      // 1 - base, 0 - nano
+isAstrocyteOrNeuron = -1    // 1 - astrocyte, 0 - neuron
+
+objref roadmapWidget
+
+{ load_file("Code/InterModularUtils/AllInterModularUtils.hoc") }
+
+proc prefaceCompleteHandler() {
+    { load_file("Code/Core/MainProgram.hoc") }
+    runMain()
+}
+
+{ load_file("Code/RoadmapWidget.hoc") }
+
+proc showRoadmapWidget() {
+    roadmapWidget = new RoadmapWidget()
+    roadmapWidget.show()
+}
+
+proc roadmapChosenHandler() { local isLoaded localobj plotShape
+
+    if (!isBaseOrNanoStart) {
+        isLoaded = loadNanoHocFile()
+        if (!isLoaded) {
+            showRoadmapWidget()
+            return
+        }
+    }
+    
+    { load_file("Code/Core/Utils.hoc") }
+    { load_file("Code/Preface/RandomNumberGenerators.hoc") }
+    
+    if (isBaseOrNanoStart) {
+        { load_file("Code/Import/Import.hoc") }
+        if (isAstrocyteOrNeuron) {
+            { load_file("Code/Preface/Astrocyte/initAstrocyte.hoc") }
+        } else {
+            { load_file("Code/Preface/Neuron/initNeuron.hoc") }
+            initNeuron()    // Don't encapsulate this call into initNeuron.hoc, because the file browser will use different default folder
+        }
+    } else {
+        prefaceCompleteHandler()
+    }
+}
+
+// Don't rename this proc to "init", because Neuron will call it once user clicks "Init & Run"
+proc theEntryPoint() {
+
+    // !! code dupl. with Import.hoc
+    if (unix_mac_pc() != 3) {
+        printMsgAndStop("The importer works only on Windows")
+    }
+    if (!nrnpython("")) {
+        printMsgAndStop("Python is not available")
+    }
+    
+    load_file("Code/Export/Export.hoc")
+    
+    // Calling here just to show up all the Python warnings early
+    sourcePythonCodeForExport()
+    
+    showRoadmapWidget()
+}
+
+theEntryPoint()

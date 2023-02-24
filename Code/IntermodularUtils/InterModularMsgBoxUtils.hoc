@@ -1,0 +1,23 @@
+
+objref msgBox
+
+// !! Code dupl. with Import/ErrWarnUtils.hoc
+// Show the message box with "OK" button
+// $s1 - The message
+// $s2 - The widget title
+proc showMessageBox() { localobj nil
+    if (msgBox != nil) {
+        msgBox.unmap()
+    }
+    msgBox = new VBox()
+    msgBox.intercept(1)
+    {
+        xpanel("")
+        xlabel($s1)
+        xbutton("OK", "msgBox.unmap()")
+        xpanel()
+    }
+    msgBox.dismiss_action("msgBox.unmap()")
+    msgBox.intercept(0)
+    msgBox.map($s2, 600, 400, -1, -1)
+}
