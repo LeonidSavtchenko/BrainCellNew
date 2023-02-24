@@ -1,5 +1,5 @@
-# ASTRO
-## 14/12/2017
+# BRAINCELL
+## 24/02/2023
 
 
 BRAINCELL 1.0. Interactive realistic model of brain cells. NEURON/Python environment
