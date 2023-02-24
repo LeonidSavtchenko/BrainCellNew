@@ -1,0 +1,48 @@
+
+// !! some code dupl. with MechComp.hoc
+
+// A group of synapses (a counterpart of MechComp template)
+begintemplate SynGroup
+
+    public getDistRange, getSecList
+    
+    external smAllSyns
+    external math
+    external eachItemInList
+    
+    
+    func getDistRange() { local distMin, distMax, isDisconnected, dist localobj syn
+        distMin = math.inf
+        distMax = -1
+        
+        isDisconnected = 0
+        for eachItemInList(syn, smAllSyns) {
+            dist = syn.dist
+            if (dist == 1e20) { // Neuron docs say: If a continuous path does not exist the return value is 1e20
+                isDisconnected = 1
+                break
+            }
+            math.updateMinMax(&distMin, &distMax, dist)
+        }
+        
+        if (isDisconnected) {
+            return 1
+        }
+        
+        $&1 = distMin
+        $&2 = distMax
+        
+        return 0
+    }
+    
+    obfunc getSecList() { localobj secList, syn
+        secList = new SectionList()
+        for eachItemInList(syn, smAllSyns) {
+            syn.sec_ref.sec secList.append()
+        }
+        return secList
+    }
+    
+endtemplate SynGroup
+
+synGroup = new SynGroup()

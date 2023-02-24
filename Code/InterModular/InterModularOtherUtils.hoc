@@ -1,0 +1,52 @@
+
+proc getGlobalVarsHint() {
+    $s1 = "The only exception is for GLOBAL variables. Any changes to them are applied immediately."
+}
+
+proc oneZeroToYesNo() { local oneOrZero
+    oneOrZero = $1
+    if (oneOrZero) {
+        $s2 = "YES"
+    } else {
+        $s2 = "NO"
+    }
+}
+
+proc createEmptyPanel() {
+    xpanel("")
+    xpanel()
+}
+
+proc dismissIfNotNil() { localobj widget, nil
+    widget = $o1
+    if (widget != nil) {
+        widget.dismissHandler()
+    }
+}
+
+// An iterator to help with looping over a linear grid when we need to cancel the standard to Neuron "float_epsilon" comparison
+// applied to all comparison operators by default.
+// Basically, we replace this naive (and buggy in most cases) code:
+//     step = (maxValue - minValue) / (numPts - 1)
+//     for (value = minValue; value <= maxValue; value += step) { ... }
+// with this robust one:
+//     for eachPointInGrid(&value, minValue, maxValue, numPts) { ... }
+// The bug in the first code manifests itself clearly when maxValue is of the same or less order than "float_epsilon" which is 1e-11 by default.
+// For more info:
+//     https://www.neuron.yale.edu/neuron/static/new_doc/programming/math/misc.html#float_epsilon
+//     https://www.neuron.yale.edu/neuron/static/new_doc/programming/hocsyntax.html#expressions
+// There are some limitations:
+//  1. iterator_statement cannot contain "return" (otherwise we'll catch Segmentation violation)
+//  2. We cannot create another iterator which calls eachPointInGrid inside (otherwise the outer iterator "forgets" its input arguments on 2nd iteration)
+iterator eachPointInGrid() { local minValue, maxValue, numPts, step, idx
+    minValue = $2
+    maxValue = $3
+    numPts = $4
+    
+    $&1 = minValue
+    step = (maxValue - minValue) / (numPts - 1)
+    for idx = 1, numPts {
+        iterator_statement
+        $&1 += step     // !! "$&1 = minValue + zero_based_idx * step" would be more accurate, but slower
+    }
+}

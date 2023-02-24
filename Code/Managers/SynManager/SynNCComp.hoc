@@ -1,0 +1,80 @@
+
+begintemplate SynNCComp
+
+    public name, isMechVarTypeInhom, mechStds
+    public isMechVarInhom, prepareMechPanelHeader, getDistRange, getSecList, updateStatsCurve
+    
+    external mth, math, mwh
+    external synGroup
+    external codeContractViolation
+    
+    strdef name
+    
+    double isMechVarTypeInhom[1][1]     // 0/1 flag
+    objref mechStds[1][1]
+    
+    
+    proc init() { localobj mechStd
+        name = "NetCon"
+        
+        double isMechVarTypeInhom[1][1]
+        objref mechStds[1][1]
+        
+        mechStd = new FakeMechanismStandardForNetCon()
+        // !! mechStd.in(firstNetCon)
+        mechStds[0][0] = mechStd
+    }
+    
+    // !! code dupl. with MechComp
+    func isMechVarInhom() { local mechIdx, varTypeIdx, arrayIndex
+        strdef varName
+        
+        mechIdx = $1
+        varTypeIdx = $2
+        varName = $s3
+        arrayIndex = $4
+        
+        if (mechIdx != 0 || varTypeIdx != 0) {
+            codeContractViolation()
+        }
+        
+        return math.isNaN(mechStds[mechIdx][varTypeIdx].get(varName, arrayIndex))
+    }
+    
+    proc prepareMechPanelHeader() { local mechIdx, varType
+        strdef mechName
+        
+        mechIdx = $1
+        varType = $2    // Just a placeholder
+        
+        if (mechIdx != 0 || varType != 1) {
+            codeContractViolation()
+        }
+        
+        mth.getMechName(1, mechIdx, mechName)
+        sprint($s3, "%s in %s", mechName, name)
+    }
+    
+    proc getDistRange() {
+        synGroup.getDistRange(&$&1, &$&2)
+    }
+    
+    obfunc getSecList() {
+        return synGroup.getSecList()
+    }
+    
+    proc updateStatsCurve() { local yMin, yMax, varType, arrayIndex localobj graph
+        strdef mechName, varName
+        
+        graph = $o1
+        yMin = $&2
+        yMax = $&3
+        mechName = $s4
+        varType = $5
+        varName = $s6
+        arrayIndex = $7
+        
+        mwh.showNotImplementedWarning()
+    }
+    
+endtemplate SynNCComp

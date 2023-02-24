@@ -7,8 +7,16 @@ if (isAstrocyteOrNeuron) {
 }
 
 if (isBaseOrNanoStart) {
-    { load_file("SeededDendritesWidget.hoc") }
+    { load_file("Widgets/SeededDendritesWidget_deprecated.hoc") }
 }
+
+objref stochTestGraph   // !! just a stub
+{ load_file("../Managers/CommonLoads.hoc") }
+{ load_file("../Managers/MechManager/MechManager.hoc") }
+if (!isAstrocyteOrNeuron) {
+    { load_file("../Managers/SynManager/SynManager.hoc") }
+}
+
 
 // UI
 objref hBoxMainPanel
@@ -85,6 +93,8 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
                 xpanel("")
                 // !! xbutton("Import nanogeometry", "loadNanoHocFile()")
                 xbutton("Export nanogeometry", "saveNanoHocFile()")
+                xpanel()
+                xpanel("")
                 xlabel("=============== Where to Seed the Nanostructures ===============")
                 xradiobutton("All dendrites", "isAllOrSomeDendritesSeeded = 1", isAllOrSomeDendritesSeeded == 1)
                 xradiobutton("Some dendrites (I will select them)", "isAllOrSomeDendritesSeeded = 0", isAllOrSomeDendritesSeeded == 0)
@@ -177,6 +187,12 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
         vBoxRightPanel = new VBox()
         vBoxRightPanel.intercept(1)
         {
+            xpanel("")
+            xbutton("Manage distr. mechs", "startMechManager()")
+            if (!isAstrocyteOrNeuron) {
+                xbutton("Manage synapses", "startSynManager()")
+            }
+            xpanel()
             xpanel("Various scenarios for calculating astrocyte dynamics")
             xlabel("====================== Simulations ======================")
            //xlabel("Simulation of FRAP experiment with  round-spot bleaching")
@@ -239,4 +255,12 @@ proc showRunPanel() {
     } else {
         xpanel(3,123)
     }
+}
+
+proc startMechManager() {
+    analyzeSectsCreateCompsShowMechManagerBaseWidget()
+}
+
+proc startSynManager() {
+    createSynCompsAndShowSynManagerBaseWidget()
 }

@@ -83,6 +83,9 @@ for idx = 0, NumberNanoBranches - 1 {
 // py!!:insertAllLinesFromFile('Code\\Neuron\\OtherBiophysics.hoc')
 //////////////////// End of other biophysics /////////////////////////////
 
+// !! hardcoded rather than exported
+soma_ref.o(0).sec distance()
+
 //////////////////// Start of synapses ///////////////////////////////////
 py:getIntegerValueFromTopLevel('SwtichOn')
 py:getDoubleValueFromTopLevel('IntervalSynapticActivity')

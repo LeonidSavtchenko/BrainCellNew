@@ -4,7 +4,7 @@ objref vBoxFrapCircleControls, hBoxFrapCircle,  plotShapeFrapioniCircle
 objref frapCircleSections[SizeTotal*2]
 // Random
 objref randomFrapCircle
-randomFrapCircle = getRNG_randomFrapCircle()
+randomFrapCircle = rngUtils.getFor_frapCircle()
 
 // Finds sections within a circle and sets initial FRAP concentration on them.
 // $1 - X coordinate circle center

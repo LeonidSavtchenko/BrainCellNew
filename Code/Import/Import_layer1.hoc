@@ -97,7 +97,7 @@ proc importHocFile_layer1() { local isCalledAfterConversion, isSomaInsertedDurin
                 cellularCompartmentsMultiSelectWidget = new CellularCompartmentsMultiSelectWidget(isCalledAfterConversion, isSomaInsertedDuringConversion, isOldStyleAstroHocFile, allNames, defaultSomaNameIdxs, defaultDendriteNameIdxs, defaultAxonNameIdxs)
                 
                 defaultSomaNameIdx = getFirstValueOrMinusOneIfEmpty(defaultSomaNameIdxs)
-                defaultDendriteNameIdx = defaultDendriteNameIdxs.x[0]
+                defaultDendriteNameIdx = getFirstValueOrMinusOneIfEmpty(defaultDendriteNameIdxs)
                 defaultAxonNameIdx = getFirstValueOrMinusOneIfEmpty(defaultAxonNameIdxs)
                 cellularCompartmentsMonoSelectWidget = new CellularCompartmentsMonoSelectWidget(isCalledAfterConversion, isSomaInsertedDuringConversion, isOldStyleAstroHocFile, allNames, defaultSomaNameIdx, defaultDendriteNameIdx, defaultAxonNameIdx)
                 

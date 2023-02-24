@@ -1,0 +1,6 @@
+
+func myDistFunc() { local x, y
+    x = $1
+    y = x/10 + 50*sin(2*PI*x/200) * tanh(x/100)
+    return y
+}

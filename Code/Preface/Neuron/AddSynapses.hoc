@@ -14,7 +14,7 @@ SynapseLocationDendrite = 1
 
 // This proc will be called each time after neuron nanogeometry deletion
 proc Neuron_AddSynapses_delete() {
-    objref input[1], StimTrigger_AddSynapses[1], NetInput_AddSynapses[1]
+    smAllSyns.remove_all()
 }
 
 xpanel("Synaptic distribution",0)

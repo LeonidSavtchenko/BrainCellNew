@@ -1,35 +1,37 @@
 
-// For all sections from this SectionList, and corresponding SectionRef to the List
-// $o1 - The SectionList
-// $o2 - The List
-proc secListToListOfSecRef() { localobj secList, list_ref
-    secList = $o1
-    list_ref = $o2
-    forsec secList {
-        list_ref.append(new SectionRef())
-    }
-}
-
-// For the current section and all its children subtree, add SectionRef-s to the List
+// For the current section and all its children subtree, take only those sections which are selectable, and add SectionRef-s to the List
 // $o1 - The List
-proc addThisAndAllChildSecRefsToTheList() { localobj list_ref, secList
+// $o2 - The plugin object that implements "isCurrentSectSelectable" predicate func
+proc addThisAndFilteredChildSecRefsToTheList() { localobj list_ref, in_plugin, secList
     list_ref = $o1
+    in_plugin = $o2
+    
     secList = new SectionList()
     secList.subtree()
-    secListToListOfSecRef(secList, list_ref)
+    
+    forsec secList {
+        if (in_plugin.isCurrentSectSelectable()) {
+            list_ref.append(new SectionRef())
+        }
+    }
 }
 
 // For all duplicate sections, remove SectionRef-s from the List, so only one copy remains
 // $o1 - The List
 proc removeAllDupSecRefsFromTheList() { localobj list_ref, secList, item
     list_ref = $o1
+    
     secList = new SectionList()
     for eachItemInList(item, list_ref) {
         item.sec secList.append()
     }
+    
     secList.unique()
+    
     list_ref.remove_all()
-    secListToListOfSecRef(secList, list_ref)
+    forsec secList {
+        list_ref.append(new SectionRef())
+    }
 }
 
 // Check if the currently accessed section belongs to a dendrite

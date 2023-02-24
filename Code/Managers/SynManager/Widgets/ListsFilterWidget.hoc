@@ -1,0 +1,56 @@
+
+begintemplate ListsFilterWidget
+
+    public show, dismissHandler
+    public filterLevel
+    
+    objref mainBox
+    objref lastParentWidget
+    
+    filterLevel = -1
+    
+    
+    proc init() {
+        filterLevel = 2     // 0: "No filtration", 1: "Minimum filtration", 2: "Maximum filtration"
+    }
+    
+    proc show() {
+        lastParentWidget = $o1
+        
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            xradiobutton("No filtration (all available PPs are shown, even incompatible)", "filterLevelChangedHandler(0)", filterLevel == 0)
+            xradiobutton("Minimum filtration (only compatible PPs are shown, even not synapses)", "filterLevelChangedHandler(1)", filterLevel == 1)
+            xradiobutton("Maximum filtration (only compatible PPs with \"syn\" in name are shown)", "filterLevelChangedHandler(2)", filterLevel == 2)
+            xbutton("OK", "okHandler()")
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Lists filter", 200, 450, -1, -1)
+    }
+    
+    proc dismissHandler() { localobj nil
+        if (mainBox != nil) {
+            mainBox.unmap()
+        }
+    }
+    
+    // All next staff is private
+    
+    
+    proc filterLevelChangedHandler() {
+        filterLevel = $1
+        lastParentWidget.onListsFilterLevelChangedHandler(0)
+    }
+    
+    proc okHandler() {
+        dismissHandler()
+    }
+    
+endtemplate ListsFilterWidget
+
+objref smlfw
+smlfw = new ListsFilterWidget()

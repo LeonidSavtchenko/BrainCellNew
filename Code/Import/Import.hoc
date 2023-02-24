@@ -1,14 +1,14 @@
 
 { load_file("TopLevelVars.hoc") }
-{ load_file("../InterModularUtils/InterModularStringUtils.hoc") }   // func stringsEqual
-{ load_file("StringUtils.hoc") }
+{ load_file("../InterModular/InterModularStringUtils.hoc") }    // stringEmpty, stringsEqual, containsSubstring
+{ load_file("../InterModular/InterModularPythonUtils.hoc") }    // stringToLowerCase
 { load_file("ErrWarnUtils.hoc") }
 { load_file("ListCopyUtils.hoc") }
 { load_file("PythonUtilsForImport.hoc") }
 { load_file("BatchUtils.hoc") }
 { load_file("CheckUtils.hoc") }
 { load_file("DefaultSelectionUtils.hoc") }
-{ load_file("../InterModularUtils/InterModularSectionUtils.hoc") }  // obfunc getAllSectionNames
+{ load_file("../InterModular/InterModularSectionUtils.hoc") }   // getAllSectionNames
 { load_file("SectionUtils.hoc") }
 { load_file("SectionRefUtils.hoc") }
 { load_file("PreviewUtils.hoc") }

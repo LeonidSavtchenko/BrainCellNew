@@ -68,3 +68,6 @@ for idx = 0, NumberNanoBranches - 1 {
 //////////////////// Start of other biophysics ///////////////////////////
 // py!!:insertAllLinesFromFile('Code\\Astrocyte\\OtherBiophysics.hoc')
 //////////////////// End of other biophysics /////////////////////////////
+
+// !! hardcoded rather than exported
+soma_ref.o(0).sec distance()

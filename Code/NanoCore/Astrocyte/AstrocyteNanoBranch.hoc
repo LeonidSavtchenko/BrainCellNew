@@ -1,7 +1,7 @@
 
 // This one will be shared by different astrocyte nano branches
 objref randomDiamAndLen
-randomDiamAndLen = getRNG_randomDiamAndLen()
+randomDiamAndLen = rngUtils.getFor_diamAndLen()
 
 // Both leaves and stalks:
 // diamStep = -1                                // Already defined in Core/NanoDistrFromFile.hoc

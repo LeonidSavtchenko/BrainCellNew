@@ -1,0 +1,26 @@
+
+{ nrnpython("import neuron;neuron.load_mechanisms('..')") }
+
+// Load some test cell
+{ load_file("../Nanogeometry/cellmorphology+nano.hoc") }
+isAstrocyteOrNeuron = 0
+
+objref cellPlotShape
+cellPlotShape = new PlotShape()
+
+
+// Watch some var just to test stochasticity applied with AltRunControlWidget
+objref stochTestGraph
+stochTestGraph = new Graph()
+{ stochTestGraph.addvar("smAllSyns.o(123).target.tau1") }
+{ graphList[0].append(stochTestGraph) }
+
+
+{ load_file("../Code/InterModular/AllInterModularUtils.hoc") }
+
+{ load_file("../Code/Managers/CommonLoads.hoc") }
+{ load_file("../Code/Managers/SynManager/SynManager.hoc") }
+
+createSynCompsAndShowSynManagerBaseWidget()
+
+{ chdir("..") }     // Without this, getcwd() will return different path compared to the start from "init.hoc"

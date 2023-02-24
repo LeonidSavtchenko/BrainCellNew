@@ -1,0 +1,218 @@
+
+// !! the data in InhomAndStochTarget-s must be updated on comp ops (merge, split) and mech ops (uninsert)
+
+// !! the construction of two nested cycles (first by sections, second by segments) is used several times here, so maybe create an iterator
+//    also, I need to group all InhomAndStochTarget-s by compartments (e.g. use dict[compIdx]) and have only one "construction" per compartment
+
+// !! can I combine boundingHelper and stochFuncHelper classes into one?
+
+begintemplate InhomAndStochTarget
+
+    public isEqual, isStochEnabled, updateInhom, updateStoch, setPlayIfPossible, stopPlayingVars, onInit, onStep, disableInhomOrStoch
+    public isStoch
+    
+    external eachItemInList, codeContractViolation
+    external mmAllComps, mth, rngUtils
+    
+    // "init" args
+    compIdx = -1
+    objref comp
+    mechIdx = -1
+    varType = -1
+    varTypeIdx = -1
+    varIdx = -1
+    strdef varName
+    arrayIndex = -1
+    objref distFuncHelper
+    objref boundingHelper, stochFuncHelper
+    
+    objref list_ref
+    
+    isInhom = -1
+    isStoch = -1
+    stochFuncCatIdx = -1
+    stochFuncIdx = -1
+    isPlayable = -1
+    objref baseMechStd, tempMechStd
+    
+    objref this
+    
+    
+    proc init() { local numArg localobj nil
+        strdef mechName
+        
+        numArg = numarg()
+        
+        if (numArg != 6 && numArg != 10) {
+            codeContractViolation()
+        }
+        
+        compIdx = $1
+        mechIdx = $2
+        varType = $3
+        varIdx = $4
+        arrayIndex = $5
+        distFuncHelper = $o6
+        if (numArg == 10) {
+            boundingHelper = $o7
+            stochFuncHelper = $o8
+            stochFuncCatIdx = $9
+            stochFuncIdx = $10
+        }
+        
+        comp = mmAllComps.o(compIdx)
+        list_ref = comp.list_ref
+        
+        mth.getMechName(0, mechIdx, mechName)
+        mth.getVarNameAndArraySize(0, mechIdx, varType, varIdx, varName)
+        
+        varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
+        baseMechStd = comp.mechStds[mechIdx][varTypeIdx]
+        tempMechStd = new MechanismStandard(mechName, varType)
+        
+        isInhom = (distFuncHelper != nil)
+        isStoch = (boundingHelper != nil)
+        
+        setIsPlayable()
+    }
+    
+    func isEqual() {
+        return (compIdx == $1 && mechIdx == $2 && varType == $3 && varIdx == $4 && arrayIndex == $5)
+    }
+    
+    proc updateInhom() {
+        distFuncHelper = $o1
+        isInhom = 1
+    }
+    
+    proc updateStoch() {
+        boundingHelper = $o1
+        stochFuncHelper = $o2
+        stochFuncCatIdx = $3
+        stochFuncIdx = $4
+        isStoch = 1
+        setIsPlayable()
+    }
+    
+    func setPlayIfPossible() { local x, homogenValue localobj sec_ref
+        strdef hocCommand
+        
+        if (!isPlayable) {
+            return 0
+        }
+        
+        for eachItemInList(sec_ref, list_ref) {
+            sec_ref.sec for (x, 0) {
+                sprint(hocCommand, "stochFuncHelper.rng.play(&%s(%.15e))", varName, x)
+                execute(hocCommand, this)
+            }
+        }
+        
+        homogenValue = baseMechStd.get(varName, arrayIndex)
+        distFuncHelper.setMeanOnStartPlaying(homogenValue)
+        
+        return 1
+    }
+    
+    proc stopPlayingVars() {
+        if (!isPlayable) {
+            return
+        }
+        
+        // Neuron docs say: "To disconnect the Random object from its list of variables, either the variables or the Random object must be destroyed."
+        // But actually it doesn't seem like there's any way to destroy the "played" Random object without dire consequences.
+        
+        // !! BUG: Hanging here, and the same effect if we just assign "nil" to stochFuncHelper.rng
+        //         No hanging if we don't call stochFuncHelper.rng.play upstream
+        //         It looks like we have only two options to disable the "play" effect:
+        //         1. "create" all sections in list_ref from scratch (replacing the old sections) - and only after this we can destroy the old RNG
+        //         2. Adjust RNG to produce constant and copy the generator to some storage just to keep alive while we replace stochFuncHelper.rng
+        //            (If we play the same var with multiple RNG-s, only the last one has visible effect)
+        //            But after this, we won't be able to make the var inhomogeneous
+        //         Alternatively, we could use Vector.play() and Vector.play_remove() instead of Random.play(),
+        //         but this requires some troublesome orchestration and looks like not giving an advantage compared to the non-played mode in our case
+        stochFuncHelper.rng = rngUtils.getFor_stochFunc_withUniqueSeed()
+        
+        distFuncHelper.resetMeanOnStopPlaying()
+    }
+    
+    proc onInit() {
+        if (isStoch) {
+            // One unused value to set up the generator and the colourizer
+            boundingHelper.generateFirstBoundedValue(stochFuncHelper)
+        }
+    }
+    
+    proc onStep() { local homogenValue, x, value, dist localobj sec_ref
+        // !! can I move the code before "for" to "onInit" proc?
+        if (isPlayable) {
+            return
+        }
+        if (varType == 1 && !isStoch) { // 1: "PARAMETER"
+            if (isInhom) {
+                return
+            } else {
+                codeContractViolation()
+            }
+        }
+        if (!isInhom) {
+            homogenValue = baseMechStd.get(varName, arrayIndex)
+        }
+        
+        for eachItemInList(sec_ref, list_ref) {
+            sec_ref.sec for (x, 0) {
+                // The base value
+                if (isInhom) {
+                    dist = distance(x)
+                    value = distFuncHelper.calculateAt(dist)
+                } else {
+                    value = homogenValue
+                }
+                
+                // The additive noise
+                if (isStoch) {
+                    value += boundingHelper.generateNextBoundedValue(stochFuncHelper)
+                }
+                
+                // This approach is 20-30% faster than "sprint"-ing a HOC-command
+                // of type "varName(x) = value" or "varName[arrayIndex](x) = value" and then "execute"-ing it
+                tempMechStd.in(x)
+                tempMechStd.set(varName, value, arrayIndex)
+                tempMechStd.out(x)
+            }
+        }
+    }
+    
+    func disableInhomOrStoch() { local isInhomOrStoch localobj nil
+        isInhomOrStoch = $1
+        if (isInhomOrStoch) {
+            isInhom = 0
+            distFuncHelper = nil
+            setIsPlayable()
+            return !isStoch
+        } else {
+            isStoch = 0
+            boundingHelper = nil
+            stochFuncHelper = nil
+            stochFuncCatIdx = -1
+            stochFuncIdx = -1
+            setIsPlayable()
+            return !isInhom
+        }
+    }
+    
+    // All next staff is private
+    
+    
+    proc setIsPlayable() {
+        if (!isStoch) {
+            isPlayable = 0
+            return          // Just a shortcut because boundingHelper used below is nil
+        }
+        isPlayable = (!isInhom && stochFuncCatIdx == 0 && (stochFuncIdx == 0 || stochFuncIdx == 1) && boundingHelper.isUntouched())
+        
+        // !! not implemented - see the comment in stopPlayingVars
+        isPlayable = 0
+    }
+    
+endtemplate InhomAndStochTarget

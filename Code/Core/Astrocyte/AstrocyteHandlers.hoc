@@ -28,7 +28,7 @@ proc changeVolume() { local j
     $2 = 1
     
     MaxDendriticLength = getMaxDendriticLength()
-    // !! need to update astrocyte biophysics here, because it depends on L
+    // !! need to update astrocyte biophysics here because it depends on L
 } 
 // end
 

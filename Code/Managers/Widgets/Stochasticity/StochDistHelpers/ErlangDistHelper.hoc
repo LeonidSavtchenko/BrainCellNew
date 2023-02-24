@@ -1,0 +1,97 @@
+
+// https://www.neuron.yale.edu/neuron/static/new_doc/programming/math/random.html#Random.erlang
+// https://en.wikipedia.org/wiki/Erlang_distribution
+
+begintemplate ErlangDistHelper
+
+    public addParamsToPanel, calcPdf, calcCdf, getMean, getStdDev, firstDice
+    
+    external math, specMath
+    
+    objref parentWidget
+    
+    k = -1
+    lambda = -1
+    
+    
+    proc init() { local inf
+        parentWidget = $o1
+        
+        k = 2
+        lambda = 3.5
+        
+        inf = math.inf
+        variable_domain(&k, 1, inf)
+        variable_domain(&lambda, float_epsilon, inf)
+        
+        // !! need to prevent fractional values for "k"
+    }
+    
+    proc addParamsToPanel() {
+        xpvalue("k", &k, 1, "parentWidget.valueChangedHandler()")
+        xpvalue("lambda", &lambda, 1, "parentWidget.valueChangedHandler()")
+    }
+    
+    func calcPdf() { local x, y
+        x = $1
+        
+        if (x > 0) {
+            y = lambda ^ k * x ^ (k - 1) * exp(-lambda * x) / specMath.factorial(k - 1)
+        } else if (x < 0) {
+            y = 0
+        } else {
+            if (k > 1) {
+                y = 0
+            } else {
+                y = lambda
+            }
+        }
+        
+        return y
+    }
+    
+    func calcCdf() { local x, y, n
+        x = $1
+        
+        if (x < 0) {
+            y = 0
+        } else {
+            // !! we can use scipy.special.gammainc here, but not sure that scipy will be available on user's machine
+            // y = specMath.gammainc(k, lambda * x) / specMath.factorial(k - 1)
+            
+            y = 1
+            for n = 0, k - 1 {
+                y -= cdfTerm(x, n)
+            }
+        }
+        
+        return y
+    }
+    
+    func getMean() {
+        return k / lambda
+    }
+    
+    func getStdDev() {
+        return sqrt(k) / lambda
+    }
+    
+    func firstDice() { local mean, variance localobj rng
+        rng = $o1
+        
+        mean = getMean()
+        variance = k / lambda ^ 2   // We don't call getStdDev here for higher precision
+        return rng.erlang(mean, variance)   // !!! cannot achieve mean = 0
+    }
+    
+    // All next staff is private
+    
+    
+    func cdfTerm() { local x, n, lambdaX
+        x = $1
+        n = $2
+        lambdaX = lambda * x
+        return exp(-lambdaX) * lambdaX ^ n / specMath.factorial(n)
+    }
+    
+endtemplate ErlangDistHelper

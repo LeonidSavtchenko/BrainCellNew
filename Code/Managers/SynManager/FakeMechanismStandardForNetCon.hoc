@@ -1,0 +1,76 @@
+
+objref _pyDict4FakeMS4NC    // !! don't keep this on the top level
+
+begintemplate FakeMechanismStandardForNetCon
+
+    public count, name, get, set
+    
+    external pyObj, _pyDict4FakeMS4NC
+    external codeContractViolation
+    
+    
+    proc init() {
+        _pyDict4FakeMS4NC = pyObj.ev("{'threshold': 10.0, 'delay': 1.0, 'weight': 0.0}")    // These default values are consistent with a new NetCon
+    }
+    
+    func count() {
+        return pyObj.ev("len(h._pyDict4FakeMS4NC)")
+    }
+    
+    func name() { local numArg
+        numArg = numarg()
+        
+        if (numArg == 1) {
+            $s1 = "NetCon"
+            return 0
+        } else if (numArg == 2){
+            pyObj.varIdx = $2
+            $s1 = pyObj.ev("list(h._pyDict4FakeMS4NC.keys())[int(varIdx)]")
+            return 1
+        } else {
+            codeContractViolation()
+        }
+    }
+    
+    func get() { local numArg, arrayIndex
+        strdef varName
+        
+        numArg = numarg()
+        if (numArg == 0 || numArg > 2) {
+            codeContractViolation()
+        }
+        
+        varName = $s1
+        
+        if (numArg == 2) {
+            arrayIndex = $2     // Just a placeholder
+            if (arrayIndex != 0) {
+                codeContractViolation()
+            }
+        }
+        
+        return _pyDict4FakeMS4NC.__getitem__(varName)
+    }
+    
+    proc set() { local numArg, value, arrayIndex
+        strdef varName
+        
+        numArg = numarg()
+        if (numArg < 2 || numArg > 3) {
+            codeContractViolation()
+        }
+        
+        varName = $s1
+        value = $2
+        
+        if (numArg == 3) {
+            arrayIndex = $3     // Just a placeholder
+            if (arrayIndex != 0) {
+                codeContractViolation()
+            }
+        }
+        
+        return _pyDict4FakeMS4NC.__setitem__(varName, value)
+    }
+    
+endtemplate FakeMechanismStandardForNetCon

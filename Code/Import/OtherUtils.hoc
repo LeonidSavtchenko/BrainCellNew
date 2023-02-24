@@ -40,7 +40,11 @@ proc loadHocFile() { local status, wasSomethingImported
     inFilePathName = $s1
     
     wasSomethingImported = isSomethingImported
-    status = load_file(1, inFilePathName)
+    mwh.showPleaseWaitBox("Loading geometry file.")
+    {
+        status = load_file(1, inFilePathName)
+    }
+    mwh.hidePleaseWaitBox()
     isSomethingImported = 1
     
     if (!status) {

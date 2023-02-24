@@ -4,7 +4,7 @@ diamStep = 0
 nanoDistrLoaded = 0 // Boolean
 // Random
 objref randomDiameters
-randomDiameters = getRNG_randomDiameters()
+randomDiameters = rngUtils.getFor_diameters()
 
 // Shows window to select a .TXT file with diameter distribution.
 proc loadDiamDistrFile() { local divisions localobj radiiFile, line, neuronLine, radiiDistrPointer

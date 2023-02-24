@@ -1,0 +1,33 @@
+
+objref mth, mmmowb, msmBaseWidget, synGroup, smAllComps
+
+{ load_file("MechTypeHelper.hoc") }
+
+{ load_file("InhomAndStochTarget.hoc") }
+{ load_file("InhomAndStochApplicator.hoc") }
+
+{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/PythonUtils/PythonUtilsForDistFuncs.hoc") }
+{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/FileUtilsForDistFuncs.hoc") }
+{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupAHelper.hoc") }
+{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupsBDHelper.hoc") }
+{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupCHelper.hoc") }
+{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupsEFHelper.hoc") }
+{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupGHelper.hoc") }
+{ load_file("Widgets/Inhomogeneity/InhomEditorSubWidget.hoc") }
+
+{ load_file("Widgets/Stochasticity/StochDistHelpers/PythonUtils/PythonUtilsForStochDists.hoc") }
+{ load_file("Widgets/Stochasticity/StochDistHelpers/UniformDistHelper.hoc") }
+{ load_file("Widgets/Stochasticity/StochDistHelpers/NormalDistHelper.hoc") }
+{ load_file("Widgets/Stochasticity/StochDistHelpers/LogNormalDistHelper.hoc") }
+{ load_file("Widgets/Stochasticity/StochDistHelpers/NegExpDistHelper.hoc") }
+{ load_file("Widgets/Stochasticity/StochDistHelpers/ErlangDistHelper.hoc") }
+{ load_file("Widgets/Stochasticity/StochDistHelpers/WeibullDistHelper.hoc") }
+{ load_file("Widgets/Stochasticity/StochFuncHelpers/StochFuncGroupAHelper.hoc") }
+{ load_file("Widgets/Stochasticity/StochFuncHelpers/StochFuncGroupGHelper.hoc") }
+{ load_file("Widgets/Stochasticity/ColourizationHelper.hoc") }
+{ load_file("Widgets/Stochasticity/BoundingHelper.hoc") }
+{ load_file("Widgets/Stochasticity/StochEditorSubWidget.hoc") }
+
+{ load_file("Widgets/VarsEditorWidget.hoc") }
+
+{ load_file("Widgets/MechOrSynManagerBaseWidget.hoc") }

@@ -1,0 +1,511 @@
+
+// A container for the common data and methods shared between different mech operation widgets
+begintemplate MechOpWidgetBase
+
+    external msmBaseWidget
+    external mmAllComps
+    external mwh, mth
+    external eachItemInList, stringEmpty
+    
+    public isDirty, lastMechOpIdx
+    public switchToOtherMechOpViewHandler, ifDirtyThenProposeUserToApplyChanges, dismissHandler
+    public mainBox
+    public mechOpHelpers
+    
+    lastMechOpIdx = -1
+    isCompOrMechCentricView = -1
+    
+    isDirty = -1
+    
+    x = -1
+    y = -1
+    w = -1
+    h = -1
+    numCols = -1
+    numRows = -1
+    colWidth = -1
+    rowHeight = -1
+    
+    double itemTypeHeights[3]
+    spacerHeight = -1
+    rowBodyHeight = -1
+    sliderMinHeight = -1
+    
+    objref mmmoccWidget, mmmomcWidget
+    objref mainBox, mainBoxForCCW, mainBoxForMCW
+    objref mechOpHelpers[4]
+    
+    
+    proc init() {
+        numCols = 4         // !! think about exposing these two in UI
+        numRows = 2         //
+        colWidth = 180
+        rowHeight = 210
+        
+        x = 520
+        y = 0
+        w = numCols * colWidth + 32     // + slider
+        h = numRows * rowHeight + 135   // + header and footer
+        
+        isCompOrMechCentricView = 1
+        
+        isDirty = 0
+        
+        mechOpHelpers[0] = new MechOp0Helper()
+        mechOpHelpers[1] = new MechOp1Helper()
+        mechOpHelpers[2] = new MechOp2Helper()
+        mechOpHelpers[3] = new MechOp3Helper()
+        
+        itemTypeHeights[0] = 17     // Checkbox
+        itemTypeHeights[1] = 21     // Menu
+        itemTypeHeights[2] = 25     // Button
+        spacerHeight = 18           // Label
+        rowBodyHeight = rowHeight - 26  // Minus header
+        sliderMinHeight = rowBodyHeight * 1.6   // Empirical multiplier
+    }
+    
+    proc switchToOtherMechOpViewHandler() { local mechOpIdx, wasDirty
+        mechOpIdx = $1
+        
+        wasDirty = isDirty
+        if (isDirty) {
+            mwh.startIntercepting()
+            applyCore()
+        }
+        
+        switchBetweenCompAndMechCentricViewsHandler(mechOpIdx, isCompOrMechCentricView)
+        
+        if (wasDirty) {
+            mwh.endIntercepting()
+        }
+    }
+    
+    // Returns: 0/1/2 flag: 0 - not dirty; 1 - dirty and cancelled by user; 2 - was dirty then applied (started intercepting messages)
+    func ifDirtyThenProposeUserToApplyChanges() { local numArg, isYes
+        strdef msg
+        
+        numArg = numarg()
+        if (numArg == 0) {
+            msg = "There are some pending changes to sections biophysics. Do you want to apply them?"
+        } else if (numArg == 1) {
+            msg = $s1
+        } else {
+            codeContractViolation()
+        }
+        
+        if (!isDirty) {
+            return 0
+        }
+        
+        isYes = boolean_dialog(msg)     // "No" or "x" give 0
+        if (!isYes) {
+            return 1
+        }
+        
+        mwh.startIntercepting()
+        applyCore()
+        
+        return 2
+    }
+    
+    proc dismissHandler() { local status
+        // !! maybe this check must be in MechManagerMainWidget.dismissHandler rather than here
+        status = ifDirtyThenProposeUserToApplyChanges()
+        if (status == 1) {
+            // !! this is a bad practice if user clicked "x"
+            return
+        }
+        
+        dismissCore()
+        
+        if (status == 2) {
+            mwh.endIntercepting()
+        }
+    }
+    
+    // All other proc-s are private
+    
+    
+    proc switchBetweenCompAndMechCentricViewsHandler() { local mechOpIdx
+        mechOpIdx = $1
+        isCompOrMechCentricView = $2
+        
+        dismissCore()
+        
+        showHelper(mechOpIdx, isCompOrMechCentricView)
+    }
+    
+    // The iterator for constructing a mech operation view including header, grid of panels and footer
+    // $1 - The mech operation index
+    // $2 - 0/1 flag indicating if we construct a comp-centric or mech-centric view
+    // $&3 (out) - The current panel index
+    // $o4 (in/out) - All the temporary boxes created (List)
+    iterator createHeaderEmptyPanelsFooter() { local mechOpIdx, maxNumPanels, isRequireApply, panCandIdx, panActIdx, isSkipPanel, rowIdx, colIdx, isSwitchToCompOrMechCentricView localobj subBoxes, mechOpHelper, sliderBox, hBox, spacerBox, nil
+        strdef headerLine1, headerLine3, switchToKeyword, buttonText, buttonHocCommand
+        
+        mechOpIdx = $1
+        isCompOrMechCentricView = $2
+        subBoxes = $o4
+        
+        if (isCompOrMechCentricView) {
+            maxNumPanels = mmAllComps.count()
+        } else {
+            maxNumPanels = mth.getNumMechs(0)
+        }
+        
+        mainBox = new VBox()        // No slider here
+        if (isCompOrMechCentricView) {
+            mainBoxForCCW = mainBox
+        } else {
+            mainBoxForMCW = mainBox
+        }
+        
+        mechOpHelper = mechOpHelpers[mechOpIdx]
+        
+        mainBox.intercept(1)
+        {
+            // Header
+            
+            xpanel("")
+            headerLine3 = ""    // Necessary because it stays in memory between two calls
+            mechOpHelper.getHeader(headerLine1, headerLine3)
+            xlabel(headerLine1)
+            isRequireApply = mechOpHelper.isRequireApply
+            if (isRequireApply) {
+                msmBaseWidget.createApplyReminder(1, 1)
+            }
+            if (!stringEmpty(headerLine3)) {
+                xlabel(headerLine3)
+            }
+            xpanel()
+            
+            // Grid of panels
+            
+            sliderBox = new VBox(3, 1)      // Slider here
+            subBoxes.append(sliderBox)
+            sliderBox.intercept(1)
+            {
+                colIdx = 0
+                
+                panActIdx = 0
+                for panCandIdx = 0, maxNumPanels - 1 {
+                    
+                    isSkipPanel = isSkipAllItems(mechOpHelper, isCompOrMechCentricView, panCandIdx)
+                    if (isSkipPanel) {
+                        continue
+                    }
+                    
+                    $&3 = panCandIdx
+                    
+                    rowIdx = int(panActIdx / numCols)
+                    colIdx = panActIdx - rowIdx * numCols
+                    
+                    if (colIdx == 0) {
+                        // Start a new row
+                        hBox = openHBox(subBoxes)
+                    }
+                    
+                    iterator_statement
+                    
+                    if (colIdx == numCols - 1) {
+                        // End this row
+                        closeHBox(hBox)
+                    }
+                    
+                    panActIdx += 1
+                }
+                
+                if (colIdx != numCols - 1) {
+                    if (hBox == nil) {
+                        // No panels created, so make a hint why
+                        hBox = openHBox(subBoxes)
+                        xpanel("")
+                        xlabel("")
+                        if (mechOpIdx == 0) {
+                            xlabel("No panels here. Check console for error messages dumped while creating compartments.")
+                            // !! once integrated to Cell, printMsgAndStop won't work anymore, and we'll need to use the warning box
+                        } else {
+                            xlabel("No panels here. Some upstream mechanism operations required.")
+                        }
+                        xlabel("")
+                        xpanel()
+                    } else {
+                        // Just a horizontal spacer
+                        // BUG: when user makes the window width too small, this spacer "pushes" the left-hand panel(s) too much
+                        for colIdx = colIdx + 1, numCols - 1 {
+                            spacerBox = new VBox()
+                            spacerBox.map("", 0, 0, colWidth, rowHeight)
+                            subBoxes.append(spacerBox)
+                        }
+                        // We could use a single wide VBox here of width "colWidth * (numCols - 1 - colIdx)" instead of many narrow ones of width "colWidth",
+                        // and it would look nicer, but it wouldn't scale horizontally when user resized the window
+                    }
+                    
+                    // End the last (partial) row
+                    closeHBox(hBox)
+                }
+            }
+            sliderBox.intercept(0)
+            sliderBox.map()
+            
+            // Footer
+            
+            isSwitchToCompOrMechCentricView = 1 - isCompOrMechCentricView
+            
+            if (isSwitchToCompOrMechCentricView) {
+                switchToKeyword = "compartment"
+            } else {
+                switchToKeyword = "mechanism"
+            }
+            
+            sprint(buttonText, "Switch to the %s-centric view instead", switchToKeyword)
+            sprint(buttonHocCommand, "switchBetweenCompAndMechCentricViewsHandler(%d, %d)", mechOpIdx, isSwitchToCompOrMechCentricView)
+            
+            xpanel("")
+            if (isRequireApply) {
+                xbutton("Apply", "applyHandler()")
+                xlabel("")
+            }
+            xbutton(buttonText, buttonHocCommand)
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map(mechOpHelper.title, x, y, w, h)
+    }
+    
+    proc showHelper() { local mechOpIdx, panIdx localobj subBoxes
+        mechOpIdx = $1
+        isCompOrMechCentricView = $2
+        
+        subBoxes = new List()
+        for createHeaderEmptyPanelsFooter(mechOpIdx, isCompOrMechCentricView, &panIdx, subBoxes) {
+            if (isCompOrMechCentricView) {
+                populateCompCentricPanelHelper(mechOpIdx, panIdx, subBoxes)
+            } else {
+                populateMechCentricPanelHelper(mechOpIdx, panIdx, subBoxes)
+            }
+        }
+        
+        lastMechOpIdx = mechOpIdx
+    }
+    
+    proc populateCompCentricPanelHelper() { local mechOpIdx, compIdx, mechIdx, numInsertedItems, isSkipItem localobj subBoxes, mechOpHelper, vBox1, vBox2
+        strdef title, handlerHocCommand, mechName
+        
+        mechOpIdx = $1
+        compIdx = $2
+        subBoxes = $o3
+        
+        mechOpHelper = mechOpHelpers[mechOpIdx]
+        
+        vBox1 = new VBox()
+        vBox1.intercept(1)
+        {
+            // The title / menu
+            xpanel("")          // Panel without slider
+            sprint(title, "Mechs in %s:", mmAllComps.o(compIdx).name)
+            xmenu(title)
+            sprint(handlerHocCommand, "psectionHandler(%d)", compIdx)
+            xbutton("sec[0] psection()", handlerHocCommand)
+            // !! would it make sense to add a button to show this compartment on a plot?
+            xmenu()
+            xpanel()
+            
+            vBox2 = new VBox()
+            vBox2.intercept(1)
+            {
+                // All checkboxes or buttons
+                xpanel("")          // Panel with slider
+                numInsertedItems = 0
+                for mechIdx = 0, mth.getNumMechs(0) - 1 {
+                    isSkipItem = mechOpHelper.isSkipBlock(compIdx, mechIdx)
+                    if (isSkipItem) {
+                        continue
+                    }
+                    mth.getMechName(0, mechIdx, mechName)
+                    numInsertedItems += mechOpHelper.insertBlock(compIdx, mechIdx, mechName)
+                }
+                insertSpacers(numInsertedItems, mechOpHelper)
+                xpanel()
+            }
+            vBox2.intercept(0)
+            vBox2.map()
+        }
+        vBox1.intercept(0)
+        vBox1.map("", 0, 0, colWidth, rowHeight)
+        
+        subBoxes.append(vBox1)
+        subBoxes.append(vBox2)
+    }
+    
+    proc populateMechCentricPanelHelper() { local mechOpIdx, mechIdx, compIdx, numInsertedItems, isSkipItem localobj subBoxes, mechOpHelper, vBox1, vBox2
+        strdef mechName, title
+        
+        mechOpIdx = $1
+        mechIdx = $2
+        subBoxes = $o3
+        
+        mechOpHelper = mechOpHelpers[mechOpIdx]
+        
+        vBox1 = new VBox()
+        vBox1.intercept(1)
+        {
+            // The title
+            xpanel("")          // Panel without slider
+            mth.getMechName(0, mechIdx, mechName)
+            sprint(title, "Comps with %s:", mechName)
+            xlabel(title)
+            xpanel()
+            
+            vBox2 = new VBox()
+            vBox2.intercept(1)
+            {
+                // All checkboxes or buttons
+                xpanel("")          // Panel with slider
+                numInsertedItems = 0
+                // for eachItemInList(comp, mmAllComps) {   // !! syntax error + Segmentation violation (no idea why)
+                for compIdx = 0, mmAllComps.count() - 1 {
+                    isSkipItem = mechOpHelper.isSkipBlock(compIdx, mechIdx)
+                    if (isSkipItem) {
+                        continue
+                    }
+                    numInsertedItems += mechOpHelper.insertBlock(compIdx, mechIdx, mmAllComps.o(compIdx).name)
+                }
+                insertSpacers(numInsertedItems, mechOpHelper)
+                xpanel()
+            }
+            vBox2.intercept(0)
+            vBox2.map()
+        }
+        vBox1.intercept(0)
+        vBox1.map("", 0, 0, colWidth, rowHeight)
+        
+        subBoxes.append(vBox1)
+        subBoxes.append(vBox2)
+    }
+    
+    proc insertSpacers() { local numInsertedItems, itemHeight, allItemsHeight localobj mechOpHelper
+        numInsertedItems = $1
+        mechOpHelper = $o2
+        
+        itemHeight = itemTypeHeights[mechOpHelper.itemTypeIdx]
+        allItemsHeight = numInsertedItems * itemHeight
+        
+        if (allItemsHeight < rowBodyHeight) {
+            // We insert these spacers to make the panel background blue rather than gray
+            insertSpacersCore(allItemsHeight, rowBodyHeight)
+        } else if (allItemsHeight < sliderMinHeight) {
+            // We insert these spacers as a workaround for strange Neuron behviour
+            // when vertical slider doesn't appear in the panel in some cases making the last items inaccessible
+            insertSpacersCore(allItemsHeight, sliderMinHeight)
+        }
+        // If allItemsHeight > sliderMinHeight, then Neuron adds the slider itself
+    }
+    
+    proc insertSpacersCore() { local allItemsHeight, requiredHeight, numSpacers, spacerIdx
+        allItemsHeight = $1
+        requiredHeight = $2
+        if (allItemsHeight >= requiredHeight) {
+            codeContractViolation()
+        }
+        numSpacers = int((requiredHeight - allItemsHeight) / spacerHeight) + 1
+        for spacerIdx = 0, numSpacers - 1 {
+            xlabel("")
+        }
+    }
+    
+    proc psectionHandler() { local compIdx, status
+        compIdx = $1
+        
+        // !! maybe check mmAllComps.o(compIdx).isCompDirty instead of isDirty?
+        status = ifDirtyThenProposeUserToApplyChanges()
+        if (status == 2) {
+            // Just to keep mwh state intact
+            mwh.endIntercepting()
+        }
+        
+        mmAllComps.o(compIdx).list_ref.o(0).sec psection()
+    }
+    
+    func isSkipAllItems() { local panIdx, compIdx, mechIdx, isSkipItem localobj mechOpHelper
+        mechOpHelper = $o1
+        isCompOrMechCentricView = $2
+        panIdx = $3
+        
+        if (isCompOrMechCentricView) {
+            compIdx = panIdx
+            for mechIdx = 0, mth.getNumMechs(0) - 1 {
+                isSkipItem = mechOpHelper.isSkipBlock(compIdx, mechIdx)
+                if (!isSkipItem) {
+                    return 0
+                }
+            }
+        } else {
+            mechIdx = panIdx
+            for compIdx = 0, mmAllComps.count() - 1 {
+                isSkipItem = mechOpHelper.isSkipBlock(compIdx, mechIdx)
+                if (!isSkipItem) {
+                    return 0
+                }
+            }
+        }
+        
+        return 1
+    }
+    
+    proc applyHandler() {
+        if (!isDirty) {
+            mwh.showMessageBox("There is no changes in mechanisms to apply.", "No changes")
+            return
+        }
+        
+        mwh.startIntercepting()
+        {
+            applyCore()
+        }
+        mwh.endIntercepting()
+    }
+    
+    proc applyCore() { localobj comp
+    
+        // Actually, this is required only when lastMechOpIdx == 1 to have VarsEditorWidget.bufferToMechStd called
+        mechOpHelpers[lastMechOpIdx].dismissChilds()
+        
+        // Applying the changes
+        for eachItemInList(comp, mmAllComps) {
+            if (!comp.isCompDirty) {
+                continue
+            }
+            comp.applyHomogenChangesToDirtyMechs()
+        }
+        isDirty = 0
+        
+        // !! maybe it makes sense to list all the affected compartments in this message (or mechs)
+        mwh.showMessageBox("All the changes were applied to sections biophysics.", "Applied")
+    }
+    
+    obfunc openHBox() { localobj subBoxes, hBox
+        subBoxes = $o1
+        hBox = new HBox()
+        hBox.intercept(1)
+        subBoxes.append(hBox)
+        return hBox
+    }
+    
+    proc closeHBox() { localobj hBox
+        hBox = $o1
+        hBox.intercept(0)
+        hBox.map("", -1, -1, 1, rowHeight)
+    }
+    
+    proc dismissCore() { localobj nil
+        if (mainBox != nil) {
+            mechOpHelpers[lastMechOpIdx].dismissChilds()
+            mainBox.unmap()
+        }
+    }
+    
+endtemplate MechOpWidgetBase
+
+mmmowb = new MechOpWidgetBase()

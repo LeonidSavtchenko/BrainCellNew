@@ -23,5 +23,5 @@ proc stretchXY() { local i, j, scaleNew
     
     MaxDendriticLength = getMaxDendriticLength()
     
-    // !! need to update astrocyte biophysics here, because it depends on L
+    // !! need to update astrocyte biophysics here because it depends on L
 }

@@ -2,17 +2,6 @@
 objref cellularCompartmentsMonoSelectWidget, cellularCompartmentsMultiSelectWidget
 
 
-begintemplate Double
-    public x
-    x = -1
-    proc init() {
-        if (numarg() == 1) {
-            x = $1
-        }
-    }
-endtemplate Double
-
-
 begintemplate CellularCompartmentsMonoSelectWidget
 
     public show
@@ -32,8 +21,9 @@ begintemplate CellularCompartmentsMonoSelectWidget
     objref somaNameChoices, dendriteNameChoices, axonNameChoices
     
     external isAstrocyteOrNeuron
+    external mwh
     external cellularCompartmentsMultiSelectWidget
-    external importHocFile_layer2, makeShallowCopyOfList, getFirstLine, showWarningBox, printMsgAndStop
+    external importHocFile_layer2, makeShallowCopyOfList, getFirstLine, printMsgAndStop
     
     // Template initialization
     // $1 - 0/1 flag indicating whether this proc is called after the file conversion stage
@@ -152,20 +142,24 @@ begintemplate CellularCompartmentsMonoSelectWidget
     
         // Validate selections and prevent widget close if incorrect
         // !! review and optimize this
-        chosenSomaNameIdx = somaNameChoices.selected()      // 0 is "(no soma in file)"
-        chosenDendriteNameIdx = dendriteNameChoices.selected()
+        chosenSomaNameIdx = somaNameChoices.selected()          // 0 is "(no soma in file)"
+        chosenDendriteNameIdx = dendriteNameChoices.selected()  // -1 if no default guess
+        if (chosenDendriteNameIdx == -1) {
+            mwh.showWarningBox("Please select a name for dendrites.")
+            return
+        }
         if (chosenSomaNameIdx - 1 == chosenDendriteNameIdx) {
-            showWarningBox("Cannot use the same sections for soma and dendrites.", "Please select different names.")
+            mwh.showWarningBox("Cannot use the same sections for soma and dendrites.", "Please select different names.")
             return
         }
         if (!isAstrocyteOrNeuron) {
             chosenAxonNameIdx = axonNameChoices.selected()  // 0 is "(no axon in file)"
             if (chosenSomaNameIdx != 0 && chosenAxonNameIdx != 0 && (chosenSomaNameIdx == chosenAxonNameIdx)) {
-                showWarningBox("Cannot use the same sections for soma and axon.", "Please select different names.")
+                mwh.showWarningBox("Cannot use the same sections for soma and axon.", "Please select different names.")
                 return
             }
             if (chosenDendriteNameIdx == chosenAxonNameIdx - 1) {
-                showWarningBox("Cannot use the same sections for dendrites and axon.", "Please select different names.")
+                mwh.showWarningBox("Cannot use the same sections for dendrites and axon.", "Please select different names.")
                 return
             }
         }
@@ -225,8 +219,9 @@ begintemplate CellularCompartmentsMultiSelectWidget
     objref somaSelectionFlags, dendriteSelectionFlags, axonSelectionFlags
     
     external isAstrocyteOrNeuron
+    external mwh
     external cellularCompartmentsMonoSelectWidget
-    external importHocFile_layer2, getFirstLine, showWarningBox, printMsgAndStop
+    external importHocFile_layer2, getFirstLine, printMsgAndStop
     
     
     // Template initialization
@@ -248,21 +243,21 @@ begintemplate CellularCompartmentsMultiSelectWidget
     }
     
     // Helper proc for default initialization of the selection flags
-    // $o1 (in/out) - The selection flags (List of Double-s)
+    // $o1 (in/out) - The selection flags (Vector)
     // $o2 - The default name indexes (Vector)
     proc setOnesForDefaultNames() { local idx localobj selectionFlags, defaultNameIdxs
         selectionFlags = $o1
         defaultNameIdxs = $o2
         
         for idx = 0, defaultNameIdxs.size() - 1 {
-            selectionFlags.o(defaultNameIdxs.x[idx]).x = 1
+            selectionFlags.x[defaultNameIdxs.x[idx]] = 1
         }
     }
     
     // Create and initialize one panel (soma, dendrite or axon names)
     // $s1 - The compartment name
     // $2 - 0/1/2 value indicating soma/dendrites/axon
-    // $o3 - The default state flags for checkboxes (List of Double-s)
+    // $o3 - The default state flags for checkboxes (Vector)
     proc createAndInitOnePanel() { local compartmentType localobj selectionFlags, vBox
         strdef compartmentName, title, handlerHocCommand
         
@@ -295,7 +290,7 @@ begintemplate CellularCompartmentsMultiSelectWidget
             xpanel("")
             for idx = 0, allNames.count() - 1 {
                 // !! nameToNameWithDims(allNames.o(idx).s, nameWithDims)
-                xcheckbox(allNames.o(idx).s, &selectionFlags.o(idx).x)
+                xcheckbox(allNames.o(idx).s, &selectionFlags.x[idx])
             }
             xpanel()
         }
@@ -304,22 +299,16 @@ begintemplate CellularCompartmentsMultiSelectWidget
     }
     
     // Ask user to select names of soma, dendrite and (for neuron only) axon sections used in the imported HOC file
-    proc show() { local idx, width localobj nil, hBox
+    proc show() { local numNames, idx, width localobj nil, hBox
         strdef str
         
         if (mainBox == nil) {
-            // Create and initialize somaSelectionFlags, dendriteSelectionFlags and (for neuron only) axonSelectionFlags (all List-s of Double-s)
-            somaSelectionFlags = new List()
-            dendriteSelectionFlags = new List()
+            // Create and initialize somaSelectionFlags, dendriteSelectionFlags and (for neuron only) axonSelectionFlags (all Vector-s)
+            numNames = allNames.count()
+            somaSelectionFlags = new Vector(numNames)       // All 0 by default
+            dendriteSelectionFlags = new Vector(numNames)   //
             if (!isAstrocyteOrNeuron) {
-                axonSelectionFlags = new List()
-            }
-            for idx = 0, allNames.count() - 1 {
-                somaSelectionFlags.append(new Double(0))
-                dendriteSelectionFlags.append(new Double(0))
-                if (!isAstrocyteOrNeuron) {
-                    axonSelectionFlags.append(new Double(0))
-                }
+                axonSelectionFlags = new Vector(numNames)   //
             }
             setOnesForDefaultNames(somaSelectionFlags, defaultSomaNameIdxs)
             setOnesForDefaultNames(dendriteSelectionFlags, defaultDendriteNameIdxs)
@@ -388,8 +377,8 @@ begintemplate CellularCompartmentsMultiSelectWidget
         } else {
             codeContractViolation()
         }
-        for idx = 0, selectionFlags.count() - 1 {
-            value = selectionFlags.o(idx).x
+        for idx = 0, selectionFlags.size() - 1 {
+            value = selectionFlags.x[idx]
             if (op == 1) {
                 value = 1
             } else if (op == 2) {
@@ -399,7 +388,7 @@ begintemplate CellularCompartmentsMultiSelectWidget
             } else {
                 codeContractViolation()
             }
-            selectionFlags.o(idx).x = value
+            selectionFlags.x[idx] = value
         }
     }
     
@@ -428,26 +417,26 @@ begintemplate CellularCompartmentsMultiSelectWidget
         // !! review this and optimize
         allDendsUnchecked = 1
         for idx = 0, allNames.count() - 1 {
-            if (somaSelectionFlags.o(idx).x && dendriteSelectionFlags.o(idx).x) {
-                showWarningBox("Cannot use the same sections for soma and dendrites.", "Please select different names.")
+            if (somaSelectionFlags.x[idx] && dendriteSelectionFlags.x[idx]) {
+                mwh.showWarningBox("Cannot use the same sections for soma and dendrites.", "Please select different names.")
                 return
             }
             if (!isAstrocyteOrNeuron) {
-                if (dendriteSelectionFlags.o(idx).x && axonSelectionFlags.o(idx).x) {
-                    showWarningBox("Cannot use the same sections for dendrites and axon.", "Please select different names.")
+                if (dendriteSelectionFlags.x[idx] && axonSelectionFlags.x[idx]) {
+                    mwh.showWarningBox("Cannot use the same sections for dendrites and axon.", "Please select different names.")
                     return
                 }
-                if (somaSelectionFlags.o(idx).x && axonSelectionFlags.o(idx).x) {
-                    showWarningBox("Cannot use the same sections for soma and axon.", "Please select different names.")
+                if (somaSelectionFlags.x[idx] && axonSelectionFlags.x[idx]) {
+                    mwh.showWarningBox("Cannot use the same sections for soma and axon.", "Please select different names.")
                     return
                 }
             }
-            if (dendriteSelectionFlags.o(idx).x) {
+            if (dendriteSelectionFlags.x[idx]) {
                 allDendsUnchecked = 0
             }
         }
         if (allDendsUnchecked) {
-            showWarningBox("Please select at least one name for dendrites.")
+            mwh.showWarningBox("Please select at least one name for dendrites.")
             return
         }
         
@@ -456,12 +445,12 @@ begintemplate CellularCompartmentsMultiSelectWidget
         usedNamesForDendrites = new List()
         usedNamesForAxon = new List()
         for idx = 0, allNames.count() - 1 {
-            if (somaSelectionFlags.o(idx).x) {
+            if (somaSelectionFlags.x[idx]) {
                 usedNamesForSoma.append(allNames.o(idx))
-            } else if (dendriteSelectionFlags.o(idx).x) {
+            } else if (dendriteSelectionFlags.x[idx]) {
                 usedNamesForDendrites.append(allNames.o(idx))
-            } else if (!isAstrocyteOrNeuron) {          // Don't combine these two lines with &&, because Neuron evaluates all the operands
-                if (axonSelectionFlags.o(idx).x) {      //
+            } else if (!isAstrocyteOrNeuron) {      // Don't combine these two lines with && because Neuron evaluates all the operands
+                if (axonSelectionFlags.x[idx]) {    //
                     usedNamesForAxon.append(allNames.o(idx))
                 }
             }
@@ -496,6 +485,3 @@ begintemplate CellularCompartmentsMultiSelectWidget
     }
 
 endtemplate CellularCompartmentsMultiSelectWidget
-
-
-// See also: showWarningBox (in ErrWarnUtils.hoc)

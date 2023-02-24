@@ -1,0 +1,174 @@
+
+// !! would it make sense to add a radiogroup to choose what to show in this widget: all vars, only homogen or only inhomogen?
+
+begintemplate MechOp1Helper
+
+    public getHeader, isSkipBlock, insertBlock, dismissChilds
+    public title, isRequireApply, itemTypeIdx, varsEditorSubWidget
+    public codeContractViolation
+    
+    external mmAllComps
+    external mth, mwh
+    external getGlobalVarsHint, stringEndsWith, dismissIfNotNil
+    
+    objref varsEditorSubWidget
+    
+    strdef title
+    isRequireApply = -1
+    itemTypeIdx = -1
+    
+    
+    proc init() {
+        title = "Edit mechanisms' variables"
+        isRequireApply = 1          // !! need to add a comment that this Apply button is for homogen params only
+        itemTypeIdx = 1     // Menu
+    }
+    
+    proc getHeader() {
+        $s1 = "Only inserted mechanisms are shown below."
+        getGlobalVarsHint($s2)
+    }
+    
+    func isSkipBlock() { local compIdx, mechIdx
+        compIdx = $1
+        mechIdx = $2
+        return !mmAllComps.o(compIdx).isMechInserted[mechIdx]
+    }
+    
+    // !! a lot of code dupl. with SynManagerMainWidget.hoc.hoc: insertBlock, insertGlobalItem, insertNotGlobalItem, insertItemCore and editMechVarsHandler
+    
+    func insertBlock() { local compIdx, mechIdx
+        strdef label
+        
+        compIdx = $1
+        mechIdx = $2
+        label = $s3
+        
+        xmenu(label)
+        {
+            // Alternatively, we can show it as a separate item on top of the panel, but it looks worse
+            insertGlobalItem(mechIdx)
+            
+            insertNotGlobalItem(1, compIdx, mechIdx)    // PARAMETER
+            insertNotGlobalItem(2, compIdx, mechIdx)    // ASSIGNED
+            insertNotGlobalItem(3, compIdx, mechIdx)    // STATE
+            
+            // !! rare case: if this mech does not have any vars at all, then need to show a message about that once user clicks the menu
+            //    (actually, the menu must be replaced with a button in that case)
+            // sprint(text, "The mechanism \"%s\" does not have any variables.", mechName)
+            // mwh.showWarningBox(text)
+        }
+        xmenu()
+        
+        return 1
+    }
+    
+    proc dismissChilds() {
+        // Notice that here we cannot dismiss the widgets created with MechanismStandard.panel and nrnglobalmechmenu
+        dismissIfNotNil(varsEditorSubWidget)
+    }
+    
+    
+    // All next proc-s are private
+    
+    proc insertGlobalItem() { local mechIdx
+        mechIdx = $1
+        if (mth.doesMechHaveGlobalVars(0, mechIdx)) {
+            // Actually, any change to GLOBAL variables is applied to all the compartments rather than 0th
+            insertItemCore(-1, 0, mechIdx)  // GLOBAL
+        }
+    }
+    
+    proc insertNotGlobalItem() { local varType, compIdx, mechIdx
+        varType = $1
+        compIdx = $2
+        mechIdx = $3
+        
+        if (mth.doesMechHaveNotGlobalVars(0, mechIdx, varType)) {
+            insertItemCore(varType, compIdx, mechIdx)
+        }
+    }
+    
+    proc insertItemCore() { local varType, compIdx, mechIdx
+        strdef varTypeName, text, handlerHocCommand
+        
+        varType = $1
+        compIdx = $2
+        mechIdx = $3
+        
+        mth.getVarTypeName(varType, varTypeName)
+        
+        sprint(text, "Edit %s variables", varTypeName)
+        sprint(handlerHocCommand, "editMechVarsHandler(%d, %d, %d)", compIdx, mechIdx, varType)
+        xbutton(text, handlerHocCommand)
+    }
+    
+    proc editMechVarsHandler() { local compIdx, mechIdx, varType, isInsertedSomewhere, varTypeIdx localobj comp, mechStd
+        strdef header, mechName
+        
+        compIdx = $1
+        mechIdx = $2
+        varType = $3
+        
+        dismissChilds()
+        
+        comp = mmAllComps.o(compIdx)
+        
+        // Just a sanity check
+        if (varType != -1) {
+            // PARAMETER, ASSIGNED or STATE
+            if (!comp.isMechInserted[mechIdx]) {
+                codeContractViolation()
+            }
+        } else {
+            // GLOBAL
+            isInsertedSomewhere = 0
+            for compIdx = 0, mmAllComps.count() - 1 {
+                if (mmAllComps.o(compIdx).isMechInserted[mechIdx]) {
+                    isInsertedSomewhere = 1
+                    break
+                }
+            }
+            if (!isInsertedSomewhere) {
+                codeContractViolation()
+            }
+        }
+        
+        mth.getMechName(0, mechIdx, mechName)
+        if (stringEndsWith(mechName, mth.ionSuffix) && varType == 2) {
+            // !! it turns out that ions can change names of their ASSIGNED vars as a result of insertion,
+            //    but mechStd.out() doesn't work if the names changed between mechStd.in() and mechStd.out()
+            //    to handle the case properly, we'll have to re-init all affected MechanismStandard objects at comp.mechStds[mechIdx][2]
+            mwh.showNotImplementedWarning("Cannot edit ASSIGNED vars for ions.")
+            return
+        }
+        
+        comp.prepareMechPanelHeader(mechIdx, varType, header)
+        
+        if (varType != -1) {
+            // Convert from varType to varTypeIdx
+            varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
+            
+            mechStd = comp.mechStds[mechIdx][varTypeIdx]
+            
+            if (mechStd.count() == 0) {
+                codeContractViolation()
+            }
+            
+            // Deprecated editor
+            // mechStd.panel(header)
+            
+            // New editor
+            varsEditorSubWidget = new VarsEditorWidget(1, compIdx, mechIdx, varType)
+            varsEditorSubWidget.show()
+            
+        } else {
+            if (!mth.doesMechHaveGlobalVars(0, mechIdx)) {
+                codeContractViolation()
+            }
+            
+            nrnglobalmechmenu(mechName)
+        }
+    }
+    
+endtemplate MechOp1Helper

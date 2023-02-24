@@ -1,8 +1,6 @@
 mid=12
 dist=27
 secondorder=2
-FARADAY=96520
-PI=3.14159      // !! too low precision here
 
 Rm = 28000
 RmDend = Rm/2
@@ -66,4 +64,3 @@ soma_ref.o(0).sec {
             e_pas=Vrest g_pas = 1/RmSoma Ra=RaSoma //cm=CmSoma
         finitialize(v)  // !! Maybe remove because now it's done in NanoBranchesManager.hoc
     }
-        soma_ref.o(0).sec distance()

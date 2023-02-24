@@ -1,0 +1,122 @@
+
+// Ask user to enter a string
+// $s1 - The hint
+// $s2 (in/out) - The default proposed string in input, and the entered string in output
+//                (all leading and trailing whitespaces are truncated)
+// Returns: 0/1 flag indicating Accept/Cancel respectively
+func _stringInputDialog() { local isAccepted
+    strdef hint, defaultStr, outStr
+    
+    hint = $s1
+    defaultStr = $s2
+    
+    outStr = defaultStr
+    
+    isAccepted = string_dialog(hint, outStr)
+    if (!isAccepted) {
+        return 1
+    }
+    
+    // Truncate all leading and trailing whitespaces in the string
+    stringTruncate(outStr, outStr)
+    
+    $s2 = outStr
+    
+    return 0
+}
+
+// Choose unique name for the new created compartment; if the first guess name is in use, then ask user to enter the name
+// $s1 - The compartment name ("soma" or "axon") being also the first guess for unique name
+// $s2 (out) - The chosen unique and valid name
+// Returns: 0/1 flag indicating Accept/Cancel respectively
+func chooseUniqueAndValidNameForNewCompartmentForImport() { local isFound, type, isCancelOrAccept
+    strdef compName, chosenName, hint
+    
+    compName = $s1
+    
+    chosenName = compName
+    
+    while (1) {
+        // Making sure that:
+        //  * the name is a valid string that can be used for creation of a new section object or section array (e.g. "123abc" or "ab+c" are invalid names)
+        //  * there is no section object or section array or any variable or keyword with this name
+        
+        isFound = 0
+        for findSecArrayOrObjectIterator(chosenName, 1, 0) {
+            isFound = 1
+        }
+        if (!isFound) {
+            // We call name_declared only after the direct section search because
+            // it considers name declared even though the section was deleted ("Import other")
+            type = name_declared(chosenName)
+            if (type == 0 || type == 3) {
+                // The chosen name is unique
+                if (isValidSecName(chosenName)) {
+                    // The chosen name is valid
+                    break
+                }
+            }
+        }
+        
+        sprint(hint, "Cannot create %s with name \"%s\" because the name is either in use, reserved or invalid. Please choose some other name:", compName, chosenName)
+        isCancelOrAccept = _stringInputDialog(hint, chosenName)
+        if (isCancelOrAccept) {
+            return 1
+        }
+    }
+    
+    $s2 = chosenName
+    
+    return 0
+}
+
+// Ask user to choose a unique name for the compartment
+// $s1 - The base compartment name being also the first guess for the new name
+// $s2 (out) - The chosen unique name
+// Other input: mmAllComps (taken from the top level)
+// Returns: 0/1 flag indicating Accept/Cancel respectively
+func chooseUniqueNameForCompartmentForMechManager() { local isFirstOrSecondHint, isCancelOrAccept, isFound localobj comp
+    strdef baseCompName, chosenName, hint
+    
+    baseCompName = $s1
+    
+    chosenName = baseCompName
+    
+    isFirstOrSecondHint = 1
+    while (1) {
+        if (isFirstOrSecondHint) {
+            hint = "Please choose a unique name for the compartment:"
+        } else {
+            hint = "This name is already assigned to some compartment. Please choose a unique name:"
+        }
+        isCancelOrAccept = _stringInputDialog(hint, chosenName)
+        if (isCancelOrAccept) {
+            return 1
+        }
+        
+        if (stringEmpty(chosenName)) {
+            isFirstOrSecondHint = 1
+            continue
+        }
+        
+        // Make sure there is no other compartment with the same name
+        isFound = 0
+        // !! think about Python's Set for better performance
+        for eachItemInList(comp, mmAllComps) {
+            if (stringsEqual(comp.name, chosenName)) {
+                isFound = 1
+                break
+            }
+        }
+        if (!isFound) {
+            // The chosen name is unique
+            break
+        }
+        
+        isFirstOrSecondHint = 0
+    }
+    
+    $s2 = chosenName
+    
+    return 0
+}

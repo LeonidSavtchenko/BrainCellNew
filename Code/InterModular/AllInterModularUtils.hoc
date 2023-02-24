@@ -1,0 +1,19 @@
+
+{ load_file("InterModularSectionUtils.hoc") }
+
+objref usedNamesForDendrites, nanoBranchesManager, seededDendrites_ref
+
+{ load_file("InterModularErrWarnUtils.hoc") }
+{ load_file("InterModularPythonUtils.hoc") }
+{ load_file("InterModularBasicMath.hoc") }                      // !! not intermodular yet
+{ load_file("InterModularListUtils.hoc") }
+{ load_file("Widgets/MessageWarningHelper.hoc") }
+{ load_file("InterModularStringUtils.hoc") }
+objref mmAllComps
+iterator findSecArrayOrObjectIterator() { codeContractViolation() }
+{ load_file("InterModularUniqueNameUtils.hoc") }
+{ load_file("InterModularRNGUtils.hoc") }
+{ load_file("InterModularOtherUtils.hoc") }                     // !! not intermodular yet
+objref mmcoWidget
+{ load_file("../Core/PluginsForCompSelectionWidget.hoc") }
+{ load_file("Widgets/CompSubsetWidget.hoc") }                   // !! not intermodular yet

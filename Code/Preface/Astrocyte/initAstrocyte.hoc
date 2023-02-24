@@ -170,7 +170,7 @@ proc showSelectGeometryUi() {
         xpanel(0)
     }
     vBoxSelectGeometry.intercept(0)
-    vBoxSelectGeometry.map("Astrocyte model", 500, 300, -1, -1)
+    vBoxSelectGeometry.map("Astrocyte model", 500, 170, -1, -1)
 }
 
 showSelectGeometryUi()

@@ -7,6 +7,7 @@ begintemplate RoadmapWidget
     
     objref mainBox, baseOrNanoDeck
     
+    
     // Ask user to choose the roadmap
     proc show() {
         strdef defaultChoice1HocCommand, defaultChoice2HocCommand

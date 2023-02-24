@@ -13,8 +13,8 @@ begintemplate ImportCompleteWidget
     
     objref mainBox
     
-    external isAstrocyteOrNeuron, ic, importCompleteHandler
-    external chooseOutLocationAndExportHocFile, hideImportedGeometry, cleanupBeforeNextImport, showWarningBox, printMsgAndStop
+    external isAstrocyteOrNeuron, mwh, ic, importCompleteHandler
+    external chooseOutLocationAndExportHocFile, hideImportedGeometry, cleanupBeforeNextImport, printMsgAndStop
     
     // Show all warnings and/or modifiers and ask user whether to proceed with this file (optionally saving it as HOC somewhere) or import other one
     // $1 - 0/1 flag indicating whether this proc is called after the file conversion stage
@@ -116,7 +116,7 @@ begintemplate ImportCompleteWidget
         
         if (userChoiceWhetherToSaveHocFile) {
             if (isAxonInserted) {
-                showWarningBox("Axon won't be saved (not implemented).")
+                mwh.showNotImplementedWarning("Axon won't be saved.")
             }
             chooseOutLocationAndExportHocFile()
         }

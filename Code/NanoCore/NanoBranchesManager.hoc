@@ -7,6 +7,8 @@ obfunc createAstrocyteNanoBranch() { codeContractViolation() }
 proc Neuron_AddSynapses_reseed() { codeContractViolation() }
 proc Neuron_AddSynapses_delete() { codeContractViolation() }
 
+objref msmBaseWidget
+
 // !!
 isFirstReseeding = 1
 isExportedMode = 0
@@ -28,9 +30,11 @@ begintemplate NanoBranchesManager
     
     external seededDendrite_ref, NumberNanoBranches
     external isAstrocyteOrNeuron, MinDistance, MaxDendriticLength, isFirstReseeding
+    external mwh, rngUtils
+    external msmBaseWidget
     
     external createAstrocyteNanoBranch, createNeuronNanoBranch, createRefsForNanoGeometry
-    external getRNG_randomBranchSeeder, Neuron_AddSynapses_reseed, Neuron_AddSynapses_delete
+    external Neuron_AddSynapses_reseed, Neuron_AddSynapses_delete
     
     objref nanoBranches_flat    // !! Flat List of all AstrocyteNanoBranch or NeuronNanoBranch -- need to merge this with the logic from Exported/CreateNanoRefs_Exported.hoc !!
     objref randomBranchSeeder 
@@ -45,14 +49,14 @@ begintemplate NanoBranchesManager
         MaxNumberBranchesPerDendrite = $1
         
         nanoBranches_flat = new List()
-        randomBranchSeeder = getRNG_randomBranchSeeder()
+        randomBranchSeeder = rngUtils.getFor_branchSeeder()
     }
     
     // Reseed dendrites with nanobranches
     // $1 - The 1st argument passed to *NanoBranch template
     // $2 (optional) - The 2nd argument passed to *NanoBranch template
     // Other inputs: seededDendrite_ref (taken from the top level) etc.
-    proc reseedBranches() { local numArg, arg1, arg2, ControlFactor, dendIdx, NormFactor, slotIdx
+    proc reseedBranches() { local numArg, arg1, arg2, ControlFactor, dendIdx, NormFactor, slotIdx localobj nil
         numArg = numarg()
         if (numArg < 1 || numArg > 2) {
             codeContractViolation()
@@ -70,42 +74,50 @@ begintemplate NanoBranchesManager
             lastUsedArg2OrMinus1 = -1
         }
         
-        if (!isFirstReseeding) {
-            deleteBranches()
+        if (msmBaseWidget != nil) {
+            msmBaseWidget.onReseedHandler()
         }
         
-        ControlFactor=(MinDistance*MaxNumberBranchesPerDendrite)/MaxDendriticLength
-        
-        for dendIdx = 0, seededDendrite_ref.count() - 1 {
-            NormFactor=ControlFactor*MaxDendriticLength/seededDendrite_ref.o(dendIdx).sec.L
+        mwh.showPleaseWaitBox("Reseeding nanostructures.")
+        {
+            if (!isFirstReseeding) {
+                deleteBranches()
+            }
             
-            for slotIdx = 0, MaxNumberBranchesPerDendrite - 1 {
+            ControlFactor=(MinDistance*MaxNumberBranchesPerDendrite)/MaxDendriticLength
+            
+            for dendIdx = 0, seededDendrite_ref.count() - 1 {
+                NormFactor=ControlFactor*MaxDendriticLength/seededDendrite_ref.o(dendIdx).sec.L
                 
-                if (randomBranchSeeder.uniform(0,1) < 1/NormFactor) {
-                    if (numArg == 1) {
-                        createInitAndConnectOneBranch(dendIdx, slotIdx, arg1)
-                    } else {
-                        createInitAndConnectOneBranch(dendIdx, slotIdx, arg1, arg2)
+                for slotIdx = 0, MaxNumberBranchesPerDendrite - 1 {
+                    
+                    if (randomBranchSeeder.uniform(0,1) < 1/NormFactor) {
+                        if (numArg == 1) {
+                            createInitAndConnectOneBranch(dendIdx, slotIdx, arg1)
+                        } else {
+                            createInitAndConnectOneBranch(dendIdx, slotIdx, arg1, arg2)
+                        }
                     }
                 }
             }
+            
+            // !! is this correct place?
+            // !! maybe it would be easier to collect references while creating sections rather than search for sections with regex afterwards
+            createRefsForNanoGeometry()
+            
+            // !!
+            if (isAstrocyteOrNeuron) {
+                v_init = -85        // mV
+                finitialize(v_init)
+            } else {
+                v_init = -64.65
+            }
+            
+            if (!isFirstReseeding && !isAstrocyteOrNeuron) {
+                Neuron_AddSynapses_reseed()
+            }
         }
-        
-        // !! is this correct place?
-        // !! maybe it would be easier to collect references while creating sections rather than search for sections with regex afterwards
-        createRefsForNanoGeometry()
-        
-        // !!
-        if (isAstrocyteOrNeuron) {
-            v_init = -85        // mV
-            finitialize(v_init)
-        } else {
-            v_init = -64.65
-        }
-        
-        if (!isFirstReseeding && !isAstrocyteOrNeuron) {
-            Neuron_AddSynapses_reseed()
-        }
+        mwh.hidePleaseWaitBox()
         
         isFirstReseeding = 0
         NumberNanoBranches = nanoBranches_flat.count()

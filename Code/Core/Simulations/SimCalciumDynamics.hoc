@@ -9,7 +9,7 @@ objref inputSt[TotalNUmberGapJunction+2], StimTrigger_SimCalciumDynamics[TotalNU
 objref fileCalciumTime
 // Random
 objref randomCalcium
-randomCalcium = getRNG_randomCalcium()
+randomCalcium = rngUtils.getFor_calcium()
 
 // Procedure of different stimulations.
 // $1 - BasicStimulus

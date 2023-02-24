@@ -11,7 +11,7 @@ objref usedNamesForSoma, usedNamesForDendrites, usedNamesForAxon
 // $o5 - Dendrites section/section array names in the HOC file (choosen by user or importer, List of String-s)
 // $o6 - Axon section/section array names in the HOC file (choosen by user or importer, List of String-s; empty if isAstrocyteOrNeuron)
 // Other input: isAstrocyteOrNeuron (taken from the top level)
-proc importHocFile_layer2() { local isCalledAfterConversion, isSomaInsertedDuringConversion, isOldStyleAstroHocFile, isSomaMissing, isAxonMissingAndRequired, isSomaInserted, isAxonInserted localobj namesOfTopoRootsInCell, namesOfTopoRootsInSoma, namesOfTopoRootsInAxon
+proc importHocFile_layer2() { local isCalledAfterConversion, isSomaInsertedDuringConversion, isOldStyleAstroHocFile, isSomaMissing, isAxonMissingAndRequired, isCancel, isSomaInserted, isAxonInserted localobj namesOfTopoRootsInCell, namesOfTopoRootsInSoma, namesOfTopoRootsInAxon
     strdef createdSomaName, createdAxonName
     
     isCalledAfterConversion = $1
@@ -29,7 +29,10 @@ proc importHocFile_layer2() { local isCalledAfterConversion, isSomaInsertedDurin
     
     if (isSomaMissing) {
         // Insert default soma
-        createDefaultSomaAndConnectAllRootSectionsToIt(createdSomaName)
+        isCancel = createDefaultSomaAndConnectAllRootSectionsToIt(createdSomaName)
+        if (isCancel) {
+            return
+        }
         usedNamesForSoma.append(new String(createdSomaName))
         namesOfTopoRootsInCell = new List()     // Empty means "nevermind"
         namesOfTopoRootsInSoma = new List()     //
@@ -42,7 +45,10 @@ proc importHocFile_layer2() { local isCalledAfterConversion, isSomaInsertedDurin
     
     if (isAxonMissingAndRequired) {
         // Insert default axon
-        createDefaultAxonAndConnectToFirstSomaSection(usedNamesForSoma.o(0).s, createdAxonName)
+        isCancel = createDefaultAxonAndConnectToFirstSomaSection(usedNamesForSoma.o(0).s, createdAxonName)
+        if (isCancel) {
+            return
+        }
         usedNamesForAxon.append(new String(createdAxonName))
         namesOfTopoRootsInAxon = new List()     // Empty means "nevermind"
     } else {

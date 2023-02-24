@@ -1,9 +1,9 @@
 
 // These ones will be shared by different neuron nano branches
 objref randomSpineRadius, randomNeckLen, randomNeckDiam
-randomSpineRadius = getRNG_randomSpineRadius()  // Random Number of Spine radius
-randomNeckLen = getRNG_randomNeckLen()          // Random Number of Neck Length
-randomNeckDiam = getRNG_randomNeckDiam()        // Random Number of Spine diameter
+randomSpineRadius = rngUtils.getFor_spineRadius()
+randomNeckLen = rngUtils.getFor_neckLen()
+randomNeckDiam = rngUtils.getFor_neckDiam()
 
 // *********************** Set of Parameters for Uniform distribution
 // Spine Head Radius
@@ -33,9 +33,10 @@ NormalDistributionOfSpineGeometry_setParams()
 
 // *********************** Set of Parameters independent on distribution
 SpineNeckNSeg = 2
-variable_domain(&SpineNeckNSeg, 2, 1e9) // !! replace with "inf" once intermodular "math" is integrated from Mech Manager
+inf = math.inf
+variable_domain(&SpineNeckNSeg, 2, inf)
 SpineHeadNSeg = 7
-variable_domain(&SpineHeadNSeg, 2, 1e9) // !!
+variable_domain(&SpineHeadNSeg, 2, inf)
 
 
 // The next "declaration" is needed just to bind the template's external at the file sourcing time

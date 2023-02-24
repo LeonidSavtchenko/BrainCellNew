@@ -38,22 +38,3 @@ proc copyHocFile() { local status
         stop
     }
 }
-
-// Convert string to lower case
-// $s1 - The input string
-// $s2 (output) - The lower case string
-proc stringToLowerCase() { localobj pyObj
-    strdef inStr, pyCommandTempl, pyCommand
-    
-    inStr = $s1
-    
-    pyCommandTempl = "outStr = '%s'.lower()"
-    sprint(pyCommand, pyCommandTempl, inStr)
-    status = nrnpython(pyCommand)
-    if (!status) {
-        printImportFailedMsgAndStop("Exception raised in Python code (caught in stringToLowerCase)")
-    }
-    
-    pyObj = new PythonObject()
-    $s2 = pyObj.outStr
-}

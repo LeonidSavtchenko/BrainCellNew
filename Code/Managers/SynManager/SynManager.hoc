@@ -1,0 +1,40 @@
+
+objref smAllComps
+
+smSrcCompIdx = -1
+smNCCompIdx = -1
+smTrgCompIdx = -1
+smSngCompIdx = -1
+
+
+{ load_file("SynManagerLoads.hoc") }
+
+
+proc createSynComps() {
+    smAllComps = new List()
+    smAllComps.append(new SynPPComp("Source PP"))
+    smAllComps.append(new SynNCComp())
+    smAllComps.append(new SynPPComp("Target PP"))
+    smAllComps.append(new SynPPComp("Single PP"))
+    smSrcCompIdx = 0
+    smNCCompIdx = 1
+    smTrgCompIdx = 2
+    smSngCompIdx = 3
+}
+
+proc createSynCompsAndShowSynManagerBaseWidget() { localobj nil
+
+    if (isAstrocyteOrNeuron) {
+        codeContractViolation()
+    }
+    
+    if (smAllComps == nil) {
+        createSynComps()
+    }
+    
+    dismissIfNotNil(msmBaseWidget)
+    msmBaseWidget = new MechOrSynManagerBaseWidget(0)
+    msmBaseWidget.show()
+    msmBaseWidget.showSynManagerHandler()
+    msmBaseWidget.showAltRunControlHandler()
+}

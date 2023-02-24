@@ -10,14 +10,6 @@ isAllOrSomeDendritesSeeded = -1
 objref seededDendrite_ref, nanoBranchesManager
 
 
-// Report the bug, print the call stack and stop
-// !! move to InterModularUtils
-proc codeContractViolation() {
-    print "Bug in Cell program: Code contract violation"
-    0/0     // Just to print the call stack
-    stop
-}
-
 load_file("GetMaxDendriticLength.hoc")
 
 MaxDendriticLength = getMaxDendriticLength()
@@ -32,3 +24,5 @@ if (isAstrocyteOrNeuron) {
 } else {
     nanoBranchesManager = new NanoBranchesManager(MaxNumberSpinesPerDendrite)
 }
+
+soma_ref.o(0).sec distance()

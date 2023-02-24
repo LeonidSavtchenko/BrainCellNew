@@ -1,0 +1,9 @@
+
+{ load_file("SynPPComp.hoc") }
+{ load_file("FakeMechanismStandardForNetCon.hoc") }
+{ load_file("SynNCComp.hoc") }
+{ load_file("SynGroup.hoc") }
+
+{ load_file("Widgets/ListsFilterWidget.hoc") }
+
+{ load_file("Widgets/SynManagerMainWidget.hoc") }
