@@ -4,10 +4,10 @@
 begintemplate MechComp
 
     public name, list_ref, isMechInserted, isMechVarTypeInhom, isMechVarTypeStoch, mechStds, isCompDirty
-    public split, mergeAllSectsFrom, showMechStdPanel, markMechDirty, markAllMechsDirty, applyHomogenChangesToDirtyMechs, getDistRange, getSecList, applySegmentationAndInhomogeneity, updateStatsCurve, isMechVarInhom, prepareMechPanelHeader, convertVarTypeToVarTypeIdx
+    public split, mergeAllSectsFrom, showMechStdPanel, markMechDirty, markAllMechsDirty, applyHomogenChangesToDirtyMechs, getDistRange, getSecList, applySegmentationAndInhomogeneity, updateStatsCurve, isMechVarInhom, prepareVarsEditorHeader, convertVarTypeToVarTypeIdx
     
     external mmAllComps
-    external mwh, math, mth, mmmowb
+    external mwh, math, mth, mmmowb, mcu
     external eachItemInList, stringsEqual, stringEndsWith, stringEmpty, joinStrings, concatenateTwoLists, codeContractViolation, printMsgAndStop
     
     strdef name
@@ -204,7 +204,7 @@ begintemplate MechComp
     }
     
     // !! it would be better to move this to MechTypeHelper
-    proc prepareMechPanelHeader() { local mechIdx, varType
+    proc prepareVarsEditorHeader() { local mechIdx, varType
         strdef varTypeName, mechName
         
         mechIdx = $1
@@ -212,7 +212,7 @@ begintemplate MechComp
         
         mth.getMechName(0, mechIdx, mechName)
         mth.getVarTypeName(varType, varTypeName)
-        sprint($s3, "%s in %s (all %s variables)", mechName, name, varTypeName)
+        sprint($s3, "%s in %s (all %s variables):", mechName, name, varTypeName)
     }
     
     proc markMechDirty() { local mechIdx
@@ -233,16 +233,17 @@ begintemplate MechComp
     }
     
     // !! need to test all isDirty staff carefully
-    proc applyHomogenChangesToDirtyMechs() { local numMechs, mechIdx, varType, varTypeIdx, x, varIdx, arraySize, arrayIndex, value localobj mechType, sec_ref, mechStd
+    proc applyHomogenChangesToDirtyMechs() { local numMechs, mechIdx, varType, varTypeIdx, x, varIdx, arraySize, arrayIndex localobj mechType, sec_ref, compMechStd, tempMechStd
         strdef mechName, varName, autoAddedIons, msg
         
-        numMechs = mth.getNumMechs(0)
+        mechType = mth.getMechType(0)
+        
+        numMechs = mechType.count
         
         for mechIdx = 0, numMechs - 1 {
             if (!isMechDirty[mechIdx]) {
                 continue
             }
-            mechType = mth.getMechType(0, mechIdx)
             mechType.select(mechIdx)
             mth.getMechName(0, mechIdx, mechName)
             for eachItemInList(sec_ref, list_ref) {
@@ -253,23 +254,15 @@ begintemplate MechComp
                         mechType.make()
                         for varType = 1, 3 {    // 1: "PARAMETER", 2: "ASSIGNED", 3: "STATE"
                             varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
+                            compMechStd = mechStds[mechIdx][varTypeIdx]
                             if (!isMechVarTypeInhom[mechIdx][varTypeIdx]) {
-                                mechStds[mechIdx][varTypeIdx].out()
+                                compMechStd.out()
                             } else {
-                                mechStd = new MechanismStandard(mechName, varType)
+                                tempMechStd = new MechanismStandard(mechName, varType)
                                 for (x, 0) {
-                                    mechStd.in(x)
-                                    for varIdx = 0, mechStd.count() - 1 {
-                                        arraySize = mth.getVarNameAndArraySize(0, mechIdx, varType, varIdx, varName)
-                                        for arrayIndex = 0, arraySize - 1 {
-                                            value = mechStds[mechIdx][varTypeIdx].get(varName, arrayIndex)
-                                            if (!math.isNaN(value)) {
-                                                // Rewriting only homogeneous variables
-                                                mechStd.set(varName, value, arrayIndex)
-                                            }
-                                        }
-                                    }
-                                    mechStd.out(x)
+                                    tempMechStd.in(x)
+                                    mcu.copyAllVarsValuesExceptInhom(compMechStd, tempMechStd)
+                                    tempMechStd.out(x)
                                 }
                             }
                         }
@@ -393,7 +386,7 @@ begintemplate MechComp
         mwh.hidePleaseWaitBox()
     }
     
-    proc updateStatsCurve() { local yMin, yMax, varType, arrayIndex, dd, x, y, d, d1, d2 localobj graph, mechStd, sec_ref
+    proc updateStatsCurve() { local yMin, yMax, varType, arraySize, arrayIndex, dd, x, y, d, d1, d2 localobj graph, mechStd, sec_ref
         strdef mechName, varName
         
         graph = $o1
@@ -402,9 +395,13 @@ begintemplate MechComp
         mechName = $s4
         varType = $5
         varName = $s6
-        arrayIndex = $7
+        arraySize = $7  // Just a placeholder
+        arrayIndex = $8
         
         mechStd = new MechanismStandard(mechName, varType)
+        
+        graph.brush(0)  // Solid line
+        graph.color(2)  // Red
         
         for eachItemInList(sec_ref, list_ref) {
             sec_ref.sec {

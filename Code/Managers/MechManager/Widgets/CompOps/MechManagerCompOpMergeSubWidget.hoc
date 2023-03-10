@@ -89,7 +89,7 @@ begintemplate MechManagerCompOpMergeSubWidget
             
             // Borrowing all inserted sticky mechs
             for mechIdx = 0, numMechs - 1 {
-                if (mth.isMechSticky(mechIdx) && srcComp.isMechInserted[mechIdx] && !dstComp.isMechInserted[mechIdx]) {
+                if (mth.isDistMechSticky(mechIdx) && srcComp.isMechInserted[mechIdx] && !dstComp.isMechInserted[mechIdx]) {
                     dstComp.isMechInserted[mechIdx] = 1
                     
                     isStickyMechBorrowed = 1

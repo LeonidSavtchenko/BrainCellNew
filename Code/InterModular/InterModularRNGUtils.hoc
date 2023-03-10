@@ -7,13 +7,13 @@
 
 begintemplate RNGUtils
 
-    public getFor_diameters, getFor_calcium, getFor_frapCircle, getFor_diamAndLen, getFor_branchSeeder, getFor_spineRadius, getFor_neckLen, getFor_neckDiam, getFor_stochFunc_withUniqueSeed, getFor_stretch_withCustomSeed
+    public getFor_diameters, getFor_calcium, getFor_frapCircle, getFor_diamAndLen, getFor_branchSeeder, getFor_spineRadius, getFor_neckLen, getFor_neckDiam, getFor_synLoc, getFor_stochFunc_withUniqueSeed, getFor_stretch_withCustomSeed
     
     uniqueSeed = -1
     
     
     proc init() {
-        uniqueSeed = 8      // Keep in sync with the code below
+        uniqueSeed = 9      // Keep in sync with the code below
     }
     
     obfunc getFor_diameters() {
@@ -45,7 +45,11 @@ begintemplate RNGUtils
     }
     
     obfunc getFor_neckDiam() {
-        return new Random(7)    // Must be equal to uniqueSeed - 1
+        return new Random(7)
+    }
+    
+    obfunc getFor_synLoc() {
+        return new Random(8)    // Must be equal to uniqueSeed - 1
     }
     
     obfunc getFor_stochFunc_withUniqueSeed() { localobj rng

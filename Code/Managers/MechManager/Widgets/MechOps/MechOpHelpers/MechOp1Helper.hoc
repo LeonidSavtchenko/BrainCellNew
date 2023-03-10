@@ -4,14 +4,13 @@
 begintemplate MechOp1Helper
 
     public getHeader, isSkipBlock, insertBlock, dismissChilds
-    public title, isRequireApply, itemTypeIdx, varsEditorSubWidget
+    public title, isRequireApply, itemTypeIdx
     public codeContractViolation
     
     external mmAllComps
     external mth, mwh
     external getGlobalVarsHint, stringEndsWith, dismissIfNotNil
-    
-    objref varsEditorSubWidget
+    external varsEditorSubWidget
     
     strdef title
     isRequireApply = -1
@@ -143,7 +142,7 @@ begintemplate MechOp1Helper
             return
         }
         
-        comp.prepareMechPanelHeader(mechIdx, varType, header)
+        comp.prepareVarsEditorHeader(mechIdx, varType, header)
         
         if (varType != -1) {
             // Convert from varType to varTypeIdx
@@ -159,7 +158,7 @@ begintemplate MechOp1Helper
             // mechStd.panel(header)
             
             // New editor
-            varsEditorSubWidget = new VarsEditorWidget(1, compIdx, mechIdx, varType)
+            varsEditorSubWidget = new VarsEditorWidget(0, compIdx, mechIdx, varType)
             varsEditorSubWidget.show()
             
         } else {

@@ -37,11 +37,11 @@ proc exportCellToHocFile() {
     // !! think about a checkbox to open just saved file in default text editor
     mwh.startIntercepting()
     {
-        msg = "Here is what we don't export: (1) \"nseg\", (2) all changes made with Mech Manager%s."
+        msg = "We don't export the changes made with Mech Manager%s."
         if (isAstrocyteOrNeuron) {
             sprint(msg, msg, "")
         } else {
-            sprint(msg, msg, " and (3) Syn Manager")
+            sprint(msg, msg, " and Syn Manager")
         }
         mwh.showNotImplementedWarning(msg)
         // !! also, the distance centre location is hardcoded in the exported file rather than actually exported

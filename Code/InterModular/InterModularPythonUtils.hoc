@@ -2,10 +2,10 @@
 objref pyObj
 pyObj = new PythonObject()
 
-nrnpython("from neuron import h")
+{ nrnpython("from neuron import h") }
 
 // !! use "pyObj.ev" everywhere in the project instead of "nrnpython" to avoid top-level output arg
-nrnpython("ev = lambda arg : eval(arg)")
+{ nrnpython("ev = lambda arg : eval(arg)") }
 
 
 proc _callPythonStringFunc() { local status

@@ -8,7 +8,7 @@ begintemplate MechOp2Helper
     public title, isRequireApply, itemTypeIdx
     
     external mmAllComps
-    external mwh, mth, mmmowb, msmBaseWidget
+    external mwh, mth, mmmowb, mcu
     external dismissIfNotNil
     
     objref defineDistFuncSubWidget
@@ -103,7 +103,7 @@ begintemplate MechOp2Helper
         
         dismissChilds()
         
-        defineDistFuncSubWidget = msmBaseWidget.defineDistFuncHandler(1, compIdx, mechIdx, varType, varIdx, arrayIndex)
+        defineDistFuncSubWidget = mcu.defineDistFuncHandler(0, compIdx, mechIdx, varType, varIdx, arrayIndex)
     }
     
 endtemplate MechOp2Helper

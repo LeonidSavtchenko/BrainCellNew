@@ -4,7 +4,7 @@ begintemplate MechOpWidgetBase
 
     external msmBaseWidget
     external mmAllComps
-    external mwh, mth
+    external mwh, mth, mcu
     external eachItemInList, stringEmpty
     
     public isDirty, lastMechOpIdx
@@ -172,7 +172,7 @@ begintemplate MechOpWidgetBase
             xlabel(headerLine1)
             isRequireApply = mechOpHelper.isRequireApply
             if (isRequireApply) {
-                msmBaseWidget.createApplyReminder(1, 1)
+                mcu.createApplyReminder(1, 1)
             }
             if (!stringEmpty(headerLine3)) {
                 xlabel(headerLine3)
@@ -393,7 +393,7 @@ begintemplate MechOpWidgetBase
         allItemsHeight = numInsertedItems * itemHeight
         
         if (allItemsHeight < rowBodyHeight) {
-            // We insert these spacers to make the panel background blue rather than gray
+            // We insert these spacers to make the panel background cyan rather than gray
             insertSpacersCore(allItemsHeight, rowBodyHeight)
         } else if (allItemsHeight < sliderMinHeight) {
             // We insert these spacers as a workaround for strange Neuron behviour
@@ -456,7 +456,7 @@ begintemplate MechOpWidgetBase
     
     proc applyHandler() {
         if (!isDirty) {
-            mwh.showMessageBox("There is no changes in mechanisms to apply.", "No changes")
+            mwh.showMessageBox("There are no changes in mechanisms to apply.", "No changes")
             return
         }
         

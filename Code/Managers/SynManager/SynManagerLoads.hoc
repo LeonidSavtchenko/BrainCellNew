@@ -1,9 +1,10 @@
 
-{ load_file("SynPPComp.hoc") }
-{ load_file("FakeMechanismStandardForNetCon.hoc") }
-{ load_file("SynNCComp.hoc") }
+{ load_file("SynComps/SynPPComp.hoc") }
+{ load_file("FakesForNetCon/LoadsForFakeMechanismForNetCon.hoc") }
+{ load_file("SynComps/SynNCComp.hoc") }
 { load_file("SynGroup.hoc") }
 
+{ load_file("Widgets/SynLocationWidget.hoc") }
 { load_file("Widgets/ListsFilterWidget.hoc") }
 
 { load_file("Widgets/SynManagerMainWidget.hoc") }

@@ -57,7 +57,7 @@ begintemplate MechOp0Helper
         
         if (mechIdx == mth.morphologyMechIdx) {
             hocCommandTemplate = "preventCheckboxUncheckingHandler(%d, %d)"
-        } else if (mth.isMechSticky(mechIdx)) {
+        } else if (mth.isDistMechSticky(mechIdx)) {
             hocCommandTemplate = "stickyMechCheckboxHandler(%d, %d)"
         } else {
             hocCommandTemplate = "checkboxHandler(%d, %d)"
@@ -89,7 +89,7 @@ begintemplate MechOp0Helper
         compIdx = $1
         mechIdx = $2
         
-        if (!mth.isMechSticky(mechIdx)) {
+        if (!mth.isDistMechSticky(mechIdx)) {
             codeContractViolation()
         }
         

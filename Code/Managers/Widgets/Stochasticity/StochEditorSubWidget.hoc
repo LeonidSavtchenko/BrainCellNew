@@ -5,8 +5,9 @@ begintemplate StochEditorSubWidget
     public boundingHelper, sampleSize
     
     external msmBaseWidget
-    external mwh, math, mth, mmmowb, inhomAndStochApplicator
+    external mwh, math, mth, mmmowb, mcu, inhomAndStochApplicator
     external createEmptyPanel, oneZeroToYesNo, eachPointInGrid, codeContractViolation
+    external varsEditorSubWidget
     
     objref mainBox, deck1, deck2, deck3, deck4, deck5, deck6, deck7, deck8, deck9, deck10, graph1, graph2, graph3, graph4, graph5, graph6, graph7, this
     
@@ -25,6 +26,7 @@ begintemplate StochEditorSubWidget
     sampleSize = -1
     numBins = -1
     
+    enumDmPpNc = -1
     isMechOrSynEditor = -1
     compIdx = -1
     objref comp
@@ -47,17 +49,19 @@ begintemplate StochEditorSubWidget
     
     proc init() { local inf, isAlreadyEnabled
     
-        isMechOrSynEditor = $1
+        enumDmPpNc = $1
         compIdx = $2
         mechIdx = $3
         varType = $4
         varIdx = $5
         arrayIndex = $6
         
-        comp = msmBaseWidget.getComp(isMechOrSynEditor, compIdx)
-        mth.getMechName(!isMechOrSynEditor, mechIdx, mechName)
+        isMechOrSynEditor = (enumDmPpNc == 0)
+        
+        comp = mcu.getComp(isMechOrSynEditor, compIdx)
+        mth.getMechName(enumDmPpNc, mechIdx, mechName)
         varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
-        arraySize = mth.getVarNameAndArraySize(!isMechOrSynEditor, mechIdx, varType, varIdx, varName)
+        arraySize = mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName)
         mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
         
         colourizationHelper = new ColourizationHelper()
@@ -114,7 +118,7 @@ begintemplate StochEditorSubWidget
         compName = comp.name
         mth.getVarTypeName(varType, varTypeName)
         mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
-        mth.getVarNameWithIndexAndUnits(!isMechOrSynEditor, mechIdx, varName, arraySize, arrayIndex, varNameWithIndexAndUnits)
+        mth.getVarNameWithIndexAndUnits(enumDmPpNc, mechIdx, varName, arraySize, arrayIndex, varNameWithIndexAndUnits)
         isInhom = comp.isMechVarInhom(mechIdx, varTypeIdx, varName, arrayIndex)
         
         mainBox = new VBox()
@@ -126,13 +130,13 @@ begintemplate StochEditorSubWidget
             xpanel()
             */
             xpanel("")
-            msmBaseWidget.createApplyReminder(isMechOrSynEditor, 0)
+            mcu.createApplyReminder(isMechOrSynEditor, 0)
             xpanel()
             hBox1 = new HBox()
             hBox1.intercept(1)
             {
                 xpanel("")
-                msmBaseWidget.createEditorSubWidgetDigest(isMechOrSynEditor, compName, mechName, varTypeName, varNameWithIndexAndUnits)
+                mcu.createEditorSubWidgetDigest(enumDmPpNc, compName, mechName, varTypeName, varNameWithIndexAndUnits)
                 /* !!! do I need this?
                 xlabel("")
                 sprint(text, "Distance range for %s:", compName)
@@ -1041,8 +1045,10 @@ begintemplate StochEditorSubWidget
             return
         }
         
-        if (mth.checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisVar(mechIdx, varType, varName)) {
-            return
+        if (isMechOrSynEditor) {
+            if (mth.checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar(mechIdx, varType, varName)) {
+                return
+            }
         }
         
         colourizationHelper.consumeSettings()
@@ -1051,8 +1057,14 @@ begintemplate StochEditorSubWidget
         if (isMechOrSynEditor) {
             mechOpIdx = mmmowb.lastMechOpIdx
             if (mechOpIdx == 1) {
-                mmmowb.mechOpHelpers[1].varsEditorSubWidget.onApplyInStochEditor(varIdx, arrayIndex)
+                varsEditorSubWidget.onApplyInStochEditor(varIdx, arrayIndex)
             }
+        } else {
+            isOK = msmBaseWidget.synManagerMainWidget.warnIfUserHasNotSelectedPPs()
+            if (!isOK) {
+                return
+            }
+            msmBaseWidget.synManagerMainWidget.applyChangesToSynStrucIfNeeded()
         }
         
         isFound = inhomAndStochApplicator.enableOrUpdateStochFor(compIdx, mechIdx, varType, varIdx, arrayIndex, boundingHelper, stochFuncHelpers[stochFuncIdx], stochFuncCatIdx, stochFuncIdx)
@@ -1071,7 +1083,7 @@ begintemplate StochEditorSubWidget
         if (isMechOrSynEditor) {
             mechOpIdx = mmmowb.lastMechOpIdx
             if (mechOpIdx == 1) {
-                mmmowb.mechOpHelpers[1].varsEditorSubWidget.onDisableInStochEditor(varIdx, arrayIndex)
+                varsEditorSubWidget.onDisableInStochEditor(varIdx, arrayIndex)
             } else if (mechOpIdx == 3) {
                 // !! need to unmap and show the parent widget again to hide the button
             }

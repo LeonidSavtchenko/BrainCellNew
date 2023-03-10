@@ -8,7 +8,7 @@ begintemplate MechOp3Helper
     public title, isRequireApply, itemTypeIdx
     
     external mmAllComps
-    external math, mth, mwh, mmmowb, msmBaseWidget, inhomAndStochApplicator
+    external math, mth, mwh, mmmowb, mcu, inhomAndStochApplicator
     external dismissIfNotNil
     
     objref defineStochFuncSubWidget
@@ -103,7 +103,7 @@ begintemplate MechOp3Helper
         
         dismissChilds()
         
-        defineStochFuncSubWidget = msmBaseWidget.defineStochFuncHandler(1, compIdx, mechIdx, varType, varIdx, arrayIndex)
+        defineStochFuncSubWidget = mcu.defineStochFuncHandler(0, compIdx, mechIdx, varType, varIdx, arrayIndex)
     }
     
 endtemplate MechOp3Helper

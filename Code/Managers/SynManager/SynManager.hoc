@@ -1,10 +1,19 @@
 
-objref smAllComps
+begintemplate EnumSynCompIdxs
+    
+    public source, netCon, target, single
+    
+    source = -1
+    netCon = -1
+    target = -1
+    single = -1
+    
+endtemplate EnumSynCompIdxs
 
-smSrcCompIdx = -1
-smNCCompIdx = -1
-smTrgCompIdx = -1
-smSngCompIdx = -1
+objref enumSynCompIdxs
+enumSynCompIdxs = new EnumSynCompIdxs()
+
+objref smAllComps
 
 
 { load_file("SynManagerLoads.hoc") }
@@ -12,14 +21,14 @@ smSngCompIdx = -1
 
 proc createSynComps() {
     smAllComps = new List()
-    smAllComps.append(new SynPPComp("Source PP"))
+    smAllComps.append(new SynPPComp("Source PP", 0))
     smAllComps.append(new SynNCComp())
-    smAllComps.append(new SynPPComp("Target PP"))
-    smAllComps.append(new SynPPComp("Single PP"))
-    smSrcCompIdx = 0
-    smNCCompIdx = 1
-    smTrgCompIdx = 2
-    smSngCompIdx = 3
+    smAllComps.append(new SynPPComp("Target PP", 1))
+    smAllComps.append(new SynPPComp("Single PP", 2))
+    enumSynCompIdxs.source = 0
+    enumSynCompIdxs.netCon = 1
+    enumSynCompIdxs.target = 2
+    enumSynCompIdxs.single = 3
 }
 
 proc createSynCompsAndShowSynManagerBaseWidget() { localobj nil

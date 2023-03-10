@@ -5,10 +5,10 @@
 
 begintemplate MechOrSynManagerBaseWidget
 
-    public show, showMechManagerHandler, showSynManagerHandler, showAltRunControlHandler, onReseedHandler, getComp, defineDistFuncHandler, defineStochFuncHandler, createApplyReminder, createEditorSubWidgetDigest, createSpacerPanel, dismissHandler
+    public show, showMechManagerHandler, showSynManagerHandler, showAltRunControlHandler, onReseedHandler, dismissHandler
+    public synManagerMainWidget
     
-    external mmAllComps, smAllComps, synGroup
-    external mmmowb
+    external mmAllComps, smAllSyns, synGroup
     external mwh
     external dismissIfNotNil
     
@@ -42,14 +42,28 @@ begintemplate MechOrSynManagerBaseWidget
     
     proc showMechManagerHandler() {
         dismissIfNotNil(mechManagerMainWidget)
+        
+        if (mmAllComps.count() == 0) {
+            mwh.showWarningBox("Cannot open the manager of distributed mechanisms because there are no compartments.")
+            return
+        }
+        
         execute("mechManagerMainWidget = new MechManagerMainWidget()", this)
         mechManagerMainWidget.show()
         mechManagerMainWidget.mechOpSelectHandler()
     }
     
-    proc showSynManagerHandler() { local isDisconnected, xMin, xMax
+    proc showSynManagerHandler() { local isDisconnected, xMin, xMax localobj nil
         dismissIfNotNil(synManagerMainWidget)
-        execute("synManagerMainWidget = new SynManagerMainWidget()", this)
+        
+        if (smAllSyns.count() == 0) {
+            mwh.showWarningBox("Cannot open the manager of synapses because there are no synapses.")
+            return
+        }
+        
+        if (synManagerMainWidget == nil) {
+            execute("synManagerMainWidget = new SynManagerMainWidget()", this)
+        }
         
         isDisconnected = synGroup.getDistRange(&xMin, &xMax)
         if (isDisconnected) {
@@ -72,120 +86,6 @@ begintemplate MechOrSynManagerBaseWidget
         dismissIfNotNil(mechManagerMainWidget)
         dismissIfNotNil(synManagerMainWidget)
         // !! maybe need to mark mechs and syns dirty somehow to force rescan on opening the widgets once again
-    }
-    
-    obfunc getComp() { local isMechOrSynEditor, compIdx
-        isMechOrSynEditor = $1
-        compIdx = $2
-        if (isMechOrSynEditor) {
-            return mmAllComps.o(compIdx)
-        } else {
-            return smAllComps.o(compIdx)
-        }
-    }
-    
-    obfunc defineDistFuncHandler() { local isMechOrSynEditor, compIdx, mechIdx, varType, varIdx, arrayIndex, isDisconnected, xMin, xMax localobj comp, nil, defineDistFuncSubWidget
-        isMechOrSynEditor = $1
-        compIdx = $2
-        mechIdx = $3
-        varType = $4
-        varIdx = $5
-        arrayIndex = $6
-        
-        comp = getComp(isMechOrSynEditor, compIdx)
-        
-        isDisconnected = comp.getDistRange(&xMin, &xMax)
-        if (isDisconnected) {
-            mwh.showWarningBox("Cannot edit inhomogeneity in this compartment", "because at least one its section doesn't have a topological connection with the distance centre.")
-            
-            // !! overkill here: we don't need to prevent opening the widget because user might wanted to do smth unrelated to inhomogeneity
-            return nil
-        }
-        
-        // !! if exists, then need to pass the old helper object here to restore the UI state
-        //    also, we'll need the helper on export
-        defineDistFuncSubWidget = new InhomEditorSubWidget(isMechOrSynEditor, compIdx, xMin, xMax, mechIdx, varType, varIdx, arrayIndex)
-        defineDistFuncSubWidget.show()
-        
-        return defineDistFuncSubWidget
-    }
-    
-    obfunc defineStochFuncHandler() { local isMechOrSynEditor, compIdx, mechIdx, varType, varIdx, arrayIndex localobj defineStochFuncSubWidget
-        isMechOrSynEditor = $1
-        compIdx = $2
-        mechIdx = $3
-        varType = $4
-        varIdx = $5
-        arrayIndex = $6
-        
-        // !! if exists, then need to pass the old helper object here to restore the UI state
-        //    also, we'll need the helper on export
-        defineStochFuncSubWidget = new StochEditorSubWidget(isMechOrSynEditor, compIdx, mechIdx, varType, varIdx, arrayIndex)
-        defineStochFuncSubWidget.show()
-        
-        return defineStochFuncSubWidget
-    }
-    
-    proc createApplyReminder() { local isMechOrSynEditor, isOrLeave
-        strdef textTempl, targetName, textEnd, text
-        
-        isMechOrSynEditor = $1
-        isOrLeave = $2
-        
-        textTempl = "No changes will be applied to %s until you click the \"Apply\" button%s"
-        
-        if (isMechOrSynEditor) {
-            targetName = "sections biophysics"
-        } else {
-            targetName = "synapses"
-        }
-        
-        if (isOrLeave) {
-            textEnd = " or leave this window."
-        } else {
-            textEnd = "."
-        }
-        
-        sprint(text, textTempl, targetName, textEnd)
-        
-        xlabel(text)
-    }
-    
-    proc createEditorSubWidgetDigest() { local isMechOrSynEditor
-        strdef compName, mechName, varTypeName, varNameWithIndexAndUnits, compClassName, mechClassName, textTempl, text
-        
-        isMechOrSynEditor = $1
-        compName = $s2
-        mechName = $s3
-        varTypeName = $s4
-        varNameWithIndexAndUnits = $s5
-        
-        if (isMechOrSynEditor) {
-            compClassName = "Compartment"
-            mechClassName = "Mechanism"
-        } else {
-            compClassName = "Synapse part"
-            mechClassName = "Point process"
-        }
-        
-        textTempl = "%s: %s"
-        
-        sprint(text, textTempl, compClassName, compName)
-        xlabel(text)
-        sprint(text, textTempl, mechClassName, mechName)
-        xlabel(text)
-        sprint(text, textTempl, varTypeName, varNameWithIndexAndUnits)
-        xlabel(text)
-    }
-    
-    proc createSpacerPanel() { local numEmptyLabels, spacerIdx
-        numEmptyLabels = $1
-        // !! this panel doesn't resize in case of widget resizing
-        xpanel("")
-        for spacerIdx = 0, numEmptyLabels - 1 {
-            xlabel("")
-        }
-        xpanel()
     }
     
     proc dismissHandler() {

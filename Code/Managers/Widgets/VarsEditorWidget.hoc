@@ -1,21 +1,19 @@
 
-// This widget is just a substitute for method MechanismStandard.panel() with 3 pros and 1 cons
-// Pros 1 (major): We can show "nan" for those variables which are inhomogeneous; user can delete "nan" and enter a value to make it homogeneous
-// Pros 2 (minor): We can hide the widget once user switches to other operation, so no multiple copies or zombies will be shown
-// Pros 3 (minor): We can choose the location on the screen for the widget
-// Cons   (major): Variable domains are not checked for variables anymore
+// This widget has one major cons compared to MechanismStandard.panel():
+// the variable domains are not checked for variables anymore
 
 begintemplate VarsEditorWidget
 
     public show, onApplyInInhomEditor, onApplyInStochEditor, onDisableInStochEditor, dismissHandler
+    public compIdx
     
-    external mwh, math, mth, msmBaseWidget, inhomAndStochApplicator
-    external dismissIfNotNil, codeContractViolation
+    external mwh, math, mth, mcu, inhomAndStochApplicator
+    external createEmptyPanel, dismissIfNotNil, codeContractViolation
     
     objref mainBox
     objref mechStd, buffer, isMechVarInhom, isMechVarStoch
     
-    isMechOrSynEditor = -1
+    enumDmPpNc = -1
     compIdx = -1
     objref comp
     mechIdx = -1
@@ -27,10 +25,10 @@ begintemplate VarsEditorWidget
     objref subWidget
     
     
-    proc init() { local numMechVars, varIdx, arraySize, arrayIndex, isInhom, isStoch localobj inhomFlagsVec, stochFlagsVec
+    proc init() { local isMechOrSynEditor, numMechVars, varIdx, arraySize, arrayIndex, isInhom, isStoch localobj inhomFlagsVec, stochFlagsVec
         strdef varName
         
-        isMechOrSynEditor = $1
+        enumDmPpNc = $1
         compIdx = $2
         mechIdx = $3
         varType = $4
@@ -39,7 +37,8 @@ begintemplate VarsEditorWidget
             codeContractViolation()
         }
         
-        comp = msmBaseWidget.getComp(isMechOrSynEditor, compIdx)
+        isMechOrSynEditor = (enumDmPpNc == 0)
+        comp = mcu.getComp(isMechOrSynEditor, compIdx)
         
         varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
         
@@ -51,7 +50,7 @@ begintemplate VarsEditorWidget
         isMechVarInhom = new List()
         isMechVarStoch = new List()
         for varIdx = 0, numMechVars - 1 {
-            arraySize = mth.getVarNameAndArraySize(!isMechOrSynEditor, mechIdx, varType, varIdx, varName)
+            arraySize = mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName)
             inhomFlagsVec = new Vector(arraySize)
             stochFlagsVec = new Vector(arraySize)
             for arrayIndex = 0, arraySize - 1 {
@@ -64,7 +63,7 @@ begintemplate VarsEditorWidget
             isMechVarStoch.append(stochFlagsVec)
         }
         
-        slotHeight = 28     // !! be careful increasing it because the "nan" hint gets cropped
+        slotHeight = 31
     }
     
     proc show() { local isAnyNaN, varIdx, arraySize, arrayIndex, isThisNaN localobj vec, subBoxes, hBox, vBox1, vBox2, vBox3
@@ -76,15 +75,15 @@ begintemplate VarsEditorWidget
         mainBox.intercept(1)
         {
             xpanel("")
-            comp.prepareMechPanelHeader(mechIdx, varType, header)
+            comp.prepareVarsEditorHeader(mechIdx, varType, header)
             xlabel(header)
             xpanel()
             isAnyNaN = 0
             for varIdx = 0, buffer.count() - 1 {
-                arraySize = mth.getVarNameAndArraySize(!isMechOrSynEditor, mechIdx, varType, varIdx, varName)
+                arraySize = mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName)
                 vec = buffer.o(varIdx)
                 for arrayIndex = 0, arraySize - 1 {
-                    mth.getVarNameWithIndexAndUnits(!isMechOrSynEditor, mechIdx, varName, arraySize, arrayIndex, varNameWithIndexAndUnits)
+                    mth.getVarNameWithIndexAndUnits(enumDmPpNc, mechIdx, varName, arraySize, arrayIndex, varNameWithIndexAndUnits)
                     isThisNaN = math.isNaN(vec.x(arrayIndex))
                     
                     hBox = new HBox()
@@ -134,12 +133,15 @@ begintemplate VarsEditorWidget
                     isAnyNaN = isAnyNaN || isThisNaN
                 }
             }
-            xpanel("")
+            xpanel("")              // Without this, the last var gets cropped sometimes
             if (isAnyNaN) {
                 xlabel("* \"nan\" means \"inhomogeneous\";")
                 xlabel("   to make it homogeneous, replace \"nan\" with a number, press \"Enter\" and click \"Apply\" in the parent widget")
             }
             xpanel()
+            if (isAnyNaN) {
+                createEmptyPanel()  // Without this, the "nan" hint gets cropped sometimes
+            }
         }
         mainBox.intercept(0)
         mainBox.dismiss_action("dismissHandler()")
@@ -198,14 +200,14 @@ begintemplate VarsEditorWidget
         varIdx = $1
         arrayIndex = $2
         defineSmthCommonHandler(isMechVarInhom, varIdx, arrayIndex)
-        subWidget = msmBaseWidget.defineDistFuncHandler(isMechOrSynEditor, compIdx, mechIdx, varType, varIdx, arrayIndex)
+        subWidget = mcu.defineDistFuncHandler(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
     }
     
     proc defineStochFuncHandler() { local varIdx, arrayIndex
         varIdx = $1
         arrayIndex = $2
         defineSmthCommonHandler(isMechVarStoch, varIdx, arrayIndex)
-        subWidget = msmBaseWidget.defineStochFuncHandler(isMechOrSynEditor, compIdx, mechIdx, varType, varIdx, arrayIndex)
+        subWidget = mcu.defineStochFuncHandler(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
     }
     
     proc defineSmthCommonHandler() { local varIdx, arrayIndex localobj isMechVarSmth

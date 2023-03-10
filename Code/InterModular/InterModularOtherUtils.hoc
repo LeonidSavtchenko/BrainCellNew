@@ -1,29 +1,4 @@
 
-proc getGlobalVarsHint() {
-    $s1 = "The only exception is for GLOBAL variables. Any changes to them are applied immediately."
-}
-
-proc oneZeroToYesNo() { local oneOrZero
-    oneOrZero = $1
-    if (oneOrZero) {
-        $s2 = "YES"
-    } else {
-        $s2 = "NO"
-    }
-}
-
-proc createEmptyPanel() {
-    xpanel("")
-    xpanel()
-}
-
-proc dismissIfNotNil() { localobj widget, nil
-    widget = $o1
-    if (widget != nil) {
-        widget.dismissHandler()
-    }
-}
-
 // An iterator to help with looping over a linear grid when we need to cancel the standard to Neuron "float_epsilon" comparison
 // applied to all comparison operators by default.
 // Basically, we replace this naive (and buggy in most cases) code:

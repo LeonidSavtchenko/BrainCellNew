@@ -1,7 +1,4 @@
 
-objref warnBox
-
-
 // Print error message and stop
 // $s1 - The message
 proc printImportFailedMsgAndStop() {

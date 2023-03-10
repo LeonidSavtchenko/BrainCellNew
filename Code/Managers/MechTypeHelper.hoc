@@ -1,18 +1,26 @@
 
 // !! if user loads mechanisms dynamically (see neuron.load_mechanisms), then we need to re-create the singleton object
 
+if (isAstrocyteOrNeuron) {
+    objref fakeMechType4NC, utils4FakeMech4NC
+} else {
+    { load_file("SynManager/FakesForNetCon/LoadsForFakeMechanismForNetCon.hoc") }
+}
+
 begintemplate MechTypeHelper
 
-    public getMechType, getNumMechs, getMechName, getNumMechVars, doesMechHaveGlobalVars, doesMechHaveNotGlobalVars, getVarNameAndArraySize, getVarTypeName, getVarNameWithIndex, getVarNameWithIndexAndUnits, isMechSticky, checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisVar, convertVarTypeToVarTypeIdx, isAcceptableNetConSource, isAcceptableNetConTarget
+    public getMechType, getNumMechs, getMechName, getNumMechVars, doesMechHaveGlobalVars, doesMechHaveNotGlobalVars, getVarNameAndArraySize, getVarTypeName, getVarNameWithIndex, getVarNameWithIndexAndUnits, isDistMechSticky, checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar, convertVarTypeToVarTypeIdx, doesPointProcessRequireSection, isPointProcessAcceptableNetConSource, isPointProcessAcceptableNetConTarget
     
     public morphologyMechIdx, diamVarType
     public extracellularMechName, ionSuffix, diamVarName
     
     external mwh
     external stringsEqual, stringEndsWith, stringEmpty, codeContractViolation
+    external fakeMechType4NC, utils4FakeMech4NC
+    external isAstrocyteOrNeuron
     
     objref mechTypes[1]
-    objref _doesMechHaveGlobalVars[1]   // Array of Vector-s of 0/1 flags
+    objref _doesMechHaveGlobalVars[1]
     objref this
     
     // Special mechs and vars
@@ -26,8 +34,8 @@ begintemplate MechTypeHelper
     proc init() { local mechTypeIdx, numMechs, mechIdx, numMechGlobalVars localobj flagsVec
         strdef mechName
         
-        objref mechTypes[2]
-        objref _doesMechHaveGlobalVars[2]
+        objref mechTypes[3]                 // 0: "Distributed Membrane Mechanisms", 1: "Point Processes", 2: "NetCon"
+        objref _doesMechHaveGlobalVars[3]   // Array of Vector-s of 0/1 flags
         
         for mechTypeIdx = 0, 1 {    // 0: "Distributed Membrane Mechanisms", 1: "Point Processes"
             mechTypes[mechTypeIdx] = new MechanismType(mechTypeIdx)
@@ -46,6 +54,16 @@ begintemplate MechTypeHelper
                 
                 flagsVec.x(mechIdx) = (numMechGlobalVars != 0)
             }
+            _doesMechHaveGlobalVars[mechTypeIdx] = flagsVec
+        }
+        
+        if (!isAstrocyteOrNeuron) {
+            mechTypeIdx = 2             // 2: "NetCon"
+            mechTypes[mechTypeIdx] = fakeMechType4NC
+            flagsVec = new Vector(1)
+            mechIdx = 0
+            numMechGlobalVars = utils4FakeMech4NC.getNumGlobalVars()
+            flagsVec.x(mechIdx) = (numMechGlobalVars != 0)
             _doesMechHaveGlobalVars[mechTypeIdx] = flagsVec
         }
         
@@ -75,24 +93,25 @@ begintemplate MechTypeHelper
         checkDistVarCodeContract(morphologyMechIdx, diamVarType, diamVarIdx, diamVarName)
     }
     
-    obfunc getMechType() {
-        return mechTypes[0]
+    obfunc getMechType() { local isLocalOrDist
+        isLocalOrDist = $1
+        return mechTypes[isLocalOrDist]
     }
     
-    func getNumMechs() { local isLocalOrDist
-        isLocalOrDist = $1
-        return mechTypes[isLocalOrDist].count
+    func getNumMechs() { local enumDmPpNc
+        enumDmPpNc = $1
+        return mechTypes[enumDmPpNc].count
     }
     
-    proc getMechName() { local isLocalOrDist, mechIdx localobj mechType
-        isLocalOrDist = $1
+    proc getMechName() { local enumDmPpNc, mechIdx localobj mechType
+        enumDmPpNc = $1
         mechIdx = $2
-        mechType = mechTypes[isLocalOrDist]
+        mechType = mechTypes[enumDmPpNc]
         mechType.select(mechIdx)
         mechType.selected($s3)
     }
     
-    func isMechSticky() { local mechIdx
+    func isDistMechSticky() { local mechIdx
         strdef mechName
         mechIdx = $1
         getMechName(0, mechIdx, mechName)
@@ -103,33 +122,33 @@ begintemplate MechTypeHelper
     // Next proc-s are "static"
     
     
-    func getNumMechVars() { local isLocalOrDist, mechIdx, varType localobj mechStd
-        isLocalOrDist = $1
+    func getNumMechVars() { local enumDmPpNc, mechIdx, varType localobj mechStd
+        enumDmPpNc = $1
         mechIdx = $2
         varType = $3
-        mechStd = createMechStd(isLocalOrDist, mechIdx, varType)
+        mechStd = createMechStd(enumDmPpNc, mechIdx, varType)
         return mechStd.count()
     }
     
-    func doesMechHaveGlobalVars() { local isLocalOrDist, mechIdx
-        isLocalOrDist = $1
+    func doesMechHaveGlobalVars() { local enumDmPpNc, mechIdx
+        enumDmPpNc = $1
         mechIdx = $2
-        return _doesMechHaveGlobalVars[isLocalOrDist].x(mechIdx)
+        return _doesMechHaveGlobalVars[enumDmPpNc].x(mechIdx)
     }
     
-    func doesMechHaveNotGlobalVars() { local isLocalOrDist, mechIdx, varType
-        isLocalOrDist = $1
+    func doesMechHaveNotGlobalVars() { local enumDmPpNc, mechIdx, varType
+        enumDmPpNc = $1
         mechIdx = $2
         varType = $3
-        return getNumMechVars(isLocalOrDist, mechIdx, varType) != 0
+        return getNumMechVars(enumDmPpNc, mechIdx, varType) != 0
     }
     
-    func getVarNameAndArraySize() { local isLocalOrDist, mechIdx, varType, varIdx localobj mechStd
-        isLocalOrDist = $1
+    func getVarNameAndArraySize() { local enumDmPpNc, mechIdx, varType, varIdx localobj mechStd
+        enumDmPpNc = $1
         mechIdx = $2
         varType = $3
         varIdx = $4
-        mechStd = createMechStd(isLocalOrDist, mechIdx, varType)
+        mechStd = createMechStd(enumDmPpNc, mechIdx, varType)
         return mechStd.name($s5, varIdx)
     }
     
@@ -164,10 +183,10 @@ begintemplate MechTypeHelper
     objref _pointProcess
     strdef _unitsStr
     
-    proc getVarNameWithIndexAndUnits() { local isLocalOrDist, mechIdx, arraySize, arrayIndex
+    proc getVarNameWithIndexAndUnits() { local enumDmPpNc, mechIdx, arraySize, arrayIndex localobj nil
         strdef varName, varNameWithIndex, mechName, hocCommand
         
-        isLocalOrDist = $1
+        enumDmPpNc = $1
         mechIdx = $2
         varName = $s3
         arraySize = $4
@@ -178,16 +197,22 @@ begintemplate MechTypeHelper
         // !! is that needed?
         _unitsStr = ""
         
-        if (isLocalOrDist) {
+        if (enumDmPpNc == 0) {
+            _unitsStr = units(varName)
+            // The line below looks more correct but actually leads to error like "Cannot find the symbol for  ca_cadifus[0]"
+            // _unitsStr = units(varNameWithIndex)
+        } else if (enumDmPpNc == 1) {
             // !! is there an easier way to get the units for an point process var?
-            getMechName(isLocalOrDist, mechIdx, mechName)
+            getMechName(enumDmPpNc, mechIdx, mechName)
             sprint(hocCommand, "_pointProcess = new %s(0.5)", mechName) // Without "0.5", we catch "point process not located in a section" error for some PPs, e.g. Exp2Syn
             execute(hocCommand, this)
             sprint(hocCommand, "_unitsStr = units(&_pointProcess.%s)", varNameWithIndex)
             execute(hocCommand, this)
+            _pointProcess = nil
+        } else if (enumDmPpNc == 2) {
+            utils4FakeMech4NC.getVarUnits(varName, _unitsStr)
         } else {
-            _unitsStr = units(varName)
-            // _unitsStr = units(varNameWithIndex) // This looks more correct but actually leads to error like "Cannot find the symbol for  ca_cadifus[0]"
+            codeContractViolation()
         }
         if (!stringEmpty(_unitsStr)) {
             // !! some vars have "1" or "1.0" assigned as units. maybe just omit it here?
@@ -197,7 +222,7 @@ begintemplate MechTypeHelper
         }
     }
     
-    func checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisVar() { local mechIdx, varType
+    func checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar() { local mechIdx, varType
         strdef varName, mechName, line1
         
         mechIdx = $1
@@ -227,12 +252,17 @@ begintemplate MechTypeHelper
         }
     }
     
-    func isAcceptableNetConSource() { local mechIdx
+    func doesPointProcessRequireSection() { local mechIdx
+        mechIdx = $1
+        return !mechTypes[1].is_artificial(mechIdx)
+    }
+    
+    func isPointProcessAcceptableNetConSource() { local mechIdx
         mechIdx = $1
         return mechTypes[1].has_net_event(mechIdx)
     }
     
-    func isAcceptableNetConTarget() { local mechIdx
+    func isPointProcessAcceptableNetConTarget() { local mechIdx
         mechIdx = $1
         return mechTypes[1].is_netcon_target(mechIdx)
     }
@@ -262,13 +292,22 @@ begintemplate MechTypeHelper
         }
     }
     
-    obfunc createMechStd() { local isLocalOrDist, mechIdx, varType
+    objref _fms4nc
+    
+    obfunc createMechStd() { local enumDmPpNc, mechIdx, varType, fms4nc, nil
         strdef mechName
-        isLocalOrDist = $1
+        enumDmPpNc = $1
         mechIdx = $2
         varType = $3
-        getMechName(isLocalOrDist, mechIdx, mechName)
-        return new MechanismStandard(mechName, varType)
+        if (enumDmPpNc != 2) {
+            getMechName(enumDmPpNc, mechIdx, mechName)
+            return new MechanismStandard(mechName, varType)
+        } else {
+            execute("_fms4nc = new FakeMechanismStandardForNetCon()", this)     // The template is not loaded for astrocytes
+            fms4nc = _fms4nc
+            _fms4nc = nil
+            return fms4nc
+        }
     }
     
 endtemplate MechTypeHelper

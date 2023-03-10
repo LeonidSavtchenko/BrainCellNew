@@ -139,7 +139,10 @@ begintemplate CellularCompartmentsMonoSelectWidget
     
     // Handler of "OK" button for the widget
     proc okHandler() { local chosenSomaNameIdx, chosenDendriteNameIdx, chosenAxonNameIdx localobj usedNamesForSoma, usedNamesForDendrites, usedNamesForAxon
-    
+        strdef line2
+        
+        line2 = "Please select different names."
+        
         // Validate selections and prevent widget close if incorrect
         // !! review and optimize this
         chosenSomaNameIdx = somaNameChoices.selected()          // 0 is "(no soma in file)"
@@ -149,17 +152,17 @@ begintemplate CellularCompartmentsMonoSelectWidget
             return
         }
         if (chosenSomaNameIdx - 1 == chosenDendriteNameIdx) {
-            mwh.showWarningBox("Cannot use the same sections for soma and dendrites.", "Please select different names.")
+            mwh.showWarningBox("Cannot use the same sections for soma and dendrites.", line2)
             return
         }
         if (!isAstrocyteOrNeuron) {
             chosenAxonNameIdx = axonNameChoices.selected()  // 0 is "(no axon in file)"
             if (chosenSomaNameIdx != 0 && chosenAxonNameIdx != 0 && (chosenSomaNameIdx == chosenAxonNameIdx)) {
-                mwh.showWarningBox("Cannot use the same sections for soma and axon.", "Please select different names.")
+                mwh.showWarningBox("Cannot use the same sections for soma and axon.", line2)
                 return
             }
             if (chosenDendriteNameIdx == chosenAxonNameIdx - 1) {
-                mwh.showWarningBox("Cannot use the same sections for dendrites and axon.", "Please select different names.")
+                mwh.showWarningBox("Cannot use the same sections for dendrites and axon.", line2)
                 return
             }
         }
@@ -412,22 +415,25 @@ begintemplate CellularCompartmentsMultiSelectWidget
     
     // Handler of "OK" button for the widget
     proc okHandler() { local allDendsUnchecked, idx localobj usedNamesForSoma, usedNamesForDendrites, usedNamesForAxon
-    
+        strdef line2
+        
+        line2 = "Please select different names."
+        
         // Validate selections and prevent widget close if incorrect
         // !! review this and optimize
         allDendsUnchecked = 1
         for idx = 0, allNames.count() - 1 {
             if (somaSelectionFlags.x[idx] && dendriteSelectionFlags.x[idx]) {
-                mwh.showWarningBox("Cannot use the same sections for soma and dendrites.", "Please select different names.")
+                mwh.showWarningBox("Cannot use the same sections for soma and dendrites.", line2)
                 return
             }
             if (!isAstrocyteOrNeuron) {
                 if (dendriteSelectionFlags.x[idx] && axonSelectionFlags.x[idx]) {
-                    mwh.showWarningBox("Cannot use the same sections for dendrites and axon.", "Please select different names.")
+                    mwh.showWarningBox("Cannot use the same sections for dendrites and axon.", line2)
                     return
                 }
                 if (somaSelectionFlags.x[idx] && axonSelectionFlags.x[idx]) {
-                    mwh.showWarningBox("Cannot use the same sections for soma and axon.", "Please select different names.")
+                    mwh.showWarningBox("Cannot use the same sections for soma and axon.", line2)
                     return
                 }
             }

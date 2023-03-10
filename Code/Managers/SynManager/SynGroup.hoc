@@ -4,12 +4,50 @@
 // A group of synapses (a counterpart of MechComp template)
 begintemplate SynGroup
 
-    public getDistRange, getSecList
+    public is3Or1PartInSynStruc, getPpNameOrEmpty, getDistRange, getSecList, applyChangesToLoc, applyChangesToStrucIfNeeded, applyChangesToDirtyHomogenVars, updateStatsCurveIter
     
-    external smAllSyns
-    external math
+    external msmBaseWidget
+    external smAllSyns, smAllComps, nanoProximal_ref, nanoDistal_ref
+    external mwh, mth, math, mcu, rngUtils
+    external stringsEqual, codeContractViolation
     external eachItemInList
+    external enumSynCompIdxs
     
+    objref randomSynLoc
+    objref this
+    
+    
+    proc init() {
+        randomSynLoc = rngUtils.getFor_synLoc()
+    }
+    
+    func is3Or1PartInSynStruc() { localobj nil
+        // It's a code contract that all the syns have the same structure
+        return (smAllSyns.o(0).netCon != nil)
+    }
+    
+    proc getPpNameOrEmpty() { local enumPpRole, idx localobj pp, nil, strFunc
+        strdef ppNameWithBrackets, ppName
+        
+        enumPpRole = $1     // 0: "Source PP", 1: "Target PP", 2: "Single PP"
+        
+        // It's a code contract that all the syns have the same structure
+        pp = smAllSyns.o(0).getPointProcess(enumPpRole)
+        if (pp == nil) {
+            $s2 = ""
+            return
+        }
+        
+        // !! maybe this can be optimized significantly (e.g. with Python) or at least we can extract and call a shared util
+        sprint(ppNameWithBrackets, "%s", pp)
+        strFunc = new StringFunctions()
+        idx = strFunc.head(ppNameWithBrackets, "\\[", ppName)
+        if (idx == -1) {
+            codeContractViolation()
+        }
+        
+        $s2 = ppName
+    }
     
     func getDistRange() { local distMin, distMax, isDisconnected, dist localobj syn
         distMin = math.inf
@@ -41,6 +79,247 @@ begintemplate SynGroup
             syn.sec_ref.sec secList.append()
         }
         return secList
+    }
+    
+    proc applyChangesToLoc() { local enumSynLoc, p, isReviewAfterApply, distMin, distMax, synIdx, connectionPoint, dist localobj sec_ref, syn
+        enumSynLoc = $1
+        p = $2
+        isReviewAfterApply = $3
+        
+        if (enumSynLoc == 2) {
+            randomSynLoc.binomial(1, p)     // Bernoulli distribution
+        }
+        
+        distMin = math.inf
+        distMax = -1
+        for synIdx = 0, smAllSyns.count() - 1 {
+            getNewSecRefAndConnectionPoint(synIdx, enumSynLoc, sec_ref, &connectionPoint)
+            syn = smAllSyns.o(synIdx)
+            syn.changeLocation(sec_ref, connectionPoint)
+            math.updateMinMax(&distMin, &distMax, syn.dist)
+        }
+        
+        msmBaseWidget.synManagerMainWidget.onSynLocChangedHandler(distMin, distMax, isReviewAfterApply)
+    }
+    
+    func applyChangesToStrucIfNeeded() { local is3Or1PartInSynStruc_new, doesSrcPpRequireSection, isForceNewTrgOrSng, is3Or1PartInSynStruc_old, enumPpRole_old, isSrcMechNameUnchanged localobj srcMechType, syn, srcPp, trgPp, netCon, oldPp, sngPp
+        strdef srcMechName, trgMechName, sngMechName, trgOrSngMechName_old, srcMechName_old, trgMechName_old, sngMechName_old
+        
+        is3Or1PartInSynStruc_new = $1
+        srcMechName = $s2
+        trgMechName = $s3
+        sngMechName = $s4
+        doesSrcPpRequireSection = $5
+        isForceNewTrgOrSng = $6
+        
+        is3Or1PartInSynStruc_old = is3Or1PartInSynStruc()
+        
+        if (is3Or1PartInSynStruc_old) {
+            enumPpRole_old = 1
+        } else {
+            enumPpRole_old = 2
+        }
+        getPpNameOrEmpty(enumPpRole_old, trgOrSngMechName_old)
+        
+        if (is3Or1PartInSynStruc_new) {
+            getPpNameOrEmpty(0, srcMechName_old)
+            getPpNameOrEmpty(1, trgMechName_old)
+            isSrcMechNameUnchanged = stringsEqual(srcMechName, srcMechName_old)
+            if (!isForceNewTrgOrSng && isSrcMechNameUnchanged && stringsEqual(trgMechName, trgMechName_old)) {
+                return 0
+            }
+            srcMechType = mth.getMechType(1)
+            srcMechType.select(srcMechName)
+            for eachItemInList(syn, smAllSyns) {
+                srcPp = createNewOrReuseOldSrcPp(syn, isSrcMechNameUnchanged, doesSrcPpRequireSection, srcMechType, srcMechName)
+                trgPp = createNewOrReuseOldTrgOrSngPp(syn, isForceNewTrgOrSng, is3Or1PartInSynStruc_old, trgMechName, trgOrSngMechName_old)
+                netCon = new NetCon(srcPp, trgPp)
+                syn.changeStructure(srcPp, netCon, trgPp)
+            }
+        } else {
+            getPpNameOrEmpty(2, sngMechName_old)
+            if (!isForceNewTrgOrSng && stringsEqual(sngMechName, sngMechName_old)) {
+                return 0
+            }
+            for eachItemInList(syn, smAllSyns) {
+                sngPp = createNewOrReuseOldTrgOrSngPp(syn, isForceNewTrgOrSng, is3Or1PartInSynStruc_old, sngMechName, trgOrSngMechName_old)
+                syn.changeStructure(sngPp)
+            }
+        }
+        
+        return 1
+    }
+    
+    func applyChangesToDirtyHomogenVars() { local srcMechIdx, trgMechIdx, sngMechIdx, isSmthChanged
+        srcMechIdx = $1
+        trgMechIdx = $2
+        sngMechIdx = $3
+        if (is3Or1PartInSynStruc()) {
+            isSmthChanged = ifMechDirtyThenApplyHomogenChanges(enumSynCompIdxs.source, srcMechIdx, 0)
+            isSmthChanged = ifMechDirtyThenApplyHomogenChanges(enumSynCompIdxs.netCon, 0, -1) || isSmthChanged
+            isSmthChanged = ifMechDirtyThenApplyHomogenChanges(enumSynCompIdxs.target, trgMechIdx, 1) || isSmthChanged
+        } else {
+            isSmthChanged = ifMechDirtyThenApplyHomogenChanges(enumSynCompIdxs.single, sngMechIdx, 2)
+        }
+        return isSmthChanged
+    }
+    
+    iterator updateStatsCurveIter() { local synIdx, d, y, yMin, yMax localobj syn, graph
+        graph = $o2
+        yMin = $&4
+        yMax = $&5
+        for synIdx = 0, smAllSyns.count() - 1 {
+            syn = smAllSyns.o(synIdx)
+            d = syn.dist
+            $o1 = syn
+            iterator_statement
+            y = $&3
+            graph.mark(d, y, "O", 2, 2, 0)
+            math.updateMinMax(&yMin, &yMax, y)
+        }
+        $&4 = yMin
+        $&5 = yMax
+    }
+    
+    // All next staff is private
+    
+    
+    obfunc createNewOrReuseOldSrcPp() { local isSrcMechNameUnchanged, doesSrcPpRequireSection localobj syn, srcMechType, outPp
+        strdef mechName
+        
+        syn = $o1
+        isSrcMechNameUnchanged = $2
+        doesSrcPpRequireSection = $3
+        srcMechType = $o4
+        mechName = $s5
+        
+        if (isSrcMechNameUnchanged) {
+            return syn.source
+        }
+        
+        if (!doesSrcPpRequireSection) {
+            srcMechType.make(outPp)     // Not located in any section
+            return outPp
+        } else {
+            return createNewPpAttachedToSection(mechName, syn.sec_ref, syn.connectionPoint)
+        }
+    }
+    
+    obfunc createNewOrReuseOldTrgOrSngPp() { local isForceNew, is3Or1PartInSynStruc_old localobj syn
+        strdef mechName, mechName_old
+        
+        syn = $o1
+        isForceNew = $2
+        is3Or1PartInSynStruc_old = $3
+        mechName = $s4
+        mechName_old = $s5
+        
+        if (!isForceNew && stringsEqual(mechName, mechName_old)) {
+            if (is3Or1PartInSynStruc_old) {
+                return syn.target
+            } else {
+                return syn.single
+            }
+        } else {
+            return createNewPpAttachedToSection(mechName, syn.sec_ref, syn.connectionPoint)
+        }
+    }
+    
+    objref _tempPp
+    
+    obfunc createNewPpAttachedToSection() { local x localobj sec_ref, outPp, nil
+        strdef mechName, hocCommand
+        
+        mechName = $s1
+        sec_ref = $o2
+        x = $3
+        
+        sprint(hocCommand, "_tempPp = new %s(%.15e)", mechName, x)
+        sec_ref.sec {
+            execute(hocCommand, this)
+        }
+        
+        outPp = _tempPp
+        _tempPp = nil
+        
+        return outPp
+    }
+    
+    func ifMechDirtyThenApplyHomogenChanges() { local compIdx, mechIdx, enumPpRole, isPPorNC, maxVarType, varType, varTypeIdx, varIdx, arraySize, arrayIndex localobj comp, syn, ppOrNetCon, compMechStd, tempMechStdExt
+        strdef mechName, varName
+        
+        compIdx = $1
+        mechIdx = $2
+        enumPpRole = $3
+        
+        comp = smAllComps.o(compIdx)
+        
+        if (!comp.isMechDirty[mechIdx]) {
+            return 0
+        }
+        
+        isPPorNC = (compIdx != enumSynCompIdxs.netCon)
+        
+        if (isPPorNC) {
+            mth.getMechName(1, mechIdx, mechName)
+        }
+        for eachItemInList(syn, smAllSyns) {
+            if (isPPorNC) {
+                ppOrNetCon = syn.getPointProcess(enumPpRole)
+                maxVarType = 3
+            } else {
+                ppOrNetCon = syn.netCon
+                maxVarType = 1
+            }
+            for varType = 1, maxVarType {   // 1: "PARAMETER", 2: "ASSIGNED", 3: "STATE"
+                varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
+                compMechStd = comp.mechStds[mechIdx][varTypeIdx]
+                if (!comp.isMechVarTypeInhom[mechIdx][varTypeIdx]) {
+                    compMechStd.out(ppOrNetCon)
+                } else {
+                    if (isPPorNC) {
+                        tempMechStdExt = new MechanismStandard(mechName, varType)
+                    } else {
+                        tempMechStdExt = new FakeMechanismStandardForNetCon()
+                    }
+                    tempMechStdExt.in(ppOrNetCon)
+                    mcu.copyAllVarsValuesExceptInhom(compMechStd, tempMechStdExt)
+                    tempMechStdExt.out(ppOrNetCon)
+                }
+            }
+        }
+        
+        comp.isMechDirty[mechIdx] = 0
+        
+        return 1
+    }
+    
+    proc getNewSecRefAndConnectionPoint() { local synIdx, enumSynLoc, connectionPoint localobj sec_ref
+        synIdx = $1
+        enumSynLoc = $2
+        
+        if (enumSynLoc == 2) {
+            enumSynLoc = randomSynLoc.repick()
+        }
+        
+        if (enumSynLoc == 0) {
+            // Synapse is connected to the centre of spine_head
+            connectionPoint = 0.5
+            nanoDistal_ref.o(synIdx).sec {
+                sec_ref = new SectionRef()
+            }
+        } else if (enumSynLoc == 1) {
+            // Synapse is connected to the point on dendrite where spine_neck emerges
+            nanoProximal_ref.o(synIdx).sec connectionPoint = parent_connection()
+            nanoProximal_ref.o(synIdx).parent {
+                sec_ref = new SectionRef()
+            }
+        } else {
+            codeContractViolation()
+        }
+        
+        $o3 = sec_ref
+        $&4 = connectionPoint
     }
     
 endtemplate SynGroup

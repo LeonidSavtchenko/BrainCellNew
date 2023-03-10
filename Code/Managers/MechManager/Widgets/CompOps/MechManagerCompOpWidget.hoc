@@ -6,7 +6,7 @@ begintemplate MechManagerCompOpWidget
     
     external mmAllComps
     external mwh, mmmowb
-    external chooseUniqueNameForCompartmentForMechManager, dismissIfNotNil
+    external chooseUniqueNameForCompartmentForMechManager, dismissIfNotNil, unmapIfNotNil
     
     objref mainBox
     objref parentWidget, cssSubWidget, mmcomSubWidget
@@ -207,12 +207,10 @@ begintemplate MechManagerCompOpWidget
         parentWidget.compOpSelectHandler()      // This will update us as well
     }
     
-    proc dismissHandler() { localobj nil
+    proc dismissHandler() {
         dismissIfNotNil(cssSubWidget)
         dismissIfNotNil(mmcomSubWidget)
-        if (mainBox != nil) {
-            mainBox.unmap()
-        }
+        unmapIfNotNil(mainBox)
     }
     
 endtemplate MechManagerCompOpWidget

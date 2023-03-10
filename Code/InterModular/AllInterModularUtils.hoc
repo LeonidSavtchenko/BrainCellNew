@@ -13,6 +13,7 @@ objref mmAllComps
 iterator findSecArrayOrObjectIterator() { codeContractViolation() }
 { load_file("InterModularUniqueNameUtils.hoc") }
 { load_file("InterModularRNGUtils.hoc") }
+{ load_file("InterModularWidgetUtils.hoc") }                    // !! not intermodular yet
 { load_file("InterModularOtherUtils.hoc") }                     // !! not intermodular yet
 objref mmcoWidget
 { load_file("../Core/PluginsForCompSelectionWidget.hoc") }

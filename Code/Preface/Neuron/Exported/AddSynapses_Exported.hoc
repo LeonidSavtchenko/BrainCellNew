@@ -4,14 +4,15 @@
 
 begintemplate Synapse
 
-    public source, netCon, target, single, dist, sec_ref
-    public getPointProcess
+    public source, netCon, target, single, sec_ref, connectionPoint, dist
+    public getPointProcess, changeLocation, changeStructure
     
     // !! uncomment here and below once it's exported
     // external codeContractViolation
     
     objref source, netCon, target, single, sec_ref
     
+    connectionPoint = -1
     dist = -1
     
     
@@ -21,28 +22,61 @@ begintemplate Synapse
             source = $o1
             netCon = $o2
             target = $o3
-            dist = $4
-            sec_ref = $o5
+            sec_ref = $o4
+            connectionPoint = $5
         } else if (numArg == 3) {
             single = $o1
-            dist = $2
-            sec_ref = $o3
+            sec_ref = $o2
+            connectionPoint = $3
+        } else {
+            // codeContractViolation()
+        }
+        calcAndCacheDist()
+    }
+    
+    obfunc getPointProcess() { local enumPpRole
+        enumPpRole = $1     // 0: "Source PP", 1: "Target PP", 2: "Single PP"
+        
+        if (enumPpRole == 0) {
+            return source
+        } else if (enumPpRole == 1) {
+            return target
+        } else if (enumPpRole == 2) {
+            return single
         } else {
             // codeContractViolation()
         }
     }
     
-    obfunc getPointProcess() { local ppRoleIdx
-        ppRoleIdx = $1  // 0: "Source PP", 1: "Target PP", 2: "Single PP"
-        
-        if (ppRoleIdx == 0) {
-            return source
-        } else if (ppRoleIdx == 1) {
-            return target
-        } else if (ppRoleIdx == 2) {
-            return single
+    proc changeLocation() {
+        sec_ref = $o1
+        connectionPoint = $2
+        calcAndCacheDist()
+    }
+    
+    proc changeStructure() { local numArg localobj nil
+        numArg = numarg()
+        if (numArg == 3) {
+            netCon = $o2    // Destroying old NetCon first
+            source = $o1
+            target = $o3
+            single = nil
+        } else if (numArg == 1) {
+            single = $o1
+            netCon = nil
+            source = nil
+            target = nil
         } else {
             // codeContractViolation()
+        }
+    }
+    
+    // All next staff is private
+    
+    
+    proc calcAndCacheDist() {
+        sec_ref.sec {
+            dist = distance(connectionPoint)
         }
     }
     
@@ -53,7 +87,7 @@ smAllSyns = new List()
 
 // Create and connect all synapses; the number of synapses is the same as the number of spines !!or less!!
 // Inputs: SynapseLocationDendrite, weight, IntervalSynapticActivity, SwtichOn, noise (all taken from the top level)
-proc CreateTheSynapticInput() { local synIdx, connectionPoint, dist localobj source, target, sec_ref, netCon, synapse
+proc CreateTheSynapticInput() { local synIdx, connectionPoint localobj source, target, sec_ref, netCon, synapse
     strdef whereConnected
     
     // !! this is not used anywhere outside
@@ -67,7 +101,6 @@ proc CreateTheSynapticInput() { local synIdx, connectionPoint, dist localobj sou
             connectionPoint = 0.5
             nanoDistal_ref.o(synIdx).sec {
                 target = new Exp2Syn(connectionPoint)
-                dist = distance(connectionPoint)
                 sec_ref = new SectionRef()
             }
         } else {
@@ -75,7 +108,6 @@ proc CreateTheSynapticInput() { local synIdx, connectionPoint, dist localobj sou
             nanoProximal_ref.o(synIdx).sec connectionPoint = parent_connection()
             nanoProximal_ref.o(synIdx).parent {
                 target = new Exp2Syn(connectionPoint)
-                dist = distance(connectionPoint)
                 sec_ref = new SectionRef()
             }
         }
@@ -93,7 +125,7 @@ proc CreateTheSynapticInput() { local synIdx, connectionPoint, dist localobj sou
         source.number = SwtichOn
         source.noise = noise
         
-        synapse = new Synapse(source, netCon, target, dist, sec_ref)
+        synapse = new Synapse(source, netCon, target, sec_ref, connectionPoint)
         smAllSyns.append(synapse)
     }
     
@@ -112,9 +144,9 @@ proc ChangeTheSynapticInput() { local synIdx localobj synapse
     for synIdx = 0, SynapseNumber - 1 {
         synapse = smAllSyns.o(synIdx)
         synapse.netCon.weight = weight
-        synapse.netCon.pre(0).interval = IntervalSynapticActivity
-        synapse.netCon.pre(0).number = SwtichOn
-        synapse.netCon.pre(0).noise = noise
+        synapse.source.interval = IntervalSynapticActivity
+        synapse.source.number = SwtichOn
+        synapse.source.noise = noise
     }
 }
 

@@ -29,7 +29,7 @@ begintemplate MechManagerMainWidget
             hBox = new HBox()
             hBox.intercept(1)
             {
-                compBox = new VBox()
+                compBox = new Deck()    // Not VBox just to fill the remaining space below in cyan
                 compBox.intercept(1)
                 {
                     xpanel("")
@@ -41,8 +41,9 @@ begintemplate MechManagerMainWidget
                     xpanel()
                 }
                 compBox.intercept(0)
+                compBox.flip_to(0)
                 compBox.map()
-                mechBox = new VBox()
+                mechBox = new Deck()    // Not VBox just to fill the remaining space below in cyan
                 mechBox.intercept(1)
                 {
                     xpanel("")
@@ -55,6 +56,7 @@ begintemplate MechManagerMainWidget
                     xpanel()
                 }
                 mechBox.intercept(0)
+                mechBox.flip_to(0)
                 mechBox.map()
             }
             hBox.intercept(0)
@@ -69,7 +71,7 @@ begintemplate MechManagerMainWidget
         }
         mainBox.intercept(0)
         mainBox.dismiss_action("dismissHandler()")
-        mainBox.map("Mechanisms manager menu", 60, 100, -1, -1)
+        mainBox.map("Manager of distributed mechanisms", 60, 100, -1, -1)
     }
     
     proc rescanHandler() {

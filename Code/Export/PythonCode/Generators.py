@@ -98,6 +98,9 @@ class Generators:
                 # Max. precision is applied here automatically
                 line = '    pt3dadd({}, {}, {}, {})'.format(sec.x3d(ptIdx), sec.y3d(ptIdx), sec.z3d(ptIdx), sec.diam3d(ptIdx))
                 lines.append(line)
+            if sec.nseg != 1:
+                line = '    nseg = {}'.format(sec.nseg)
+                lines.append(line)
             lines.append('}')
         return lines
         

@@ -1,5 +1,9 @@
 
-objref mth, mmmowb, msmBaseWidget, synGroup, smAllComps
+objref mth, mmmowb, msmBaseWidget, mcu, varsEditorSubWidget, synGroup, smAllComps
+
+if (isAstrocyteOrNeuron) {
+    objref smAllSyns
+}
 
 { load_file("MechTypeHelper.hoc") }
 
@@ -31,3 +35,5 @@ objref mth, mmmowb, msmBaseWidget, synGroup, smAllComps
 { load_file("Widgets/VarsEditorWidget.hoc") }
 
 { load_file("Widgets/MechOrSynManagerBaseWidget.hoc") }
+
+{ load_file("ManagersCommonUtils.hoc") }
