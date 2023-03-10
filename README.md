@@ -8,11 +8,6 @@ BRAINCELL 1.0. Interactive realistic model of brain cells. NEURON/Python environ
 
 <p> 
 
-Welcome to our software "BRAINCELL 1.0" that simulates realistic brain cells including astrocytes and neurons! 
-This powerful tool is designed to help researchers, neuroscientists, and medical professionals better understand how the brain works and how it responds to various stimuli and treatments.
-With our software, you can create detailed simulations of individual neurons and astrocytes with detail nano-geometry  that accurately replicate the complex dynamics of the brain. 
-</p>
-<p>
 This software "BRAINCELL 1.0" simulates realistic brain cells, including neurons and astrocytes, and helps researchers, neuroscientists, and medical professionals to understand the brain's workings better. It allows users to create detailed simulations of individual neurons and astrocytes, adjusting parameters such as membrane capacitance, ion conductance, and synaptic strength with different spatial distributions and stochastic parameters to observe the resulting behavior of simulated cells.
 
 To build a realistic cell model, the software requires experimental data or estimates such as 3D reconstructed trees of main identifiable cell processes, a sample of nanoscopic astroglial processes and neuron spines reconstructed using 3D EM, average tissue volume fraction occupied by astroglia and neuron, mean membrane surface density and surface-to-volume fraction values obtained from 3D reconstructions of nanoscopic processes, and the characteristic I-V curve for the cell of interest.
@@ -22,6 +17,7 @@ The software requires a host computer with MATLAB (2012 or later) and NEURON (7.
 The software has three main regimes of modeling, which include constructing astroglial morphology, NEURON-based simulations of membrane mechanisms, and simulating full-scale Ca2+ dynamics using cluster/cloud-based parallel computing. These regimes can be run separately, depending on the user's requirements and available computational resources.
 
 Overall, "BRAINCELL 1.0" is a comprehensive tool for simulating realistic brain cells and is expected to help unlock new insights into the workings of the brain, aiding researchers in the field of neuroscience and medical professionals in developing treatments for brain-related disorders.
+
 </p>
 
 
