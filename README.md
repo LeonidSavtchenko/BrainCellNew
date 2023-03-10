@@ -8,15 +8,18 @@ BRAINCELL 1.0. Interactive realistic model of brain cells. NEURON/Python environ
 
 <p> 
 
-This software "BRAINCELL 1.0" simulates realistic brain cells, including neurons and astrocytes, and helps researchers, neuroscientists, and medical professionals to understand the brain's workings better. It allows users to create detailed simulations of individual neurons and astrocytes, adjusting parameters such as membrane capacitance, ion conductance, and synaptic strength with different spatial distributions and stochastic parameters to observe the resulting behavior of simulated cells.
-
-To build a realistic cell model, the software requires experimental data or estimates such as 3D reconstructed trees of main identifiable cell processes, a sample of nanoscopic astroglial processes and neuron spines reconstructed using 3D EM, average tissue volume fraction occupied by astroglia and neuron, mean membrane surface density and surface-to-volume fraction values obtained from 3D reconstructions of nanoscopic processes, and the characteristic I-V curve for the cell of interest.
-
-The software requires a host computer with MATLAB (2012 or later) and NEURON (7.2 or later) installed under Windows 7 or 10 to run. It operates on Linux and Windows platforms and can be run sequentially or in parallel (MPI) computing.
-
-The software has three main regimes of modeling, which include constructing astroglial morphology, NEURON-based simulations of membrane mechanisms, and simulating full-scale Ca2+ dynamics using cluster/cloud-based parallel computing. These regimes can be run separately, depending on the user's requirements and available computational resources.
-
-Overall, "BRAINCELL 1.0" is a comprehensive tool for simulating realistic brain cells and is expected to help unlock new insights into the workings of the brain, aiding researchers in the field of neuroscience and medical professionals in developing treatments for brain-related disorders.
+Welcome to our software "BRAINCELL 1.0" that simulates realistic brain cells including astrocytes and neurons! 
+This powerful tool is designed to help researchers, neuroscientists, and medical professionals better understand how the brain works and how it responds to various stimuli and treatments.
+With our software, you can create detailed simulations of individual neurons and astrocytes with detail nano-geometry  that accurately replicate the complex dynamics of the brain. 
+</p>
+<p>
+Our software provides a comprehensive suite of features that enable you to design, run, and analyze simulations of brain cells with ease.
+Whether you are a seasoned researcher or a newcomer to the field of neuroscience, our software is easy to use and provides a wide range of customization options. 
+You can adjust parameters such as membrane capacitance, ion conductance, and synaptic strength with different spatial distributions and stochastic parameters, and observe the resulting behavior of your simulated cells.
+The user manual that accompanies our software is designed to provide you with all the information you need to get started with your simulations. 
+It covers topics such as installation and setup, creating and configuring cells and networks, and running simulations and analyzing results.
+We are confident that our software will help you unlock new insights into the workings of the brain, and we are committed to providing ongoing support to ensure that you get the most out of your simulations. If you have any questions or need assistance, please do not hesitate to contact our support team.
+Thank you for choosing "BRAINCELL", and we look forward to seeing the exciting discoveries you make using it!
 
 </p>
 
