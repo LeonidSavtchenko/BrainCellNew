@@ -26,9 +26,9 @@ Thank you for choosing "BRAINCELL", and we look forward to seeing the exciting d
 
 
 
-## Experimental data or estimates desirable to build a realistic cell  model
+## The following section describes which experiment data or approximations are preferred when building a realistic cell model.
 
-##### 1. A 3D reconstructed tree of main identifiable cell processes importable into NEURON. Alternatively, this could be  an artificially generated cell arbour with the branching pattern and branch diameters representing the average (typical)  cell from the population of interest. 
+##### 1. A 3D reconstructed tree of main identifiable cell processes importable from https://neuromorpho.org/ in any format. Alternatively, this could be  an artificially generated cell arbour with the branching pattern and branch diameters representing the average (typical)  cell from the population of interest. 
 ##### 2. A sample (20-50) of nanoscopic astroglial processes and neuron spines reconstructed using 3D (serial-section) EM, with rendered surface co-ordinates.  This sample will be used to obtain statistical properties of the ultrathin processes to be generated in the model. 
 ##### 3. Average tissue volume fraction occupied by astroglia and neuron, as distributed radially from the soma to the cell edges.  This data set is obtained from two-photon excitation measurements in situ (or from published data). 
 ##### 4. The mean membrane surface density and the surface-to-volume fraction values obtained from 3D reconstructions of nanoscopic  processes.  
