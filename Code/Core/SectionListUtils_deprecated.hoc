@@ -1,15 +1,4 @@
 
-// For all sections from this SectionList, and corresponding SectionRef to the List
-// $o1 - The SectionList
-// $o2 - The List
-proc secListToListOfSecRef() { localobj secList, list_ref
-    secList = $o1
-    list_ref = $o2
-    forsec secList {
-        list_ref.append(new SectionRef())
-    }
-}
-
 // For the current section and all its children subtree, add SectionRef-s to the List
 // $o1 - The List
 proc addThisAndAllChildSecRefsToTheList() { localobj list_ref, secList

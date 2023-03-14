@@ -117,8 +117,7 @@ begintemplate StochEditorSubWidget
         
         compName = comp.name
         mth.getVarTypeName(varType, varTypeName)
-        mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
-        mth.getVarNameWithIndexAndUnits(enumDmPpNc, mechIdx, varName, arraySize, arrayIndex, varNameWithIndexAndUnits)
+        mth.getVarNameWithIndexAndUnits(enumDmPpNc, mechIdx, varName, arraySize, arrayIndex, varNameWithIndexAndUnits, varNameWithIndex)
         isInhom = comp.isMechVarInhom(mechIdx, varTypeIdx, varName, arrayIndex)
         
         mainBox = new VBox()
@@ -1032,7 +1031,7 @@ begintemplate StochEditorSubWidget
         stochFuncChangedHandler(stochFuncIdx)
     }
     
-    proc applyHandler() { local isOK, mechOpIdx, isFound
+    proc applyHandler() { local isOK, isCalledFromVarsEditor, isFound
         strdef verb
         
         isOK = makeSureCanProceed()
@@ -1040,31 +1039,30 @@ begintemplate StochEditorSubWidget
             return
         }
         
-        if (!isMechOrSynEditor) {
-            mwh.showNotImplementedWarning()
-            return
-        }
-        
         if (isMechOrSynEditor) {
             if (mth.checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar(mechIdx, varType, varName)) {
                 return
             }
+        } else {
+            mwh.showNotImplementedWarning()
+            return
         }
         
         colourizationHelper.consumeSettings()
         
-        // !!
         if (isMechOrSynEditor) {
-            mechOpIdx = mmmowb.lastMechOpIdx
-            if (mechOpIdx == 1) {
-                varsEditorSubWidget.onApplyInStochEditor(varIdx, arrayIndex)
-            }
+            isCalledFromVarsEditor = (mmmowb.lastMechOpIdx == 1)
         } else {
             isOK = msmBaseWidget.synManagerMainWidget.warnIfUserHasNotSelectedPPs()
             if (!isOK) {
                 return
             }
             msmBaseWidget.synManagerMainWidget.applyChangesToSynStrucIfNeeded()
+            isCalledFromVarsEditor = 1
+        }
+        
+        if (isCalledFromVarsEditor) {
+            varsEditorSubWidget.onApplyInStochEditor(varIdx, arrayIndex)
         }
         
         isFound = inhomAndStochApplicator.enableOrUpdateStochFor(compIdx, mechIdx, varType, varIdx, arrayIndex, boundingHelper, stochFuncHelpers[stochFuncIdx], stochFuncCatIdx, stochFuncIdx)
@@ -1077,19 +1075,29 @@ begintemplate StochEditorSubWidget
         showStochStatusMsg(1, verb)
     }
     
-    proc disableHandler() { local mechOpIdx, isFound
+    proc disableHandler() { local mechOpIdx, isCalledFromVarsEditor, /* !! isOK */ isFound
     
-        // !!
         if (isMechOrSynEditor) {
             mechOpIdx = mmmowb.lastMechOpIdx
-            if (mechOpIdx == 1) {
-                varsEditorSubWidget.onDisableInStochEditor(varIdx, arrayIndex)
-            } else if (mechOpIdx == 3) {
+            isCalledFromVarsEditor = (mechOpIdx == 1)
+            if (mechOpIdx == 3) {
                 // !! need to unmap and show the parent widget again to hide the button
             }
         } else {
+            /* !!??
+            isOK = msmBaseWidget.synManagerMainWidget.warnIfUserHasNotSelectedPPs()
+            if (!isOK) {
+                return
+            }
+            msmBaseWidget.synManagerMainWidget.applyChangesToSynStrucIfNeeded()
+            */
+            isCalledFromVarsEditor = 1
             mwh.showNotImplementedWarning()
             return
+        }
+        
+        if (isCalledFromVarsEditor) {
+            varsEditorSubWidget.onDisableInStochEditor(varIdx, arrayIndex)
         }
         
         isFound = inhomAndStochApplicator.disableInhomOrStochFor(0, compIdx, mechIdx, varType, varIdx, arrayIndex)

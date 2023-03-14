@@ -7,8 +7,8 @@ begintemplate VarsEditorWidget
     public show, onApplyInInhomEditor, onApplyInStochEditor, onDisableInStochEditor, dismissHandler
     public compIdx
     
-    external mwh, math, mth, mcu, inhomAndStochApplicator
-    external createEmptyPanel, dismissIfNotNil, codeContractViolation
+    external mwh, math, mth, mcu, sbh4ve, inhomAndStochApplicator
+    external createElasticSpacer, createEmptyPanel, dismissIfNotNil, codeContractViolation
     
     objref mainBox
     objref mechStd, buffer, isMechVarInhom, isMechVarStoch
@@ -17,6 +17,7 @@ begintemplate VarsEditorWidget
     compIdx = -1
     objref comp
     mechIdx = -1
+    strdef mechName
     varType = -1
     varTypeIdx = -1
     
@@ -36,6 +37,8 @@ begintemplate VarsEditorWidget
         if (varType == -1) {    // GLOBAL
             codeContractViolation()
         }
+        
+        mth.getMechName(enumDmPpNc, mechIdx, mechName)
         
         isMechOrSynEditor = (enumDmPpNc == 0)
         comp = mcu.getComp(isMechOrSynEditor, compIdx)
@@ -66,10 +69,8 @@ begintemplate VarsEditorWidget
         slotHeight = 31
     }
     
-    proc show() { local isAnyNaN, varIdx, arraySize, arrayIndex, isThisNaN localobj vec, subBoxes, hBox, vBox1, vBox2, vBox3
-        strdef header, varName, varNameWithIndexAndUnits, handlerHocCommand
-        
-        subBoxes = new List()
+    proc show() { local isAnyNaN, varIdx, arraySize, arrayIndex, isThisNaN localobj vec, hBox, vBox1, vBox2, vBox3
+        strdef header, varName, varNameWithIndex, varNameWithIndexAndUnits, handlerHocCommand
         
         mainBox = new VBox(3, 1)
         mainBox.intercept(1)
@@ -83,7 +84,7 @@ begintemplate VarsEditorWidget
                 arraySize = mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName)
                 vec = buffer.o(varIdx)
                 for arrayIndex = 0, arraySize - 1 {
-                    mth.getVarNameWithIndexAndUnits(enumDmPpNc, mechIdx, varName, arraySize, arrayIndex, varNameWithIndexAndUnits)
+                    mth.getVarNameWithIndexAndUnits(enumDmPpNc, mechIdx, varName, arraySize, arrayIndex, varNameWithIndexAndUnits, varNameWithIndex)
                     isThisNaN = math.isNaN(vec.x(arrayIndex))
                     
                     hBox = new HBox()
@@ -114,21 +115,20 @@ begintemplate VarsEditorWidget
                         vBox3 = new VBox()
                         vBox3.intercept(1)
                         {
-                            xpanel("")
-                            sprint(handlerHocCommand, "defineStochFuncHandler(%d, %d)", varIdx, arrayIndex)
-                            xstatebutton("Define stoch model", &isMechVarStoch.o(varIdx).x(arrayIndex), handlerHocCommand)
-                            xpanel()
+                            if (!sbh4ve.isHideStochButton(mechName, varNameWithIndex)) {
+                                xpanel("")
+                                sprint(handlerHocCommand, "defineStochFuncHandler(%d, %d)", varIdx, arrayIndex)
+                                xstatebutton("Define stoch model", &isMechVarStoch.o(varIdx).x(arrayIndex), handlerHocCommand)
+                                xpanel()
+                            } else {
+                                createElasticSpacer()
+                            }
                         }
                         vBox3.intercept(0)
                         vBox3.map("", 0, 0, 122, slotHeight)
                     }
                     hBox.intercept(0)
                     hBox.map()
-                    
-                    subBoxes.append(hBox)
-                    subBoxes.append(vBox1)
-                    subBoxes.append(vBox2)
-                    subBoxes.append(vBox3)
                     
                     isAnyNaN = isAnyNaN || isThisNaN
                 }

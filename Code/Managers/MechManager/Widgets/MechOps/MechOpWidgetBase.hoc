@@ -139,13 +139,11 @@ begintemplate MechOpWidgetBase
     // $1 - The mech operation index
     // $2 - 0/1 flag indicating if we construct a comp-centric or mech-centric view
     // $&3 (out) - The current panel index
-    // $o4 (in/out) - All the temporary boxes created (List)
-    iterator createHeaderEmptyPanelsFooter() { local mechOpIdx, maxNumPanels, isRequireApply, panCandIdx, panActIdx, isSkipPanel, rowIdx, colIdx, isSwitchToCompOrMechCentricView localobj subBoxes, mechOpHelper, sliderBox, hBox, spacerBox, nil
+    iterator createHeaderEmptyPanelsFooter() { local mechOpIdx, maxNumPanels, isRequireApply, panCandIdx, panActIdx, isSkipPanel, rowIdx, colIdx, isSwitchToCompOrMechCentricView localobj mechOpHelper, sliderBox, hBoxes, hBox, spacerBox, nil
         strdef headerLine1, headerLine3, switchToKeyword, buttonText, buttonHocCommand
         
         mechOpIdx = $1
         isCompOrMechCentricView = $2
-        subBoxes = $o4
         
         if (isCompOrMechCentricView) {
             maxNumPanels = mmAllComps.count()
@@ -182,10 +180,11 @@ begintemplate MechOpWidgetBase
             // Grid of panels
             
             sliderBox = new VBox(3, 1)      // Slider here
-            subBoxes.append(sliderBox)
             sliderBox.intercept(1)
             {
                 colIdx = 0
+                
+                hBoxes = new List()
                 
                 panActIdx = 0
                 for panCandIdx = 0, maxNumPanels - 1 {
@@ -202,7 +201,7 @@ begintemplate MechOpWidgetBase
                     
                     if (colIdx == 0) {
                         // Start a new row
-                        hBox = openHBox(subBoxes)
+                        hBox = openHBox(hBoxes)
                     }
                     
                     iterator_statement
@@ -218,7 +217,7 @@ begintemplate MechOpWidgetBase
                 if (colIdx != numCols - 1) {
                     if (hBox == nil) {
                         // No panels created, so make a hint why
-                        hBox = openHBox(subBoxes)
+                        hBox = openHBox(hBoxes)
                         xpanel("")
                         xlabel("")
                         if (mechOpIdx == 0) {
@@ -235,7 +234,6 @@ begintemplate MechOpWidgetBase
                         for colIdx = colIdx + 1, numCols - 1 {
                             spacerBox = new VBox()
                             spacerBox.map("", 0, 0, colWidth, rowHeight)
-                            subBoxes.append(spacerBox)
                         }
                         // We could use a single wide VBox here of width "colWidth * (numCols - 1 - colIdx)" instead of many narrow ones of width "colWidth",
                         // and it would look nicer, but it wouldn't scale horizontally when user resized the window
@@ -274,28 +272,26 @@ begintemplate MechOpWidgetBase
         mainBox.map(mechOpHelper.title, x, y, w, h)
     }
     
-    proc showHelper() { local mechOpIdx, panIdx localobj subBoxes
+    proc showHelper() { local mechOpIdx, panIdx
         mechOpIdx = $1
         isCompOrMechCentricView = $2
         
-        subBoxes = new List()
-        for createHeaderEmptyPanelsFooter(mechOpIdx, isCompOrMechCentricView, &panIdx, subBoxes) {
+        for createHeaderEmptyPanelsFooter(mechOpIdx, isCompOrMechCentricView, &panIdx) {
             if (isCompOrMechCentricView) {
-                populateCompCentricPanelHelper(mechOpIdx, panIdx, subBoxes)
+                populateCompCentricPanelHelper(mechOpIdx, panIdx)
             } else {
-                populateMechCentricPanelHelper(mechOpIdx, panIdx, subBoxes)
+                populateMechCentricPanelHelper(mechOpIdx, panIdx)
             }
         }
         
         lastMechOpIdx = mechOpIdx
     }
     
-    proc populateCompCentricPanelHelper() { local mechOpIdx, compIdx, mechIdx, numInsertedItems, isSkipItem localobj subBoxes, mechOpHelper, vBox1, vBox2
+    proc populateCompCentricPanelHelper() { local mechOpIdx, compIdx, mechIdx, numInsertedItems, isSkipItem localobj mechOpHelper, vBox1, vBox2
         strdef title, handlerHocCommand, mechName
         
         mechOpIdx = $1
         compIdx = $2
-        subBoxes = $o3
         
         mechOpHelper = mechOpHelpers[mechOpIdx]
         
@@ -334,17 +330,13 @@ begintemplate MechOpWidgetBase
         }
         vBox1.intercept(0)
         vBox1.map("", 0, 0, colWidth, rowHeight)
-        
-        subBoxes.append(vBox1)
-        subBoxes.append(vBox2)
     }
     
-    proc populateMechCentricPanelHelper() { local mechOpIdx, mechIdx, compIdx, numInsertedItems, isSkipItem localobj subBoxes, mechOpHelper, vBox1, vBox2
+    proc populateMechCentricPanelHelper() { local mechOpIdx, mechIdx, compIdx, numInsertedItems, isSkipItem localobj mechOpHelper, vBox1, vBox2
         strdef mechName, title
         
         mechOpIdx = $1
         mechIdx = $2
-        subBoxes = $o3
         
         mechOpHelper = mechOpHelpers[mechOpIdx]
         
@@ -380,9 +372,6 @@ begintemplate MechOpWidgetBase
         }
         vBox1.intercept(0)
         vBox1.map("", 0, 0, colWidth, rowHeight)
-        
-        subBoxes.append(vBox1)
-        subBoxes.append(vBox2)
     }
     
     proc insertSpacers() { local numInsertedItems, itemHeight, allItemsHeight localobj mechOpHelper
@@ -485,11 +474,11 @@ begintemplate MechOpWidgetBase
         mwh.showMessageBox("All the changes were applied to sections biophysics.", "Applied")
     }
     
-    obfunc openHBox() { localobj subBoxes, hBox
-        subBoxes = $o1
+    obfunc openHBox() { localobj hBoxes, hBox
+        hBoxes = $o1
         hBox = new HBox()
         hBox.intercept(1)
-        subBoxes.append(hBox)
+        hBoxes.append(hBox)
         return hBox
     }
     

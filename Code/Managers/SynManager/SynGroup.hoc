@@ -4,7 +4,7 @@
 // A group of synapses (a counterpart of MechComp template)
 begintemplate SynGroup
 
-    public is3Or1PartInSynStruc, getPpNameOrEmpty, getDistRange, getSecList, applyChangesToLoc, applyChangesToStrucIfNeeded, applyChangesToDirtyHomogenVars, updateStatsCurveIter
+    public is3Or1PartInSynStruc, getPpNameOrEmpty, getDistRange, getSecList, applyChangesToLoc, applyChangesToStrucIfNeeded, applyChangesToDirtyHomogenVars, applyInhomogeneityIter, updateStatsCurveIter, updateColormaps
     
     external msmBaseWidget
     external smAllSyns, smAllComps, nanoProximal_ref, nanoDistal_ref
@@ -78,6 +78,11 @@ begintemplate SynGroup
         for eachItemInList(syn, smAllSyns) {
             syn.sec_ref.sec secList.append()
         }
+        
+        // When synapse location is "Dendrite (just under Spine Neck)",
+        // this is required to avoid glitchy look of the colormap "Show syn locations only"
+        secList.unique()
+        
         return secList
     }
     
@@ -164,21 +169,53 @@ begintemplate SynGroup
         return isSmthChanged
     }
     
-    iterator updateStatsCurveIter() { local synIdx, d, y, yMin, yMax localobj syn, graph
+    iterator applyInhomogeneityIter() { local synIdx localobj distFuncHelper, prevSec_ref, nil, syn
+        distFuncHelper = $o2
+        
+        mwh.showPleaseWaitBox("Applying inhomogeneity.")
+        {
+            prevSec_ref = nil
+            for synIdx = 0, smAllSyns.count() - 1 {
+                syn = smAllSyns.o(synIdx)
+                if (syn.sec_ref != prevSec_ref) {
+                    distFuncHelper.onNewSection()   // For "Zebra (sections)" only
+                }
+                $o1 = syn
+                iterator_statement
+                prevSec_ref = syn.sec_ref
+            }
+        }
+        mwh.hidePleaseWaitBox()
+    }
+    
+    iterator updateStatsCurveIter() { local synIdx, y, yMin, yMax localobj syn, graph
         graph = $o2
         yMin = $&4
         yMax = $&5
         for synIdx = 0, smAllSyns.count() - 1 {
             syn = smAllSyns.o(synIdx)
-            d = syn.dist
             $o1 = syn
             iterator_statement
             y = $&3
-            graph.mark(d, y, "O", 2, 2, 0)
+            graph.mark(syn.dist, y, "O", 2, 2, 0)
             math.updateMinMax(&yMin, &yMax, y)
         }
         $&4 = yMin
         $&5 = yMax
+    }
+    
+    proc updateColormaps() { localobj shape1, shape2, syn, pp
+        shape1 = $o1
+        shape2 = $o2
+        
+        shape1.point_mark_remove()
+        shape2.point_mark_remove()
+        for eachItemInList(syn, smAllSyns) {
+            pp = syn.getPointProcess(3)
+            // !! need to choose the "colorindex" arg according to the watched var value and the colorbar
+            shape1.point_mark(pp, 2, 2, 2)
+            shape2.point_mark(pp, 2, 2, 2)
+        }
     }
     
     // All next staff is private

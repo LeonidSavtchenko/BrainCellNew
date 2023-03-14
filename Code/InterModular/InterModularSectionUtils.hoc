@@ -44,3 +44,14 @@ obfunc getAllSectionNames() { local isFound, idx localobj secNames
     
     return secNames
 }
+
+// For all sections from this SectionList, add corresponding SectionRef to the List
+// $o1 - The SectionList
+// $o2 - The List
+proc secListToListOfSecRef() { localobj secList, list_ref
+    secList = $o1
+    list_ref = $o2
+    forsec secList {
+        list_ref.append(new SectionRef())
+    }
+}

@@ -1,0 +1,64 @@
+
+// Don't encapsulate this proc into a template because "forall" would loop just over the sections owned by the template
+proc getDistMechVarRangeOutside() { local varType, arrayIndex, yMin, yMax localobj list_ref, secList, sec_ref, outList_ref
+    strdef mechName, varName
+    
+    list_ref = $o1
+    mechName = $s2
+    varType = $3
+    varName = $s4
+    arrayIndex = $5
+    
+    secList = new SectionList()
+    forall {
+        if (!ismembrane(mechName)) {
+            continue
+        }
+        secList.append()
+    }
+    for eachItemInList(sec_ref, list_ref) {
+        sec_ref.sec {
+            if (!ismembrane(mechName)) {
+                codeContractViolation()
+            }
+            secList.remove()
+        }
+    }
+    outList_ref = new List()
+    secListToListOfSecRef(secList, outList_ref)
+    getDistMechVarRangeInside(outList_ref, mechName, varType, varName, arrayIndex, &yMin, &yMax)
+    
+    $&6 = yMin
+    $&7 = yMax
+}
+
+proc getDistMechVarRangeInside() { local varType, arrayIndex, yMin, yMax, x, y localobj list_ref, mechStd, sec_ref
+    strdef mechName, varName
+    
+    list_ref = $o1
+    mechName = $s2
+    varType = $3
+    varName = $s4
+    arrayIndex = $5
+    
+    mechStd = new MechanismStandard(mechName, varType)
+    
+    yMin = math.inf
+    yMax = -math.inf
+    
+    for eachItemInList(sec_ref, list_ref) {
+        sec_ref.sec {
+            if (!ismembrane(mechName)) {
+                codeContractViolation()
+            }
+            for (x, 0) {
+                mechStd.in(x)
+                y = mechStd.get(varName, arrayIndex)
+                math.updateMinMax(&yMin, &yMax, y)
+            }
+        }
+    }
+    
+    $&6 = yMin
+    $&7 = yMax
+}

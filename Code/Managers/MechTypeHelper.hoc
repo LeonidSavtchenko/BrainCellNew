@@ -183,8 +183,13 @@ begintemplate MechTypeHelper
     objref _pointProcess
     strdef _unitsStr
     
-    proc getVarNameWithIndexAndUnits() { local enumDmPpNc, mechIdx, arraySize, arrayIndex localobj nil
+    proc getVarNameWithIndexAndUnits() { local numArg, enumDmPpNc, mechIdx, arraySize, arrayIndex localobj nil
         strdef varName, varNameWithIndex, mechName, hocCommand
+        
+        numArg = numarg()
+        if (numArg < 6 || numArg > 7) {
+            codeContractViolation()
+        }
         
         enumDmPpNc = $1
         mechIdx = $2
@@ -219,6 +224,10 @@ begintemplate MechTypeHelper
             sprint($s6, "%s (%s)", varNameWithIndex, _unitsStr)
         } else {
             sprint($s6, "%s", varNameWithIndex) // !! would simple assignment work here?
+        }
+        
+        if (numArg == 7) {
+            $s7 = varNameWithIndex
         }
     }
     
@@ -294,7 +303,7 @@ begintemplate MechTypeHelper
     
     objref _fms4nc
     
-    obfunc createMechStd() { local enumDmPpNc, mechIdx, varType, fms4nc, nil
+    obfunc createMechStd() { local enumDmPpNc, mechIdx, varType localobj fms4nc, nil
         strdef mechName
         enumDmPpNc = $1
         mechIdx = $2

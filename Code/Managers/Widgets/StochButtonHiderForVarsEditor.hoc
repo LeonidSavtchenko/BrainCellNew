@@ -1,0 +1,29 @@
+
+begintemplate StochButtonHiderForVarsEditor
+
+    public isHideStochButton
+    
+    external pyObj
+    external printMsgAndStop
+    
+    
+    proc init() { local status
+        strdef pyCommand
+        sprint(pyCommand, "import json\nwith open('%s/../../../Settings/hide_stoch_btn_for.json') as jsonFile:\n    sbh4ve_jsonDict = json.load(jsonFile)\ndef sbh4ve_isHideStochButton(mechName, varNameWithIndex):\n    return mechName in sbh4ve_jsonDict and varNameWithIndex in sbh4ve_jsonDict[mechName]", getcwd())
+        status = nrnpython(pyCommand)
+        if (!status) {
+            printMsgAndStop("\nException raised in Python code (caught in StochButtonHiderForVarsEditor ctor)")
+        }
+    }
+    
+    func isHideStochButton() {
+        strdef mechName, varNameWithIndex
+        mechName = $s1
+        varNameWithIndex = $s2
+        return pyObj.sbh4ve_isHideStochButton(mechName, varNameWithIndex)
+    }
+    
+endtemplate StochButtonHiderForVarsEditor
+
+objref sbh4ve
+sbh4ve = new StochButtonHiderForVarsEditor()

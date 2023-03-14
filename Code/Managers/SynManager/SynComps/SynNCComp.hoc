@@ -123,14 +123,10 @@ begintemplate SynNCComp
         
         mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
         
-        mwh.showPleaseWaitBox("Applying inhomogeneity.")
-        {
-            for eachItemInList(syn, smAllSyns) {
-                y = distFuncHelper.calculateAt(syn.dist)
-                utils4FakeMech4NC.setNetConVar(syn.netCon, varNameWithIndex, y)
-            }
+        for synGroup.applyInhomogeneityIter(syn, distFuncHelper) {
+            y = distFuncHelper.calculateAt(syn.dist)
+            utils4FakeMech4NC.setNetConVar(syn.netCon, varNameWithIndex, y)
         }
-        mwh.hidePleaseWaitBox()
     }
     
 endtemplate SynNCComp

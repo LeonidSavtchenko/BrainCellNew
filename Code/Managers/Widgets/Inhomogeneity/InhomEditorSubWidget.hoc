@@ -4,11 +4,11 @@ begintemplate InhomEditorSubWidget
     public show, updateCurves, dismissHandler
     
     external msmBaseWidget, varsEditorSubWidget
-    external mwh, math, mth, mmmowb, mcu, inhomAndStochApplicator
-    external createEmptyPanel, createElasticSpacer, oneZeroToYesNo, codeContractViolation
+    external mwh, math, mth, mmmowb, mcu, inhomAndStochApplicator, synGroup
+    external getDistMechVarRangeOutside, getDistMechVarRangeInside, createEmptyPanel, createElasticSpacer, oneZeroToYesNo, codeContractViolation
     external eachPointInGrid
     
-    objref mainBox, deck1, deck2, deck3, deck4, deck5, graph1, graph2, plotShape1, plotShape2, this
+    objref mainBox, deck1, deck2, deck3, deck4, deck5, graph1, graph2, shape1, shape2, this
     
     objref distFuncHelpers[16]
     
@@ -41,12 +41,8 @@ begintemplate InhomEditorSubWidget
     
     xMin = -1
     xMax = -1
-    yMin1 = -1  // Model curve (blue)
-    yMax1 = -1
-    yMin2 = -1  // Stats curve (red)
-    yMax2 = -1
-    yMin3 = -1  // Both
-    yMax3 = -1
+    yMinOut = -1
+    yMaxOut = -1
     
     isCancel = -1
     
@@ -86,6 +82,8 @@ begintemplate InhomEditorSubWidget
             variable_domain(&segmentationHelper.total_nseg, 1, inf)
             // variable_domain(&segmentationHelper.min_nseg, 1, segmentationHelper.total_nseg)  // Unfortunately, this won't change the upper limit for min_nseg once total_nseg changes
             variable_domain(&segmentationHelper.min_nseg, 1, inf)
+            
+            getDistMechVarRangeOutside(comp.list_ref, mechName, varType, varName, arrayIndex, &yMinOut, &yMaxOut)
         }
         
         distFuncIdx = 1
@@ -284,7 +282,13 @@ begintemplate InhomEditorSubWidget
                             xpanel()
                             xpanel("")
                             distFuncIdxs[zebraDistFuncCatIdx] = 14
-                            xradiobutton("Zebra (segments, check subdivision on colormap for small \"nseg\")", "distFuncChangedHandler(14)", 1)
+                            if (isMechOrSynEditor) {
+                                what = ""
+                            } else {
+                                what = "/PPs"
+                            }
+                            sprint(text, "Zebra (segments%s, check subdivision on colormap for small \"nseg\")", what)
+                            xradiobutton(text, "distFuncChangedHandler(14)", 1)
                             xradiobutton("Zebra (sections)", "distFuncChangedHandler(15)", 0)
                             xpanel()
                         }
@@ -331,25 +335,31 @@ begintemplate InhomEditorSubWidget
                     {
                         graph1 = new Graph()
                         graph1.brush(0)                         // Without this, graph1 will be dashed if the widget is unmapped and shown again
-                        plotShape1 = new PlotShape()            // Show all compartments
                         if (isMechOrSynEditor) {
+                            shape1 = new PlotShape()            // Show all compartments
                             // !! BUG: Colormap looks uniform when we try to watch an array element, e.g. "ca_cadifus[0]"
                             //         Maybe it's Neuron restriction because user cannot do it even manually
                             //         clicking on colormap corner and then "Plot What?"
-                            plotShape1.variable(varNameWithIndex)
+                            shape1.variable(varNameWithIndex)
+                        } else {
+                            shape1 = new Shape()                // !!
                         }
-                        plotShape1.exec_menu("Shape Plot")
-                        plotShape1.flush()
+                        shape1.exec_menu("Shape Plot")
+                        shape1.flush()
                         graph2 = new Graph()
                         graph2.brush(1, 1, 0)                   // Installing a dash brush; looks like the "pattern" arg doesn't work as described in Neuron docs
                         graph2.brush(0)                         // Switching to solid line by default
-                        plotShape2 = new PlotShape(secList)     // Show this compartment only
                         if (isMechOrSynEditor) {
-                            // !! The same comment as for plotShape1
-                            plotShape2.variable(varNameWithIndex)
+                            shape2 = new PlotShape(secList)     // Show this compartment only
+                        } else {
+                            shape2 = new Shape(secList)         // !!
                         }
-                        plotShape2.exec_menu("Shape Plot")
-                        plotShape2.flush()
+                        if (isMechOrSynEditor) {
+                            // !! The same comment as for shape1
+                            shape2.variable(varNameWithIndex)
+                        }
+                        shape2.exec_menu("Shape Plot")
+                        shape2.flush()
                         xpanel("")
                         xlabel("Curves are not available for Zebra.")   // Shown for Zebra instead of graph1 and graph2
                         xlabel("Please switch to the colormap.")        //
@@ -374,9 +384,9 @@ begintemplate InhomEditorSubWidget
         
         // This works fine only after mapping of the mainBox
         deck5.flip_to(1)
-        plotShape1.exec_menu("View = plot")
+        shape1.exec_menu("View = plot")
         deck5.flip_to(3)
-        plotShape2.exec_menu("View = plot")
+        shape2.exec_menu("View = plot")
         
         if (isMechOrSynEditor) {
             segmentationModeChangedHandler(segmentationHelper.segmentationMode)
@@ -429,7 +439,7 @@ begintemplate InhomEditorSubWidget
         distFuncChangedHandler(distFuncIdxs[distFuncCatIdx], isCalledFromShow)
     }
     
-    proc distFuncChangedHandler() { local numArg, isCalledFromShow, absValue localobj distFuncHelper
+    proc distFuncChangedHandler() { local numArg, isCalledFromShow localobj distFuncHelper
         
         // !! BUG: We can get here even though the last called "selectedHandler" still didn't exit.
         //         This happens when "selectedHandler" calls "string_dialog", but user
@@ -465,10 +475,6 @@ begintemplate InhomEditorSubWidget
         
         if (distFuncCatIdx != zebraDistFuncCatIdx) {
             updateCurves()
-        } else {
-            absValue = abs(distFuncHelper.value)
-            yMin1 = -absValue   // Used by colormaps
-            yMax1 = absValue    //
         }
         
         showCurveOrColormapChangedHandler(showCurveOrColormapIdx)
@@ -498,8 +504,14 @@ begintemplate InhomEditorSubWidget
         }
         deck5.flip_to(cardIdx)  // Graph-s / PlotShape-s
         
-        if (showCurveOrColormapIdx == 1 && arraySize > 1) {
-            mwh.showWarningBox("The colormap is shown incorrectly because \"Plot What?\" is an array element (Neuron restriction).")
+        if (showCurveOrColormapIdx == 1) {
+            if (isMechOrSynEditor) {
+                if (arraySize > 1) {
+                    mwh.showWarningBox("The colormap is shown incorrectly because \"Plot What?\" is an array element (Neuron restriction).")
+                }
+            } else {
+                mwh.showNotImplementedWarning()
+            }
         }
     }
     
@@ -527,26 +539,27 @@ begintemplate InhomEditorSubWidget
     
     proc updateModelCurve() {
         graph1.erase()
-        yMin1 = math.inf
-        yMax1 = -math.inf
-        updateModelCurveCore(graph1, &yMin1, &yMax1)
+        updateModelCurveCore(graph1)
     }
     
-    proc updateStatsCurve() {
+    proc updateStatsCurve() { local numArg, yMin, yMax
         strdef what, text
         
+        numArg = numarg()
+        if (numArg != 0 && numArg != 2) {
+            codeContractViolation()
+        }
+        
         graph2.erase_all()
-        yMin2 = math.inf
-        yMax2 = -math.inf
+        yMin = math.inf
+        yMax = -math.inf
         // !! for synapses, skip this call if the edited inhom var doesn't correspond to the actual synapses
         //    (when they were created with different PPs or without NetCon-s)
-        comp.updateStatsCurve(graph2, &yMin2, &yMax2, mechName, varType, varName, arraySize, arrayIndex)
+        comp.updateStatsCurve(graph2, &yMin, &yMax, mechName, varType, varName, arraySize, arrayIndex)
         
-        yMin3 = yMin2
-        yMax3 = yMax2
         graph2.brush(1)     // Dash
         // !! for higher performance, just copy the data from graph1 (the same as in StochEditorSubWidget.hoc - create a common util)
-        updateModelCurveCore(graph2, &yMin3, &yMax3)
+        updateModelCurveCore(graph2, yMin, yMax)
         
         if (isMechOrSynEditor) {
             what = "sec/seg"
@@ -559,12 +572,27 @@ begintemplate InhomEditorSubWidget
         graph2.label(text)
         graph2.color(3)     // Blue
         graph2.label("Dist func")
+        
+        if (numArg == 2) {
+            $&1 = yMin
+            $&2 = yMax
+        }
     }
     
-    proc updateModelCurveCore() { local yMin, yMax, minNseg4Curve, nseg4Curve, xyMargin4Graph, xRange, x, y, xMargin4Graph, xMin4Graph, xMax4Graph, yRange, yMargin4Graph, yMin4Graph, yMax4Graph localobj graph, distFuncHelper
+    proc updateModelCurveCore() { local numArg, yMin, yMax, minNseg4Curve, nseg4Curve, xyMargin4Graph, xRange, x, y, xMargin4Graph, xMin4Graph, xMax4Graph, yRange, yMargin4Graph, yMin4Graph, yMax4Graph localobj graph, distFuncHelper
+    
+        numArg = numarg()
+        if (numArg == 1) {
+            yMin = math.inf
+            yMax = -math.inf
+        } else if (numArg == 3) {
+            yMin = $2
+            yMax = $3
+        } else {
+            codeContractViolation()
+        }
+        
         graph = $o1
-        yMin = $&2
-        yMax = $&3
         
         minNseg4Curve = 1000    // !! hardcode
         
@@ -604,16 +632,48 @@ begintemplate InhomEditorSubWidget
         // Looks unnecessary because we are not in the process of simulation
         // But if removed, then the default exp. model is not shown (no idea why)
         graph.flush()
+    }
+    
+    proc updateColormaps() { local numArg, yMin2, yMax2, distFuncIdx, absValue, yMin1, yMax1 localobj distFuncHelper
+        if (isMechOrSynEditor) {
+            // !! BUG: for some reason, the colorbar is not always placed at the left-top corner
+            
+            numArg = numarg()
+            if (numArg == 0) {
+                if (distFuncCatIdx != zebraDistFuncCatIdx) {
+                    getDistMechVarRangeInside(comp.list_ref, mechName, varType, varName, arrayIndex, &yMin2, &yMax2)
+                } else {
+                    distFuncIdx = distFuncIdxs[zebraDistFuncCatIdx]
+                    distFuncHelper = distFuncHelpers[distFuncIdx]
+                    absValue = abs(distFuncHelper.value)
+                    yMin2 = -absValue
+                    yMax2 = absValue
+                }
+            } else if (numArg == 2) {
+                yMin2 = $1
+                yMax2 = $2
+            } else {
+                codeContractViolation()
+            }
+            
+            yMin1 = math.min(yMin2, yMinOut)
+            yMax1 = math.max(yMax2, yMaxOut)
+            
+            shape1.scale(yMin1, yMax1)  // All compartments
+            shape2.scale(yMin2, yMax2)  // This compartment only
+        } else {
+            synGroup.updateColormaps(shape1, shape2)
+        }
         
-        $&2 = yMin
-        $&3 = yMax
+        shape1.flush()
+        shape2.flush()
     }
     
     proc selectDistFuncHandler() {
         distFuncChangedHandler(distFuncIdx)
     }
     
-    proc applyHandler() { local isOK, isInhom, varValue, mechOpIdx, cond localobj distFuncHelper, secList
+    proc applyHandler() { local isOK, yMin, yMax, isInhom, varValue, mechOpIdx, isCalledFromVarsEditor localobj distFuncHelper, secList
         strdef line1, title, line2, line3
         
         if (isCancel) {
@@ -631,6 +691,13 @@ begintemplate InhomEditorSubWidget
         if (isMechOrSynEditor) {
             comp.applySegmentationAndInhomogeneity(segmentationHelper, mechName, varType, varName, arrayIndex, distFuncHelper)
             inhomAndStochApplicator.enableOrUpdateInhomFor(compIdx, mechIdx, varType, varIdx, arrayIndex, distFuncHelper)
+            
+            if (segmentationHelper.segmentationMode != 0) {
+                // For some reason, this is required after changing nseg; otherwise we get error in proc updateColormaps: Unhandled Exception. This usually means a bad memory
+                shape1.observe()
+                secList = comp.getSecList()
+                shape2.observe(secList)
+            }
         } else {
             isOK = msmBaseWidget.synManagerMainWidget.warnIfUserHasNotSelectedPPs()
             if (!isOK) {
@@ -641,41 +708,30 @@ begintemplate InhomEditorSubWidget
             // !! inhomAndStochApplicator.enableOrUpdateInhomFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, distFuncHelper)
         }
         
-        if (isMechOrSynEditor) {    // Don't combine into one IF to avoid "object prefix is NULL" error for synapses
-            if (segmentationHelper.segmentationMode != 0) {
-                // For some reason, this is required after changing nseg; otherwise we get error in proc updateColormaps: Unhandled Exception. This usually means a bad memory
-                plotShape1.observe()
-                secList = comp.getSecList()
-                plotShape2.observe(secList)
-            }
-            
-            updateColormaps()
-        }
+        updateStatsCurve(&yMin, &yMax)
         
-        updateStatsCurve()  // This sets yMin2 and yMax2
+        updateColormaps(yMin, yMax)
         
-        isInhom = (yMin2 != yMax2)
+        isInhom = (yMin != yMax)
         if (isInhom) {
             varValue = math.nan
         } else {
-            varValue = yMin2
+            varValue = yMin
         }
         comp.mechStds[mechIdx][varTypeIdx].set(varName, varValue, arrayIndex)
         comp.isMechVarTypeInhom[mechIdx][varTypeIdx] = isInhom
         
-        // !!
-        cond = 0
         if (isMechOrSynEditor) {
             mechOpIdx = mmmowb.lastMechOpIdx
-            if (mechOpIdx == 1) {
-                cond = 1
-            } else if (mechOpIdx == 2 && !isInhom) {
+            isCalledFromVarsEditor = (mechOpIdx == 1)
+            if (mechOpIdx == 2 && !isInhom) {
                 // !! need to unmap and show the parent widget again to hide the button
             }
         } else {
-            cond = 1
+            isCalledFromVarsEditor = 1
         }
-        if (cond) {
+        
+        if (isCalledFromVarsEditor) {
             varsEditorSubWidget.onApplyInInhomEditor(varIdx, arrayIndex, isInhom)
         }
         
@@ -688,16 +744,6 @@ begintemplate InhomEditorSubWidget
             line3 = "(The checkbox \"Enable stochasticity\" must be checked.)"
             mwh.showMessageBox(line1, "", line2, line3, title)
         }
-    }
-    
-    proc updateColormaps() {
-        // !! BUG: for some reason, the colorbar is not always placed at the left-top corner
-        
-        // plotShape1.scale(yMin1, yMax1)   // !! this is not correct for plotShape1 because other compartments can have values out of the range
-        plotShape1.flush()
-        
-        plotShape2.scale(yMin1, yMax1)
-        plotShape2.flush()
     }
     
     proc dismissChild() {

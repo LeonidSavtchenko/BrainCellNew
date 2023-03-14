@@ -1,0 +1,18 @@
+{
+    "NetStim": [
+        "interval",
+        "number",
+        "start",
+        "noise"
+    ],
+    "NetStimm": [
+        "interval",
+        "number",
+        "start",
+        "noise"
+    ],
+    "JustExampleOfMechName": [
+        "JustExampleOfVarNameForScalar",
+        "JustExampleOfVarNameForArrayElement[123]"
+    ]
+}

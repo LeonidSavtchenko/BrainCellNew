@@ -17,6 +17,7 @@ if (isAstrocyteOrNeuron) {
 { load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupCHelper.hoc") }
 { load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupsEFHelper.hoc") }
 { load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupGHelper.hoc") }
+{ load_file("Widgets/Inhomogeneity/InhomEditorSectionUtils.hoc") }
 { load_file("Widgets/Inhomogeneity/InhomEditorSubWidget.hoc") }
 
 { load_file("Widgets/Stochasticity/StochDistHelpers/PythonUtils/PythonUtilsForStochDists.hoc") }
@@ -32,6 +33,7 @@ if (isAstrocyteOrNeuron) {
 { load_file("Widgets/Stochasticity/BoundingHelper.hoc") }
 { load_file("Widgets/Stochasticity/StochEditorSubWidget.hoc") }
 
+{ load_file("Widgets/StochButtonHiderForVarsEditor.hoc") }
 { load_file("Widgets/VarsEditorWidget.hoc") }
 
 { load_file("Widgets/MechOrSynManagerBaseWidget.hoc") }

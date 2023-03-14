@@ -16,12 +16,3 @@ SynapseLocationDendrite = 1
 proc Neuron_AddSynapses_delete() {
     smAllSyns.remove_all()
 }
-
-xpanel("Synaptic distribution",0)
-xlabel("===============Synaptic Distribution====================")
-xvalue("weight", "weight", 1, "ChangeTheSynapticInput()", 0, 1)
-xvalue("IntervalSynapticActivity", "IntervalSynapticActivity", 1, "ChangeTheSynapticInput()", 0, 1)
-xvalue("Number", "SwtichOn", 1, "ChangeTheSynapticInput()", 0, 1)
-xvalue("Synapse Location: Spine Head = 1 or Dendrite = 0", "SynapseLocationDendrite", 1, "CreateTheSynapticInput()", 0, 1)
-xvalue("Noise = 1 or Deterministic = 0", "noise", 1, "ChangeTheSynapticInput()", 0, 1)
-xpanel()

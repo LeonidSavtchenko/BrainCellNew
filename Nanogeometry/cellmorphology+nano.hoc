@@ -35131,15 +35131,21 @@ begintemplate Synapse
         calcAndCacheDist()
     }
     
-    obfunc getPointProcess() { local enumPpRole
-        enumPpRole = $1     // 0: "Source PP", 1: "Target PP", 2: "Single PP"
+    obfunc getPointProcess() { local enumPpRoleExt localobj nil
+        enumPpRoleExt = $1     // 0: "Source PP", 1: "Target PP", 2: "Single PP", 3: "Target PP or Single PP"
         
-        if (enumPpRole == 0) {
+        if (enumPpRoleExt == 0) {
             return source
-        } else if (enumPpRole == 1) {
+        } else if (enumPpRoleExt == 1) {
             return target
-        } else if (enumPpRole == 2) {
+        } else if (enumPpRoleExt == 2) {
             return single
+        } else if (enumPpRoleExt == 3) {
+            if (netCon != nil) {
+                return target
+            } else {
+                return single
+            }
         } else {
             // codeContractViolation()
         }
@@ -35182,15 +35188,16 @@ endtemplate Synapse
 objref smAllSyns
 smAllSyns = new List()
 
-// Create and connect all synapses; the number of synapses is the same as the number of spines !!or less!!
-// Inputs: SynapseLocationDendrite, weight, IntervalSynapticActivity, SwtichOn, noise (all taken from the top level)
-proc CreateTheSynapticInput() { local synIdx, connectionPoint localobj source, target, sec_ref, netCon, synapse
-    strdef whereConnected
+
+// This proc will be called each time after neuron nanogeometry reseeding
+// Create and connect all default synapses; the number is the same as the number of spines
+// Inputs (all taken from the top level): SynapseLocationDendrite, weight, IntervalSynapticActivity, SwtichOn, noise,
+//                                        nanoDistal_ref, nanoProximal_ref
+proc Neuron_AddSynapses_reseed() { local numSyns, synIdx, connectionPoint localobj source, target, sec_ref, netCon, synapse
     
-    // !! this is not used anywhere outside
-    SynapseNumber = nanoDistal_ref.count()
+    numSyns = nanoDistal_ref.count()
     
-    for synIdx = 0, SynapseNumber - 1 {
+    for synIdx = 0, numSyns - 1 {
         source = new NetStim()
         
         if (SynapseLocationDendrite) {
@@ -35225,32 +35232,6 @@ proc CreateTheSynapticInput() { local synIdx, connectionPoint localobj source, t
         synapse = new Synapse(source, netCon, target, sec_ref, connectionPoint)
         smAllSyns.append(synapse)
     }
-    
-    if (SynapseLocationDendrite) {
-        whereConnected = "spine_head(0.5)"
-    } else {
-        whereConnected = "dendrite(where spine_neck emerges)"
-    }
-    printf("SynapseNumber=%d; each connected to: %s\n", SynapseNumber, whereConnected)
-}
-
-// Inputs: SynapseNumber, smAllSyns, weight, IntervalSynapticActivity, SwtichOn, noise (all taken from the top level)
-proc ChangeTheSynapticInput() { local synIdx localobj synapse
-    // !! use the iterator once it's exported
-    // for eachItemInList(synapse, smAllSyns) {
-    for synIdx = 0, SynapseNumber - 1 {
-        synapse = smAllSyns.o(synIdx)
-        synapse.netCon.weight = weight
-        synapse.source.interval = IntervalSynapticActivity
-        synapse.source.number = SwtichOn
-        synapse.source.noise = noise
-    }
-}
-
-// This proc will be called each time after neuron nanogeometry reseeding
-proc Neuron_AddSynapses_reseed() {
-    CreateTheSynapticInput()
-    ChangeTheSynapticInput()
 }
 
 Neuron_AddSynapses_reseed()
