@@ -74,21 +74,17 @@ Thank you for choosing "BRAINCELL", and we look forward to seeing the exciting d
     <p>Design and simulations of longer-term (seconds to minutes) intracellular calcium dynamics within realistic geometry using the cluster / cloud-based parallel computing. This regime can be run separately from other parts of ASTRO, it requires a Host computer with MATLAB (2012 or later) and NEURON (7.2 or later, <a href="https://neuron.yale.edu/neuron/download">https://neuron.yale.edu/neuron/download</a>) installed under Windows 7 or 10, and Worker computer / cluster operating under Linux and with preinstalled NEURON (<a href="https://neuron.yale.edu/neuron/download/compile_linux">https://neuron.yale.edu/neuron/download/compile_linux</a>) and MPI.</p>
     <p>Briefly, in this regime, the user working on the Host computer with MATLAB creates a MAT-file containing instructions for computation; uploads this file to the Worker cluster and launches there the simulations of astroglial Ca2+ dynamics (independently of the Host computer). The Host computer connects intermittently to the Worker time (a) to monitor computation progress, and (b) to download intermediate simulation results that are displayed and saved in MATLAB. Once simulations have been completed
 
-## Documentation
-
-Manual and API documentation can be found at https://github.com/LeonidSavtchenko/BrainCellNew
-
-
-
-<address>
-
-Written by <a href="mailto:savtchenko#yahoo.com">Dr. Leonid Savtchenko</a>.<br> and Prof. Dmitri Rusakov 
-<p>
-Visit us at:<br> </p>
-http://www.ucl.ac.uk/ion/departments/epilepsy/themes/synaptic-imaging <br>
-Department of Clinical and Experimental Epilepsy<br>
-Institute of Neurology<br>
-University College London<br>
-UK<br>
-
-</address>
+<section>
+      <h2>Documentation</h2>
+      <p>Manual and API documentation can be found at <a href="https://github.com/LeonidSavtchenko/BrainCellNew">https://github.com/LeonidSavtchenko/BrainCellNew</a>.</p>
+    </section>
+    <section>
+      <h2>Contact Information</h2>
+      <address>
+        Written by <a href="mailto:savtchenko#yahoo.com">Dr. Leonid Savtchenko</a>.<br> and Prof. Dmitri Rusakov<br>
+        Visit us at:<br>
+        <a href="http://www.ucl.ac.uk/ion/departments/epilepsy/themes/synaptic-imaging">Department of Clinical and Experimental Epilepsy<br>Institute of Neurology<br>University College London<br>UK</a>
+      </address>
+    </section>
+  </body>
+</html>
