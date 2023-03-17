@@ -32,32 +32,20 @@ Thank you for choosing "BRAINCELL", and we look forward to seeing the exciting d
 
 
 
-## The following section describes which experiment data or approximations are preferred when building a realistic cell model.
-
-##### 1. A 3D reconstructed tree of main identifiable cell processes importable from https://neuromorpho.org/ in any format. Alternatively, this could be  an artificially generated cell arbour with the branching pattern and branch diameters representing the average (typical)  cell from the population of interest. 
-##### 2. A sample (20-50) of nanoscopic astroglial processes and neuron spines reconstructed using 3D (serial-section) EM, with rendered surface co-ordinates.  This sample will be used to obtain statistical properties of the ultrathin processes to be generated in the model. 
-##### 3. Average tissue volume fraction occupied by astroglia and neuron, as distributed radially from the soma to the cell edges.  This data set is obtained from two-photon excitation measurements in situ (or from published data). 
-##### 4. The mean membrane surface density and the surface-to-volume fraction values obtained from 3D reconstructions of nanoscopic  processes.  
-##### 5. The characteristic I-V curve (somatic patch-clamp, square-pulse current injections) for the cell of interest, other (optional) available functional data such as electrical responses to glutamate uncaging or changes in extracellular potassium, intracellular calcium wave speed, etc. 
-
-
-## Installation. 
-
-### System Requirements for BRAINCELL:
-#### •	The basic languages : C++, MATLAB not older 2013 and Neuron 7.0
-#### •	Platform : Linux and Windows. 
-#### •	Type of operation : Sequential and parallel (MPI) computing
-
-
-## Setting up and running BRAINCELL: Main regimes of modelling 
-
-
-##### 1.	Constructing astroglial morphology ('Nano-geometry', Host computer only required). Importing the 3D main-branch morphology of astroglia into NEURON; generating, within the NEURON environment, the nanoscopic astroglial protrusions that reflect experimental data. This regime can be run separately from other parts of ASTRO, it requires a Host computer with MATLAB (2012 or later) and NEURON (7.2 or later, https://neuron.yale.edu/neuron/download) installed under Windows 7 or 10. 
-
-##### 2.	NEURON-based simulations of membrane mechanisms ('NEURON simulations', Host computer only required). Further adjustment of the astrocyte morphology (in accord with volumetric data); populating the cell with membrane mechanisms; setting up simulation configurations and protocols. This regime can be run separately from other parts of ASTRO, it requires a Host computer with MATLAB (2012 or later) and NEURON (7.2 or later, https://neuron.yale.edu/neuron/download) installed under Windows 7 or 10. 
-##### 3.	Simulating full-scale Ca2+ dynamics ('Calcium Dynamics on Cluster', Host and Worker computers normally required). Design and simulations of longer-term (seconds to minutes) intracellular calcium dynamics within realistic geometry using the cluster / cloud-based parallel computing. This regime can be run separately from other parts of ASTRO, it requires a Host computer with MATLAB (2012 or later) and NEURON (7.2 or later, https://neuron.yale.edu/neuron/download) installed under Windows 7 or 10, and Worker computer / cluster operating under Linux and with preinstalled NEURON (https://neuron.yale.edu/neuron/download/compile_linux) and MPI. 
-##### Briefly, in this regime, the user working on the Host computer with MATLAB creates a MAT-file containing instructions for computation; uploads this file to the Worker cluster and launches there the simulations of astroglial Ca2+ dynamics (independently of the Host computer). The Host computer connects intermittently to the Worker time (a) to monitor computation progress, and (b) to download intermediate simulation results that are displayed and saved in MATLAB. Once simulations have been completed, the MATLAB module running on the Host computer downloads the output MAT-file and visualises the computation results. 
-
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Building a Realistic Cell Model</title>
+  </head>
+  <body>
+    <h2>The following section describes which experiment data or approximations are preferred when building a realistic cell model.</h2>
+    <ol>
+      <li>A 3D reconstructed tree of main identifiable cell processes importable from <a href="https://neuromorpho.org/">https://neuromorpho.org/</a> in any format. Alternatively, this could be an artificially generated cell arbour with the branching pattern and branch diameters representing the average (typical) cell from the population of interest.</li>
+      <li>A sample (20-50) of nanoscopic astroglial processes and neuron spines reconstructed using 3D (serial-section) EM, with rendered surface co-ordinates. This sample will be used to obtain statistical properties of the ultrathin processes to be generated in the model.</li>
+      <li>Average tissue volume fraction occupied by astroglia and neuron, as distributed radially from the soma to the cell edges. This data set is obtained from two-photon excitation measurements in situ (or from published data).</li>
+      <li>The mean membrane surface density and the surface-to-volume fraction values obtained from 3D reconstructions of nanoscopic processes.</li>
+      <li>The characteristic I-V curve (somatic patch-clamp, square-pulse current injections) for the cell of interest, other (optional) available functional data such as electrical responses to glutamate uncaging or changes in extracellular potassium, intracellular calcium wave speed, etc.</li>
+    </ol>
 
 ## Documentation
 
