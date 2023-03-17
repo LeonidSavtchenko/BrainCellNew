@@ -3,9 +3,10 @@
 
 
 BRAINCELL 1.0. Interactive realistic model of brain cells. NEURON/Python environment
-![Brain Cell](https://github.com/LeonidSavtchenko/BrainCellNew/blob/main/2696937247-astrocyte.jpg)
+<!-- This is adding a picturet -->
+<!--![Brain Cell](https://github.com/LeonidSavtchenko/BrainCellNew/blob/main/2696937247-astrocyte.jpg)-->
 
-<img src="https://github.com/LeonidSavtchenko/BrainCellNew/blob/main/2696937247-astrocyte.jpg" alt="alt text" width=100 height=100 style="display:block; margin:auto;"/>
+<img src="https://github.com/LeonidSavtchenko/BrainCellNew/blob/main/2696937247-astrocyte.jpg" alt="Brain Cell" width=200 height=200 style="display:block; margin:auto;"/>
 ## Version 1.0
 
 <p> 
