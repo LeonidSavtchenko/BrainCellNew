@@ -35,7 +35,7 @@ Thank you for choosing "BRAINCELL", and we look forward to seeing the exciting d
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Building a Realistic Cell Model</title>
+    Building a Realistic Cell Model
   </head>
   <body>
     <h2>The following section describes which experiment data or approximations are preferred when building a realistic cell model.</h2>
