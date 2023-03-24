@@ -1,8 +1,8 @@
 
-objref mth, mmmowb, msmBaseWidget, mcu, varsEditorSubWidget, synGroup, smAllComps
+objref mth, mmmowb, msmBaseWidget, mcu, varsEditorSubWidget, synGroup, smAllComps, spineNeckDiamCache
 
 if (isAstrocyteOrNeuron) {
-    objref smAllSyns
+    objref smAllSyns, rph
 }
 
 { load_file("MechTypeHelper.hoc") }

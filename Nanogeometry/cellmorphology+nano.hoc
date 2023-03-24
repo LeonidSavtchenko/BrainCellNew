@@ -35092,7 +35092,7 @@ SwtichOn = 1000
 IntervalSynapticActivity = 100.0
 weight = 0.0002
 noise = 1.0
-SynapseLocationDendrite = 1
+enumSynLoc = 0
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -35101,13 +35101,13 @@ SynapseLocationDendrite = 1
 
 begintemplate Synapse
 
-    public source, netCon, target, single, sec_ref, connectionPoint, dist
+    public source, netCon, target, single, rpefPp, rpefNetCon, sec_ref, connectionPoint, dist
     public getPointProcess, changeLocation, changeStructure
     
     // !! uncomment here and below once it's exported
     // external codeContractViolation
     
-    objref source, netCon, target, single, sec_ref
+    objref source, netCon, target, single, rpefPp, rpefNetCon, sec_ref
     
     connectionPoint = -1
     dist = -1
@@ -35159,16 +35159,39 @@ begintemplate Synapse
     
     proc changeStructure() { local numArg localobj nil
         numArg = numarg()
-        if (numArg == 3) {
-            netCon = $o2    // Destroying old NetCon first
-            source = $o1
-            target = $o3
-            single = nil
-        } else if (numArg == 1) {
+        if (numArg == 1) {
+            // single -> Section
+            
+            netCon = nil        // Destroying old NetCon-s before all connected PPs
+            rpefNetCon = nil    //
+            
             single = $o1
-            netCon = nil
+            
             source = nil
             target = nil
+            rpefPp = nil
+        } else if (numArg == 3) {
+            // source -> netCon -> target -> Section
+            
+            netCon = $o2        // Destroying old NetCon-s before all connected PPs
+            rpefNetCon = nil    //
+            
+            source = $o1
+            target = $o3
+            
+            single = nil
+            rpefPp = nil
+        } else if (numArg == 5) {
+            // source -> netCon -> rpefPp -> rpefNetCon -> target -> Section
+            
+            netCon = $o2        // Destroying old NetCon-s before all connected PPs
+            rpefNetCon = $o4    //
+            
+            source = $o1
+            rpefPp = $o3
+            target = $o5
+            
+            single = nil
         } else {
             // codeContractViolation()
         }
@@ -35191,26 +35214,34 @@ smAllSyns = new List()
 
 // This proc will be called each time after neuron nanogeometry reseeding
 // Create and connect all default synapses; the number is the same as the number of spines
-// Inputs (all taken from the top level): SynapseLocationDendrite, weight, IntervalSynapticActivity, SwtichOn, noise,
+// Inputs (all taken from the top level): enumSynLoc, weight, IntervalSynapticActivity, SwtichOn, noise,
 //                                        nanoDistal_ref, nanoProximal_ref
-proc Neuron_AddSynapses_reseed() { local numSyns, synIdx, connectionPoint localobj source, target, sec_ref, netCon, synapse
+// !! code dupl. with SynGroup.getNewSecRefConnectionPointAndSpineNeckDiam
+proc Neuron_AddSynapses_reseed() { local numSyns, synIdx, connectionPoint localobj source, target, sec_ref, np_ref, netCon, synapse
     
     numSyns = nanoDistal_ref.count()
+    
+    if (enumSynLoc == 2) {
+        enumSynLoc == 0     // !!
+    }
     
     for synIdx = 0, numSyns - 1 {
         source = new NetStim()
         
-        if (SynapseLocationDendrite) {
+        if (enumSynLoc == 0) {
             // Synapse is connected to the centre of spine_head
             connectionPoint = 0.5
             nanoDistal_ref.o(synIdx).sec {
                 target = new Exp2Syn(connectionPoint)
                 sec_ref = new SectionRef()
             }
-        } else {
+        } else if (enumSynLoc == 1) {
             // Synapse is connected to the point on dendrite where spine_neck emerges
-            nanoProximal_ref.o(synIdx).sec connectionPoint = parent_connection()
-            nanoProximal_ref.o(synIdx).parent {
+            np_ref = nanoProximal_ref.o(synIdx)
+            np_ref.sec {
+                connectionPoint = parent_connection()
+            }
+            np_ref.parent {
                 target = new Exp2Syn(connectionPoint)
                 sec_ref = new SectionRef()
             }

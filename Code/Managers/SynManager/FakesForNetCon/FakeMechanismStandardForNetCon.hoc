@@ -4,7 +4,7 @@ begintemplate FakeMechanismStandardForNetCon
     public count, name, get, set, in, out
     
     external pyObj
-    external mth
+    external mth, mcu, rph
     external utils4FakeMech4NC
     external codeContractViolation
     
@@ -12,8 +12,11 @@ begintemplate FakeMechanismStandardForNetCon
     
     
     proc init() {
+        strdef pyCommand
+        sprint(pyCommand, "{'threshold': 10.0, 'delay': 1.0, 'weight': 0.0, '%s': 1.0}", rph.metaVarName)
         // These default values are consistent with a newly created NetCon
-        pyValuesDict = pyObj.ev("{'threshold': 10.0, 'delay': 1.0, 'weight': 0.0}")
+        pyValuesDict = pyObj.ev(pyCommand)
+        // !! think about encapsulating "release_probability" into a new (non-standard) varType, e.g. varType == 4 named "Meta"
     }
     
     func count() {
@@ -80,6 +83,9 @@ begintemplate FakeMechanismStandardForNetCon
         netCon = $o1
         for varIdx = 0, count() - 1 {
             arraySize = name(varName, varIdx)
+            if (mcu.isMetaVar(varName)) {
+                continue
+            }
             for arrayIndex = 0, arraySize - 1 {
                 mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
                 value = utils4FakeMech4NC.getNetConVar(netCon, varNameWithIndex)
@@ -93,6 +99,9 @@ begintemplate FakeMechanismStandardForNetCon
         netCon = $o1
         for varIdx = 0, count() - 1 {
             arraySize = name(varName, varIdx)
+            if (mcu.isMetaVar(varName)) {
+                continue
+            }
             for arrayIndex = 0, arraySize - 1 {
                 value = get(varName, arrayIndex)
                 mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)

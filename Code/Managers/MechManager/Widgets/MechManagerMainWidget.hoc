@@ -3,7 +3,7 @@ proc analyzeSectsAndCreateComps() { codeContractViolation() }
 
 begintemplate MechManagerMainWidget
 
-    public show, compOpSelectHandler, mechOpSelectHandler, updateVisibleMechOpChilds, dismissHandler
+    public show, rescanHandler, compOpSelectHandler, mechOpSelectHandler, updateVisibleMechOpChilds, dismissHandler
     
     external analyzeSectsAndCreateComps, dismissIfNotNil
     external mmAllComps
@@ -79,6 +79,29 @@ begintemplate MechManagerMainWidget
         updateVisibleMechOpChilds()
     }
     
+    proc compOpSelectHandler() {
+        compOpChangedHandler(compOpIdx)
+    }
+    
+    proc mechOpSelectHandler() {
+        mechOpChangedHandler(mechOpIdx)
+    }
+    
+    proc updateVisibleMechOpChilds() {
+        if (mmmowb.mainBox.ismapped()) {
+            mechOpSelectHandler()
+        }
+    }
+    
+    proc dismissHandler() {
+        dismissIfNotNil(mmcoWidget)
+        mmmowb.dismissHandler()
+        mainBox.unmap()
+    }
+    
+    // All next staff is private
+    
+    
     proc compOpChangedHandler() { localobj nil
         compOpIdx = $1
         
@@ -98,29 +121,9 @@ begintemplate MechManagerMainWidget
         mmcoWidget.show(compOpIdx)
     }
     
-    proc compOpSelectHandler() {
-        compOpChangedHandler(compOpIdx)
-    }
-    
     proc mechOpChangedHandler() {
         mechOpIdx = $1
         mmmowb.switchToOtherMechOpViewHandler(mechOpIdx)
-    }
-    
-    proc mechOpSelectHandler() {
-        mechOpChangedHandler(mechOpIdx)
-    }
-    
-    proc updateVisibleMechOpChilds() {
-        if (mmmowb.mainBox.ismapped()) {
-            mechOpSelectHandler()
-        }
-    }
-    
-    proc dismissHandler() {
-        dismissIfNotNil(mmcoWidget)
-        mmmowb.dismissHandler()
-        mainBox.unmap()
     }
     
 endtemplate MechManagerMainWidget

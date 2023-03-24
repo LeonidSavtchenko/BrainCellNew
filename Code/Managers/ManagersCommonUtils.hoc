@@ -1,10 +1,11 @@
 
 begintemplate ManagersCommonUtils
 
-    public getComp, defineDistFuncHandler, defineStochFuncHandler, createApplyReminder, createEditorSubWidgetDigest, copyAllVarsValuesExceptInhom
+    public getComp, defineDistFuncHandler, defineStochFuncHandler, createApplyReminder, createEditorSubWidgetDigest, copyAllVarsValuesExceptInhom, isMetaVar
     
     external mmAllComps, smAllComps
     external mwh, math
+    external stringStartsWith
     
     
     obfunc getComp() { local isMechOrSynEditor, compIdx
@@ -134,6 +135,12 @@ begintemplate ManagersCommonUtils
                 }
             }
         }
+    }
+    
+    func isMetaVar() {
+        strdef varName
+        varName = $s1
+        return stringStartsWith(varName, "@")
     }
     
 endtemplate ManagersCommonUtils

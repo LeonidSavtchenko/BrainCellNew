@@ -56,6 +56,20 @@ proc stringTruncate() {
 }
 
 // !! not intermodular actually
+// Check if the given string starts with the given prefix
+// $s1 - The tested string
+// $s2 - The prefix
+// Returns 0/1 flag
+func stringStartsWith() {
+    strdef inStr, inPrefix, pyMembCall
+    inStr = $s1
+    inPrefix = $s2
+    sprint(pyMembCall, "startswith('%s')", inPrefix)
+    _callPythonStringFunc(inStr, pyMembCall)
+    return pyObj.pyRes
+}
+
+// !! not intermodular actually
 // Check if the given string ends with the given suffix
 // $s1 - The tested string
 // $s2 - The suffix

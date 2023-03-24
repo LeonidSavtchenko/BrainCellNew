@@ -5,10 +5,10 @@ begintemplate SynLocationWidget
     
     external synGroup
     external createEmptyPanel, unmapIfNotNil, codeContractViolation
+    external enumSynLoc
     
     objref mainBox, deck
     
-    enumSynLoc = -1
     p = -1
     isReviewAfterApply = -1
     
@@ -17,9 +17,6 @@ begintemplate SynLocationWidget
     
     
     proc init() {
-        // !! take it from the top level (SynapseLocationDendrite)
-        enumSynLoc = 0      // 0: "Spine Head", 1: "Dendrite (just under Spine Neck)", 2: "Random"
-        
         p = 0.5
         
         isReviewAfterApply = 0
@@ -63,7 +60,16 @@ begintemplate SynLocationWidget
             // deck.flip_to(*)     // Will be done below in synLocChangedHandler
             deck.map()
             xpanel("")
-            xlabel("")
+            xlabel("Notes:")
+            getSynLocName(synLocName, 1)
+            sprint(text, "* When a synapse is moved to %s,", synLocName)
+            xlabel(text)
+            sprint(text, "  we set Spine Neck diam to %g (%s).", synGroup.witheredSpineNeckDiam, units("diam"))
+            xlabel(text)
+            getSynLocName(synLocName, 0)
+            sprint(text, "* When the synapse is moved back to %s,", synLocName)
+            xlabel(text)
+            xlabel("  we restore the old value of Spine Neck diam.")
             xbutton("Apply", "applyHandler()")
             xlabel("")
             xcheckbox("Review after \"Apply\"", &isReviewAfterApply)
@@ -113,7 +119,7 @@ begintemplate SynLocationWidget
     }
     
     proc applyHandler() {
-        synGroup.applyChangesToLoc(enumSynLoc, p, isReviewAfterApply)
+        synGroup.applyChangesToLoc(p, isReviewAfterApply)
         isReviewAfterApply = 0
         dismissHandler()
     }

@@ -42,6 +42,8 @@ proc analyzeSectsAndCreateComps() { localobj endFoot_ref, ecSource_ref, other_re
         }
     }
     mwh.hidePleaseWaitBox()
+    
+    isScheduledRescanningOfDistMechs = 0
 }
 
 proc analyzeSectsCreateCompsShowMechManagerBaseWidget() { localobj nil

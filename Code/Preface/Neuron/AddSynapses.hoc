@@ -6,8 +6,9 @@ IntervalSynapticActivity = 100
 weight = 0.0002
 noise = 1
 
-// 0/1 flag indicating whether each synapse is connected to the centre of spine_head (if 1) or the point on dendrite where spine_neck emerges (if 0)
-SynapseLocationDendrite = 1
+// Synapse location:
+// 0: "Spine Head", 1: "Dendrite (just under Spine Neck)", 2: "Random"
+enumSynLoc = 0
 
 
 { load_file("Exported/AddSynapses_Exported.hoc") }

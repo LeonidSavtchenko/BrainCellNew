@@ -4,7 +4,7 @@ begintemplate InhomEditorSubWidget
     public show, updateCurves, dismissHandler
     
     external msmBaseWidget, varsEditorSubWidget
-    external mwh, math, mth, mmmowb, mcu, inhomAndStochApplicator, synGroup
+    external mwh, math, mth, mmmowb, mcu, inhomAndStochApplicator, synGroup, rph
     external getDistMechVarRangeOutside, getDistMechVarRangeInside, createEmptyPanel, createElasticSpacer, oneZeroToYesNo, codeContractViolation
     external eachPointInGrid
     
@@ -43,6 +43,7 @@ begintemplate InhomEditorSubWidget
     xMax = -1
     yMinOut = -1
     yMaxOut = -1
+    yMinModel = -1
     
     isCancel = -1
     
@@ -93,7 +94,7 @@ begintemplate InhomEditorSubWidget
         if (!isAlreadyInhom) {
             showCurveOrColormapIdx = 0
         } else {
-            showCurveOrColormapIdx = 2
+            showCurveOrColormapIdx = 1
         }
         showAllOrThisCompIdx = 0
         
@@ -303,8 +304,8 @@ begintemplate InhomEditorSubWidget
                         {
                             xpanel("")
                             xradiobutton("Show model curve", "showCurveOrColormapChangedHandler(0)", showCurveOrColormapIdx == 0)
-                            xradiobutton("Show colormap (requires \"Apply\")", "showCurveOrColormapChangedHandler(1)", showCurveOrColormapIdx == 1)
-                            xradiobutton("Show stats curve (requires \"Apply\")", "showCurveOrColormapChangedHandler(2)", showCurveOrColormapIdx == 2)
+                            xradiobutton("Show stats curve (requires \"Apply\")", "showCurveOrColormapChangedHandler(1)", showCurveOrColormapIdx == 1)
+                            xradiobutton("Show colormap (requires \"Apply\")", "showCurveOrColormapChangedHandler(2)", showCurveOrColormapIdx == 2)
                             xpanel()
                             deck4 = new Deck()
                             deck4.intercept(1)
@@ -333,33 +334,29 @@ begintemplate InhomEditorSubWidget
                     deck5 = new Deck()
                     deck5.intercept(1)
                     {
+                        // Model curve
                         graph1 = new Graph()
-                        graph1.brush(0)                         // Without this, graph1 will be dashed if the widget is unmapped and shown again
-                        if (isMechOrSynEditor) {
-                            shape1 = new PlotShape()            // Show all compartments
-                            // !! BUG: Colormap looks uniform when we try to watch an array element, e.g. "ca_cadifus[0]"
-                            //         Maybe it's Neuron restriction because user cannot do it even manually
-                            //         clicking on colormap corner and then "Plot What?"
-                            shape1.variable(varNameWithIndex)
-                        } else {
-                            shape1 = new Shape()                // !!
-                        }
-                        shape1.exec_menu("Shape Plot")
-                        shape1.flush()
+                        graph1.brush(0)         // Without this, graph1 will be dashed if the widget is unmapped and shown again
+                        
+                        // Stats curve
                         graph2 = new Graph()
-                        graph2.brush(1, 1, 0)                   // Installing a dash brush; looks like the "pattern" arg doesn't work as described in Neuron docs
-                        graph2.brush(0)                         // Switching to solid line by default
+                        graph2.brush(1, 1, 0)   // Installing a dash brush; looks like the "pattern" arg doesn't work as described in Neuron docs
+                        graph2.brush(0)         // Switching to solid line by default
+                        
+                        // Colormap (all compartments)
                         if (isMechOrSynEditor) {
-                            shape2 = new PlotShape(secList)     // Show this compartment only
+                            shape1 = new PlotShape()
                         } else {
-                            shape2 = new Shape(secList)         // !!
+                            shape1 = new Shape()
                         }
+                        
+                        // Colormap (this compartment only)
                         if (isMechOrSynEditor) {
-                            // !! The same comment as for shape1
-                            shape2.variable(varNameWithIndex)
+                            shape2 = new PlotShape(secList)
+                        } else {
+                            shape2 = new Shape(secList)
                         }
-                        shape2.exec_menu("Shape Plot")
-                        shape2.flush()
+                        
                         xpanel("")
                         xlabel("Curves are not available for Zebra.")   // Shown for Zebra instead of graph1 and graph2
                         xlabel("Please switch to the colormap.")        //
@@ -383,19 +380,50 @@ begintemplate InhomEditorSubWidget
         mainBox.map("Inhomogeneity editor", 460, 150, -1, -1)
         
         // This works fine only after mapping of the mainBox
-        deck5.flip_to(1)
-        shape1.exec_menu("View = plot")
+        deck5.flip_to(2)
+        initShape(shape1)
         deck5.flip_to(3)
-        shape2.exec_menu("View = plot")
+        initShape(shape2)
+        
+        updateColormaps()
         
         if (isMechOrSynEditor) {
             segmentationModeChangedHandler(segmentationHelper.segmentationMode)
         }
         distFuncCatChangedHandler(distFuncCatIdx, 1)
-        updateColormaps()
         showCurveOrColormapChangedHandler(showCurveOrColormapIdx)
-        if (showCurveOrColormapIdx == 1) {
+        if (showCurveOrColormapIdx == 2) {
             showAllOrThisCompColormapChangedHandler(showAllOrThisCompIdx)
+        }
+    }
+    
+    proc updateCurves() {
+        if (distFuncCatIdx == zebraDistFuncCatIdx) {
+            codeContractViolation()
+        }
+        updateModelCurve()
+        updateStatsCurve()
+    }
+    
+    proc dismissHandler() {
+        dismissChild()
+        if (mainBox.ismapped()) {
+            mainBox.unmap()
+        }
+    }
+    
+    // All next staff is private
+    
+    
+    proc initShape() { localobj shape
+        shape = $o1
+        shape.exec_menu("Shape Plot")
+        shape.exec_menu("View = plot")
+        if (isMechOrSynEditor) {
+            // !! BUG: Colormap looks uniform when we try to watch an array element, e.g. "ca_cadifus[0]"
+            //         Maybe it's Neuron restriction because user cannot do it even manually
+            //         clicking on colormap corner and then "Plot What?"
+            shape.variable(varNameWithIndex)
         }
     }
     
@@ -488,23 +516,23 @@ begintemplate InhomEditorSubWidget
         }
         
         if (showCurveOrColormapIdx == 2) {
-            cardIdx = 0
+            cardIdx = 1
         } else {
-            cardIdx = showCurveOrColormapIdx
+            cardIdx = 0
         }
         deck4.flip_to(cardIdx)  // Show all compartments / Show this compartment only
         
-        if (showCurveOrColormapIdx == 1 && showAllOrThisCompIdx == 1) {
+        if (showCurveOrColormapIdx == 2 && showAllOrThisCompIdx == 1) {
             cardIdx = 3
         } else {
             cardIdx = showCurveOrColormapIdx
         }
-        if (distFuncCatIdx == zebraDistFuncCatIdx && (showCurveOrColormapIdx == 0 || showCurveOrColormapIdx == 2)) {
+        if (distFuncCatIdx == zebraDistFuncCatIdx && (showCurveOrColormapIdx == 0 || showCurveOrColormapIdx == 1)) {
             cardIdx = 4
         }
         deck5.flip_to(cardIdx)  // Graph-s / PlotShape-s
         
-        if (showCurveOrColormapIdx == 1) {
+        if (showCurveOrColormapIdx == 2) {
             if (isMechOrSynEditor) {
                 if (arraySize > 1) {
                     mwh.showWarningBox("The colormap is shown incorrectly because \"Plot What?\" is an array element (Neuron restriction).")
@@ -519,7 +547,7 @@ begintemplate InhomEditorSubWidget
         showAllOrThisCompIdx = $1
         
         if (showAllOrThisCompIdx == 0) {
-            cardIdx = 1
+            cardIdx = 2
         } else if (showAllOrThisCompIdx == 1) {
             cardIdx = 3
         } else {
@@ -527,14 +555,6 @@ begintemplate InhomEditorSubWidget
         }
         
         deck5.flip_to(cardIdx)  // Show all compartments / Show this compartment only
-    }
-    
-    proc updateCurves() {
-        if (distFuncCatIdx == zebraDistFuncCatIdx) {
-            codeContractViolation()
-        }
-        updateModelCurve()
-        updateStatsCurve()
     }
     
     proc updateModelCurve() {
@@ -579,15 +599,15 @@ begintemplate InhomEditorSubWidget
         }
     }
     
-    proc updateModelCurveCore() { local numArg, yMin, yMax, minNseg4Curve, nseg4Curve, xyMargin4Graph, xRange, x, y, xMargin4Graph, xMin4Graph, xMax4Graph, yRange, yMargin4Graph, yMin4Graph, yMax4Graph localobj graph, distFuncHelper
+    proc updateModelCurveCore() { local numArg, isStatsCurveRangeProvided, yMinStats, yMaxStats, minNseg4Curve, nseg4Curve, xyMargin4Graph, xRange, yMin, yMax, x, y, xMargin4Graph, xMin4Graph, xMax4Graph, yRange, yMargin4Graph, yMin4Graph, yMax4Graph localobj graph, distFuncHelper
     
         numArg = numarg()
         if (numArg == 1) {
-            yMin = math.inf
-            yMax = -math.inf
+            isStatsCurveRangeProvided = 0
         } else if (numArg == 3) {
-            yMin = $2
-            yMax = $3
+            yMinStats = $2
+            yMaxStats = $3
+            isStatsCurveRangeProvided = 1
         } else {
             codeContractViolation()
         }
@@ -611,10 +631,18 @@ begintemplate InhomEditorSubWidget
         graph.color(3)     // Blue
         graph.beginline()
         
+        yMin = math.inf
+        yMax = -math.inf
         for eachPointInGrid(&x, xMin, xMax, nseg4Curve + 1) {
             y = distFuncHelper.calculateAt(x)
             graph.line(x, y)
             math.updateMinMax(&yMin, &yMax, y)
+        }
+        yMinModel = yMin
+        
+        if (isStatsCurveRangeProvided) {
+            yMin = math.min(yMin, yMinStats)
+            yMax = math.max(yMax, yMaxStats)
         }
         
         // This makes the axes box too small compared to the curve (no idea why)
@@ -636,8 +664,6 @@ begintemplate InhomEditorSubWidget
     
     proc updateColormaps() { local numArg, yMin2, yMax2, distFuncIdx, absValue, yMin1, yMax1 localobj distFuncHelper
         if (isMechOrSynEditor) {
-            // !! BUG: for some reason, the colorbar is not always placed at the left-top corner
-            
             numArg = numarg()
             if (numArg == 0) {
                 if (distFuncCatIdx != zebraDistFuncCatIdx) {
@@ -659,6 +685,7 @@ begintemplate InhomEditorSubWidget
             yMin1 = math.min(yMin2, yMinOut)
             yMax1 = math.max(yMax2, yMaxOut)
             
+            // !! BUG: this shifts the colorbar on shape1 from the top-left corner to the center (select "cm" in Axon)
             shape1.scale(yMin1, yMax1)  // All compartments
             shape2.scale(yMin2, yMax2)  // This compartment only
         } else {
@@ -703,21 +730,34 @@ begintemplate InhomEditorSubWidget
             if (!isOK) {
                 return
             }
+            
+            // It would be more correct to pass "yMin" (from stats curve, calculated just below) instead of "yMinModel" (from model curve, calculated earlier)
+            rph.ifMetaVarThenEnableOrDisable(varName, yMinModel)
             msmBaseWidget.synManagerMainWidget.applyChangesToSynStrucIfNeeded()
+            
             comp.applyInhomogeneity(mechName, varType, varName, arraySize, arrayIndex, distFuncHelper)
             // !! inhomAndStochApplicator.enableOrUpdateInhomFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, distFuncHelper)
         }
         
         updateStatsCurve(&yMin, &yMax)
         
+        // !! BUG: we pass yMin and yMax here, but they are not set by updateStatsCurve in some cases for compartments of type SynPPComp and SynNCComp
         updateColormaps(yMin, yMax)
         
+        // !! the same comment regarding yMin and yMax (this is why we need 2nd IF)
         isInhom = (yMin != yMax)
         if (isInhom) {
             varValue = math.nan
         } else {
             varValue = yMin
         }
+        if (!isMechOrSynEditor && mcu.isMetaVar(varName)) {
+            if (!rph.isEnabled) {   // Don't combine into one IF because "rph" can be nil
+                isInhom = 0
+                varValue = 1
+            }
+        }
+        
         comp.mechStds[mechIdx][varTypeIdx].set(varName, varValue, arrayIndex)
         comp.isMechVarTypeInhom[mechIdx][varTypeIdx] = isInhom
         
@@ -735,7 +775,7 @@ begintemplate InhomEditorSubWidget
             varsEditorSubWidget.onApplyInInhomEditor(varIdx, arrayIndex, isInhom)
         }
         
-        sprint(line1, "The inhomogeneity was applied to \"%s\" in %s. Now you can review colormap or stats curve.", varNameWithIndex, comp.name)
+        sprint(line1, "The inhomogeneity was applied to \"%s\" in %s. Now you can review stats curve or colormap.", varNameWithIndex, comp.name)
         title = "Inhomogeneity applied"
         if (varType == 1) { // 1: "PARAMETER"
             mwh.showMessageBox(line1, title)
@@ -748,13 +788,6 @@ begintemplate InhomEditorSubWidget
     
     proc dismissChild() {
         distFuncHelpers[distFuncIdx].dismissHandler()
-    }
-    
-    proc dismissHandler() {
-        dismissChild()
-        if (mainBox.ismapped()) {
-            mainBox.unmap()
-        }
     }
     
 endtemplate InhomEditorSubWidget

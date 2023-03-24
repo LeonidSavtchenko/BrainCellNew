@@ -1,0 +1,74 @@
+
+begintemplate ReleaseProbabilityHelper
+
+    public ifMetaVarThenEnableOrDisable, createDefaultEventFilter
+    public isEnabled
+    public metaVarName, realMechName, realVarType, realVarName, realArrayIndex
+    
+    external smAllComps
+    // !! external mth      // !! circular file dependencies problem
+    external joinStrings
+    external mcu, enumSynCompIdxs
+    
+    metaMechIdx = -1        // Correspond to FakeMechanism*ForNetCon
+    metaVarTypeIdx = -1     //
+    strdef metaVarName      //
+    metaArrayIndex = -1     //
+    
+    strdef realMechName     // Correspond to PostNetConEventFilter
+    realVarType = -1        //
+    strdef realVarName      //
+    realArrayIndex = -1     //
+    
+    isEnabled = -1
+    
+    
+    proc init() { local metaVarType
+        realMechName = "PostNetConEventFilter"  // Keep in sync with proc createDefaultEventFilter
+        realVarType = 1
+        realVarName = "release_probability"
+        realArrayIndex = 0
+        
+        metaMechIdx = 0
+        metaVarType = 1
+        metaVarTypeIdx = 0  // !! mth.convertVarTypeToVarTypeIdx(metaVarType)
+        metaVarName = "@"
+        joinStrings(metaVarName, realVarName, "")
+        metaArrayIndex = 0
+    }
+    
+    proc ifMetaVarThenEnableOrDisable() { local minValue
+        strdef varName
+        varName = $s1
+        minValue = $2
+        if (mcu.isMetaVar(varName)) {
+            isEnabled = (minValue < 1)
+        }
+    }
+    
+    proc createDefaultEventFilter() { local release_probability, weight localobj trgPp, mechStd, efPp, efNetCon
+        trgPp = $o1
+        
+        mechStd = smAllComps.o(enumSynCompIdxs.netCon).mechStds[metaMechIdx][metaVarTypeIdx]
+        
+        // These two values will be assigned homogeneously in this proc, but if any of the vars must be inhomogeneous, we'll rewrite its values shortly downstream
+        release_probability = mechStd.get(metaVarName, metaArrayIndex)
+        weight = mechStd.get("weight")
+        
+        efPp = new PostNetConEventFilter()  // Keep the name in sync with proc init
+        efPp.release_probability = release_probability
+        // The "seed" will be set shortly downstream (once per rank)
+        
+        efNetCon = new NetCon(efPp, trgPp)
+        efNetCon.delay = 0
+        efNetCon.weight = weight
+        // The "threshold" is not set here just because it won't be used by this NetCon
+        
+        $o2 = efPp
+        $o3 = efNetCon
+    }
+    
+endtemplate ReleaseProbabilityHelper
+
+objref rph
+rph = new ReleaseProbabilityHelper()

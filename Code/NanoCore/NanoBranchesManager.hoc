@@ -28,6 +28,12 @@ begintemplate NanoBranchesManager
     
     public reseedBranches, reseedBranchesWithLastUsedArgs, updateBranches, deleteBranches
     
+    // Keeping this list "public" even though the name doesn't appear explicitly anywhere outside this template.
+    // It turns out, NEURON accesses it via reflection (implicitly) when user selects
+    //  Tools -> Distributed Mechanisms -> Viewers -> Shape Name
+    // and then double clicks on any nanogeometry section in the list.
+    public nanoBranches_flat
+    
     external seededDendrite_ref, NumberNanoBranches
     external isAstrocyteOrNeuron, MinDistance, MaxDendriticLength, isFirstReseeding
     external mwh, rngUtils
@@ -75,7 +81,7 @@ begintemplate NanoBranchesManager
         }
         
         if (msmBaseWidget != nil) {
-            msmBaseWidget.onReseedHandler()
+            msmBaseWidget.onNanoReseedOrUpdateHandler()
         }
         
         mwh.showPleaseWaitBox("Reseeding nanostructures.")
@@ -136,7 +142,7 @@ begintemplate NanoBranchesManager
     // Update nanobranches geometry without reseeding
     // $1 - The 1st argument passed to *NanoBranch template
     // $2 (optional) - The 2nd argument passed to *NanoBranch template
-    proc updateBranches() { local numArg, arg1, arg2, branchIdx localobj nanoBranch
+    proc updateBranches() { local numArg, arg1, arg2, branchIdx localobj nil, nanoBranch
         numArg = numarg()
         if (numArg < 1 || numArg > 2) {
             codeContractViolation()
@@ -145,6 +151,10 @@ begintemplate NanoBranchesManager
         arg1 = $1
         if (numArg == 2) {
             arg2 = $2
+        }
+        
+        if (msmBaseWidget != nil) {
+            msmBaseWidget.onNanoReseedOrUpdateHandler()
         }
         
         for branchIdx = 0, NumberNanoBranches - 1 {

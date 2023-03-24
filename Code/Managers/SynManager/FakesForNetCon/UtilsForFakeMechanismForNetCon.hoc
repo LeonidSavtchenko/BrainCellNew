@@ -3,14 +3,16 @@ begintemplate UtilsForFakeMechanismForNetCon
 
     public getNumGlobalVars, getNumVars, getVarNameAndArraySize, getVarUnits, getNetConVar, setNetConVar
     
-    external pyObj
+    external pyObj, rph
     
     objref _pyUnitsDict, _tempNetCon, this
     _tempValue = -1
     
     
     proc init() {
-        _pyUnitsDict = pyObj.ev("{'threshold': 'mV', 'delay': 'ms', 'weight': ''}")
+        strdef pyCommand
+        sprint(pyCommand, "{'threshold': 'mV', 'delay': 'ms', 'weight': '', '%s': ''}", rph.metaVarName)
+        _pyUnitsDict = pyObj.ev(pyCommand)
     }
     
     func getNumGlobalVars() {
@@ -61,7 +63,7 @@ begintemplate UtilsForFakeMechanismForNetCon
         
         _tempNetCon = nil
     }
-
+    
 endtemplate UtilsForFakeMechanismForNetCon
 
 

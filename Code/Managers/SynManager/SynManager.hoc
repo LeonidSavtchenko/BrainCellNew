@@ -1,20 +1,5 @@
 
-begintemplate EnumSynCompIdxs
-    
-    public source, netCon, target, single
-    
-    source = -1
-    netCon = -1
-    target = -1
-    single = -1
-    
-endtemplate EnumSynCompIdxs
-
-objref enumSynCompIdxs
-enumSynCompIdxs = new EnumSynCompIdxs()
-
 objref smAllComps
-
 
 { load_file("SynManagerLoads.hoc") }
 
@@ -40,6 +25,8 @@ proc createSynCompsAndShowSynManagerBaseWidget() { localobj nil
     if (smAllComps == nil) {
         createSynComps()
     }
+    
+    spineNeckDiamCache.cacheAllDiams()
     
     dismissIfNotNil(msmBaseWidget)
     msmBaseWidget = new MechOrSynManagerBaseWidget(0)

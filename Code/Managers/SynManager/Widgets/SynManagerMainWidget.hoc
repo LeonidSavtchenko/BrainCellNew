@@ -19,7 +19,7 @@ begintemplate SynManagerMainWidget
     
     external smAllSyns, synGroup, smAllComps
     external slw, smlfw
-    external mwh, mth
+    external mwh, mth, rph
     external createEmptyPanel, createElasticSpacer, getGlobalVarsHint, stringEmpty, stringsEqual, stringToLowerCase, containsSubstring, dismissIfNotNil, codeContractViolation
     external enumSynCompIdxs
     external varsEditorSubWidget
@@ -281,7 +281,7 @@ begintemplate SynManagerMainWidget
     //  populate 3 lists based on the filter level (preserving the old selections if possible) and switch the decks respectively
     // If called from "init", then:
     //  populate 3 lists based on the filter level
-    proc onListsFilterLevelChangedHandler() { local isCalledFromInit, mechIdx, cond, srcChoiceIdx, trgChoiceIdx, sngChoiceIdx, isSynInName localobj ppListItem
+    proc onListsFilterLevelChangedHandler() { local isCalledFromInit, srcChoiceIdx, trgChoiceIdx, sngChoiceIdx, mechIdx, isForIntUseOnly, isAccNCSrc, isAccNCTrg, doesReqSec, isSynInName, isAddToSrcList, isAddToTrgList, isAddToSngList localobj newItem
         strdef oldSrcSelMechName, oldTrgSelMechName, oldSngSelMechName, mechName, mechNameLower
         
         isCalledFromInit = $1
@@ -306,32 +306,56 @@ begintemplate SynManagerMainWidget
         // (Re)populate the lists based on the filter level
         for mechIdx = 0, mth.getNumMechs(1) - 1 {
             mth.getMechName(1, mechIdx, mechName)
-            ppListItem = new PPListItem(mechIdx, mechName)
             
-            cond = (smlfw.filterLevel == 0) || mth.isPointProcessAcceptableNetConSource(mechIdx)
-            if (cond) {
-                appendAndSelectIfMechNameEqual(srcChoices, ppListItem, oldSrcSelMechName, &srcChoiceIdx)
+            stringToLowerCase(mechName, mechNameLower)
+            
+            isForIntUseOnly = stringsEqual(mechName, rph.realMechName)
+            isAccNCSrc = mth.isPointProcessAcceptableNetConSource(mechIdx)
+            isAccNCTrg = mth.isPointProcessAcceptableNetConTarget(mechIdx)
+            doesReqSec = mth.doesPointProcessRequireSection(mechIdx)
+            isSynInName = containsSubstring(mechNameLower, "syn")
+            
+            if (smlfw.filterLevel < 0 || smlfw.filterLevel > 3) {
+                codeContractViolation()
             }
             
-            if (smlfw.filterLevel == 2) {
-                // Applying the name filter for Target PP and Single PP
-                stringToLowerCase(mechName, mechNameLower)
-                isSynInName = containsSubstring(mechNameLower, "syn")
-                if (!isSynInName) {
-                    continue
-                }
+            // No filtration
+            isAddToSrcList = 1
+            isAddToTrgList = 1
+            isAddToSngList = 1
+            
+            if (smlfw.filterLevel >= 1) {
+                // Minimum filtration
+                isAddToSrcList = !isForIntUseOnly
+                isAddToTrgList = !isForIntUseOnly
+                isAddToSngList = !isForIntUseOnly
+            }
+            if (smlfw.filterLevel >= 2) {
+                // Moderate filtration
+                isAddToSrcList = isAddToSrcList && isAccNCSrc
+                isAddToTrgList = isAddToTrgList && isAccNCTrg && doesReqSec
+                isAddToSngList = isAddToSngList && !isAccNCTrg && doesReqSec
+            }
+            if (smlfw.filterLevel >= 3) {
+                // Maximum filtration
+                isAddToSrcList = isAddToSrcList && !doesReqSec
+                isAddToTrgList = isAddToTrgList && isSynInName
+                isAddToSngList = isAddToSngList && isSynInName
             }
             
-            cond = (smlfw.filterLevel == 0) || (mth.isPointProcessAcceptableNetConTarget(mechIdx) && mth.doesPointProcessRequireSection(mechIdx))
-            if (cond) {
-                appendAndSelectIfMechNameEqual(trgChoices, ppListItem, oldTrgSelMechName, &trgChoiceIdx)
-            }
+            // !! not sure about isAddToSngList: imagine a PP that has NetCon input, but can work even without a NetCon;
+            //    we can add or remove !isAccNCTrg and !isAccNCSrc to the AND condition in any combination
             
-            // !! not sure about this cond, maybe the part after || is not necessary
-            //    (imagine a PP that has NetCon input, but can work even without a NetCon)
-            cond = (smlfw.filterLevel == 0) || !mth.isPointProcessAcceptableNetConTarget(mechIdx)
-            if (cond) {
-                appendAndSelectIfMechNameEqual(sngChoices, ppListItem, oldSngSelMechName, &sngChoiceIdx)
+            newItem = new PPListItem(mechIdx, mechName)
+            
+            if (isAddToSrcList) {
+                appendAndSelectIfMechNameEqual(srcChoices, newItem, oldSrcSelMechName, &srcChoiceIdx)
+            }
+            if (isAddToTrgList) {
+                appendAndSelectIfMechNameEqual(trgChoices, newItem, oldTrgSelMechName, &trgChoiceIdx)
+            }
+            if (isAddToSngList) {
+                appendAndSelectIfMechNameEqual(sngChoices, newItem, oldSngSelMechName, &sngChoiceIdx)
             }
         }
         

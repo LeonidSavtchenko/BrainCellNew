@@ -4,7 +4,7 @@
 if (isAstrocyteOrNeuron) {
     objref fakeMechType4NC, utils4FakeMech4NC
 } else {
-    { load_file("SynManager/FakesForNetCon/LoadsForFakeMechanismForNetCon.hoc") }
+    { load_file("SynManager/SynManagerBaseLoads.hoc") }
 }
 
 begintemplate MechTypeHelper

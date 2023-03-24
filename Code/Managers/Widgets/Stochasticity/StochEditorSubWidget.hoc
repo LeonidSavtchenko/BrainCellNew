@@ -472,6 +472,27 @@ begintemplate StochEditorSubWidget
         stochFuncCatChangedHandler(stochFuncCatIdx, 1)
     }
     
+    proc updateModelCurves() { localobj stochFuncHelper
+    
+        if (stochFuncCatIdx > 0 && stochFuncCatIdx < specialStochFuncCatIdx) {
+            // !! not implemented, just to avoid downstream errors (the user has been informed)
+            return
+        }
+        
+        stochFuncHelper = stochFuncHelpers[stochFuncIdx]
+        
+        if (stochFuncCatIdx != specialStochFuncCatIdx) {
+            math.disableGreedyComparison()  // Needed for calcCdf and makeSureBoundsOK
+            {
+                isBoundsOK = boundingHelper.prepareForPdfAndCdfBounding(stochFuncHelper.distHelper)
+            }
+            math.restoreGreedyComparison()
+            
+            stochFuncHelper.showPdf(graph1)
+            stochFuncHelper.showCdf(graph2)
+        }
+    }
+    
     proc dismissHandler() {
         dismissChild()
         if (mainBox.ismapped()) {
@@ -1004,27 +1025,6 @@ begintemplate StochEditorSubWidget
         }
         graph.exec_menu("View = plot")
         graph.flush()
-    }
-    
-    proc updateModelCurves() { localobj stochFuncHelper
-    
-        if (stochFuncCatIdx > 0 && stochFuncCatIdx < specialStochFuncCatIdx) {
-            // !! not implemented, just to avoid downstream errors (the user has been informed)
-            return
-        }
-        
-        stochFuncHelper = stochFuncHelpers[stochFuncIdx]
-        
-        if (stochFuncCatIdx != specialStochFuncCatIdx) {
-            math.disableGreedyComparison()  // Needed for calcCdf and makeSureBoundsOK
-            {
-                isBoundsOK = boundingHelper.prepareForPdfAndCdfBounding(stochFuncHelper.distHelper)
-            }
-            math.restoreGreedyComparison()
-            
-            stochFuncHelper.showPdf(graph1)
-            stochFuncHelper.showCdf(graph2)
-        }
     }
     
     proc selectDistFuncHandler() {

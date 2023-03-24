@@ -7,13 +7,20 @@
 
 begintemplate RNGUtils
 
-    public getFor_diameters, getFor_calcium, getFor_frapCircle, getFor_diamAndLen, getFor_branchSeeder, getFor_spineRadius, getFor_neckLen, getFor_neckDiam, getFor_synLoc, getFor_stochFunc_withUniqueSeed, getFor_stretch_withCustomSeed
+    public getFor_diameters, getFor_calcium, getFor_frapCircle, getFor_diamAndLen, getFor_branchSeeder, getFor_spineRadius, getFor_neckLen, getFor_neckDiam, getFor_synLoc, getFor_stochFunc_withUniqueSeed, getFor_stretch_withCustomSeed, getSeedFor_RPH
     
-    uniqueSeed = -1
+    uniqueSeedForHoc = -1
+    uniqueSeedForMod = -1
     
     
-    proc init() {
-        uniqueSeed = 9      // Keep in sync with the code below
+    proc init() { local minSeedForMod, maxNumSeedsPerRankForMod localobj pc
+        uniqueSeedForHoc = 9    // Keep in sync with the obfunc-s below
+        
+        minSeedForMod = 10000           // !! maybe the random generators used in HOC and MOD are different, and so we can simply use "0" here
+        maxNumSeedsPerRankForMod = 1000     // !! how many times user can change synapse structure per 1 session with the guarantee of unique seeds
+        
+        pc = new ParallelContext()
+        uniqueSeedForMod = minSeedForMod + maxNumSeedsPerRankForMod * pc.id
     }
     
     obfunc getFor_diameters() {
@@ -49,18 +56,24 @@ begintemplate RNGUtils
     }
     
     obfunc getFor_synLoc() {
-        return new Random(8)    // Must be equal to uniqueSeed - 1
+        return new Random(8)    // Must be equal to uniqueSeedForHoc - 1
     }
     
     obfunc getFor_stochFunc_withUniqueSeed() { localobj rng
-        rng = new Random(uniqueSeed)
-        uniqueSeed += 1
+        rng = new Random(uniqueSeedForHoc)
+        uniqueSeedForHoc += 1
         return rng
     }
     
     // $1 - The seed
     obfunc getFor_stretch_withCustomSeed() {
         return new Random($1)
+    }
+    
+    func getSeedFor_RPH() { local seed
+        seed = uniqueSeedForMod
+        uniqueSeedForMod += 1
+        return seed
     }
     
 endtemplate RNGUtils

@@ -5,9 +5,10 @@
 { load_file("../Nanogeometry/cellmorphology+nano.hoc") }
 isAstrocyteOrNeuron = 0
 
-objref cellPlotShape
-cellPlotShape = new PlotShape()
-
+objref stochTestPlotShape
+stochTestPlotShape = new PlotShape()
+{ stochTestPlotShape.exec_menu("Shape Plot") }
+{ fast_flush_list.append(stochTestPlotShape) }
 
 // Watch some var just to test stochasticity applied with AltRunControlWidget
 objref stochTestGraph
@@ -15,6 +16,7 @@ stochTestGraph = new Graph()
 { stochTestGraph.addvar("smAllSyns.o(123).target.tau1") }
 { graphList[0].append(stochTestGraph) }
 
+tstop = 15
 
 { load_file("../Code/InterModular/AllInterModularUtils.hoc") }
 

@@ -5,9 +5,9 @@ begintemplate SynNCComp
     public isMechVarInhom, prepareVarsEditorHeader, getDistRange, getSecList, markMechDirty, updateStatsCurve, applyInhomogeneity
     public isMechVarTypeInhom, mechStds, isMechDirty
     
-    external mwh, mth, math
+    external mwh, mth, math, rph
     external smAllSyns, synGroup
-    external utils4FakeMech4NC
+    external mcu, utils4FakeMech4NC
     external stringsEqual, codeContractViolation
     external eachItemInList
     
@@ -80,7 +80,7 @@ begintemplate SynNCComp
         isMechDirty[mechIdx] = 1
     }
     
-    proc updateStatsCurve() { local yMin, yMax, varType, arraySize, arrayIndex, y localobj graph, nil, syn
+    proc updateStatsCurve() { local yMin, yMax, varType, arraySize, arrayIndex, isMetaVar, y localobj graph, firstSyn, nil, mechStd, syn
         strdef mechName, varName, varNameWithIndex
         
         graph = $o1
@@ -92,22 +92,41 @@ begintemplate SynNCComp
         arraySize = $7
         arrayIndex = $8
         
-        if (smAllSyns.o(0).netCon == nil) {
-            // The actual synapses don't use NetCon-s
-            return
+        isMetaVar = mcu.isMetaVar(varName)
+        
+        firstSyn = smAllSyns.o(0)
+        if (!isMetaVar) {
+            if (firstSyn.netCon == nil) {
+                // The actual synapses don't have NetCon-s
+                return
+            }
+        } else {
+            if (firstSyn.rpefPp == nil) {
+                // The actual synapses don't have the release probability event filter PPs
+                return
+            }
         }
         
-        mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
+        if (!isMetaVar) {
+            mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
+        } else {
+            mechStd = new MechanismStandard(rph.realMechName, rph.realVarType)
+        }
         
         for synGroup.updateStatsCurveIter(syn, graph, &y, &yMin, &yMax) {
-            y = utils4FakeMech4NC.getNetConVar(syn.netCon, varNameWithIndex)
+            if (!isMetaVar) {
+                y = utils4FakeMech4NC.getNetConVar(syn.netCon, varNameWithIndex)
+            } else {
+                mechStd.in(syn.rpefPp)
+                y = mechStd.get(rph.realVarName, rph.realArrayIndex)
+            }
         }
         
         $&2 = yMin
         $&3 = yMax
     }
     
-    proc applyInhomogeneity() { local varType, arraySize, arrayIndex, y localobj distFuncHelper, syn
+    proc applyInhomogeneity() { local varType, arraySize, arrayIndex, isMetaVar, isWeightVar, y localobj distFuncHelper, firstNetCon, mechStd, syn, thisPp
         strdef mechName, varName, varNameWithIndex
         
         mechName = $s1  // Just placeholders
@@ -121,11 +140,35 @@ begintemplate SynNCComp
             codeContractViolation()
         }
         
-        mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
+        isMetaVar = mcu.isMetaVar(varName)
+        
+        if (isMetaVar && !rph.isEnabled) {
+            return
+        }
+        
+        if (!isMetaVar) {
+            mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
+            isWeightVar = stringsEqual(varName, "weight")
+        } else {
+            mechStd = new MechanismStandard(rph.realMechName, rph.realVarType)
+        }
         
         for synGroup.applyInhomogeneityIter(syn, distFuncHelper) {
             y = distFuncHelper.calculateAt(syn.dist)
-            utils4FakeMech4NC.setNetConVar(syn.netCon, varNameWithIndex, y)
+            if (!isMetaVar) {
+                firstNetCon = syn.netCon
+                utils4FakeMech4NC.setNetConVar(firstNetCon, varNameWithIndex, y)
+                if (rph.isEnabled && isWeightVar) {
+                    syn.rpefNetCon.weight = firstNetCon.weight
+                }
+            } else {
+                thisPp = syn.rpefPp
+                mechStd.in(thisPp)
+                // BUG: "variable_domain" used in "MechanismStandard.panel()" is ignored in "MechanismStandard.set()" and "MechanismStandard.out()",
+                //      so we can use any invalid value here without even a warning
+                mechStd.set(rph.realVarName, y, rph.realArrayIndex)
+                mechStd.out(thisPp)
+            }
         }
     }
     

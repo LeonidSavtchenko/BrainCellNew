@@ -7,7 +7,7 @@ begintemplate VarsEditorWidget
     public show, onApplyInInhomEditor, onApplyInStochEditor, onDisableInStochEditor, dismissHandler
     public compIdx
     
-    external mwh, math, mth, mcu, sbh4ve, inhomAndStochApplicator
+    external mwh, math, mth, mcu, sbh4ve, inhomAndStochApplicator, rph
     external createElasticSpacer, createEmptyPanel, dismissIfNotNil, codeContractViolation
     
     objref mainBox
@@ -69,7 +69,7 @@ begintemplate VarsEditorWidget
         slotHeight = 31
     }
     
-    proc show() { local isAnyNaN, varIdx, arraySize, arrayIndex, isThisNaN localobj vec, hBox, vBox1, vBox2, vBox3
+    proc show() { local isAnyNaN, isAnyMeta, varIdx, arraySize, arrayIndex, isThisNaN localobj vec, hBox, vBox1, vBox2, vBox3
         strdef header, varName, varNameWithIndex, varNameWithIndexAndUnits, handlerHocCommand
         
         mainBox = new VBox(3, 1)
@@ -80,8 +80,12 @@ begintemplate VarsEditorWidget
             xlabel(header)
             xpanel()
             isAnyNaN = 0
+            isAnyMeta = 0
             for varIdx = 0, buffer.count() - 1 {
                 arraySize = mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName)
+                if (mcu.isMetaVar(varName)) {
+                    isAnyMeta = 1
+                }
                 vec = buffer.o(varIdx)
                 for arrayIndex = 0, arraySize - 1 {
                     mth.getVarNameWithIndexAndUnits(enumDmPpNc, mechIdx, varName, arraySize, arrayIndex, varNameWithIndexAndUnits, varNameWithIndex)
@@ -134,12 +138,16 @@ begintemplate VarsEditorWidget
                 }
             }
             xpanel("")              // Without this, the last var gets cropped sometimes
+            if (isAnyMeta) {
+                xlabel("* \"@\" means a meta variable; it's not a part of the standard \"NetCon\" class,")
+                xlabel("   but rather used by our program to filter events emitted by \"NetCon\"-s")
+            }
             if (isAnyNaN) {
                 xlabel("* \"nan\" means \"inhomogeneous\";")
                 xlabel("   to make it homogeneous, replace \"nan\" with a number, press \"Enter\" and click \"Apply\" in the parent widget")
             }
             xpanel()
-            if (isAnyNaN) {
+            if (isAnyMeta || isAnyNaN) {
                 createEmptyPanel()  // Without this, the "nan" hint gets cropped sometimes
             }
         }
@@ -183,15 +191,25 @@ begintemplate VarsEditorWidget
     // All next proc-s are private
     
     
-    proc editHomogenVarHandler() { local varIdx, arrayIndex
-        varIdx = $1
-        arrayIndex = $2
+    proc editHomogenVarHandler() { local varIdx, arrayIndex, value
+        strdef varName
+        
         // !! BUG: If user enters the editbox with "nan" and just leaves it without changing anything,
         //         then "undefined variable nan" error is printed to console and the var gets reset to its default value.
         //         (All this happens before we even get here.)
-        if (!math.isNaN(buffer.o(varIdx).x(arrayIndex))) {
+        
+        varIdx = $1
+        arrayIndex = $2
+        
+        value = buffer.o(varIdx).x(arrayIndex)
+        
+        if (!math.isNaN(value)) {
             isMechVarInhom.o(varIdx).x(arrayIndex) = 0
+            
+            mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName)
+            rph.ifMetaVarThenEnableOrDisable(varName, value)
         }
+        
         comp.markMechDirty(mechIdx)
         dismissChild()
     }

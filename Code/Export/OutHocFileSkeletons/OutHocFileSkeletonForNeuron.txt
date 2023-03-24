@@ -91,7 +91,7 @@ py:getIntegerValueFromTopLevel('SwtichOn')
 py:getDoubleValueFromTopLevel('IntervalSynapticActivity')
 py:getDoubleValueFromTopLevel('weight')
 py:getDoubleValueFromTopLevel('noise')
-py:getIntegerValueFromTopLevel('SynapseLocationDendrite')
+py:getIntegerValueFromTopLevel('enumSynLoc')
 
 //////////////////////////////////////////////////////////////////////////
 py:insertAllLinesFromFile('Code\\Preface\\Neuron\\Exported\\AddSynapses_Exported.hoc')

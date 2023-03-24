@@ -1,4 +1,13 @@
 {
+    "AlphaSynapse": [
+        "onset"
+    ],
+    "AmpaSynapse": [
+        "onset"
+    ],
+    "NetCon": [
+        "@release_probability"
+    ],
     "NetStim": [
         "interval",
         "number",

@@ -3,14 +3,18 @@
 { load_file("../../Core/Widgets/AltRunControlWidget.hoc") }
 
 
+isScheduledRescanningOfDistMechs = 0
+isScheduledCachingOfSpineNeckDiams = 0
+
 begintemplate MechOrSynManagerBaseWidget
 
-    public show, showMechManagerHandler, showSynManagerHandler, showAltRunControlHandler, onReseedHandler, dismissHandler
+    public show, showMechManagerHandler, showSynManagerHandler, showAltRunControlHandler, onNanoReseedOrUpdateHandler, dismissHandler
     public synManagerMainWidget
     
     external mmAllComps, smAllSyns, synGroup
-    external mwh
+    external mwh, spineNeckDiamCache
     external dismissIfNotNil
+    external isScheduledRescanningOfDistMechs, isScheduledCachingOfSpineNeckDiams
     
     objref mainBox, this
     objref mechManagerMainWidget, synManagerMainWidget, altRunControlWidget
@@ -40,7 +44,7 @@ begintemplate MechOrSynManagerBaseWidget
         mainBox.map("Base widget", 25, 575, -1, -1)
     }
     
-    proc showMechManagerHandler() {
+    proc showMechManagerHandler() { localobj nil
         dismissIfNotNil(mechManagerMainWidget)
         
         if (mmAllComps.count() == 0) {
@@ -48,8 +52,13 @@ begintemplate MechOrSynManagerBaseWidget
             return
         }
         
-        execute("mechManagerMainWidget = new MechManagerMainWidget()", this)
+        if (mechManagerMainWidget == nil) {
+            execute("mechManagerMainWidget = new MechManagerMainWidget()", this)
+        }
         mechManagerMainWidget.show()
+        if (isScheduledRescanningOfDistMechs) {
+            mechManagerMainWidget.rescanHandler()
+        }
         mechManagerMainWidget.mechOpSelectHandler()
     }
     
@@ -73,6 +82,9 @@ begintemplate MechOrSynManagerBaseWidget
             return
         }
         
+        if (isScheduledCachingOfSpineNeckDiams) {
+            spineNeckDiamCache.cacheAllDiams()
+        }
         synManagerMainWidget.show(xMin, xMax)
     }
     
@@ -82,16 +94,24 @@ begintemplate MechOrSynManagerBaseWidget
         altRunControlWidget.show()
     }
     
-    proc onReseedHandler() {
-        dismissIfNotNil(mechManagerMainWidget)
-        dismissIfNotNil(synManagerMainWidget)
-        // !! maybe need to mark mechs and syns dirty somehow to force rescan on opening the widgets once again
+    proc onNanoReseedOrUpdateHandler() {
+        dismissManagers()
+        isScheduledRescanningOfDistMechs = 1    // !! for higher performance, it would be better to rescan only nanogeometry
+        isScheduledCachingOfSpineNeckDiams = 1
     }
     
     proc dismissHandler() {
-        onReseedHandler()
+        dismissManagers()
         dismissIfNotNil(altRunControlWidget)
         mainBox.unmap()
+    }
+    
+    // All next staff is private
+    
+    
+    proc dismissManagers() {
+        dismissIfNotNil(mechManagerMainWidget)
+        dismissIfNotNil(synManagerMainWidget)
     }
     
 endtemplate MechOrSynManagerBaseWidget
