@@ -1,10 +1,10 @@
 
 begintemplate ManagersCommonUtils
 
-    public getComp, defineDistFuncHandler, defineStochFuncHandler, createApplyReminder, createEditorSubWidgetDigest, copyAllVarsValuesExceptInhom, isMetaVar
+    public getComp, defineDistFuncHandler, defineStochFuncHandler, createApplyReminder, createEditorSubWidgetDigest, copyAllVarsValuesExceptInhom, updateIsMechVarTypeInhom, isMetaVar
     
     external mmAllComps, smAllComps
-    external mwh, math
+    external mwh, math, mth
     external stringStartsWith
     
     
@@ -133,6 +133,39 @@ begintemplate ManagersCommonUtils
                     // Rewriting only homogeneous variables
                     dstMechStd.set(varName, varValue, arrayIndex)
                 }
+            }
+        }
+    }
+    
+    proc updateIsMechVarTypeInhom() { local enumDmPpNc, numMechs, numVarTypes, mechIdx, varTypeIdx, isAnyInhom, numVars, varIdx, arraySize, arrayIndex, value localobj comp, mechStd
+        strdef varName
+        
+        comp = $o1
+        
+        enumDmPpNc = comp.enumDmPpNc
+        numMechs = mth.getNumMechs(enumDmPpNc)
+        numVarTypes = mth.getNumVarTypes(enumDmPpNc)
+        for mechIdx = 0, numMechs - 1 {
+            for varTypeIdx = 0, numVarTypes - 1 {   // 0: "PARAMETER", 1: "ASSIGNED", 2: "STATE"
+                isAnyInhom = 0
+                
+                mechStd = comp.mechStds[mechIdx][varTypeIdx]
+                numVars = mechStd.count()
+                for varIdx = 0, numVars - 1 {
+                    arraySize = mechStd.name(varName, varIdx)
+                    for arrayIndex = 0, arraySize - 1 {
+                        value = mechStd.get(varName, arrayIndex)
+                        if (math.isNaN(value)) {
+                            isAnyInhom = 1
+                            break
+                        }
+                    }
+                    if (isAnyInhom) {
+                        break
+                    }
+                }
+                
+                comp.isMechVarTypeInhom[mechIdx][varTypeIdx] = isAnyInhom
             }
         }
     }

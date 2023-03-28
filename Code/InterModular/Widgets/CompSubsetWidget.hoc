@@ -19,6 +19,8 @@ begintemplate CompSubsetWidget
     notSelectableColor = -1
     selectedColor = -1
     
+    strdef numSelectedSectsHint
+    
     objref mainBox, plotShape
     
     objref selected_ref
@@ -67,7 +69,8 @@ begintemplate CompSubsetWidget
             xlabel("Hold \"Shift\" while clicking on sections to keep the previous selection.")
             // !! xlabel("The sections shown in black are not dendrites, and so cannot be selected.")
             xlabel("The sections shown in black are not in the base compartment, and so cannot be selected.")
-            xlabel("The number of selected sections is printed to console after each click.")
+            xlabel("")
+            xvarlabel(numSelectedSectsHint)
             xbutton("Done", "doneHandler()")
             xpanel()
             // !! think about showing only selectable sections (call "new PlotShape" with the SectionList arg)
@@ -123,6 +126,7 @@ begintemplate CompSubsetWidget
         isSectSelectable = in_plugin.isCurrentSectSelectable()
         if (!isSectSelectable) {
             pop_section()
+            updateNumSelectedSectsHint()
             return
         }
         
@@ -142,13 +146,7 @@ begintemplate CompSubsetWidget
             item.sec plotShape.color(selectedColor)
         }
         
-        // !! BUG: if we got here from MechManager module, user wants to select a subset of Dendrites compartment, and clicks on a dendrite with nanogeometry
-        //    as a result, the number printed to console will include nanogeometry by mistake
-        //    need to implement a more robust design with filtration of sections from the selected subtree
-        //    OR show only selectable sections (call "new PlotShape" with the SectionList arg)
-        // !! printf("%d dendrite section(s) selected\n", selected_ref.count())
-        printf("%d %s section(s) selected\n", selected_ref.count(), in_comp.name)
-        // plotShape.label(numSelectedSectsHint)    // This would be better than "print", but no idea how to delete the old label each time
+        updateNumSelectedSectsHint()
     }
     
     // The handler of "Done" button
@@ -168,6 +166,11 @@ begintemplate CompSubsetWidget
         in_plugin.dismissHandler()
     }
     
+    proc updateNumSelectedSectsHint() {
+        // !! sprint(numSelectedSectsHint, "%d dendrite section(s) selected\n", selected_ref.count())
+        sprint(numSelectedSectsHint, "%d section(s) selected in \"%s\"", selected_ref.count(), in_comp.name)
+    }
+    
 endtemplate CompSubsetWidget
 
 
@@ -184,7 +187,7 @@ proc seededDendritesChangedHandler() {
         //    so maybe need to hide MainUI temporarily
         nanoBranchesManager.deleteBranches()
         
-        cssWidget = new CompSubsetWidget()
+        cssWidget = new CompSubsetWidget(*, 0)
         cssWidget.show()
     }
 }

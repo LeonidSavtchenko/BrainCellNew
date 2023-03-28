@@ -340,7 +340,7 @@ begintemplate InhomEditorSubWidget
                         
                         // Stats curve
                         graph2 = new Graph()
-                        graph2.brush(1, 1, 0)   // Installing a dash brush; looks like the "pattern" arg doesn't work as described in Neuron docs
+                        graph2.brush(1, 1, 0)   // Installing a dash brush; looks like the "pattern" arg doesn't work as described in NEURON docs
                         graph2.brush(0)         // Switching to solid line by default
                         
                         // Colormap (all compartments)
@@ -421,7 +421,7 @@ begintemplate InhomEditorSubWidget
         shape.exec_menu("View = plot")
         if (isMechOrSynEditor) {
             // !! BUG: Colormap looks uniform when we try to watch an array element, e.g. "ca_cadifus[0]"
-            //         Maybe it's Neuron restriction because user cannot do it even manually
+            //         Maybe it's NEURON restriction because user cannot do it even manually
             //         clicking on colormap corner and then "Plot What?"
             shape.variable(varNameWithIndex)
         }
@@ -535,7 +535,7 @@ begintemplate InhomEditorSubWidget
         if (showCurveOrColormapIdx == 2) {
             if (isMechOrSynEditor) {
                 if (arraySize > 1) {
-                    mwh.showWarningBox("The colormap is shown incorrectly because \"Plot What?\" is an array element (Neuron restriction).")
+                    mwh.showWarningBox("The colormap is shown incorrectly because \"Plot What?\" is an array element (NEURON restriction).")
                 }
             } else {
                 mwh.showNotImplementedWarning()
@@ -700,7 +700,7 @@ begintemplate InhomEditorSubWidget
         distFuncChangedHandler(distFuncIdx)
     }
     
-    proc applyHandler() { local isOK, yMin, yMax, isInhom, varValue, mechOpIdx, isCalledFromVarsEditor localobj distFuncHelper, secList
+    proc applyHandler() { local isOK, yMin, yMax, isInhom, varValue, mechOpIdx, isCalledFromVarsEditor localobj distFuncHelper, secList, synManagerMainWidget
         strdef line1, title, line2, line3
         
         if (isCancel) {
@@ -726,14 +726,16 @@ begintemplate InhomEditorSubWidget
                 shape2.observe(secList)
             }
         } else {
-            isOK = msmBaseWidget.synManagerMainWidget.warnIfUserHasNotSelectedPPs()
+            synManagerMainWidget = msmBaseWidget.synManagerMainWidget
+            
+            isOK = synManagerMainWidget.warnIfUserHasNotSelectedPPs()
             if (!isOK) {
                 return
             }
             
             // It would be more correct to pass "yMin" (from stats curve, calculated just below) instead of "yMinModel" (from model curve, calculated earlier)
             rph.ifMetaVarThenEnableOrDisable(varName, yMinModel)
-            msmBaseWidget.synManagerMainWidget.applyChangesToSynStrucIfNeeded()
+            synManagerMainWidget.applyChangesToSynStrucIfNeeded()
             
             comp.applyInhomogeneity(mechName, varType, varName, arraySize, arrayIndex, distFuncHelper)
             // !! inhomAndStochApplicator.enableOrUpdateInhomFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, distFuncHelper)
@@ -759,7 +761,7 @@ begintemplate InhomEditorSubWidget
         }
         
         comp.mechStds[mechIdx][varTypeIdx].set(varName, varValue, arrayIndex)
-        comp.isMechVarTypeInhom[mechIdx][varTypeIdx] = isInhom
+        comp.updateIsMechVarTypeInhom()
         
         if (isMechOrSynEditor) {
             mechOpIdx = mmmowb.lastMechOpIdx
@@ -773,6 +775,10 @@ begintemplate InhomEditorSubWidget
         
         if (isCalledFromVarsEditor) {
             varsEditorSubWidget.onApplyInInhomEditor(varIdx, arrayIndex, isInhom)
+        }
+        
+        if (!isMechOrSynEditor) {
+            synManagerMainWidget.setInhomVarsLabel()
         }
         
         sprint(line1, "The inhomogeneity was applied to \"%s\" in %s. Now you can review stats curve or colormap.", varNameWithIndex, comp.name)

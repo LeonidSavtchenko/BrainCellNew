@@ -105,26 +105,3 @@ proc cleanupBeforeNextImport() {
     // delete NumberDendrites   // This will cause the strange error "NumberDendrites undefined variable" when we'll try to create it again in importHocFile_layer2
     NumberDendrites = -1
 }
-
-// !! think about some VectorUtils.hoc
-// !!
-func getFirstValueOrMinusOneIfEmpty() { localobj vec
-    vec = $o1
-    if (vec.size() == 0) {
-        return -1
-    } else {
-        return vec.x[0]
-    }
-}
-
-// !!
-proc getFirstLine() {
-    strdef templ
-    
-    templ = "Please help us identify which names were used in the HOC file to define soma%s"
-    if (isAstrocyteOrNeuron) {
-        sprint($s1, templ, " and dendrites")
-    } else {
-        sprint($s1, templ, ", dendrites and axon")
-    }
-}

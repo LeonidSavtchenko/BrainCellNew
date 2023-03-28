@@ -119,7 +119,7 @@ begintemplate InhomAndStochTarget
             return
         }
         
-        // Neuron docs say: "To disconnect the Random object from its list of variables, either the variables or the Random object must be destroyed."
+        // NEURON docs say: "To disconnect the Random object from its list of variables, either the variables or the Random object must be destroyed."
         // But actually it doesn't seem like there's any way to destroy the "played" Random object without dire consequences.
         
         // !! BUG: Hanging here, and the same effect if we just assign "nil" to stochFuncHelper.rng

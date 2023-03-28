@@ -1,5 +1,5 @@
 
-// An iterator to help with looping over a linear grid when we need to cancel the standard to Neuron "float_epsilon" comparison
+// An iterator to help with looping over a linear grid when we need to cancel the standard to NEURON "float_epsilon" comparison
 // applied to all comparison operators by default.
 // Basically, we replace this naive (and buggy in most cases) code:
 //     step = (maxValue - minValue) / (numPts - 1)

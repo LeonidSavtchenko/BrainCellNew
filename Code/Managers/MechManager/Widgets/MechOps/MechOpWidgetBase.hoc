@@ -385,11 +385,11 @@ begintemplate MechOpWidgetBase
             // We insert these spacers to make the panel background cyan rather than gray
             insertSpacersCore(allItemsHeight, rowBodyHeight)
         } else if (allItemsHeight < sliderMinHeight) {
-            // We insert these spacers as a workaround for strange Neuron behviour
+            // We insert these spacers as a workaround for strange NEURON behviour
             // when vertical slider doesn't appear in the panel in some cases making the last items inaccessible
             insertSpacersCore(allItemsHeight, sliderMinHeight)
         }
-        // If allItemsHeight > sliderMinHeight, then Neuron adds the slider itself
+        // If allItemsHeight > sliderMinHeight, then NEURON adds the slider itself
     }
     
     proc insertSpacersCore() { local allItemsHeight, requiredHeight, numSpacers, spacerIdx

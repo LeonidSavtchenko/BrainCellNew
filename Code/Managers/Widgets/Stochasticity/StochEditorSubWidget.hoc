@@ -435,7 +435,7 @@ begintemplate StochEditorSubWidget
                     graph3.brush(0)
                     graph3.color(2)         // Red
                     graph4 = new Graph()    // PDF (from the sample + model)
-                    graph4.brush(1, 1, 0)   // Installing a dash brush; looks like the "pattern" arg doesn't work as described in Neuron docs
+                    graph4.brush(1, 1, 0)   // Installing a dash brush; looks like the "pattern" arg doesn't work as described in NEURON docs
                     graph4.brush(0)         // Switching to solid line by default
                     graph5 = new Graph()    // CDF (from the sample + model)
                     graph5.brush(1, 1, 0)
@@ -952,7 +952,7 @@ begintemplate StochEditorSubWidget
             
             FFT(-1, acfVec, vfr, vfi)
             
-            // !! Neuron docs say: "If vsrc.size() is not an integral power of 2, it is padded with 0’s to the next power of 2 size."
+            // !! NEURON docs say: "If vsrc.size() is not an integral power of 2, it is padded with 0’s to the next power of 2 size."
             //    maybe that's not the behaviour we wanted here
         }
         

@@ -1,15 +1,16 @@
 
 begintemplate SynPPComp
 
-    public name, isMechVarTypeInhom, mechStds
-    public isMechVarInhom, prepareVarsEditorHeader, getDistRange, getSecList, markMechDirty, updateStatsCurve, applyInhomogeneity
+    public enumDmPpNc, name, isMechVarTypeInhom, mechStds
+    public isMechVarInhom, prepareVarsEditorHeader, getDistRange, getSecList, markMechDirty, updateStatsCurve, applyInhomogeneity, updateIsMechVarTypeInhom, isAnyVarInhom
     public isMechVarTypeInhom, mechStds, isMechDirty
     
-    external mwh, mth, math
+    external mwh, mth, math, mcu
     external smAllSyns, synGroup
     external stringsEqual, codeContractViolation
     external eachItemInList
     
+    enumDmPpNc = -1
     enumPpRole = -1
     strdef name
     
@@ -18,6 +19,8 @@ begintemplate SynPPComp
     objref mechStds[1][1]
     double isMechDirty[1]               // 0/1 flags
     
+    objref this
+    
     
     proc init() { local numMechs, mechIdx, varType, varTypeIdx localobj actFirstPp, mechStd
         strdef actPpName, thisPpName
@@ -25,7 +28,9 @@ begintemplate SynPPComp
         name = $s1
         enumPpRole = $2
         
-        numMechs = mth.getNumMechs(1)
+        enumDmPpNc = 1
+        
+        numMechs = mth.getNumMechs(enumDmPpNc)
         
         double isMechVarTypeInhom[numMechs][3]  // 0/1 flags
         objref mechStds[numMechs][3]            // 0: "PARAMETER", 1: "ASSIGNED", 2: "STATE"
@@ -144,6 +149,15 @@ begintemplate SynPPComp
             mechStd.set(varName, y, arrayIndex)
             mechStd.out(thisPp)
         }
+    }
+    
+    proc updateIsMechVarTypeInhom() {
+        mcu.updateIsMechVarTypeInhom(this)
+    }
+    
+    func isAnyVarInhom() { local mechIdx
+        mechIdx = $1
+        return synGroup.isAnyVarInhom(this, mechIdx)
     }
     
 endtemplate SynPPComp

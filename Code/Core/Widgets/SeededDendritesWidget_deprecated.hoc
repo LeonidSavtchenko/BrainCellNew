@@ -22,6 +22,8 @@ begintemplate SeededDendritesSelectionWidget
     notDendriteColor = -1
     selectedColor = -1
     
+    strdef numSeededDendsHint
+    
     objref mainBox, plotShape
     
     objref selectedDendrite_ref
@@ -57,7 +59,8 @@ begintemplate SeededDendritesSelectionWidget
             // Usage of "Ctrl" is more natural for multiselect than "Shift", but for some reason, mouseEventsHandler is not called at all when "Ctrl" is pressed
             xlabel("Hold \"Shift\" while clicking on sections to keep the previous selection.")
             xlabel("The sections shown in black are not dendrites, and so cannot be selected.")
-            xlabel("The number of selected sections is printed to console after each click.")
+            xlabel("")
+            xvarlabel(numSeededDendsHint)
             xbutton("Done", "doneHandler()")
             xpanel()
             plotShape = new PlotShape()
@@ -77,8 +80,6 @@ begintemplate SeededDendritesSelectionWidget
     // $3 - y
     // $4 - Keystate: reflects the state of Control (bit 1), Shift (bit 2), and Meta (bit 3) keys
     proc mouseEventsHandler() { local eventType, x, y, keystate, isMultiselect, isDendrite localobj item
-        strdef numSeededDendsHint
-        
         eventType = $1
         x = $2
         y = $3
@@ -102,6 +103,7 @@ begintemplate SeededDendritesSelectionWidget
         isDendrite = checkIfCurrentSecIsDendrite()
         if (!isDendrite) {
             pop_section()
+            updateNumSeededDendsHint()
             return
         }
         
@@ -121,9 +123,7 @@ begintemplate SeededDendritesSelectionWidget
             item.sec plotShape.color(selectedColor)
         }
         
-        sprint(numSeededDendsHint, "%d dendrite section(s) selected", selectedDendrite_ref.count())
-        print numSeededDendsHint
-        // plotShape.label(numSeededDendsHint) // This would be better than "print", but no idea how to delete the old label each time
+        updateNumSeededDendsHint()
     }
     
     // The handler of "Done" button
@@ -149,6 +149,10 @@ begintemplate SeededDendritesSelectionWidget
         nanoBranchesManager.reseedBranchesWithLastUsedArgs()
         
         mainBox.unmap()
+    }
+    
+    proc updateNumSeededDendsHint() {
+        sprint(numSeededDendsHint, "%d dendrite section(s) selected", selectedDendrite_ref.count())
     }
     
 endtemplate SeededDendritesSelectionWidget

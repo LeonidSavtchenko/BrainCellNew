@@ -77,7 +77,7 @@ begintemplate MechOp0Helper
         
         mth.getMechName(0, mechIdx, mechName)
         
-        sprint(msg, "\"%s\" mechanism cannot be uninserted (Neuron restriction).", mechName)
+        sprint(msg, "\"%s\" mechanism cannot be uninserted (NEURON restriction).", mechName)
         mwh.showWarningBox(msg)
         
         mmAllComps.o(compIdx).isMechInserted[mechIdx] = 1
@@ -100,7 +100,7 @@ begintemplate MechOp0Helper
         willMechBeInserted = comp.isMechInserted[mechIdx]               // Checkbox state
         
         if (wasMechInserted && !willMechBeInserted) {
-            sprint(msg, "Once inserted, \"%s\" mechanism cannot be uninserted anymore (Neuron restriction).", mechName)
+            sprint(msg, "Once inserted, \"%s\" mechanism cannot be uninserted anymore (NEURON restriction).", mechName)
             mwh.showWarningBox(msg)
             comp.isMechInserted[mechIdx] = 1
             return

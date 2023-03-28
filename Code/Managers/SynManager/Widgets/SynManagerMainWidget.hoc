@@ -15,12 +15,12 @@ endtemplate PPListItem
 
 begintemplate SynManagerMainWidget
 
-    public show, onSynLocChangedHandler, onListsFilterLevelChangedHandler, warnIfUserHasNotSelectedPPs, applyChangesToSynStrucIfNeeded, dismissHandler
+    public show, onSynLocChangedHandler, onListsFilterLevelChangedHandler, warnIfUserHasNotSelectedPPs, applyChangesToSynStrucIfNeeded, setInhomVarsLabel, dismissHandler
     
     external smAllSyns, synGroup, smAllComps
     external slw, smlfw
     external mwh, mth, rph
-    external createEmptyPanel, createElasticSpacer, getGlobalVarsHint, stringEmpty, stringsEqual, stringToLowerCase, containsSubstring, dismissIfNotNil, codeContractViolation
+    external createEmptyPanel, createElasticSpacer, getGlobalVarsHint, oneZeroToYesNo, stringEmpty, stringsEqual, stringToLowerCase, containsSubstring, dismissIfNotNil, codeContractViolation
     external enumSynCompIdxs
     external varsEditorSubWidget
     
@@ -80,9 +80,9 @@ begintemplate SynManagerMainWidget
                 xlabel(text)
                 setDistRangeVarLabel(distMin, distMax)
                 xvarlabel(distRangeVarLabel)
-                inhomVarsVarLabel = "Inhomogeneous vars: {YES/NO}"  // !! switching these two is not implemented
+                setInhomVarsLabel()
                 xvarlabel(inhomVarsVarLabel)
-                stochVarsVarLabel = "Stochastic vars: {YES/NO}"     //
+                stochVarsVarLabel = "Stochastic vars: {YES/NO}"     // !! switching of this one is not implemented
                 xvarlabel(stochVarsVarLabel)
                 xpanel()
                 vBox1 = new VBox()
@@ -435,6 +435,40 @@ begintemplate SynManagerMainWidget
         sprint(distRangeVarLabel, "Distance range: %g ... %g (%s)", distMin, distMax, units("L"))
     }
     
+    proc setInhomVarsLabel() { local isAnyVarInhom localobj nil
+        strdef yesNo
+        
+        isAnyVarInhom = 0
+        if (is3Or1PartInSynStruc) {
+            checkIfAnyVarInhom(srcChoices, enumSynCompIdxs.source, &isAnyVarInhom)
+            checkIfAnyVarInhom(nil,        enumSynCompIdxs.netCon, &isAnyVarInhom)
+            checkIfAnyVarInhom(trgChoices, enumSynCompIdxs.target, &isAnyVarInhom)
+        } else {
+            checkIfAnyVarInhom(sngChoices, enumSynCompIdxs.single, &isAnyVarInhom)
+        }
+        
+        oneZeroToYesNo(isAnyVarInhom, yesNo)
+        sprint(inhomVarsVarLabel, "Inhomogeneous vars: %s", yesNo)
+    }
+    
+    proc checkIfAnyVarInhom() { local synCompIdx, isAnyVarInhom, selMechIdx localobj choicesOrNil, nil
+        choicesOrNil = $o1
+        synCompIdx = $2
+        isAnyVarInhom = $&3
+        
+        if (choicesOrNil != nil) {
+            selMechIdx = getSelMechIdxOrMinusOne(choicesOrNil)
+        } else {
+            selMechIdx = 0
+        }
+        
+        if (selMechIdx != -1) {
+            isAnyVarInhom = smAllComps.o(synCompIdx).isAnyVarInhom(selMechIdx) || isAnyVarInhom
+        }
+        
+        $&3 = isAnyVarInhom
+    }
+    
     proc setSynLocVarLabel() {
         slw.getSynLocName(synLocVarLabel)
     }
@@ -701,6 +735,8 @@ begintemplate SynManagerMainWidget
         trgMechIdx = getSelMechIdxOrMinusOne(trgChoices)
         sngMechIdx = getSelMechIdxOrMinusOne(sngChoices)
         isSmthChanged = synGroup.applyChangesToDirtyHomogenVars(srcMechIdx, trgMechIdx, sngMechIdx) || isSmthChanged
+        
+        setInhomVarsLabel()
         
         if (isSmthChanged) {
             mwh.showMessageBox("All the changes were applied to synapses.", "Applied")

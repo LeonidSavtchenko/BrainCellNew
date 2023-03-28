@@ -1,8 +1,8 @@
 
 begintemplate SynNCComp
 
-    public name, isMechVarTypeInhom, mechStds
-    public isMechVarInhom, prepareVarsEditorHeader, getDistRange, getSecList, markMechDirty, updateStatsCurve, applyInhomogeneity
+    public enumDmPpNc, name, isMechVarTypeInhom, mechStds
+    public isMechVarInhom, prepareVarsEditorHeader, getDistRange, getSecList, markMechDirty, updateStatsCurve, applyInhomogeneity, updateIsMechVarTypeInhom, isAnyVarInhom
     public isMechVarTypeInhom, mechStds, isMechDirty
     
     external mwh, mth, math, rph
@@ -11,14 +11,18 @@ begintemplate SynNCComp
     external stringsEqual, codeContractViolation
     external eachItemInList
     
+    enumDmPpNc = -1
     strdef name
     
     double isMechVarTypeInhom[1][1]     // 0/1 flag
     objref mechStds[1][1]
     double isMechDirty[1]               // 0/1 flag
     
+    objref this
+    
     
     proc init() { localobj mechStd
+        enumDmPpNc = 2
         name = "NetCon"
         
         double isMechVarTypeInhom[1][1]
@@ -170,6 +174,15 @@ begintemplate SynNCComp
                 mechStd.out(thisPp)
             }
         }
+    }
+    
+    proc updateIsMechVarTypeInhom() {
+        mcu.updateIsMechVarTypeInhom(this)
+    }
+    
+    func isAnyVarInhom() { local mechIdx
+        mechIdx = $1
+        return synGroup.isAnyVarInhom(this, mechIdx)
     }
     
 endtemplate SynNCComp

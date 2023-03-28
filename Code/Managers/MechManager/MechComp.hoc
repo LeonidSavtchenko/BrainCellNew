@@ -3,13 +3,14 @@
 // (strictly speaking, not a compartment, but rather a collection of sections having the same set of mechanisms)
 begintemplate MechComp
 
-    public name, list_ref, isMechInserted, isMechVarTypeInhom, isMechVarTypeStoch, mechStds, isCompDirty
-    public split, mergeAllSectsFrom, showMechStdPanel, markMechDirty, markAllMechsDirty, applyHomogenChangesToDirtyMechs, getDistRange, getSecList, applySegmentationAndInhomogeneity, updateStatsCurve, isMechVarInhom, prepareVarsEditorHeader, convertVarTypeToVarTypeIdx
+    public enumDmPpNc, name, list_ref, isMechInserted, isMechVarTypeInhom, isMechVarTypeStoch, mechStds, isCompDirty
+    public split, mergeAllSectsFrom, showMechStdPanel, markMechDirty, markAllMechsDirty, applyHomogenChangesToDirtyMechs, getDistRange, getSecList, applySegmentationAndInhomogeneity, updateStatsCurve, isMechVarInhom, prepareVarsEditorHeader, convertVarTypeToVarTypeIdx, updateIsMechVarTypeInhom
     
     external mmAllComps
     external mwh, math, mth, mmmowb, mcu
     external eachItemInList, stringsEqual, stringEndsWith, stringEmpty, joinStrings, concatenateTwoLists, codeContractViolation, printMsgAndStop
     
+    enumDmPpNc = -1
     strdef name
     objref list_ref                     // List of SectionRef-s
     double isMechInserted[1]            // 0/1 flags
@@ -20,6 +21,8 @@ begintemplate MechComp
     // !! think about having a 2-D array of special objects like mechStds[1][1], but for stochasticity
     double isMechDirty[1]               // 0/1 flags indicating that given mechanism in this compartment has any pending operation: either insertion/uninsertion or change of a variable (except GLOBAL-s)
     isCompDirty = -1
+    
+    objref this
     
     
     proc init() { local numMechs
@@ -34,7 +37,9 @@ begintemplate MechComp
             printMsgAndStop(msg)
         }
         
-        numMechs = mth.getNumMechs(0)
+        enumDmPpNc = 0
+        
+        numMechs = mth.getNumMechs(enumDmPpNc)
         
         double isMechInserted[numMechs]         // 0/1 flags
         double isMechVarTypeInhom[numMechs][3]  // 0/1 flags
@@ -66,11 +71,11 @@ begintemplate MechComp
             for varType = 1, 3 {    // 1: "PARAMETER", 2: "ASSIGNED", 3: "STATE"
                 // If varType == -1 ("GLOBAL"), then MechanismStandard object does not implement "panel" method,
                 // so all the GLOBAL variables will be edited with "nrnglobalmechmenu" just in place
-                // Neuron docs say: If vartype = -1, the count and names (and array size) of the GLOBAL variables are accessible, but any other method will generate an error message.
+                // NEURON docs say: If vartype = -1, the count and names (and array size) of the GLOBAL variables are accessible, but any other method will generate an error message.
                 
                 mechStd = new MechanismStandard(mechName, varType)  // !! do I need to create such "default" mechStd after each uninsert/insert?
                 
-                // Neuron docs say that this copies parameter values into this mechanism standard from the mechanism located in first segment of the currently accessed section
+                // NEURON docs say that this copies parameter values into this mechanism standard from the mechanism located in first segment of the currently accessed section
                 firstSec_ref.sec mechStd.in()
                 
                 // Deprecated because MechanismStandard.panel() is not used anymore
@@ -225,7 +230,7 @@ begintemplate MechComp
     
     // !! think about applyChangesToDirtySects instead of this
     proc markAllMechsDirty() { local mechIdx
-        for mechIdx = 0, mth.getNumMechs(0) - 1 {
+        for mechIdx = 0, mth.getNumMechs(enumDmPpNc) - 1 {
             isMechDirty[mechIdx] = 1
         }
         isCompDirty = 1
@@ -236,7 +241,7 @@ begintemplate MechComp
     proc applyHomogenChangesToDirtyMechs() { local numMechs, mechIdx, varType, varTypeIdx, x, varIdx, arraySize, arrayIndex localobj mechType, sec_ref, compMechStd, tempMechStd
         strdef mechName, varName, autoAddedIons, msg
         
-        mechType = mth.getMechType(0)
+        mechType = mth.getMechType(enumDmPpNc)
         
         numMechs = mechType.count
         
@@ -270,7 +275,7 @@ begintemplate MechComp
                         if (mechIdx == mth.morphologyMechIdx) {
                             // If we remove this special assignment for "diam" from "morphology",
                             // then the diameter will revert back to the previous value once we execute line "plotShape1 = new PlotShape()"
-                            // in proc InhomEditorSubWidget.show (very weird Neuron behaviour)
+                            // in proc InhomEditorSubWidget.show (very weird NEURON behaviour)
                             varTypeIdx = mth.convertVarTypeToVarTypeIdx(mth.diamVarType)
                             diam = mechStds[mechIdx][varTypeIdx].get(mth.diamVarName)
                         }
@@ -288,15 +293,17 @@ begintemplate MechComp
         
         // Some mechs insert ions automatically (e.g. hh inserts na_ion and k_ion), so now we need to find all "newcomers" and warn user about them
         autoAddedIons = ""
-        list_ref.o(0).sec for mechIdx = 0, numMechs - 1 {
-            mth.getMechName(0, mechIdx, mechName)
-            if (!isMechInserted[mechIdx] && ismembrane(mechName)) {
-                if (!stringEndsWith(mechName, mth.ionSuffix)) {
-                    codeContractViolation()
+        list_ref.o(0).sec {
+            for mechIdx = 0, numMechs - 1 {
+                mth.getMechName(0, mechIdx, mechName)
+                if (!isMechInserted[mechIdx] && ismembrane(mechName)) {
+                    if (!stringEndsWith(mechName, mth.ionSuffix)) {
+                        codeContractViolation()
+                    }
+                    joinStrings(autoAddedIons, mechName, ", ")
+                    isMechInserted[mechIdx] = 1
+                    // !! do I need to make it homogeneous here?
                 }
-                joinStrings(autoAddedIons, mechName, ", ")
-                isMechInserted[mechIdx] = 1
-                // !! do I need to make it homogeneous here?
             }
         }
         
@@ -317,7 +324,7 @@ begintemplate MechComp
         for eachItemInList(sec_ref, list_ref) {
             sec_ref.sec for (x) {
                 dist = distance(x)
-                if (dist == 1e20) { // Neuron docs say: If a continuous path does not exist the return value is 1e20
+                if (dist == 1e20) { // NEURON docs say: If a continuous path does not exist the return value is 1e20
                     isDisconnected = 1
                     break
                 }
@@ -405,7 +412,7 @@ begintemplate MechComp
         
         for eachItemInList(sec_ref, list_ref) {
             sec_ref.sec {
-                // We'll use "distance(x) +- dd" instead of "distance(x +- dx)" because the latter is a step-like function of "dx" (Neuron feature)
+                // We'll use "distance(x) +- dd" instead of "distance(x +- dx)" because the latter is a step-like function of "dx" (NEURON feature)
                 dd = L / (2 * nseg)
                 
                 for (x, 0) {
@@ -427,6 +434,10 @@ begintemplate MechComp
         
         $&2 = yMin
         $&3 = yMax
+    }
+    
+    proc updateIsMechVarTypeInhom() {
+        mcu.updateIsMechVarTypeInhom(this)
     }
     
 endtemplate MechComp

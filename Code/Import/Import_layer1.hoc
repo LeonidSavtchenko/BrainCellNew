@@ -49,7 +49,7 @@ proc importSwcOrOtherFile_layer1() { local isSomaMissing, isAxonMissing, isAxonM
 // $3 - 0/1 flag indicating whether default soma was inserted during the file conversion
 // $4 - 0/1 flag indicating whether axon is missing and required, or -1 if we don't know yet
 // Other input: isAstrocyteOrNeuron (taken from the top level)
-proc importHocFile_layer1() { local isCalledAfterConversion, isSomaInsertedDuringConversion, isAxonMissingAndRequiredOrMinusOne, isOldStyleAstroHocFile, needToShowCellularCompartmentsWidget, defaultSomaNameIdx, defaultDendriteNameIdx, defaultAxonNameIdx localobj usedNamesForSoma, usedNamesForDendrites, usedNamesForAxon, allNames, defaultSomaNameIdxs, defaultDendriteNameIdxs, defaultAxonNameIdxs
+proc importHocFile_layer1() { local isCalledAfterConversion, isSomaInsertedDuringConversion, isAxonMissingAndRequiredOrMinusOne, isOldStyleAstroHocFile, needToShowCellularCompartmentsWidget localobj usedNamesForSoma, usedNamesForDendrites, usedNamesForAxon, allNames, defaultSomaNameIdxs, defaultDendriteNameIdxs, defaultAxonNameIdxs
     strdef inFilePathName
     
     inFilePathName = $s1
@@ -93,21 +93,9 @@ proc importHocFile_layer1() { local isCalledAfterConversion, isSomaInsertedDurin
             if (needToShowCellularCompartmentsWidget) {
                 // Ask user to select names from the lists so we can put proper sections to soma_ref, dendrite_ref and (for neuron only) axon_ref
                 
-                // Create both widgets
-                cellularCompartmentsMultiSelectWidget = new CellularCompartmentsMultiSelectWidget(isCalledAfterConversion, isSomaInsertedDuringConversion, isOldStyleAstroHocFile, allNames, defaultSomaNameIdxs, defaultDendriteNameIdxs, defaultAxonNameIdxs)
-                
-                defaultSomaNameIdx = getFirstValueOrMinusOneIfEmpty(defaultSomaNameIdxs)
-                defaultDendriteNameIdx = getFirstValueOrMinusOneIfEmpty(defaultDendriteNameIdxs)
-                defaultAxonNameIdx = getFirstValueOrMinusOneIfEmpty(defaultAxonNameIdxs)
-                cellularCompartmentsMonoSelectWidget = new CellularCompartmentsMonoSelectWidget(isCalledAfterConversion, isSomaInsertedDuringConversion, isOldStyleAstroHocFile, allNames, defaultSomaNameIdx, defaultDendriteNameIdx, defaultAxonNameIdx)
-                
-                if (defaultSomaNameIdxs.size() > 1 || defaultDendriteNameIdxs.size() != 1 || defaultAxonNameIdxs.size() > 1) {
-                    // Show multiselect widget
-                    cellularCompartmentsMultiSelectWidget.show()
-                } else {
-                    // Show monoselect widget
-                    cellularCompartmentsMonoSelectWidget.show()
-                }
+                // Create and show the widget
+                cellularCompartmentsWidget = new CellularCompartmentsWidget(isCalledAfterConversion, isSomaInsertedDuringConversion, isOldStyleAstroHocFile, allNames, defaultSomaNameIdxs, defaultDendriteNameIdxs, defaultAxonNameIdxs)
+                cellularCompartmentsWidget.show()
                 
                 // Unfortunately, we have to exit all the call stack now even though user is still making a choice
                 // The "OK" button handler will call "importHocFile_layer2"

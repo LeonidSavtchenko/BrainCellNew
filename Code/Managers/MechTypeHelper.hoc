@@ -9,7 +9,7 @@ if (isAstrocyteOrNeuron) {
 
 begintemplate MechTypeHelper
 
-    public getMechType, getNumMechs, getMechName, getNumMechVars, doesMechHaveGlobalVars, doesMechHaveNotGlobalVars, getVarNameAndArraySize, getVarTypeName, getVarNameWithIndex, getVarNameWithIndexAndUnits, isDistMechSticky, checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar, convertVarTypeToVarTypeIdx, doesPointProcessRequireSection, isPointProcessAcceptableNetConSource, isPointProcessAcceptableNetConTarget
+    public getMechType, getNumMechs, getMechName, getNumVarTypes, getNumMechVars, doesMechHaveGlobalVars, doesMechHaveNotGlobalVars, getVarNameAndArraySize, getVarTypeName, getVarNameWithIndex, getVarNameWithIndexAndUnits, isDistMechSticky, checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar, convertVarTypeToVarTypeIdx, doesPointProcessRequireSection, isPointProcessAcceptableNetConSource, isPointProcessAcceptableNetConTarget
     
     public morphologyMechIdx, diamVarType
     public extracellularMechName, ionSuffix, diamVarName
@@ -70,7 +70,7 @@ begintemplate MechTypeHelper
         // All code below is for Distributed Membrane Mechanisms only
         
         
-        // The Neuron code responsible for "Can't uninsert mechanism" and "Not allowed to uninsert ions at this time" warnings:
+        // The NEURON code responsible for "Can't uninsert mechanism" and "Not allowed to uninsert ions at this time" warnings:
         //  \nrn-master\src\nrnoc\cabcode.cpp
         
         // This mech is inserted by default and cannot be uninserted
@@ -82,12 +82,12 @@ begintemplate MechTypeHelper
         extracellularMechName = "extracellular"
         ionSuffix = "_ion"
         
-        // This variable from "morphology" cannot be made inhomogeneous in the same way like others (Neuron restriction)
+        // This variable from "morphology" cannot be made inhomogeneous in the same way like others (NEURON restriction)
         diamVarType = 1     // PARAMETER
         diamVarIdx = 0
         diamVarName = "diam"
         
-        // Draw user attention if something changed in future Neuron version
+        // Draw user attention if something changed in future NEURON version
         checkDistMechCodeContract(morphologyMechIdx, morphologyMechName)
         checkDistMechCodeContract(extracellularMechIdx, extracellularMechName)
         checkDistVarCodeContract(morphologyMechIdx, diamVarType, diamVarIdx, diamVarName)
@@ -115,12 +115,23 @@ begintemplate MechTypeHelper
         strdef mechName
         mechIdx = $1
         getMechName(0, mechIdx, mechName)
-        // !! it looks like checking for "_ion" suffix is not what Neuron does internally
+        // !! it looks like checking for "_ion" suffix is not what NEURON does internally
         return mechIdx == extracellularMechIdx || stringEndsWith(mechName, ionSuffix)
     }
     
     // Next proc-s are "static"
     
+    
+    func getNumVarTypes() { local enumDmPpNc
+        enumDmPpNc = $1
+        if (enumDmPpNc == 0 || enumDmPpNc == 1) {
+            return 3    // "PARAMETER", "ASSIGNED", "STATE"
+        } else if (enumDmPpNc == 2) {
+            return 1
+        } else {
+            codeContractViolation()
+        }
+    }
     
     func getNumMechVars() { local enumDmPpNc, mechIdx, varType localobj mechStd
         enumDmPpNc = $1

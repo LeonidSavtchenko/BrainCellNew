@@ -1,16 +1,4 @@
 
-// Make a shallow copy of this List
-// $o1 - The List
-// Returns The copy
-obfunc makeShallowCopyOfList() { local idx localobj inList, outList
-    inList = $o1
-    outList = new List()
-    for idx = 0, inList.count() - 1 {
-        outList.append(inList.o(idx))
-    }
-    return outList
-}
-
 // Make a deep copy for this List of String-s converting each to lower case
 // $o1 - The List of String-s
 // Returns The copy

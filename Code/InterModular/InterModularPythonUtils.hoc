@@ -83,7 +83,7 @@ func stringEndsWith() {
     return pyObj.pyRes
 }
 
-// Check if the given string is a valid identifier in Python (assume that means a valid section name in Neuron)
+// Check if the given string is a valid identifier in Python (assume that means a valid section name in NEURON)
 // $s1 - The section name
 // Returns 0/1 flag
 func isValidSecName() {

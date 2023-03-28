@@ -1,212 +1,5 @@
 
-objref cellularCompartmentsMonoSelectWidget, cellularCompartmentsMultiSelectWidget
-
-
-begintemplate CellularCompartmentsMonoSelectWidget
-
-    public show
-    
-    // The arguments passed to importHocFile_layer2
-    isCalledAfterConversion = -1
-    isSomaInsertedDuringConversion = -1
-    isOldStyleAstroHocFile = -1
-    
-    // Other ctor args
-    objref allNames
-    defaultSomaNameIdx = -1
-    defaultDendriteNameIdx = -1
-    defaultAxonNameIdx = -1
-    
-    objref mainBox
-    objref somaNameChoices, dendriteNameChoices, axonNameChoices
-    
-    external isAstrocyteOrNeuron
-    external mwh
-    external cellularCompartmentsMultiSelectWidget
-    external importHocFile_layer2, makeShallowCopyOfList, getFirstLine, printMsgAndStop
-    
-    // Template initialization
-    // $1 - 0/1 flag indicating whether this proc is called after the file conversion stage
-    // $2 - 0/1 flag indicating whether soma was inserted during the file conversion stage
-    // $3 - 0/1 flag indicating whether the HOC file was designed to be input of Astro 1.0 and so follows the old style
-    // $o4 - Names of all sections created in the imported HOC file (List of String-s)
-    // $5 - Index of the default selection for soma name or -1 to select "(no soma in file)" by default
-    // $6 - Index of the default selection for dendrite name
-    // $7 - Index of the default selection for axon name or -1 to select "(no axon in file)" by default
-    proc init() {
-        isCalledAfterConversion = $1
-        isSomaInsertedDuringConversion = $2
-        isOldStyleAstroHocFile = $3
-        allNames = $o4
-        defaultSomaNameIdx = $5
-        defaultDendriteNameIdx = $6
-        defaultAxonNameIdx = $7
-    }
-    
-    // Create and initialize one panel (soma, dendrite or axon names)
-    // $s1 - The compartment name
-    // $o2 - The items to choose from (List of String-s)
-    // $3 - The default selected string index
-    proc createAndInitOnePanel() { local defaultNameIdx localobj nameChoices, vBox
-        strdef compartmentName, title
-        
-        compartmentName = $s1
-        nameChoices = $o2
-        defaultNameIdx = $3
-        
-        vBox = new VBox()
-        vBox.intercept(1)
-        {
-            // The title
-            xpanel("")
-            sprint(title, "%s sections:", compartmentName)
-            xlabel(title)
-            xpanel()
-            
-            // All names
-            xpanel("")
-            nameChoices.browser("", "s")
-            // !! nameChoices.browser("", python_callable_for_conversion_from_s_to_nameWithDims)
-            nameChoices.select(defaultNameIdx)
-            xpanel()
-        }
-        vBox.intercept(0)
-        vBox.map()
-    }
-    
-    // Ask user to select names of soma and dendrite sections used in the imported HOC file
-    proc show() { local width localobj nil, hBox
-        strdef str
-        
-        if (mainBox == nil) {
-            // Prepare the lists that will be shown to user so they can select names
-            somaNameChoices = makeShallowCopyOfList(allNames)
-            dendriteNameChoices = makeShallowCopyOfList(allNames)
-            if (!isAstrocyteOrNeuron) {
-                axonNameChoices = makeShallowCopyOfList(allNames)
-            }
-            
-            somaNameChoices.prepend(new String("(no soma in file)"))        // !! move to constants
-            defaultSomaNameIdx += 1 // -1 gives 0 which is fine
-            
-            if (!isAstrocyteOrNeuron) {
-                axonNameChoices.prepend(new String("(no axon in file)"))    // !! move to constants
-                defaultAxonNameIdx += 1 // -1 gives 0 which is fine
-            }
-            
-            mainBox = new VBox()
-            mainBox.intercept(1)
-            {
-                // !! do not show soma and/or axon panels if importer creates them itself
-                xpanel("")
-                getFirstLine(str)
-                xlabel(str)
-                xlabel("so we can simulate the cell correctly.")
-                if (isAstrocyteOrNeuron) {
-                    str = "Select \"(no soma in file)\" on the left side if the file does not define soma."
-                } else {
-                    str = "Select \"(no soma in file)\" and/or \"(no axon in file)\" if the file does not define such compartment."
-                }
-                xlabel(str)
-                xpanel()
-                hBox = new HBox()
-                hBox.intercept(1)
-                {
-                    createAndInitOnePanel("Soma", somaNameChoices, defaultSomaNameIdx)
-                    createAndInitOnePanel("Dendrite", dendriteNameChoices, defaultDendriteNameIdx)
-                    if (!isAstrocyteOrNeuron) {
-                        createAndInitOnePanel("Axon", axonNameChoices, defaultAxonNameIdx)
-                    }
-                }
-                hBox.intercept(0)
-                hBox.map()
-                xpanel("")
-                xbutton("OK", "okHandler()")
-                xlabel("")
-                xbutton("Use multiselect instead", "useMultiSelectHandler()")
-                xpanel()
-            }
-            mainBox.dismiss_action("dismissHandler()")
-            mainBox.intercept(0)
-        }
-        // !! width change depending on whether we hide soma and/or axon panels
-        width = 430
-        if (!isAstrocyteOrNeuron) {
-            width *= 3 / 2
-        }
-        mainBox.map("Cellular compartments", 350, 50, width, 500)
-    }
-    
-    // Handler of "OK" button for the widget
-    proc okHandler() { local chosenSomaNameIdx, chosenDendriteNameIdx, chosenAxonNameIdx localobj usedNamesForSoma, usedNamesForDendrites, usedNamesForAxon
-        strdef line2
-        
-        line2 = "Please select different names."
-        
-        // Validate selections and prevent widget close if incorrect
-        // !! review and optimize this
-        chosenSomaNameIdx = somaNameChoices.selected()          // 0 is "(no soma in file)"
-        chosenDendriteNameIdx = dendriteNameChoices.selected()  // -1 if no default guess
-        if (chosenDendriteNameIdx == -1) {
-            mwh.showWarningBox("Please select a name for dendrites.")
-            return
-        }
-        if (chosenSomaNameIdx - 1 == chosenDendriteNameIdx) {
-            mwh.showWarningBox("Cannot use the same sections for soma and dendrites.", line2)
-            return
-        }
-        if (!isAstrocyteOrNeuron) {
-            chosenAxonNameIdx = axonNameChoices.selected()  // 0 is "(no axon in file)"
-            if (chosenSomaNameIdx != 0 && chosenAxonNameIdx != 0 && (chosenSomaNameIdx == chosenAxonNameIdx)) {
-                mwh.showWarningBox("Cannot use the same sections for soma and axon.", line2)
-                return
-            }
-            if (chosenDendriteNameIdx == chosenAxonNameIdx - 1) {
-                mwh.showWarningBox("Cannot use the same sections for dendrites and axon.", line2)
-                return
-            }
-        }
-        
-        // Read the names selected by user before closing the widget
-        usedNamesForSoma = new List()
-        usedNamesForDendrites = new List()
-        usedNamesForAxon = new List()
-        if (chosenSomaNameIdx != 0) {
-            usedNamesForSoma.append(somaNameChoices.o(chosenSomaNameIdx))
-        }
-        usedNamesForDendrites.append(dendriteNameChoices.o(chosenDendriteNameIdx))
-        if (!isAstrocyteOrNeuron && chosenAxonNameIdx != 0) {
-            usedNamesForAxon.append(axonNameChoices.o(chosenAxonNameIdx))
-        }
-        
-        // Close the widget
-        mainBox.unmap()
-        
-        // Proceed with the import (now user has made the choices)
-        importHocFile_layer2(isCalledAfterConversion, isSomaInsertedDuringConversion, isOldStyleAstroHocFile, usedNamesForSoma, usedNamesForDendrites, usedNamesForAxon)
-    }
-    
-    // Handler of "Use multiselect instead" button for the widget
-    proc useMultiSelectHandler() {
-        // Close this widget
-        mainBox.unmap()
-        
-        // Show other one
-        cellularCompartmentsMultiSelectWidget.show()
-    }
-    
-    // Handler of "X" button for the widget
-    proc dismissHandler() {
-        // Close the widget
-        mainBox.unmap()
-        
-        printMsgAndStop("Names weren't selected")
-    }
-
-endtemplate CellularCompartmentsMonoSelectWidget
-
-
-begintemplate CellularCompartmentsMultiSelectWidget
+begintemplate CellularCompartmentsWidget
 
     public show
     
@@ -223,8 +16,7 @@ begintemplate CellularCompartmentsMultiSelectWidget
     
     external isAstrocyteOrNeuron
     external mwh
-    external cellularCompartmentsMonoSelectWidget
-    external importHocFile_layer2, getFirstLine, printMsgAndStop
+    external importHocFile_layer2, printMsgAndStop
     
     
     // Template initialization
@@ -303,7 +95,7 @@ begintemplate CellularCompartmentsMultiSelectWidget
     
     // Ask user to select names of soma, dendrite and (for neuron only) axon sections used in the imported HOC file
     proc show() { local numNames, idx, width localobj nil, hBox
-        strdef str
+        strdef whatElse, str
         
         if (mainBox == nil) {
             // Create and initialize somaSelectionFlags, dendriteSelectionFlags and (for neuron only) axonSelectionFlags (all Vector-s)
@@ -324,7 +116,12 @@ begintemplate CellularCompartmentsMultiSelectWidget
             {
                 // !! do not show soma and/or axon panels if importer creates them itself
                 xpanel("")
-                getFirstLine(str)
+                if (isAstrocyteOrNeuron) {
+                    whatElse = " and dendrites"
+                } else {
+                    whatElse = ", dendrites and axon"
+                }
+                sprint(str, "Please help us identify which names were used in the HOC file to define soma%s", whatElse)
                 xlabel(str)
                 xlabel("so we can simulate the cell correctly.")
                 if (isAstrocyteOrNeuron) {
@@ -347,8 +144,6 @@ begintemplate CellularCompartmentsMultiSelectWidget
                 hBox.map()
                 xpanel("")
                 xbutton("OK", "okHandler()")
-                xlabel("")
-                xbutton("Use monoselect instead", "useMonoSelectHandler()")
                 xpanel()
             }
             mainBox.dismiss_action("dismissHandler()")
@@ -455,7 +250,7 @@ begintemplate CellularCompartmentsMultiSelectWidget
                 usedNamesForSoma.append(allNames.o(idx))
             } else if (dendriteSelectionFlags.x[idx]) {
                 usedNamesForDendrites.append(allNames.o(idx))
-            } else if (!isAstrocyteOrNeuron) {      // Don't combine these two lines with && because Neuron evaluates all the operands
+            } else if (!isAstrocyteOrNeuron) {      // Don't combine these two lines with && because NEURON evaluates all the operands
                 if (axonSelectionFlags.x[idx]) {    //
                     usedNamesForAxon.append(allNames.o(idx))
                 }
@@ -473,15 +268,6 @@ begintemplate CellularCompartmentsMultiSelectWidget
         importHocFile_layer2(isCalledAfterConversion, isSomaInsertedDuringConversion, isOldStyleAstroHocFile, usedNamesForSoma, usedNamesForDendrites, usedNamesForAxon)
     }
     
-    // Handler of "Use monoselect instead" button for the widget
-    proc useMonoSelectHandler() {
-        // Close this widget
-        mainBox.unmap()
-        
-        // Show other one
-        cellularCompartmentsMonoSelectWidget.show()
-    }
-    
     // Handler of "X" button for the widget
     proc dismissHandler() {
         // Close the widget
@@ -490,4 +276,7 @@ begintemplate CellularCompartmentsMultiSelectWidget
         printMsgAndStop("Names weren't selected")
     }
 
-endtemplate CellularCompartmentsMultiSelectWidget
+endtemplate CellularCompartmentsWidget
+
+
+objref cellularCompartmentsWidget

@@ -50,7 +50,7 @@ begintemplate MechManagerCompOpMergeSubWidget
             xpanel("")
             sprint(text, "* There is an exception for \"%s\" and \"*%s\" mechs which are \"sticky\".", mth.extracellularMechName, mth.ionSuffix)
             xlabel(text)
-            xlabel("  (Once inserted, they cannot be uninserted anymore due to Neuron restriction).")
+            xlabel("  (Once inserted, they cannot be uninserted anymore due to NEURON restriction).")
             xlabel("  If any source comp have a \"sticky\" mech inserted,")
             xlabel("  we'll insert it into the destination comp to avoid inconsistency.")
             xpanel()

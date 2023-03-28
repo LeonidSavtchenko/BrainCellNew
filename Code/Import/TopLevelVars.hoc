@@ -15,7 +15,7 @@ begintemplate ImporterConstants
     
     external isAstrocyteOrNeuron
     
-    // !! Neuron ignores all these values (considers them all 0) until something is assigned explicitly in proc init()
+    // !! NEURON ignores all these values (considers them all 0) until something is assigned explicitly in proc init()
     defaultSomaDiamAndLenForAstrocyte = -1
     defaultSomaDiamAndLenForNeuron = -1
     
