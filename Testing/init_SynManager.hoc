@@ -10,13 +10,16 @@ stochTestPlotShape = new PlotShape()
 { stochTestPlotShape.exec_menu("Shape Plot") }
 { fast_flush_list.append(stochTestPlotShape) }
 
+tstop = 15
+
 // Watch some var just to test stochasticity applied with AltRunControlWidget
 objref stochTestGraph
 stochTestGraph = new Graph()
+// !! "Graph.addvar" doesn't work for NetCon vars, e.g. "smAllSyns.o(123).netCon.weight" (no idea why);
+//    to watch a NetCon var, have to select it manually (click in the corner of the Graph, then "Plot what?")
 { stochTestGraph.addvar("smAllSyns.o(123).target.tau1") }
+{ stochTestGraph.size(0, tstop, 0.099, 0.101) }
 { graphList[0].append(stochTestGraph) }
-
-tstop = 15
 
 { load_file("../Code/InterModular/AllInterModularUtils.hoc") }
 

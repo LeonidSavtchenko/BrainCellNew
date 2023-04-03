@@ -1,7 +1,7 @@
 
 begintemplate ReleaseProbabilityHelper
 
-    public ifMetaVarThenEnableOrDisable, createNewOrReuseOldEventFilter
+    public ifMetaVarThenEnableOrDisable, createNewEventFilterButTryToInherit
     public isEnabled
     public metaVarName, realMechName, realVarType, realVarName, realArrayIndex
     
@@ -26,7 +26,7 @@ begintemplate ReleaseProbabilityHelper
     
     
     proc init() { local metaVarType
-        realMechName = "PostNetConEventFilter"  // Keep in sync with proc createNewOrReuseOldEventFilter
+        realMechName = "PostNetConEventFilter"  // Keep in sync with proc createNewEventFilterButTryToInherit
         realVarType = 1
         realVarName = "release_probability"
         realArrayIndex = 0
@@ -50,7 +50,7 @@ begintemplate ReleaseProbabilityHelper
     
     objref _mechStd
     
-    proc createNewOrReuseOldEventFilter() { local wasEfPresentBefore, is3Or1PartInSynStruc_old, release_probability localobj syn, trgPp, efPp, efNetCon, nil
+    proc createNewEventFilterButTryToInherit() { local wasEfPresentBefore, is3Or1PartInSynStruc_old, release_probability localobj syn, trgPp, efPp, efNetCon, nil
     
         syn = $o1
         wasEfPresentBefore = $2
@@ -63,7 +63,7 @@ begintemplate ReleaseProbabilityHelper
         } else {
             _mechStd = smAllComps.o(enumSynCompIdxs.netCon).mechStds[metaMechIdx][metaVarTypeIdx]
             
-            // This value will be assigned homogeneously in this proc, but if any of the vars must be inhomogeneous, we'll rewrite its values shortly downstream
+            // !! BUG: This equals NaN if the var was made inhomogen earlier
             release_probability = _mechStd.get(metaVarName, metaArrayIndex)
             
             efPp = new PostNetConEventFilter()  // Keep the name in sync with proc init
@@ -82,10 +82,9 @@ begintemplate ReleaseProbabilityHelper
                 _mechStd.in(syn.netCon)
             } else {
                 // We'll use the _mechStd defined above
-                // All values will be assigned homogeneously in this proc, but if any of the vars must be inhomogeneous, we'll rewrite its values shortly downstream
             }
         }
-        _mechStd.out(efNetCon)
+        _mechStd.out(efNetCon)  // !! BUG: This inserts NaN-s for inhomogen vars
         efNetCon.delay = 0      // The second NetCon has no delay
         
         $o5 = efPp

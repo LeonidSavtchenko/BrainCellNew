@@ -1,7 +1,7 @@
 
 begintemplate SynNCComp
 
-    public enumDmPpNc, name, isMechVarTypeInhom, mechStds
+    public name, enumDmPpNc, isMechVarTypeInhom, mechStds
     public isMechVarInhom, prepareVarsEditorHeader, getDistRange, getSecList, markMechDirty, updateStatsCurve, applyInhomogeneity, updateIsMechVarTypeInhom, isAnyVarInhom
     public isMechVarTypeInhom, mechStds, isMechDirty
     
@@ -11,8 +11,8 @@ begintemplate SynNCComp
     external stringsEqual, codeContractViolation
     external eachItemInList
     
-    enumDmPpNc = -1
     strdef name
+    enumDmPpNc = -1
     
     double isMechVarTypeInhom[1][1]     // 0/1 flag
     objref mechStds[1][1]
@@ -22,8 +22,8 @@ begintemplate SynNCComp
     
     
     proc init() { localobj mechStd
-        enumDmPpNc = 2
         name = "NetCon"
+        enumDmPpNc = 2
         
         double isMechVarTypeInhom[1][1]
         objref mechStds[1][1]

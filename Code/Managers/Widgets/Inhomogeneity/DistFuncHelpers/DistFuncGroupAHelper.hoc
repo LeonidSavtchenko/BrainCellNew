@@ -30,7 +30,7 @@ begintemplate DistFuncGroupAHelper
             params[5] = 2e-4
         } else {
             params[1] = 1
-            params[2] = 0.01
+            params[2] = -0.01
         }
     }
     

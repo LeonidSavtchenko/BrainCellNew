@@ -1,7 +1,7 @@
 
 begintemplate SynPPComp
 
-    public enumDmPpNc, name, isMechVarTypeInhom, mechStds
+    public name, enumDmPpNc, enumPpRole, isMechVarTypeInhom, mechStds
     public isMechVarInhom, prepareVarsEditorHeader, getDistRange, getSecList, markMechDirty, updateStatsCurve, applyInhomogeneity, updateIsMechVarTypeInhom, isAnyVarInhom
     public isMechVarTypeInhom, mechStds, isMechDirty
     
@@ -10,9 +10,9 @@ begintemplate SynPPComp
     external stringsEqual, codeContractViolation
     external eachItemInList
     
+    strdef name
     enumDmPpNc = -1
     enumPpRole = -1
-    strdef name
     
     double isMechVarTypeInhom[1][1]     // 0/1 flags
     // !! would it make sense to create these MechanismStandard-s without 2nd ctor arg and get rid of 2nd dimension in this array?

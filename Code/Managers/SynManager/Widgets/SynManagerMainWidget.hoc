@@ -15,12 +15,12 @@ endtemplate PPListItem
 
 begintemplate SynManagerMainWidget
 
-    public show, onSynLocChangedHandler, onListsFilterLevelChangedHandler, warnIfUserHasNotSelectedPPs, applyChangesToSynStrucIfNeeded, setInhomVarsLabel, dismissHandler
+    public show, onSynLocChangedHandler, onListsFilterLevelChangedHandler, warnIfUserHasNotSelectedPPs, applyChangesToSynStrucIfNeeded, applyChangesToDirtyHomogenVarsIfNeeded, updateNumInhomVarsLabel, updateNumStochVarsLabel, dismissHandler
     
     external smAllSyns, synGroup, smAllComps
     external slw, smlfw
-    external mwh, mth, rph
-    external createEmptyPanel, createElasticSpacer, getGlobalVarsHint, oneZeroToYesNo, stringEmpty, stringsEqual, stringToLowerCase, containsSubstring, dismissIfNotNil, codeContractViolation
+    external mwh, mth, rph, inhomAndStochLibrary
+    external createEmptyPanel, createElasticSpacer, getGlobalVarsHint, stringEmpty, stringsEqual, stringToLowerCase, containsSubstring, dismissIfNotNil, codeContractViolation
     external enumSynCompIdxs
     external varsEditorSubWidget
     
@@ -36,7 +36,7 @@ begintemplate SynManagerMainWidget
     
     listBoxHeight = -1
     
-    strdef distRangeVarLabel, inhomVarsVarLabel, stochVarsVarLabel, synLocVarLabel
+    strdef distRangeVarLabel, numInhomVarsVarLabel, numStochVarsVarLabel, synLocVarLabel
     
     
     proc init() {
@@ -80,10 +80,10 @@ begintemplate SynManagerMainWidget
                 xlabel(text)
                 setDistRangeVarLabel(distMin, distMax)
                 xvarlabel(distRangeVarLabel)
-                setInhomVarsLabel()
-                xvarlabel(inhomVarsVarLabel)
-                stochVarsVarLabel = "Stochastic vars: {YES/NO}"     // !! switching of this one is not implemented
-                xvarlabel(stochVarsVarLabel)
+                updateNumInhomVarsLabel()
+                xvarlabel(numInhomVarsVarLabel)
+                updateNumStochVarsLabel()
+                xvarlabel(numStochVarsVarLabel)
                 xpanel()
                 vBox1 = new VBox()
                 vBox1.intercept(1)
@@ -258,9 +258,7 @@ begintemplate SynManagerMainWidget
         // so we have to destroy old Target/Single PPs and create new ones
         applyHandler(1)
         
-        // !! BUG 1: all inhomogeneities applied to Target/Single PPs and NetCon-s earlier disappear at this point
-        //           even though "Edit variables" widget will indicate inhomogeneities in them anyway
-        //    BUG 2: all inhomogeneities applied to Source PPs earlier get inconsistent due to the changed "dist"
+        // !! BUG: all inhomogeneities in PPs and NetCon-s applied earlier get a bit inconsistent with their models due to a small change in "dist"
         
         if (!isReviewAfterApply) {
             return
@@ -396,7 +394,7 @@ begintemplate SynManagerMainWidget
         return isOK
     }
     
-    func applyChangesToSynStrucIfNeeded() { local numArg, isForceNewTrgOrSng, srcMechIdx, doesSrcPpRequireSection, isSmthChanged
+    func applyChangesToSynStrucIfNeeded() { local numArg, isForceNewTrgOrSng, srcMechIdx, trgMechIdx, sngMechIdx, isSmthChanged
         strdef srcMechName, trgMechName, sngMechName
         
         numArg = numarg()
@@ -408,16 +406,24 @@ begintemplate SynManagerMainWidget
             codeContractViolation()
         }
         
+        srcMechIdx = getSelMechIdxOrMinusOne(srcChoices)
+        trgMechIdx = getSelMechIdxOrMinusOne(trgChoices)
+        sngMechIdx = getSelMechIdxOrMinusOne(sngChoices)
         getSelMechNameOrEmptyString(srcChoices, srcMechName)
         getSelMechNameOrEmptyString(trgChoices, trgMechName)
         getSelMechNameOrEmptyString(sngChoices, sngMechName)
-        if (is3Or1PartInSynStruc) {
-            srcMechIdx = getSelMechIdxOrMinusOne(srcChoices)
-            doesSrcPpRequireSection = mth.doesPointProcessRequireSection(srcMechIdx)
-        } else {
-            doesSrcPpRequireSection = -1
-        }
-        isSmthChanged = synGroup.applyChangesToStrucIfNeeded(is3Or1PartInSynStruc, srcMechName, trgMechName, sngMechName, doesSrcPpRequireSection, isForceNewTrgOrSng)
+        
+        isSmthChanged = synGroup.applyChangesToStrucIfNeeded(is3Or1PartInSynStruc, srcMechIdx, trgMechIdx, sngMechIdx, srcMechName, trgMechName, sngMechName, isForceNewTrgOrSng)
+        
+        return isSmthChanged
+    }
+    
+    func applyChangesToDirtyHomogenVarsIfNeeded() { local srcMechIdx, trgMechIdx, sngMechIdx, isSmthChanged
+        srcMechIdx = getSelMechIdxOrMinusOne(srcChoices)
+        trgMechIdx = getSelMechIdxOrMinusOne(trgChoices)
+        sngMechIdx = getSelMechIdxOrMinusOne(sngChoices)
+        isSmthChanged = synGroup.applyChangesToDirtyHomogenVars(srcMechIdx, trgMechIdx, sngMechIdx)
+        updateNumInhomVarsLabel()
         return isSmthChanged
     }
     
@@ -435,38 +441,14 @@ begintemplate SynManagerMainWidget
         sprint(distRangeVarLabel, "Distance range: %g ... %g (%s)", distMin, distMax, units("L"))
     }
     
-    proc setInhomVarsLabel() { local isAnyVarInhom localobj nil
-        strdef yesNo
-        
-        isAnyVarInhom = 0
-        if (is3Or1PartInSynStruc) {
-            checkIfAnyVarInhom(srcChoices, enumSynCompIdxs.source, &isAnyVarInhom)
-            checkIfAnyVarInhom(nil,        enumSynCompIdxs.netCon, &isAnyVarInhom)
-            checkIfAnyVarInhom(trgChoices, enumSynCompIdxs.target, &isAnyVarInhom)
-        } else {
-            checkIfAnyVarInhom(sngChoices, enumSynCompIdxs.single, &isAnyVarInhom)
-        }
-        
-        oneZeroToYesNo(isAnyVarInhom, yesNo)
-        sprint(inhomVarsVarLabel, "Inhomogeneous vars: %s", yesNo)
+    proc updateNumInhomVarsLabel() { local numInhomVars
+        numInhomVars = inhomAndStochLibrary.getNumInhomVarsForSyns()
+        sprint(numInhomVarsVarLabel, "Number of inhom vars: %d", numInhomVars)
     }
     
-    proc checkIfAnyVarInhom() { local synCompIdx, isAnyVarInhom, selMechIdx localobj choicesOrNil, nil
-        choicesOrNil = $o1
-        synCompIdx = $2
-        isAnyVarInhom = $&3
-        
-        if (choicesOrNil != nil) {
-            selMechIdx = getSelMechIdxOrMinusOne(choicesOrNil)
-        } else {
-            selMechIdx = 0
-        }
-        
-        if (selMechIdx != -1) {
-            isAnyVarInhom = smAllComps.o(synCompIdx).isAnyVarInhom(selMechIdx) || isAnyVarInhom
-        }
-        
-        $&3 = isAnyVarInhom
+    proc updateNumStochVarsLabel() { local numStochVars
+        numStochVars = inhomAndStochLibrary.getNumStochVarsForSyns()
+        sprint(numStochVarsVarLabel, "Number of stoch vars: %d", numStochVars)
     }
     
     proc setSynLocVarLabel() {
@@ -711,7 +693,7 @@ begintemplate SynManagerMainWidget
         varsEditorSubWidget.show()
     }
     
-    proc applyHandler() { local numArg, isForceNewTrgOrSng, isOK, isSmthChanged, srcMechIdx, trgMechIdx, sngMechIdx
+    proc applyHandler() { local numArg, isForceNewTrgOrSng, isOK, isSmthChanged
         
         numArg = numarg()
         if (numArg == 0) {
@@ -730,13 +712,7 @@ begintemplate SynManagerMainWidget
         dismissChilds()
         
         isSmthChanged = applyChangesToSynStrucIfNeeded(isForceNewTrgOrSng)
-        
-        srcMechIdx = getSelMechIdxOrMinusOne(srcChoices)
-        trgMechIdx = getSelMechIdxOrMinusOne(trgChoices)
-        sngMechIdx = getSelMechIdxOrMinusOne(sngChoices)
-        isSmthChanged = synGroup.applyChangesToDirtyHomogenVars(srcMechIdx, trgMechIdx, sngMechIdx) || isSmthChanged
-        
-        setInhomVarsLabel()
+        isSmthChanged = applyChangesToDirtyHomogenVarsIfNeeded() || isSmthChanged
         
         if (isSmthChanged) {
             mwh.showMessageBox("All the changes were applied to synapses.", "Applied")

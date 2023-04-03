@@ -8,7 +8,7 @@ begintemplate MechOp3Helper
     public title, isRequireApply, itemTypeIdx
     
     external mmAllComps
-    external math, mth, mwh, mmmowb, mcu, inhomAndStochApplicator
+    external math, mth, mwh, mmmowb, mcu, inhomAndStochLibrary
     external dismissIfNotNil
     
     objref defineStochFuncSubWidget
@@ -72,7 +72,7 @@ begintemplate MechOp3Helper
             for varIdx = 0, numMechVars - 1 {
                 arraySize = mth.getVarNameAndArraySize(0, mechIdx, varType, varIdx, varName)
                 for arrayIndex = 0, arraySize - 1 {
-                    isStoch = inhomAndStochApplicator.isStochEnabledFor(compIdx, mechIdx, varType, varIdx, arrayIndex)
+                    isStoch = inhomAndStochLibrary.isStochEnabledFor(0, compIdx, mechIdx, varType, varIdx, arrayIndex)
                     if (isStoch) {
                         mth.getVarNameWithIndexAndUnits(0, mechIdx, varName, arraySize, arrayIndex, varNameWithIndexAndUnits)
                         sprint(text, "%s/%s: %s", name, varTypeName, varNameWithIndexAndUnits)

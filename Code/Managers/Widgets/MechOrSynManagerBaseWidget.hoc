@@ -9,15 +9,15 @@ isScheduledCachingOfSpineNeckDiams = 0
 begintemplate MechOrSynManagerBaseWidget
 
     public show, showMechManagerHandler, showSynManagerHandler, showAltRunControlHandler, onNanoReseedOrUpdateHandler, dismissHandler
-    public synManagerMainWidget
     
+    external mechManagerMainWidget, synManagerMainWidget
     external mmAllComps, smAllSyns, synGroup
     external mwh, spineNeckDiamCache
     external dismissIfNotNil
     external isScheduledRescanningOfDistMechs, isScheduledCachingOfSpineNeckDiams
     
     objref mainBox, this
-    objref mechManagerMainWidget, synManagerMainWidget, altRunControlWidget
+    objref altRunControlWidget
     
     isMechOrSyn = -1
     
@@ -94,7 +94,21 @@ begintemplate MechOrSynManagerBaseWidget
         altRunControlWidget.show()
     }
     
-    proc onNanoReseedOrUpdateHandler() {
+    proc onNanoReseedOrUpdateHandler() { localobj nil
+        mwh.startIntercepting()
+        {
+            if (mechManagerMainWidget != nil) {
+                mwh.showNotImplementedWarning("Cannot preserve the comps, mechs and vars defined with Mech Manager.")
+                // !! BUG: the values shown in VarsEditorWidget become inconsistent with the actual sections;
+                //         need schedule the call of proc analyzeSectsAndCreateComps() to reset vars in mechStds
+            }
+            if (synManagerMainWidget != nil) {
+                mwh.showNotImplementedWarning("Cannot preserve the syn loc, struc, PPs and vars defined with Syn Manager.")
+                // !! BUG: the values shown in VarsEditorWidget become inconsistent with the actual synapses;
+                //         need schedule the call of proc createSynComps() to reset vars in mechStds
+            }
+        }
+        mwh.endIntercepting()
         dismissManagers()
         isScheduledRescanningOfDistMechs = 1    // !! for higher performance, it would be better to rescan only nanogeometry
         isScheduledCachingOfSpineNeckDiams = 1

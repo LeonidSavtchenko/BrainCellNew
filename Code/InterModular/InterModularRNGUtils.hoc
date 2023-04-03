@@ -16,8 +16,14 @@ begintemplate RNGUtils
     proc init() { local minSeedForMod, maxNumSeedsPerRankForMod localobj pc
         uniqueSeedForHoc = 9    // Keep in sync with the obfunc-s below
         
-        minSeedForMod = 10000           // !! maybe the random generators used in HOC and MOD are different, and so we can simply use "0" here
-        maxNumSeedsPerRankForMod = 1000     // !! how many times user can change synapse structure per 1 session with the guarantee of unique seeds
+        if (!use_mcell_ran4()) {
+            minSeedForMod = 0       // HOC and MOD use different RNGs, so we don't care about seeds overlapping
+        } else {
+            minSeedForMod = 10000   // HOC and MOD can use the same RNG, so we try to prevent seeds overlapping
+        }
+        
+        // How many times user can change synapse structure per 1 session with the guarantee of unique seeds
+        maxNumSeedsPerRankForMod = 1000
         
         pc = new ParallelContext()
         uniqueSeedForMod = minSeedForMod + maxNumSeedsPerRankForMod * pc.id

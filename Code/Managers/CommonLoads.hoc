@@ -1,5 +1,6 @@
 
-objref mth, mmmowb, msmBaseWidget, mcu, varsEditorSubWidget, synGroup, smAllComps, spineNeckDiamCache
+objref msmBaseWidget, mechManagerMainWidget, synManagerMainWidget, varsEditorSubWidget
+objref mth, mmmowb, mcu, synGroup, smAllComps, spineNeckDiamCache
 
 if (isAstrocyteOrNeuron) {
     objref smAllSyns, rph
@@ -7,8 +8,9 @@ if (isAstrocyteOrNeuron) {
 
 { load_file("MechTypeHelper.hoc") }
 
-{ load_file("InhomAndStochTarget.hoc") }
-{ load_file("InhomAndStochApplicator.hoc") }
+{ load_file("InhomAndStochLibrary/InhomAndStochTarget.hoc") }
+{ load_file("InhomAndStochLibrary/InhomAndStochLibrary.hoc") }
+{ load_file("InhomAndStochLibrary/InhomAndStochApplicator.hoc") }
 
 { load_file("Widgets/Inhomogeneity/DistFuncHelpers/PythonUtils/PythonUtilsForDistFuncs.hoc") }
 { load_file("Widgets/Inhomogeneity/DistFuncHelpers/FileUtilsForDistFuncs.hoc") }

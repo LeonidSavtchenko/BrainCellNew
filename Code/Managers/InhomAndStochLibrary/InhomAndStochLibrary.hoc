@@ -1,0 +1,149 @@
+
+begintemplate InhomAndStochLibrary
+    
+    public isStochEnabledFor, getNumInhomVarsForSyns, getNumStochVarsForSyns, onInhomApply, onStochApply, onStochDisable, onMechUninsert, onCompMerge, onCompSplit, onSynStrucChange
+    public activeSpecVars
+    
+    external eachItemInList
+    
+    objref activeSpecVars, inactiveSpecVars
+    
+    
+    proc init() {
+        activeSpecVars = new List()
+        inactiveSpecVars = new List()
+    }
+    
+    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
+    func isStochEnabledFor() {
+        idx = findActiveSpecVar($1, $2, $3, $4, $5, $6)
+        if (idx == activeSpecVars.count()) {
+            // Not found
+            return 0
+        }
+        return activeSpecVars.o(idx).isStoch
+    }
+    
+    func getNumInhomVarsForSyns() {
+        return getNumInhomOrStochVarsForSyns(1)
+    }
+    
+    func getNumStochVarsForSyns() {
+        return getNumInhomOrStochVarsForSyns(0)
+    }
+    
+    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, distFuncHelper
+    func onInhomApply() { local idx
+        idx = findActiveSpecVar($1, $2, $3, $4, $5, $6)
+        if (idx == activeSpecVars.count()) {
+            // Not found - create
+            activeSpecVars.append(new InhomAndStochTarget($1, $2, $3, $4, $5, $6, $o7))
+            return 0
+        }
+        // Found - update
+        activeSpecVars.o(idx).updateInhom($o7)
+        return 1
+    }
+    
+    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, boundingHelper, stochFuncHelper, stochFuncCatIdx, stochFuncIdx
+    func onStochApply() { local idx localobj nil
+        idx = findActiveSpecVar($1, $2, $3, $4, $5, $6)
+        if (idx == activeSpecVars.count()) {
+            // Not found - create
+            activeSpecVars.append(new InhomAndStochTarget($1, $2, $3, $4, $5, $6, nil, $o7, $o8, $9, $10))
+            return 0
+        }
+        // Found - update
+        activeSpecVars.o(idx).updateStoch($o7, $o8, $9, $10)
+        return 1
+    }
+    
+    // !!!! BUG: need to call this func with isInhomOrStoch = 1 somewhere
+    // in: isInhomOrStoch, enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
+    func onStochDisable() { local idx, isAnotherDisabledAsWell
+        idx = findActiveSpecVar($2, $3, $4, $5, $6, $7)
+        if (idx == activeSpecVars.count()) {
+            // Not found
+            return 0
+        }
+        // Found
+        isAnotherDisabledAsWell = activeSpecVars.o(idx).disableInhomOrStoch($1)
+        if (isAnotherDisabledAsWell) {
+            activeSpecVars.remove(idx)
+        }
+        // !! do I need to restore the old value for the var here?
+        return 1
+    }
+    
+    // !! call this
+    proc onMechUninsert() {
+        // !! disable stochasticity for all vars of the uninserted mechanism
+    }
+    
+    // !! call this
+    proc onCompMerge() {
+        // !! update activeSpecVars accordingly
+    }
+    
+    // !! call this
+    proc onCompSplit() {
+        // !! update activeSpecVars accordingly
+    }
+    
+    // !! call this
+    proc onSynStrucChange() { localobj retrievedInhomAndStochTargets, inhomAndStochTarget
+        // !!<ss> archive inhom and stoch models for removed syn parts (PP or NetCon);
+        //        if present, de-archive inhom and stoch models for the new parts;
+        //        then apply de-archived inhom models
+        /* !!
+        inhomAndStochModelsLibrary.store(oldSynStruc)
+        retrievedInhomAndStochTargets = inhomAndStochModelsLibrary.retrieve(newSynStruc)
+        for eachItemInList(inhomAndStochTarget, retrievedInhomAndStochTargets) {
+            if (!inhomAndStochTarget.isDmOrSynPart && inhomAndStochTarget.isInhom) {
+                inhomAndStochTarget.apply()
+            }
+        }
+        */
+    }
+    
+    // All next staff is private
+    
+    
+    // in: isInhomOrStoch
+    func getNumInhomOrStochVarsForSyns() { local isInhomOrStoch, numVars localobj inhomAndStochTarget
+        isInhomOrStoch = $1
+        numVars = 0
+        for eachItemInList(inhomAndStochTarget, activeSpecVars) {
+            if (inhomAndStochTarget.isDmOrSynPart) {
+                continue
+            }
+            if (isInhomOrStoch) {
+                if (!inhomAndStochTarget.isInhom) {
+                    continue
+                }
+            } else {
+                if (!inhomAndStochTarget.isStoch) {
+                    continue
+                }
+            }
+            numVars += 1
+        }
+        return numVars
+    }
+    
+    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
+    func findActiveSpecVar() { local idx
+        // Not many inhomAndStochTarget-s, so hashless comparison works just fine
+        for idx = 0, activeSpecVars.count() - 1 {
+            if (activeSpecVars.o(idx).isEqual($1, $2, $3, $4, $5, $6)) {
+                break
+            }
+        }
+        return idx
+    }
+    
+endtemplate InhomAndStochLibrary
+
+
+objref inhomAndStochLibrary
+inhomAndStochLibrary = new InhomAndStochLibrary()

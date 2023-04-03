@@ -4,10 +4,10 @@
 
 begintemplate VarsEditorWidget
 
-    public show, onApplyInInhomEditor, onApplyInStochEditor, onDisableInStochEditor, dismissHandler
+    public show, onApplyInInhomEditor, onApplyOrDisableInStochEditor, dismissHandler
     public compIdx
     
-    external mwh, math, mth, mcu, sbh4ve, inhomAndStochApplicator, rph
+    external mwh, math, mth, mcu, sbh4ve, inhomAndStochLibrary, rph
     external createElasticSpacer, createEmptyPanel, dismissIfNotNil, codeContractViolation
     
     objref mainBox
@@ -59,7 +59,7 @@ begintemplate VarsEditorWidget
             for arrayIndex = 0, arraySize - 1 {
                 isInhom = comp.isMechVarInhom(mechIdx, varTypeIdx, varName, arrayIndex)
                 inhomFlagsVec.x(arrayIndex) = isInhom
-                isStoch = inhomAndStochApplicator.isStochEnabledFor(compIdx, mechIdx, varType, varIdx, arrayIndex)
+                isStoch = inhomAndStochLibrary.isStochEnabledFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
                 stochFlagsVec.x(arrayIndex) = isStoch
             }
             isMechVarInhom.append(inhomFlagsVec)
@@ -166,16 +166,11 @@ begintemplate VarsEditorWidget
         show()
     }
     
-    proc onApplyInStochEditor() { local varIdx, arrayIndex
+    proc onApplyOrDisableInStochEditor() { local varIdx, arrayIndex, isStoch
         varIdx = $1
         arrayIndex = $2
-        isMechVarStoch.o(varIdx).x(arrayIndex) = 1
-    }
-    
-    proc onDisableInStochEditor() { local varIdx, arrayIndex
-        varIdx = $1
-        arrayIndex = $2
-        isMechVarStoch.o(varIdx).x(arrayIndex) = 0
+        isStoch = $3
+        isMechVarStoch.o(varIdx).x(arrayIndex) = isStoch
     }
     
     proc dismissHandler() { localobj nil

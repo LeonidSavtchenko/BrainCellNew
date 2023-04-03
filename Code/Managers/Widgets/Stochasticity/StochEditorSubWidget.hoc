@@ -4,10 +4,9 @@ begintemplate StochEditorSubWidget
     public show, updateModelCurves, dismissHandler
     public boundingHelper, sampleSize
     
-    external msmBaseWidget
-    external mwh, math, mth, mmmowb, mcu, inhomAndStochApplicator
+    external varsEditorSubWidget, synManagerMainWidget
+    external mwh, math, mth, mmmowb, mcu, inhomAndStochLibrary, rph
     external createEmptyPanel, oneZeroToYesNo, eachPointInGrid, codeContractViolation
-    external varsEditorSubWidget
     
     objref mainBox, deck1, deck2, deck3, deck4, deck5, deck6, deck7, deck8, deck9, deck10, graph1, graph2, graph3, graph4, graph5, graph6, graph7, this
     
@@ -40,6 +39,9 @@ begintemplate StochEditorSubWidget
     arrayIndex = -1
     strdef varNameWithIndex
     
+    isCalledFromVarsEditor = -1
+    isCalledFromReviewStochVars = -1
+    
     isBoundsOK = -1
     isCancel = -1
     
@@ -63,6 +65,14 @@ begintemplate StochEditorSubWidget
         varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
         arraySize = mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName)
         mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
+        
+        if (isMechOrSynEditor) {
+            isCalledFromVarsEditor = (mmmowb.lastMechOpIdx == 1)
+            isCalledFromReviewStochVars = (mmmowb.lastMechOpIdx == 3)
+        } else {
+            isCalledFromVarsEditor = 1
+            isCalledFromReviewStochVars = 0
+        }
         
         colourizationHelper = new ColourizationHelper()
         boundingHelper = new BoundingHelper(colourizationHelper)
@@ -101,7 +111,7 @@ begintemplate StochEditorSubWidget
         stochFuncHelpers[18] = new StochFuncGroupGHelper(3, this)
         stochFuncHelpers[19] = new StochFuncGroupGHelper(4, this)
         
-        isAlreadyEnabled = inhomAndStochApplicator.isStochEnabledFor(compIdx, mechIdx, varType, varIdx, arrayIndex)
+        isAlreadyEnabled = inhomAndStochLibrary.isStochEnabledFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
         if (isAlreadyEnabled) {
             // !!! need to restore the old UI values for bounding.*, colourizationHelper.*, stochFuncCatIdx, stochFuncIdx, params in distFunc etc.
             //     but this looks more like export/import logic rather than stochasticity logic
@@ -136,13 +146,9 @@ begintemplate StochEditorSubWidget
             {
                 xpanel("")
                 mcu.createEditorSubWidgetDigest(enumDmPpNc, compName, mechName, varTypeName, varNameWithIndexAndUnits)
-                /* !!! do I need this?
-                xlabel("")
-                sprint(text, "Distance range for %s:", compName)
-                xlabel(text)
-                sprint(text, "%g ... %g (%s)", xMin, xMax, units("L"))
-                xlabel(text)
-                */
+                if (!isMechOrSynEditor) {
+                    xlabel("Applied on each: {ITERATION/SYNAPTIC EVENT}")
+                }
                 oneZeroToYesNo(isInhom, yesNo)
                 sprint(text, "Inhomogeneous: %s", yesNo)
                 xlabel(text)
@@ -1031,7 +1037,7 @@ begintemplate StochEditorSubWidget
         stochFuncChangedHandler(stochFuncIdx)
     }
     
-    proc applyHandler() { local isOK, isCalledFromVarsEditor, isFound
+    proc applyHandler() { local isOK, isFound
         strdef verb
         
         isOK = makeSureCanProceed()
@@ -1044,68 +1050,85 @@ begintemplate StochEditorSubWidget
                 return
             }
         } else {
-            mwh.showNotImplementedWarning()
-            return
+            // !!<ss>
+            if (enumDmPpNc == 1) {
+                if (comp.enumPpRole == 2) { // Don't combine into one IF because other comps don't have "enumPpRole"
+                    mwh.showNotImplementedWarning("Cannot be applied for NetCon-less synapses.")
+                    return
+                }
+            }
+            if (!rph.isEnabled) {
+                mwh.showNotImplementedWarning("Cannot be applied until the release probability mechanics is enabled.")
+                return
+            }
         }
         
         colourizationHelper.consumeSettings()
         
-        if (isMechOrSynEditor) {
-            isCalledFromVarsEditor = (mmmowb.lastMechOpIdx == 1)
-        } else {
-            isOK = msmBaseWidget.synManagerMainWidget.warnIfUserHasNotSelectedPPs()
+        if (!isMechOrSynEditor) {
+            isOK = synManagerMainWidget.warnIfUserHasNotSelectedPPs()
             if (!isOK) {
                 return
             }
-            msmBaseWidget.synManagerMainWidget.applyChangesToSynStrucIfNeeded()
-            isCalledFromVarsEditor = 1
+            synManagerMainWidget.applyChangesToSynStrucIfNeeded()
+            synManagerMainWidget.applyChangesToDirtyHomogenVarsIfNeeded()
         }
         
-        if (isCalledFromVarsEditor) {
-            varsEditorSubWidget.onApplyInStochEditor(varIdx, arrayIndex)
-        }
+        isFound = inhomAndStochLibrary.onStochApply(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, boundingHelper, stochFuncHelpers[stochFuncIdx], stochFuncCatIdx, stochFuncIdx)
         
-        isFound = inhomAndStochApplicator.enableOrUpdateStochFor(compIdx, mechIdx, varType, varIdx, arrayIndex, boundingHelper, stochFuncHelpers[stochFuncIdx], stochFuncCatIdx, stochFuncIdx)
         if (!isFound) {
-            comp.isMechVarTypeStoch[mechIdx][varTypeIdx] = 1    // !!! = (stdDev > 0)
+            if (isMechOrSynEditor) {
+                comp.isMechVarTypeStoch[mechIdx][varTypeIdx] = 1    // !! or = (stdDev > 0) ?
+            }
             verb = "enabled"
         } else {
             verb = "updated"
         }
+        
+        updateParentWidgets(1)
+        
         showStochStatusMsg(1, verb)
     }
     
-    proc disableHandler() { local mechOpIdx, isCalledFromVarsEditor, /* !! isOK */ isFound
+    proc disableHandler() { local /* !! isOK */ isFound
     
         if (isMechOrSynEditor) {
-            mechOpIdx = mmmowb.lastMechOpIdx
-            isCalledFromVarsEditor = (mechOpIdx == 1)
-            if (mechOpIdx == 3) {
+            if (isCalledFromReviewStochVars) {
                 // !! need to unmap and show the parent widget again to hide the button
             }
         } else {
-            /* !!??
-            isOK = msmBaseWidget.synManagerMainWidget.warnIfUserHasNotSelectedPPs()
+            /* !!??<ss>
+            isOK = synManagerMainWidget.warnIfUserHasNotSelectedPPs()
             if (!isOK) {
                 return
             }
-            msmBaseWidget.synManagerMainWidget.applyChangesToSynStrucIfNeeded()
+            synManagerMainWidget.applyChangesToSynStrucIfNeeded()
+            synManagerMainWidget.applyChangesToDirtyHomogenVarsIfNeeded()
             */
-            isCalledFromVarsEditor = 1
-            mwh.showNotImplementedWarning()
-            return
         }
         
-        if (isCalledFromVarsEditor) {
-            varsEditorSubWidget.onDisableInStochEditor(varIdx, arrayIndex)
-        }
+        isFound = inhomAndStochLibrary.onStochDisable(0, enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
         
-        isFound = inhomAndStochApplicator.disableInhomOrStochFor(0, compIdx, mechIdx, varType, varIdx, arrayIndex)
         if (isFound) {
-            comp.isMechVarTypeStoch[mechIdx][varTypeIdx] = 0
+            if (isMechOrSynEditor) {
+                comp.isMechVarTypeStoch[mechIdx][varTypeIdx] = 0
+            }
+            
+            updateParentWidgets(0)
+            
             showStochStatusMsg(0, "disabled")
         } else {
             mwh.showMessageBox("Nothing to disable.", "No stochasticity")
+        }
+    }
+    
+    proc updateParentWidgets() { local isStoch
+        isStoch = $1
+        if (isCalledFromVarsEditor) {
+            varsEditorSubWidget.onApplyOrDisableInStochEditor(varIdx, arrayIndex, isStoch)
+        }
+        if (!isMechOrSynEditor) {
+            synManagerMainWidget.updateNumStochVarsLabel()
         }
     }
     

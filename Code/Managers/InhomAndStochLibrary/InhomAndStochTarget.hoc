@@ -1,20 +1,19 @@
 
-// !! the data in InhomAndStochTarget-s must be updated on comp ops (merge, split) and mech ops (uninsert)
-
-// !! the construction of two nested cycles (first by sections, second by segments) is used several times here, so maybe create an iterator
-//    also, I need to group all InhomAndStochTarget-s by compartments (e.g. use dict[compIdx]) and have only one "construction" per compartment
-
-// !! can I combine boundingHelper and stochFuncHelper classes into one?
+// !!!! the data in InhomAndStochTarget-s must be updated on comp ops (merge, split), mech ops (uninsert) and PP/NetCon ops (destruction)
 
 begintemplate InhomAndStochTarget
 
     public isEqual, isStochEnabled, updateInhom, updateStoch, setPlayIfPossible, stopPlayingVars, onInit, onStep, disableInhomOrStoch
-    public isStoch
+    public isDmOrSynPart, isInhom, isStoch
     
-    external eachItemInList, codeContractViolation
-    external mmAllComps, mth, rngUtils
+    external smAllSyns
+    external rngUtils, mth, mcu
+    external stringsEqual, codeContractViolation
+    external eachItemInList
     
     // "init" args
+    enumDmPpNc = -1
+    isDmOrSynPart = -1
     compIdx = -1
     objref comp
     mechIdx = -1
@@ -43,32 +42,43 @@ begintemplate InhomAndStochTarget
         
         numArg = numarg()
         
-        if (numArg != 6 && numArg != 10) {
+        if (numArg != 7 && numArg != 11) {
             codeContractViolation()
         }
         
-        compIdx = $1
-        mechIdx = $2
-        varType = $3
-        varIdx = $4
-        arrayIndex = $5
-        distFuncHelper = $o6
-        if (numArg == 10) {
-            boundingHelper = $o7
-            stochFuncHelper = $o8
-            stochFuncCatIdx = $9
-            stochFuncIdx = $10
+        enumDmPpNc = $1
+        compIdx = $2
+        mechIdx = $3
+        varType = $4
+        varIdx = $5
+        arrayIndex = $6
+        distFuncHelper = $o7
+        if (numArg == 11) {
+            boundingHelper = $o8
+            stochFuncHelper = $o9
+            stochFuncCatIdx = $10
+            stochFuncIdx = $11
         }
         
-        comp = mmAllComps.o(compIdx)
-        list_ref = comp.list_ref
+        isDmOrSynPart = (enumDmPpNc == 0)
         
-        mth.getMechName(0, mechIdx, mechName)
-        mth.getVarNameAndArraySize(0, mechIdx, varType, varIdx, varName)
+        comp = mcu.getComp(isDmOrSynPart, compIdx)
+        if (isDmOrSynPart) {
+            list_ref = comp.list_ref
+        }
+        
+        mth.getMechName(enumDmPpNc, mechIdx, mechName)
+        mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName)
         
         varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
         baseMechStd = comp.mechStds[mechIdx][varTypeIdx]
-        tempMechStd = new MechanismStandard(mechName, varType)
+        if (enumDmPpNc != 2) {
+            tempMechStd = new MechanismStandard(mechName, varType)
+        } else {
+            // !!<ss> need to test if using this "Fake*" template with "in-set-out" workflow we still achieve better performance
+            //   than "sprint"-ing and executing a HOC-command for direct var assignment
+            execute("tempMechStd = new FakeMechanismStandardForNetCon()", this)     // The template is not loaded for astrocytes
+        }
         
         isInhom = (distFuncHelper != nil)
         isStoch = (boundingHelper != nil)
@@ -77,7 +87,7 @@ begintemplate InhomAndStochTarget
     }
     
     func isEqual() {
-        return (compIdx == $1 && mechIdx == $2 && varType == $3 && varIdx == $4 && arrayIndex == $5)
+        return (enumDmPpNc == $1 && compIdx == $2 && mechIdx == $3 && varType == $4 && varIdx == $5 && arrayIndex == $6)
     }
     
     proc updateInhom() {
@@ -143,7 +153,7 @@ begintemplate InhomAndStochTarget
         }
     }
     
-    proc onStep() { local homogenValue, x, value, dist localobj sec_ref
+    proc onStep() { local homogenValue, x, value, dist, isWeightVar localobj sec_ref, syn, synPart
         // !! can I move the code before "for" to "onInit" proc?
         if (isPlayable) {
             return
@@ -159,12 +169,47 @@ begintemplate InhomAndStochTarget
             homogenValue = baseMechStd.get(varName, arrayIndex)
         }
         
-        for eachItemInList(sec_ref, list_ref) {
-            sec_ref.sec for (x, 0) {
+        if (isDmOrSynPart) {
+            for eachItemInList(sec_ref, list_ref) {
+                sec_ref.sec for (x, 0) {
+                    // The base value
+                    if (isInhom) {
+                        dist = distance(x)
+                        value = distFuncHelper.calculateAt(dist)
+                    } else {
+                        value = homogenValue
+                    }
+                    
+                    // The additive noise
+                    if (isStoch) {
+                        value += boundingHelper.generateNextBoundedValue(stochFuncHelper)
+                    }
+                    
+                    // This approach is 20-30% faster than "sprint"-ing a HOC-command
+                    // of type "varName(x) = value" or "varName[arrayIndex](x) = value" and then "execute"-ing it
+                    tempMechStd.in(x)
+                    tempMechStd.set(varName, value, arrayIndex)
+                    tempMechStd.out(x)
+                }
+            }
+        } else {
+            isWeightVar = stringsEqual(varName, "weight")
+            for eachItemInList(syn, smAllSyns) {
+                if (!syn.rpefPp.isAnyEventsOnThisIter) {
+                    continue
+                }
+                
+                if (enumDmPpNc == 1) {
+                    synPart = syn.getPointProcess(comp.enumPpRole)
+                } else if (enumDmPpNc == 2) {
+                    synPart = syn.netCon
+                } else {
+                    codeContractViolation()
+                }
+                
                 // The base value
                 if (isInhom) {
-                    dist = distance(x)
-                    value = distFuncHelper.calculateAt(dist)
+                    value = distFuncHelper.calculateAt(syn.dist)
                 } else {
                     value = homogenValue
                 }
@@ -174,11 +219,20 @@ begintemplate InhomAndStochTarget
                     value += boundingHelper.generateNextBoundedValue(stochFuncHelper)
                 }
                 
-                // This approach is 20-30% faster than "sprint"-ing a HOC-command
-                // of type "varName(x) = value" or "varName[arrayIndex](x) = value" and then "execute"-ing it
-                tempMechStd.in(x)
+                // !!<ss> if synPart is a NetCon, then see the comment for tempMechStd in ctor
+                tempMechStd.in(synPart)
                 tempMechStd.set(varName, value, arrayIndex)
-                tempMechStd.out(x)
+                tempMechStd.out(synPart)
+                
+                if (enumDmPpNc == 2 && isWeightVar) {
+                    syn.rpefNetCon.weight = value
+                    // Here we could also have similar logic to sync the value from "syn.netCon.@release_probability" to "syn.rpefPp.release_probability",
+                    // but it's not needed because the button "Define stoch model" is hidden for "@release_probability"
+                }
+                
+                // !! it would be better to set it back to 0 in MOD code rather than here,
+                //    but I couldn't figure out what type of block in MOD file should contain the assignment operator to execute it in the right time
+                syn.rpefPp.isAnyEventsOnThisIter = 0
             }
         }
     }
@@ -211,7 +265,7 @@ begintemplate InhomAndStochTarget
         }
         isPlayable = (!isInhom && stochFuncCatIdx == 0 && (stochFuncIdx == 0 || stochFuncIdx == 1) && boundingHelper.isUntouched())
         
-        // !! not implemented - see the comment in stopPlayingVars
+        // !!<ss> not implemented - see the comment in stopPlayingVars
         isPlayable = 0
     }
     
