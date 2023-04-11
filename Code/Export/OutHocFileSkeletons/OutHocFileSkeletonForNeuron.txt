@@ -87,10 +87,6 @@ for idx = 0, NumberNanoBranches - 1 {
 soma_ref.o(0).sec distance()
 
 //////////////////// Start of synapses ///////////////////////////////////
-py:getIntegerValueFromTopLevel('SwtichOn')
-py:getDoubleValueFromTopLevel('IntervalSynapticActivity')
-py:getDoubleValueFromTopLevel('weight')
-py:getDoubleValueFromTopLevel('noise')
 py:getIntegerValueFromTopLevel('enumSynLoc')
 
 //////////////////////////////////////////////////////////////////////////

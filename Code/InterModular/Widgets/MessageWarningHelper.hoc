@@ -40,6 +40,9 @@ begintemplate MessageWarningHelper
         numArg = numarg()
         
         if (isIntMode) {
+            if (intMsgLines.count() != 0) {
+                intMsgLines.append(new String("--------------------"))
+            }
             for i = 1, numArg - 1 {
                 intMsgLines.append(new String($si))
             }
@@ -72,6 +75,9 @@ begintemplate MessageWarningHelper
         numArg = numarg()
         
         if (isIntMode) {
+            if (intWarnLines.count() != 0) {
+                intWarnLines.append(new String("--------------------"))
+            }
             for i = 1, numArg {
                 intWarnLines.append(new String($si))
             }
@@ -99,6 +105,7 @@ begintemplate MessageWarningHelper
     // Show "Not implemented" warning box with "OK" button OR intercept all warning lines to show them later
     // Restriction: Cannot be called in the process of construction of a panel (applied if !isIntMode)
     // $s1 (optional) - The first line of the warning
+    // $s2 (optional) - The second line of the warning
     proc showNotImplementedWarning() { local numArg
         strdef line1, line2
         line1 = "Not implemented."
@@ -108,6 +115,8 @@ begintemplate MessageWarningHelper
             showWarningBox(line1, line2)
         } else if (numArg == 1) {
             showWarningBox($s1, line1, line2)
+        } else if (numArg == 2) {
+            showWarningBox($s1, $s2, line1, line2)
         } else {
             codeContractViolation()
         }

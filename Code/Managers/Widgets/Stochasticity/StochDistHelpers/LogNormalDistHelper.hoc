@@ -69,7 +69,7 @@ begintemplate LogNormalDistHelper
         mean = getMean()
         sigmaSq = sigma ^ 2
         variance = (exp(sigmaSq) - 1) * exp(2 * mu + sigmaSq)   // We don't call getStdDev here for higher precision
-        return rng.lognormal(mean, variance)    // !!! cannot achieve mean = 0
+        return rng.lognormal(mean, variance)    // !! cannot achieve mean = 0
     }
     
 endtemplate LogNormalDistHelper

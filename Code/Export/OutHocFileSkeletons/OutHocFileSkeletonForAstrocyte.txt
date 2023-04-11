@@ -52,6 +52,10 @@ py:initGeometry()
 // py!!:insertAllLinesFromFile('Code\\Astrocyte\\DendritesBiophysics.hoc')
 //////////////////// End of dendrites biophysics /////////////////////////
 
+//////////////////// Start of end foot biophysics ////////////////////////
+// py!!:insertAllLinesFromFile('Code\\Astrocyte\\EndFootBiophysics.hoc')
+//////////////////// End of end foot biophysics //////////////////////////
+
 //////////////////// Start of nanogeometry biophysics ////////////////////
 py:getDoubleValueFromTopLevel('GPassive')
 py:getIntegerValueFromTopLevel('currentMechanismSetup')

@@ -1,8 +1,6 @@
 
-// !! would it make sense to create a counterpart for "Tools" -> "RunButton" as well?
-
 // This widget is a counterpart of the standard "RunControl" widget available via "Tools" -> "RunControl" or nrncontrolmenu()
-// with the difference that it applies the stochasticity models defined in our program
+// with the difference that it applies the stoch (and inhom) models defined in our program
 begintemplate AltRunControlWidget
 
     public show, dismissHandler

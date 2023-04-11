@@ -1,1 +1,0 @@
-MODOBJFILES= AMPASyn.o CAl.o Diff3FullNew.o FRAP.o GluTrans.o IPotassium.o Isin.o Kir.o Kir4.o NoiseIClamp.o _PostNetConEventFilter.o cadifus.o distr.o gap.o gapCa.o gapCaSt.o h.o kadist.o kaprox.o kdrca1.o kdrglia.o kpump.o na3n.o naxn.o netstimm.o potassiumd.o

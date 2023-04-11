@@ -1,4 +1,4 @@
 
 { load_file("EnumSynCompIdxs.hoc") }
-{ load_file("ReleaseProbabilityHelper.hoc") }
+{ load_file("SynEventsHelper.hoc") }
 { load_file("FakesForNetCon/LoadsForFakeMechanismForNetCon.hoc") }

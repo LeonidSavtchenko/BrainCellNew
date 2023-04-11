@@ -1,0 +1,54 @@
+
+begintemplate InhomAndStochApplicator
+    
+    public startPlayingVars, stopPlayingVars, onInit, onStep
+    
+    external codeContractViolation
+    external inhomAndStochLibrary
+    
+    
+    iterator eachActiveSpecialVarFromLib() { codeContractViolation() }
+    
+    func startPlayingVars() { local isAllPlayed, isThisPlayed localobj specVar
+        isAllPlayed = 1
+        for eachActiveSpecialVarFromLib(specVar) {
+            isThisPlayed = specVar.setPlayIfPossible()
+            isAllPlayed = isAllPlayed && isThisPlayed
+        }
+        return !isAllPlayed
+    }
+    
+    proc stopPlayingVars() { localobj specVar
+        for eachActiveSpecialVarFromLib(specVar) {
+            specVar.stopPlayingVars()
+        }
+    }
+    
+    proc onInit() { localobj specVar
+        for eachActiveSpecialVarFromLib(specVar) {
+            specVar.onInit()
+        }
+    }
+    
+    proc onStep() { localobj specVar
+        for eachActiveSpecialVarFromLib(specVar) {
+            specVar.onStep()
+        }
+    }
+    
+    // All next staff is private
+    
+    
+    iterator eachActiveSpecialVarFromLib() { local specVarIdx localobj activeSpecVars
+        activeSpecVars = inhomAndStochLibrary.activeSpecVars
+        for specVarIdx = 0, activeSpecVars.count() - 1 {
+            $o1 = activeSpecVars.o(specVarIdx)
+            iterator_statement
+        }
+    }
+    
+endtemplate InhomAndStochApplicator
+
+
+objref inhomAndStochApplicator
+inhomAndStochApplicator = new InhomAndStochApplicator()

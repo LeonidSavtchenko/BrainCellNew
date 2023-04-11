@@ -6,17 +6,19 @@ begintemplate MechManagerCompOpMergeSubWidget
     
     external mmAllComps
     external mwh, mth, mmmowb, mmcoWidget
+    external inhomAndStochLibrary
     external joinStrings, codeContractViolation
     
     objref mainBox
     objref mergeCheckBoxStates
     
-    mechAndNameSrcCompIdx = -1
+    donorCompIdx = -1
+    
     
     proc init() {
         mergeCheckBoxStates = $o1
         
-        mechAndNameSrcCompIdx = -1
+        donorCompIdx = -1
     }
     
     proc show() { local numComps, compIdx, isChecked localobj comp
@@ -35,9 +37,9 @@ begintemplate MechManagerCompOpMergeSubWidget
             for compIdx = 0, numComps - 1 {
                 if (mergeCheckBoxStates.x(compIdx)) {
                     comp = mmAllComps.o(compIdx)
-                    sprint(handlerHocCommand, "mechAndNameSrcCompIdx = %d", compIdx)
-                    if (mechAndNameSrcCompIdx == -1) {
-                        mechAndNameSrcCompIdx = compIdx
+                    sprint(handlerHocCommand, "donorCompIdx = %d", compIdx)
+                    if (donorCompIdx == -1) {
+                        donorCompIdx = compIdx
                         isChecked = 1
                     } else {
                         isChecked = 0
@@ -60,7 +62,7 @@ begintemplate MechManagerCompOpMergeSubWidget
         mainBox.map("Primary legator", 260, 310, -1, -1)
     }
     
-    // Input: this.mechAndNameSrcCompIdx, this.mergeCheckBoxStates
+    // Input: this.donorCompIdx, this.mergeCheckBoxStates
     proc mergeHandler() { local status, numMechs, isStickyMechBorrowed, numComps, srcCompIdx, mechIdx localobj dstComp, srcComp
         strdef stickyMechNames, mechName
         
@@ -69,7 +71,7 @@ begintemplate MechManagerCompOpMergeSubWidget
             return
         }
         
-        dstComp = mmAllComps.o(mechAndNameSrcCompIdx)
+        dstComp = mmAllComps.o(donorCompIdx)
         
         numMechs = mth.getNumMechs(0)
         
@@ -78,7 +80,7 @@ begintemplate MechManagerCompOpMergeSubWidget
         
         numComps = mmAllComps.count()
         for (srcCompIdx = numComps - 1; srcCompIdx > -1; srcCompIdx -= 1) {
-            if (!mergeCheckBoxStates.x(srcCompIdx) || srcCompIdx == mechAndNameSrcCompIdx) {
+            if (!mergeCheckBoxStates.x(srcCompIdx) || srcCompIdx == donorCompIdx) {
                 continue
             }
             
@@ -101,6 +103,8 @@ begintemplate MechManagerCompOpMergeSubWidget
             // Deleting compartment
             mmAllComps.remove(srcCompIdx)
         }
+        
+        inhomAndStochLibrary.onCompMerge(mergeCheckBoxStates, donorCompIdx)
         
         // Applying mechanisms
         // !! we can improve perf here applying changes to the borrowed sections only,

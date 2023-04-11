@@ -57,7 +57,7 @@ proc importHocOrSwcOrZipOrOtherFile() { local numArg localobj file
         sprint(defaultDirPath, "%sGeometry/", getcwd())
         file.chooser("r", "Import base geometry", "*.*", "Load", "Cancel", defaultDirPath)
         if (!file.chooser()) {
-            print "File wasn't selected"
+            // File wasn't selected
             return
         }
         

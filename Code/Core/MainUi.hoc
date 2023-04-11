@@ -92,7 +92,7 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
             if (isBaseOrNanoStart) {
                 xpanel("")
                 // !! xbutton("Import nanogeometry", "loadNanoHocFile()")
-                xbutton("Export nanogeometry", "saveNanoHocFile()")
+                xbutton("Export nanogeometry", "startExportManager()")
                 xpanel()
                 xpanel("")
                 xlabel("=============== Where to Seed the Nanostructures ===============")
@@ -255,6 +255,11 @@ proc showRunPanel() {
     } else {
         xpanel(3,123)
     }
+}
+
+proc startExportManager() {
+    exportManagerWidget.dismissHandler()
+    exportManagerWidget.show()
 }
 
 proc startMechManager() {
