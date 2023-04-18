@@ -35,7 +35,11 @@ proc exportCellToHocFile() { local isEndFootPresent
     mwh.startIntercepting()
     {
         line1 = "We don't export the biophysics of Soma%s"
+<<<<<<< HEAD
         line2 = "as well as the changes made with the biophys manager%s."
+=======
+        line2 = "as well as the changes made with Mech Manager%s."
+>>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
         if (isAstrocyteOrNeuron) {
             isEndFootPresent = 0
             forsec "EndFoot" {
@@ -50,7 +54,11 @@ proc exportCellToHocFile() { local isEndFootPresent
             sprint(line2, line2, "")
         } else {
             sprint(line1, line1, ", Dendrites, Axon and Extracellular Source")
+<<<<<<< HEAD
             sprint(line2, line2, " and the synapse manager")
+=======
+            sprint(line2, line2, " and Syn Manager")
+>>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
         }
         mwh.showNotImplementedWarning(line1, line2)
         // !! also, the distance centre location is hardcoded in the exported file rather than actually exported

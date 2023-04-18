@@ -11,7 +11,11 @@
 begintemplate InhomAndStochLibrary
     
     public isStochEnabledFor, onInhomApply, onStochApply, onMakingVarHomogen, onStochDisable, onNanoReseedOrUpdate
+<<<<<<< HEAD
     public getNumInhomVarsForDistMechs, getNumStochVarsForDistMechs, onMechInsert, onMechUninsert, onCompSplit, onCompMerge
+=======
+    public onMechInsert, onMechUninsert, onCompSplit, onCompMerge
+>>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
     public getNumInhomVarsForSyns, getNumStochVarsForSyns, isAnyStochVarsForSyns, onSynLocChange, onSynStrucChange
     
     public activeSpecVars
@@ -106,7 +110,11 @@ begintemplate InhomAndStochLibrary
         // !! mwh.showNotImplementedWarning()
     }
     
+<<<<<<< HEAD
     // !! uncomment the caller for this method once "restoreInhomogeneity" is implemented in InhomAndStochTarget for biophys mechs
+=======
+    // !! uncomment the caller for this method once "restoreInhomogeneity" is implemented in InhomAndStochTarget for dist mechs
+>>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
     // in: compIdx, mechIdx
     proc onMechInsert() { local compIdx, mechIdx, inactSpecVarIdx localobj newActSpecVars, inactSpecVar, newActSpecVar
         compIdx = $1
@@ -132,6 +140,7 @@ begintemplate InhomAndStochLibrary
         for eachItemInList(newActSpecVar, newActSpecVars) {
             if (newActSpecVar.isInhom) {
                 newActSpecVar.restoreInhomogeneity()    // !! not implemented
+<<<<<<< HEAD
             }
         }
         
@@ -254,6 +263,122 @@ begintemplate InhomAndStochLibrary
                 break
             }
         }
+=======
+            }
+        }
+        
+        // Commit all the changes to the library
+        concatenateTwoLists(activeSpecVars, newActSpecVars)
+    }
+    
+    // !! uncomment the caller for this method
+    // in: compIdx, mechIdx
+    proc onMechUninsert() { local compIdx, mechIdx, actSpecVarIdx localobj actSpecVar
+        compIdx = $1
+        mechIdx = $2
+        
+        // Given compartment and uninserted mechanism, move all inhom and stoch models of its vars to the storage
+        for (actSpecVarIdx = activeSpecVars.count() - 1; actSpecVarIdx >= 0; actSpecVarIdx -= 1) {
+            actSpecVar = activeSpecVars.o(actSpecVarIdx)
+            if (!actSpecVar.isDmOrSynPart) {
+                continue
+            }
+            if (actSpecVar.compIdx != compIdx || actSpecVar.mechIdx != mechIdx) {
+                continue
+            }
+            
+            inactiveSpecVars.append(actSpecVar)
+            activeSpecVars.remove(actSpecVarIdx)
+        }
+    }
+    
+    // !! finish the implementation for this method
+    // in: splitCompIdx
+    proc onCompSplit() { local splitCompIdx
+        splitCompIdx = $1
+        
+        // Correct compIdx everywhere because we've inserted a new comp into mmAllComps
+        correctCompIdxsAfterSplit(activeSpecVars, splitCompIdx)
+        correctCompIdxsAfterSplit(inactiveSpecVars, splitCompIdx)
+        
+        // Copy all inhom and stoch models from src (splitCompIdx) to dst (splitCompIdx + 1) comp in activeSpecVars and inactiveSpecVars
+        // !!
+        
+        // Update list_ref for src and dst in activeSpecVars and inactiveSpecVars
+        // !!
+        
+        // !! mwh.showNotImplementedWarning()
+    }
+    
+    // !! finish the implementation for this method
+    // in: checkBoxStates, mergeCompIdx
+    proc onCompMerge() { local mergeCompIdx, oldNumComps, idx, idx2, delCompIdx localobj checkBoxStates, delCompIdxs, compIdxMapFromOldToNew
+        checkBoxStates = $o1
+        mergeCompIdx = $2
+        
+        oldNumComps = checkBoxStates.size()
+        
+        // Delete inhom and stoch models for all merged comps (both activeSpecVars and inactiveSpecVars)
+        delCompIdxs = new Vector()
+        for idx = 0, oldNumComps - 1 {
+            if (checkBoxStates.x(idx) && idx != mergeCompIdx) {
+                delCompIdxs.append(idx)
+            }
+        }
+        /* !!
+        print "delCompIdxs:"
+        delCompIdxs.printf("%8.4f\n")
+        */
+        deleteSpecVarsForMergedComps(activeSpecVars, delCompIdxs)
+        deleteSpecVarsForMergedComps(inactiveSpecVars, delCompIdxs)
+        
+        // Correct compIdx everywhere because we've removed some comps in mmAllComps
+        compIdxMapFromOldToNew = new Vector(oldNumComps)
+        compIdxMapFromOldToNew.indgen()
+        for idx = 0, delCompIdxs.size() - 1 {
+            delCompIdx = delCompIdxs.x(idx)
+            compIdxMapFromOldToNew.x(delCompIdx) = math.nan
+            for idx2 = delCompIdx + 1, oldNumComps - 1 {
+                compIdxMapFromOldToNew.x(idx2) -= 1
+            }
+        }
+        /* !!
+        print "compIdxMapFromOldToNew:"
+        compIdxMapFromOldToNew.printf("%8.4f\n")
+        */
+        correctCompIdxsAfterMerge(activeSpecVars, compIdxMapFromOldToNew)
+        correctCompIdxsAfterMerge(inactiveSpecVars, compIdxMapFromOldToNew)
+        
+        // Update list_ref for mergeCompIdx in activeSpecVars and inactiveSpecVars
+        // !!
+        
+        // Restore inhomogeneity for mergeCompIdx in activeSpecVars
+        // !!
+        
+        // !! mwh.showNotImplementedWarning()
+    }
+    
+    func getNumInhomVarsForSyns() {
+        return getNumInhomOrStochVarsForSyns(1)
+    }
+    
+    func getNumStochVarsForSyns() {
+        return getNumInhomOrStochVarsForSyns(0)
+    }
+    
+    func isAnyStochVarsForSyns() { local isFound localobj actSpecVar
+        isFound = 0
+        for eachItemInList(actSpecVar, activeSpecVars) {
+            if (actSpecVar.isDmOrSynPart) {
+                continue
+            }
+            if (actSpecVar.isStoch) {
+                // Don't replace with "return 1" because iterators cannot return a value (Segmentation violation)
+                isFound = 1
+                break
+            }
+        }
+>>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
         return isFound
     }
     
@@ -365,6 +490,7 @@ begintemplate InhomAndStochLibrary
     // All next staff is private
     
     
+<<<<<<< HEAD
     // in: isDmOrSynPart, isInhomOrStoch
     func getNumInhomOrStochVars() { local isDmOrSynPart, isInhomOrStoch, numVars localobj actSpecVar
         isDmOrSynPart = $1
@@ -372,6 +498,14 @@ begintemplate InhomAndStochLibrary
         numVars = 0
         for eachItemInList(actSpecVar, activeSpecVars) {
             if (actSpecVar.isDmOrSynPart != isDmOrSynPart) {
+=======
+    // in: isInhomOrStoch
+    func getNumInhomOrStochVarsForSyns() { local isInhomOrStoch, numVars localobj actSpecVar
+        isInhomOrStoch = $1
+        numVars = 0
+        for eachItemInList(actSpecVar, activeSpecVars) {
+            if (actSpecVar.isDmOrSynPart) {
+>>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
                 continue
             }
             if (isInhomOrStoch) {

@@ -1,0 +1,187 @@
+
+begintemplate ExportManagerWidget
+
+    public show, dismissHandler
+    
+    external mwh
+    external saveNanoHocFile, createEmptyPanel, unmapIfNotNil
+    external isAstrocyteOrNeuron
+    
+    objref mainBox, deck1, deck2, deck3, deck4
+    
+    isExportDistMechs = -1
+    isExportDistMechInhoms = -1
+    isExportDistMechStochs = -1
+    isExportSyns = -1
+    isExportSynInhoms = -1
+    isExportSynStochs = -1
+    isCreateInnerFile = -1
+    isExposeModelVars = -1
+    isCreateOuterFile = -1
+    isRecordAndSaveModelVars = -1
+    isMakeSweepForSomeModelVars = -1
+    
+    
+    proc init() {
+        isExportDistMechs = 1
+        isExportDistMechInhoms = 1
+        isExportDistMechStochs = 1
+        isExportSyns = 1
+        isExportSynInhoms = 1
+        isExportSynStochs = 1
+        isCreateInnerFile = 0
+        isExposeModelVars = 0
+        isCreateOuterFile = 0
+        isRecordAndSaveModelVars = 0
+        isMakeSweepForSomeModelVars = 0
+    }
+    
+    proc show() { localobj hBox1, hBox2, hBox3, hBox4
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            xlabel("The minimum exported data include all topology and geometry.")
+            xlabel("Please choose what other data must be exported:")
+            xpanel()
+            hBox1 = new HBox()
+            hBox1.intercept(1)
+            {
+                xpanel("")
+                xcheckbox("All distr. mechs", &isExportDistMechs, "distMechsCheckBoxHandler()")
+                xpanel()
+                deck1 = createInhomStochDeck(&isExportDistMechInhoms, &isExportDistMechStochs, isExportDistMechs)
+            }
+            hBox1.intercept(0)
+            hBox1.map()
+            if (!isAstrocyteOrNeuron) {
+                hBox2 = new HBox()
+                hBox2.intercept(1)
+                {
+                    xpanel("")
+                    xcheckbox("All synapses", &isExportSyns, "synsCheckBoxHandler()")
+                    xpanel()
+                    deck2 = createInhomStochDeck(&isExportSynInhoms, &isExportSynStochs, isExportSyns)
+                }
+                hBox2.intercept(0)
+                hBox2.map()
+            }
+            hBox3 = new HBox()
+            hBox3.intercept(1)
+            {
+                xpanel("")
+                xcheckbox("Create settings file", &isCreateInnerFile, "innerFileCheckBoxHandler()")
+                xpanel()
+                deck3 = new Deck()
+                deck3.intercept(1)
+                {
+                    createEmptyPanel()
+                    xpanel("")
+                    xlabel("By default, the file will contain the following general settings:")
+                    xlabel("    ENABLE_GRAPHICAL_INTERFACE, SHOW_TOPOLOGY, ENABLE_AUTORUN, ENABLE_AUTOEXIT")
+                    xlabel("and general simulation params:")
+                    xlabel("    DT, TSTART, TSTOP")
+                    xcheckbox("Expose some model vars (I will select them)", &isExposeModelVars)
+                    xpanel()
+                }
+                deck3.intercept(0)
+                deck3.flip_to(isCreateInnerFile)
+                deck3.map()
+            }
+            hBox3.intercept(0)
+            hBox3.map()
+            hBox4 = new HBox()
+            hBox4.intercept(1)
+            {
+                xpanel("")
+                xcheckbox("Create management file", &isCreateOuterFile, "outerFileCheckBoxHandler()")
+                xpanel()
+                deck4 = new Deck()
+                deck4.intercept(1)
+                {
+                    createEmptyPanel()
+                    xpanel("")
+                    xcheckbox("Record and save some model vars (I will select the vars and specify file names)", &isRecordAndSaveModelVars)
+                    xcheckbox("Make a sweep for some model vars (I will select the vars and specify grids)", &isMakeSweepForSomeModelVars)
+                    xpanel()
+                }
+                deck4.intercept(0)
+                deck4.flip_to(isCreateOuterFile)
+                deck4.map()
+            }
+            hBox4.intercept(0)
+            hBox4.map()
+            xpanel("")
+            xlabel("")
+            xbutton("Export", "exportHandler()")
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Manager of export", 60, 100, -1, -1)
+    }
+    
+    proc dismissHandler() { 
+        unmapIfNotNil(mainBox)
+    }
+    
+    // All next staff is private
+    
+    
+    obfunc createInhomStochDeck() { local isInhom, isStoch, cardIdx localobj deck
+        isInhom = $&1
+        isStoch = $&2
+        cardIdx = $3
+        
+        deck = new Deck()
+        deck.intercept(1)
+        {
+            createEmptyPanel()
+            xpanel("")
+            xcheckbox("With inhom vars (N detected)", &isInhom) // !! N
+            xcheckbox("With stoch vars (M detected)", &isStoch) // !! M
+            xpanel()
+        }
+        deck.intercept(0)
+        deck.flip_to(cardIdx)
+        deck.map()
+        
+        return deck
+    }
+    
+    proc distMechsCheckBoxHandler() {
+        deck1.flip_to(isExportDistMechs)
+    }
+    
+    proc synsCheckBoxHandler() {
+        deck2.flip_to(isExportSyns)
+    }
+    
+    proc innerFileCheckBoxHandler() {
+        deck3.flip_to(isCreateInnerFile)
+    }
+    
+    proc outerFileCheckBoxHandler() {
+        deck4.flip_to(isCreateOuterFile)
+    }
+    
+    proc exportHandler() { local isCancel
+        /* !!
+        if (isExportDistMechs || isExportSyns || isCreateInnerFile || isCreateOuterFile) {
+            mwh.showNotImplementedWarning()
+            return
+        }
+        */
+        
+        isCancel = saveNanoHocFile()
+        if (isCancel) {
+            return
+        }
+        
+        dismissHandler()
+    }
+    
+endtemplate ExportManagerWidget
+
+objref exportManagerWidget
+exportManagerWidget = new ExportManagerWidget()

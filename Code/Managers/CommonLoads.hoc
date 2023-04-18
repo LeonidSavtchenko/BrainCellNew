@@ -1,6 +1,10 @@
 
 objref msmBaseWidget, mechManagerMainWidget, synManagerMainWidget, varsEditorSubWidget
+<<<<<<< HEAD
 objref mth, mmmowb, mcu, synGroup, spineNeckDiamCache, inhomAndStochLibrary
+=======
+objref mth, mmmowb, mcu, synGroup, smAllComps, spineNeckDiamCache, inhomAndStochLibrary
+>>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
 
 if (isAstrocyteOrNeuron) {
     objref smAllSyns, enumSynCompIdxs, seh

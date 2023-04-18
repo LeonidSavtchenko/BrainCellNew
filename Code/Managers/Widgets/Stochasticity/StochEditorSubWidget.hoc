@@ -5,7 +5,11 @@ begintemplate StochEditorSubWidget
     public boundingHelper, sampleSize
     
     external varsEditorSubWidget, synManagerMainWidget
+<<<<<<< HEAD
     external mwh, math, mth, mmmowb, mcu, compUtils, inhomAndStochLibrary, seh
+=======
+    external mwh, math, mth, mmmowb, mcu, inhomAndStochLibrary, seh
+>>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
     external createEmptyPanel, oneZeroToYesNo, eachPointInGrid, codeContractViolation
     
     objref mainBox, deck1, deck2, deck3, deck4, deck5, deck6, deck7, deck8, deck9, deck10, graph1, graph2, graph3, graph4, graph5, graph6, graph7, this

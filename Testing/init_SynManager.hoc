@@ -17,8 +17,18 @@ objref stochTestGraph
 stochTestGraph = new Graph()
 // !! "Graph.addvar" doesn't work for NetCon vars, e.g. "smAllSyns.o(123).netCon.weight" (no idea why);
 //    to watch a NetCon var, have to select it manually (click in the corner of the Graph, then "Plot what?")
+<<<<<<< HEAD
 { stochTestGraph.addvar("smAllSyns.o(123).trgPp.tau2") }
 { stochTestGraph.size(0, tstop, 0, 30) }
+=======
+<<<<<<< HEAD
+{ stochTestGraph.addvar("smAllSyns.o(123).trgPp.tau2") }
+{ stochTestGraph.size(0, tstop, 0, 30) }
+=======
+{ stochTestGraph.addvar("smAllSyns.o(123).target.tau1") }
+{ stochTestGraph.size(0, tstop, 0.099, 0.101) }
+>>>>>>> 4270058af141697764467fe2a7da6582b32501b5
+>>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
 { graphList[0].append(stochTestGraph) }
 
 { load_file("../Code/InterModular/AllInterModularUtils.hoc") }

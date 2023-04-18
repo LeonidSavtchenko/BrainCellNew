@@ -4,7 +4,11 @@ begintemplate InhomEditorSubWidget
     public show, updateCurves, dismissHandler
     
     external varsEditorSubWidget, synManagerMainWidget
+<<<<<<< HEAD
     external mwh, math, mth, mmmowb, mcu, compUtils, inhomAndStochLibrary, synGroup, seh
+=======
+    external mwh, math, mth, mmmowb, mcu, inhomAndStochLibrary, synGroup, seh
+>>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
     external getDistMechVarRangeOutside, getDistMechVarRangeInside, createEmptyPanel, createElasticSpacer, oneZeroToYesNo, codeContractViolation
     external eachPointInGrid
     

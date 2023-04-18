@@ -5,7 +5,11 @@ begintemplate InhomAndStochTarget
     public isDmOrSynPart, compIdx, mechIdx, mechName, isInhom, isStoch
     
     external smAllSyns
+<<<<<<< HEAD
     external mwh, rngUtils, mth, compUtils
+=======
+    external mwh, rngUtils, mth, mcu
+>>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
     external stringsEqual, codeContractViolation
     external eachItemInList
     
@@ -241,6 +245,13 @@ begintemplate InhomAndStochTarget
                     // but it's not needed because the button "Define stoch model" is hidden for "@release_probability"
                 }
                 
+<<<<<<< HEAD
+=======
+                // !! it would be better to set it back to 0 in MOD code rather than here,
+                //    but I couldn't figure out what type of block in MOD file should contain the assignment operator to execute it in the right time
+                syn.sefwPp.isAnyEventsOnThisIter = 0
+                
+>>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
                 prevSec_ref = syn.sec_ref
             }
         }
@@ -252,7 +263,11 @@ begintemplate InhomAndStochTarget
             codeContractViolation()
         }
         
+<<<<<<< HEAD
         comp = compUtils.getComp(isDmOrSynPart, compIdx)
+=======
+        comp = mcu.getComp(isDmOrSynPart, compIdx)
+>>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
         if (isDmOrSynPart) {
             // !!
             mwh.showNotImplementedWarning()

@@ -94,7 +94,12 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
             if (isBaseOrNanoStart) {
                 /* !!
                 xpanel("")
+<<<<<<< HEAD
                 xbutton("Import cell", "loadNanoHocFile()")
+=======
+                // !! xbutton("Import nanogeometry", "loadNanoHocFile()")
+                xbutton("Export nanogeometry", "startExportManager()")
+>>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
                 xpanel()
                 */
                 xpanel("")
@@ -262,8 +267,13 @@ proc showRunPanel() {
 }
 
 proc startExportManager() {
+<<<<<<< HEAD
     exportManagerMainWidget.dismissHandler()
     exportManagerMainWidget.show()
+=======
+    exportManagerWidget.dismissHandler()
+    exportManagerWidget.show()
+>>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
 }
 
 proc startMechManager() {
