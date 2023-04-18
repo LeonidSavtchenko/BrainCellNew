@@ -4,7 +4,7 @@ begintemplate FakeMechanismStandardForNetCon
     public count, name, get, set, in, out
     
     external pyObj
-    external mth, mcu, seh
+    external mth, mcu, rph
     external utils4FakeMech4NC
     external codeContractViolation
     
@@ -13,7 +13,7 @@ begintemplate FakeMechanismStandardForNetCon
     
     proc init() {
         strdef pyCommand
-        sprint(pyCommand, "{'threshold': 10.0, 'delay': 1.0, 'weight': 0.0, '%s': 1.0}", seh.metaVarName)
+        sprint(pyCommand, "{'threshold': 10.0, 'delay': 1.0, 'weight': 0.0, '%s': 1.0}", rph.metaVarName)
         // These default values are consistent with a newly created NetCon
         pyValuesDict = pyObj.ev(pyCommand)
         // !! think about encapsulating "release_probability" into a new (non-standard) varType, e.g. varType == 4 named "Meta"

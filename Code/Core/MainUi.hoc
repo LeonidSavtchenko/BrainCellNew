@@ -17,8 +17,6 @@ if (!isAstrocyteOrNeuron) {
     { load_file("../Managers/SynManager/SynManager.hoc") }
 }
 
-{ load_file("../Export/Widgets/ExportWidgetsLoads.hoc") }
-
 
 // UI
 objref hBoxMainPanel
@@ -92,16 +90,10 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
         vBoxLeftPanel.intercept(1)
         {
             if (isBaseOrNanoStart) {
-                /* !!
                 xpanel("")
-<<<<<<< HEAD
-                xbutton("Import cell", "loadNanoHocFile()")
-=======
                 // !! xbutton("Import nanogeometry", "loadNanoHocFile()")
-                xbutton("Export nanogeometry", "startExportManager()")
->>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
+                xbutton("Export nanogeometry", "saveNanoHocFile()")
                 xpanel()
-                */
                 xpanel("")
                 xlabel("=============== Where to Seed the Nanostructures ===============")
                 xradiobutton("All dendrites", "isAllOrSomeDendritesSeeded = 1", isAllOrSomeDendritesSeeded == 1)
@@ -196,11 +188,10 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
         vBoxRightPanel.intercept(1)
         {
             xpanel("")
-            xbutton("Edit biophysics", "startMechManager()")
+            xbutton("Manage distr. mechs", "startMechManager()")
             if (!isAstrocyteOrNeuron) {
-                xbutton("Edit synapses", "startSynManager()")
+                xbutton("Manage synapses", "startSynManager()")
             }
-            xbutton("Export cell", "startExportManager()")
             xpanel()
             xpanel("Various scenarios for calculating astrocyte dynamics")
             xlabel("====================== Simulations ======================")
@@ -264,16 +255,6 @@ proc showRunPanel() {
     } else {
         xpanel(3,123)
     }
-}
-
-proc startExportManager() {
-<<<<<<< HEAD
-    exportManagerMainWidget.dismissHandler()
-    exportManagerMainWidget.show()
-=======
-    exportManagerWidget.dismissHandler()
-    exportManagerWidget.show()
->>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
 }
 
 proc startMechManager() {

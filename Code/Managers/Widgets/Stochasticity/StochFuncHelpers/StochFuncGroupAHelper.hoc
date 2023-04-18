@@ -63,7 +63,7 @@ begintemplate StochFuncGroupAHelper
         mainBox.map("Stoch model params", 210, 525, -1, -1)
         
         if (modelIdx > 1) {
-            mwh.showWarningBox("This is an asymmetric distribution.", "That means, adding such a noise to a variable will shift its mean value (defined elsewhere).")
+            mwh.showWarningBox("This is an asymmetric distribution.", "That means, adding such a noise to a mech variable will shift its mean value (defined elsewhere).")
         }
         
         return 0

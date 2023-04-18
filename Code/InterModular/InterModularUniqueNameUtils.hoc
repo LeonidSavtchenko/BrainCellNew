@@ -29,7 +29,7 @@ func _stringInputDialog() { local isAccepted
 // $s1 - The compartment name ("soma" or "axon") being also the first guess for unique name
 // $s2 (out) - The chosen unique and valid name
 // Returns: 0/1 flag indicating Accept/Cancel respectively
-func chooseUniqueAndValidNameForNewCompartmentForImport() { local isFound, type, isCancel
+func chooseUniqueAndValidNameForNewCompartmentForImport() { local isFound, type, isCancelOrAccept
     strdef compName, chosenName, hint
     
     compName = $s1
@@ -59,8 +59,8 @@ func chooseUniqueAndValidNameForNewCompartmentForImport() { local isFound, type,
         }
         
         sprint(hint, "Cannot create %s with name \"%s\" because the name is either in use, reserved or invalid. Please choose some other name:", compName, chosenName)
-        isCancel = _stringInputDialog(hint, chosenName)
-        if (isCancel) {
+        isCancelOrAccept = _stringInputDialog(hint, chosenName)
+        if (isCancelOrAccept) {
             return 1
         }
     }
@@ -75,7 +75,7 @@ func chooseUniqueAndValidNameForNewCompartmentForImport() { local isFound, type,
 // $s2 (out) - The chosen unique name
 // Other input: mmAllComps (taken from the top level)
 // Returns: 0/1 flag indicating Accept/Cancel respectively
-func chooseUniqueNameForCompartmentForMechManager() { local isFirstOrSecondHint, isCancel, isFound localobj comp
+func chooseUniqueNameForCompartmentForMechManager() { local isFirstOrSecondHint, isCancelOrAccept, isFound localobj comp
     strdef baseCompName, chosenName, hint
     
     baseCompName = $s1
@@ -89,8 +89,8 @@ func chooseUniqueNameForCompartmentForMechManager() { local isFirstOrSecondHint,
         } else {
             hint = "This name is already assigned to some compartment. Please choose a unique name:"
         }
-        isCancel = _stringInputDialog(hint, chosenName)
-        if (isCancel) {
+        isCancelOrAccept = _stringInputDialog(hint, chosenName)
+        if (isCancelOrAccept) {
             return 1
         }
         
@@ -117,24 +117,6 @@ func chooseUniqueNameForCompartmentForMechManager() { local isFirstOrSecondHint,
     }
     
     $s2 = chosenName
-    
-    return 0
-}
-
-func enterVarExpression() { local isCancel
-    strdef var, hint
-    
-    var = $s1
-    
-    hint = "Please enter a HOC expression to access a variable:"
-    isCancel = _stringInputDialog(hint, var)
-    if (isCancel) {
-        return 1
-    }
-    
-    // !! make sure the var is not empty and not present in the list
-    
-    $s1 = var
     
     return 0
 }

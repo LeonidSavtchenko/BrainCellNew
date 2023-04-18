@@ -1,12 +1,12 @@
 
 begintemplate EnumSynCompIdxs
     
-    public srcPp, netCon, trgPp, sngPp
+    public source, netCon, target, single
     
-    srcPp = -1
+    source = -1
     netCon = -1
-    trgPp = -1
-    sngPp = -1
+    target = -1
+    single = -1
     
 endtemplate EnumSynCompIdxs
 

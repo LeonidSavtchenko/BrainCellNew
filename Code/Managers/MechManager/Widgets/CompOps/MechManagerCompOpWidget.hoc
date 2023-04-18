@@ -7,7 +7,6 @@ begintemplate MechManagerCompOpWidget
     external mmAllComps
     external mwh, mmmowb
     external chooseUniqueNameForCompartmentForMechManager, dismissIfNotNil, unmapIfNotNil
-    external inhomAndStochLibrary
     
     objref mainBox
     objref parentWidget, cssSubWidget, mmcomSubWidget
@@ -160,8 +159,6 @@ begintemplate MechManagerCompOpWidget
         
         newComp = comp.split(selected_ref, newCompName)
         mmAllComps.insrt(splitCompIdx + 1, newComp)
-        
-        inhomAndStochLibrary.onCompSplit(splitCompIdx)
         
         updateWidgetsAfterOp()
         

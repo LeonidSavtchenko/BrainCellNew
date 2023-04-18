@@ -7,7 +7,7 @@
 
 begintemplate RNGUtils
 
-    public getFor_diameters, getFor_calcium, getFor_frapCircle, getFor_diamAndLen, getFor_branchSeeder, getFor_spineRadius, getFor_neckLen, getFor_neckDiam, getFor_synLoc, getFor_stochFunc_withUniqueSeed, getFor_stretch_withCustomSeed, getSeedFor_SEFW
+    public getFor_diameters, getFor_calcium, getFor_frapCircle, getFor_diamAndLen, getFor_branchSeeder, getFor_spineRadius, getFor_neckLen, getFor_neckDiam, getFor_synLoc, getFor_stochFunc_withUniqueSeed, getFor_stretch_withCustomSeed, getSeedFor_RPH
     
     uniqueSeedForHoc = -1
     uniqueSeedForMod = -1
@@ -76,7 +76,7 @@ begintemplate RNGUtils
         return new Random($1)
     }
     
-    func getSeedFor_SEFW() { local seed
+    func getSeedFor_RPH() { local seed
         seed = uniqueSeedForMod
         uniqueSeedForMod += 1
         return seed

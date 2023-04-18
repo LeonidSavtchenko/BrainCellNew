@@ -1,5 +1,0 @@
-
-{ load_file("AddOneVarWidget.hoc") }
-{ load_file("DefineVarGridWidget.hoc") }
-{ load_file("CreateListOfVarsWidget.hoc") }
-{ load_file("ExportManagerMainWidget.hoc") }

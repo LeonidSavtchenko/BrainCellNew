@@ -7,11 +7,7 @@ begintemplate VarsEditorWidget
     public show, onApplyInInhomEditor, onApplyOrDisableInStochEditor, dismissHandler
     public compIdx
     
-<<<<<<< HEAD
-    external mwh, math, mth, mcu, compUtils, sbh4ve, inhomAndStochLibrary, seh
-=======
-    external mwh, math, mth, mcu, sbh4ve, inhomAndStochLibrary, seh
->>>>>>> 079650c00928b3fba5c5e710974d74a050fd1bca
+    external mwh, math, mth, mcu, sbh4ve, inhomAndStochLibrary, rph
     external createElasticSpacer, createEmptyPanel, dismissIfNotNil, codeContractViolation
     
     objref mainBox
@@ -45,7 +41,7 @@ begintemplate VarsEditorWidget
         mth.getMechName(enumDmPpNc, mechIdx, mechName)
         
         isMechOrSynEditor = (enumDmPpNc == 0)
-        comp = compUtils.getComp(isMechOrSynEditor, compIdx)
+        comp = mcu.getComp(isMechOrSynEditor, compIdx)
         
         varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
         
@@ -160,27 +156,14 @@ begintemplate VarsEditorWidget
         mainBox.map("Edit variables", 435, 100, -1, -1)
     }
     
-    proc onApplyInInhomEditor() { local varIdx, arrayIndex, isInhom localobj vec
-        strdef varName
-        
+    proc onApplyInInhomEditor() { local varIdx, arrayIndex, isInhom
         varIdx = $1
         arrayIndex = $2
         isInhom = $3
-        
-        vec = isMechVarInhom.o(varIdx)
-        if (isInhom && vec.x(arrayIndex)) {
-            return
-        }
-        
-        mechStd.name(varName, varIdx)
-        buffer.o(varIdx).x(arrayIndex) = mechStd.get(varName, arrayIndex)
-        if (!isInhom && !vec.x(arrayIndex)) {
-            return
-        }
-        
-        vec.x(arrayIndex) = isInhom
-        mainBox.unmap()     // !! annoying blinking
-        show()              //
+        isMechVarInhom.o(varIdx).x(arrayIndex) = isInhom
+        mechStdToBuffer()
+        mainBox.unmap()
+        show()
     }
     
     proc onApplyOrDisableInStochEditor() { local varIdx, arrayIndex, isStoch
@@ -219,7 +202,7 @@ begintemplate VarsEditorWidget
             isMechVarInhom.o(varIdx).x(arrayIndex) = 0
             
             mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName)
-            seh.ifMetaVarThenUpdateStatus(varName, value)
+            rph.ifMetaVarThenEnableOrDisable(varName, value)
         }
         
         comp.markMechDirty(mechIdx)

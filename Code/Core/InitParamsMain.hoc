@@ -15,7 +15,7 @@ proc initParamsMain() {
      insertGapJunc()
      CaGapFlux(jd, SwitchOffGapJunction)
     //***************************************************************************************
-    // !! InsertElectricMechanisms(1)   // !! it must be called here rather than just below
+    // !! InsertElectricMechanisms(1)   // !!!!!! the next my step
     if (isAstrocyteOrNeuron) {
         nanoBranchesManager.reseedBranches(nanoDistrLoaded, nanoDistrLoaded)    // !!
     }

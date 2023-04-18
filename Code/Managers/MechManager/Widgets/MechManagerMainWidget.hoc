@@ -36,7 +36,7 @@ begintemplate MechManagerMainWidget
                     xlabel("Compartment* operations:")
                     xradiobutton("Split 1 comp into 2", "compOpChangedHandler(0)", compOpIdx == 0)
                     xradiobutton("Merge 2+ comps into 1", "compOpChangedHandler(1)", compOpIdx == 1)
-                    xradiobutton("Rename a comp", "compOpChangedHandler(2)", compOpIdx == 2)
+                    xradiobutton("Rename comp", "compOpChangedHandler(2)", compOpIdx == 2)
                     xbutton("Select", "compOpSelectHandler()")
                     xpanel()
                 }
@@ -62,17 +62,16 @@ begintemplate MechManagerMainWidget
             hBox.intercept(0)
             hBox.map()
             xpanel("")
-            xbutton("Rescan**", "rescanHandler()")
+            xlabel("* In this context, \"compartment\" means a group of sections")
+            xlabel("  having the same mechanisms (distance function and stochastic model)")
             xpanel()
             xpanel("")
-            xlabel("* Here \"compartment\" is just a group of sects sharing the same biophys model;")
-            xlabel("** Click \"Rescan\" after changing any mech vars outside this biophys manager,")
-            xlabel("   e.g. after usage of Tools -> Distributed Mechs -> Managers -> Homogen Spec")
+            xbutton("Rescan (I have changed sections/biophysics outside Mech Manager)", "rescanHandler()")
             xpanel()
         }
         mainBox.intercept(0)
         mainBox.dismiss_action("dismissHandler()")
-        mainBox.map("Manager of biophysics", 60, 100, -1, -1)
+        mainBox.map("Manager of distributed mechanisms", 60, 100, -1, -1)
     }
     
     proc rescanHandler() {

@@ -13,7 +13,6 @@ begintemplate MechOrSynManagerBaseWidget
     external mechManagerMainWidget, synManagerMainWidget
     external mmAllComps, smAllSyns, synGroup
     external mwh, spineNeckDiamCache
-    external inhomAndStochLibrary
     external dismissIfNotNil
     external isScheduledRescanningOfDistMechs, isScheduledCachingOfSpineNeckDiams
     
@@ -33,9 +32,9 @@ begintemplate MechOrSynManagerBaseWidget
         {
             xpanel("")
             if (isMechOrSyn) {
-                xbutton("Show biophys manager", "showMechManagerHandler()")
+                xbutton("Show Mech Manager", "showMechManagerHandler()")
             } else {
-                xbutton("Show synapse manager", "showSynManagerHandler()")
+                xbutton("Show Syn Manager", "showSynManagerHandler()")
             }
             xbutton("Show Alt Run Control", "showAltRunControlHandler()")
             xpanel()
@@ -49,7 +48,7 @@ begintemplate MechOrSynManagerBaseWidget
         dismissIfNotNil(mechManagerMainWidget)
         
         if (mmAllComps.count() == 0) {
-            mwh.showWarningBox("Cannot open the biophys manager because there are no compartments.")
+            mwh.showWarningBox("Cannot open the manager of distributed mechanisms because there are no compartments.")
             return
         }
         
@@ -67,7 +66,7 @@ begintemplate MechOrSynManagerBaseWidget
         dismissIfNotNil(synManagerMainWidget)
         
         if (smAllSyns.count() == 0) {
-            mwh.showWarningBox("Cannot open the synapse manager because there are no synapses.")
+            mwh.showWarningBox("Cannot open the manager of synapses because there are no synapses.")
             return
         }
         
@@ -99,18 +98,17 @@ begintemplate MechOrSynManagerBaseWidget
         mwh.startIntercepting()
         {
             if (mechManagerMainWidget != nil) {
-                mwh.showNotImplementedWarning("Cannot preserve the comps, mechs and vars defined with the biophys manager.")
+                mwh.showNotImplementedWarning("Cannot preserve the comps, mechs and vars defined with Mech Manager.")
                 // !! BUG: the values shown in VarsEditorWidget become inconsistent with the actual sections;
                 //         need schedule the call of proc analyzeSectsAndCreateComps() to reset vars in mechStds
             }
             if (synManagerMainWidget != nil) {
-                mwh.showNotImplementedWarning("Cannot preserve the syn loc, struc, PPs and vars defined with the synapse manager.")
+                mwh.showNotImplementedWarning("Cannot preserve the syn loc, struc, PPs and vars defined with Syn Manager.")
                 // !! BUG: the values shown in VarsEditorWidget become inconsistent with the actual synapses;
                 //         need schedule the call of proc createSynComps() to reset vars in mechStds
             }
         }
         mwh.endIntercepting()
-        inhomAndStochLibrary.onNanoReseedOrUpdate()
         dismissManagers()
         isScheduledRescanningOfDistMechs = 1    // !! for higher performance, it would be better to rescan only nanogeometry
         isScheduledCachingOfSpineNeckDiams = 1
