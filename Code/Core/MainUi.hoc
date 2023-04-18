@@ -17,6 +17,8 @@ if (!isAstrocyteOrNeuron) {
     { load_file("../Managers/SynManager/SynManager.hoc") }
 }
 
+{ load_file("../Export/Widgets/ExportWidgetsLoads.hoc") }
+
 
 // UI
 objref hBoxMainPanel
@@ -90,10 +92,11 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
         vBoxLeftPanel.intercept(1)
         {
             if (isBaseOrNanoStart) {
+                /* !!
                 xpanel("")
-                // !! xbutton("Import nanogeometry", "loadNanoHocFile()")
-                xbutton("Export nanogeometry", "saveNanoHocFile()")
+                xbutton("Import cell", "loadNanoHocFile()")
                 xpanel()
+                */
                 xpanel("")
                 xlabel("=============== Where to Seed the Nanostructures ===============")
                 xradiobutton("All dendrites", "isAllOrSomeDendritesSeeded = 1", isAllOrSomeDendritesSeeded == 1)
@@ -188,10 +191,11 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
         vBoxRightPanel.intercept(1)
         {
             xpanel("")
-            xbutton("Manage distr. mechs", "startMechManager()")
+            xbutton("Edit biophysics", "startMechManager()")
             if (!isAstrocyteOrNeuron) {
-                xbutton("Manage synapses", "startSynManager()")
+                xbutton("Edit synapses", "startSynManager()")
             }
+            xbutton("Export cell", "startExportManager()")
             xpanel()
             xpanel("Various scenarios for calculating astrocyte dynamics")
             xlabel("====================== Simulations ======================")
@@ -255,6 +259,11 @@ proc showRunPanel() {
     } else {
         xpanel(3,123)
     }
+}
+
+proc startExportManager() {
+    exportManagerMainWidget.dismissHandler()
+    exportManagerMainWidget.show()
 }
 
 proc startMechManager() {

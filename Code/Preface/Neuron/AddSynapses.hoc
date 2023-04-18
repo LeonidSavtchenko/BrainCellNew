@@ -1,14 +1,7 @@
 
-// DelayInter = 1       // This was not used
-SwtichOn = 1000
-IntervalSynapticActivity = 100
-// SynapticWait = 1     // This was not used
-weight = 0.0002
-noise = 1
-
 // Synapse location:
 // 0: "Spine Head", 1: "Dendrite (just under Spine Neck)", 2: "Random"
-enumSynLoc = 0
+enumSynLoc = 0  // !!
 
 
 { load_file("Exported/AddSynapses_Exported.hoc") }

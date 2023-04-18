@@ -1,22 +1,12 @@
 
 begintemplate ManagersCommonUtils
 
-    public getComp, defineDistFuncHandler, defineStochFuncHandler, createApplyReminder, createEditorSubWidgetDigest, copyAllVarsValuesExceptInhom, updateIsMechVarTypeInhom, isMetaVar
+    public defineDistFuncHandler, defineStochFuncHandler, createApplyReminder, createEditorSubWidgetDigest, copyAllVarsValuesExceptInhom, updateIsMechVarTypeInhom, isMetaVar
     
     external mmAllComps, smAllComps
-    external mwh, math, mth
+    external mwh, math, mth, compUtils
     external stringStartsWith
     
-    
-    obfunc getComp() { local isMechOrSynEditor, compIdx
-        isMechOrSynEditor = $1
-        compIdx = $2
-        if (isMechOrSynEditor) {
-            return mmAllComps.o(compIdx)
-        } else {
-            return smAllComps.o(compIdx)
-        }
-    }
     
     obfunc defineDistFuncHandler() { local enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, isMechOrSynEditor, isDisconnected, xMin, xMax localobj comp, nil, defineDistFuncSubWidget
         enumDmPpNc = $1
@@ -27,7 +17,7 @@ begintemplate ManagersCommonUtils
         arrayIndex = $6
         
         isMechOrSynEditor = (enumDmPpNc == 0)
-        comp = getComp(isMechOrSynEditor, compIdx)
+        comp = compUtils.getComp(isMechOrSynEditor, compIdx)
         
         isDisconnected = comp.getDistRange(&xMin, &xMax)
         if (isDisconnected) {

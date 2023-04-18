@@ -63,7 +63,7 @@ begintemplate NegExpDistHelper
         rng = $o1
         
         mean = getMean()
-        return rng.negexp(mean)     // !!! cannot achieve mean = 0
+        return rng.negexp(mean)     // !! cannot achieve mean = 0
     }
     
 endtemplate NegExpDistHelper

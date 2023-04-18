@@ -4,11 +4,12 @@ begintemplate InhomEditorSubWidget
     public show, updateCurves, dismissHandler
     
     external varsEditorSubWidget, synManagerMainWidget
-    external mwh, math, mth, mmmowb, mcu, inhomAndStochLibrary, synGroup, rph
+    external mwh, math, mth, mmmowb, mcu, compUtils, inhomAndStochLibrary, synGroup, seh
     external getDistMechVarRangeOutside, getDistMechVarRangeInside, createEmptyPanel, createElasticSpacer, oneZeroToYesNo, codeContractViolation
     external eachPointInGrid
     
     objref mainBox, deck1, deck2, deck3, deck4, deck5, graph1, graph2, shape1, shape2, this
+    strdef isInhomVarLabel
     
     objref distFuncHelpers[16]
     
@@ -39,6 +40,8 @@ begintemplate InhomEditorSubWidget
     arrayIndex = -1
     strdef varNameWithIndex
     
+    isCalledFromVarsEditor = -1
+    
     xMin = -1
     xMax = -1
     yMinOut = -1
@@ -48,7 +51,7 @@ begintemplate InhomEditorSubWidget
     isCancel = -1
     
     
-    proc init() { local isAlreadyInhom, inf
+    proc init() { local inf, isInhom
     
         enumDmPpNc = $1
         compIdx = $2
@@ -61,13 +64,17 @@ begintemplate InhomEditorSubWidget
         
         isMechOrSynEditor = (enumDmPpNc == 0)
         
-        comp = mcu.getComp(isMechOrSynEditor, compIdx)
+        comp = compUtils.getComp(isMechOrSynEditor, compIdx)
         mth.getMechName(enumDmPpNc, mechIdx, mechName)
+        varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
         arraySize = mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName)
         mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
         
-        varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
-        isAlreadyInhom = comp.isMechVarInhom(mechIdx, varTypeIdx, varName, arrayIndex)
+        if (isMechOrSynEditor) {
+            isCalledFromVarsEditor = (mmmowb.lastMechOpIdx == 1)
+        } else {
+            isCalledFromVarsEditor = 1
+        }
         
         if (isMechOrSynEditor) {
             inf = math.inf
@@ -91,9 +98,12 @@ begintemplate InhomEditorSubWidget
         distFuncCatIdx = 0
         zebraDistFuncCatIdx = 4
         
-        if (!isAlreadyInhom) {
+        isInhom = comp.isMechVarInhom(mechIdx, varTypeIdx, varName, arrayIndex)
+        
+        if (!isInhom) {
             showCurveOrColormapIdx = 0
         } else {
+            // !! need to restore the old UI state: distFuncCatIdx, distFuncIdx, params in dist func etc. (maybe segmentationHelper.*)
             showCurveOrColormapIdx = 1
         }
         showAllOrThisCompIdx = 0
@@ -116,12 +126,13 @@ begintemplate InhomEditorSubWidget
         distFuncHelpers[15] = new DistFuncGroupGHelper(1, this)
     }
     
-    proc show() { local isStoch localobj secList, hBox1, vBox1, hBox2, vBox2, vBox3, hBox3, vBox4, hBox4
-        strdef compName, varNameWithIndexAndUnits, text, yesNo, what
+    proc show() { local isInhom, isStoch localobj secList, hBox1, hBox2, hBox3, hBox4, hBox5, vBox1, vBox2, vBox3, vBox4
+        strdef compName, varNameWithIndexAndUnits, text, yesNo, what, when
         
         compName = comp.name
         mth.getVarTypeName(varType, varTypeName)
         mth.getVarNameWithIndexAndUnits(enumDmPpNc, mechIdx, varName, arraySize, arrayIndex, varNameWithIndexAndUnits)
+        isInhom = comp.isMechVarInhom(mechIdx, varTypeIdx, varName, arrayIndex)
         isStoch = inhomAndStochLibrary.isStochEnabledFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
         secList = comp.getSecList()
         
@@ -136,6 +147,8 @@ begintemplate InhomEditorSubWidget
             {
                 xpanel("")
                 mcu.createEditorSubWidgetDigest(enumDmPpNc, compName, mechName, varTypeName, varNameWithIndexAndUnits)
+                updateIsInhomVarLabel(isInhom)
+                xvarlabel(isInhomVarLabel)
                 oneZeroToYesNo(isStoch, yesNo)
                 sprint(text, "Stochastic: %s", yesNo)
                 xlabel(text)
@@ -371,9 +384,24 @@ begintemplate InhomEditorSubWidget
             }
             vBox3.intercept(0)
             vBox3.map()
-            xpanel("")
-            xbutton("Apply", "applyHandler()")
-            xpanel()
+            hBox5 = new HBox()
+            hBox5.intercept(1)
+            {
+                xpanel("")
+                xbutton("Apply", "applyHandler()")
+                xpanel()
+                xpanel("")
+                if (!isStoch && varType == 1) { // PARAMETER
+                    when = "CLICK"
+                } else {                        // PARAMETER, ASSIGNED, STATE
+                    when = "ITERATION"
+                }
+                sprint(text, "Applied on each: %s", when)
+                xlabel(text)
+                xpanel()
+            }
+            hBox5.intercept(0)
+            hBox5.map()
         }
         mainBox.intercept(0)
         mainBox.dismiss_action("dismissHandler()")
@@ -414,6 +442,13 @@ begintemplate InhomEditorSubWidget
     
     // All next staff is private
     
+    
+    proc updateIsInhomVarLabel() { local isInhom
+        strdef yesNo
+        isInhom = $1
+        oneZeroToYesNo(isInhom, yesNo)
+        sprint(isInhomVarLabel, "Inhomogeneous: %s", yesNo)
+    }
     
     proc initShape() { localobj shape
         shape = $o1
@@ -700,9 +735,8 @@ begintemplate InhomEditorSubWidget
         distFuncChangedHandler(distFuncIdx)
     }
     
-    proc applyHandler() { local isOK, yMin, yMax, isInhom, varValue, mechOpIdx, isCalledFromVarsEditor localobj distFuncHelper, secList
-        strdef line1, title, line2, line3
-        
+    proc applyHandler() { local isOK, yMin, yMax, isInhom, varValue localobj distFuncHelper, secList
+    
         if (isCancel) {
             mwh.showWarningBox("Please set the distance function first.")
             return
@@ -731,7 +765,7 @@ begintemplate InhomEditorSubWidget
             }
             
             // It would be more correct to pass "yMin" (from stats curve, calculated just below) instead of "yMinModel" (from model curve, calculated earlier)
-            rph.ifMetaVarThenEnableOrDisable(varName, yMinModel)
+            seh.ifMetaVarThenUpdateStatus(varName, yMinModel)
             synManagerMainWidget.applyChangesToSynStrucIfNeeded()
             
             comp.applyInhomogeneity(mechName, varType, varName, arraySize, arrayIndex, distFuncHelper)
@@ -752,7 +786,7 @@ begintemplate InhomEditorSubWidget
             varValue = yMin
         }
         if (!isMechOrSynEditor && mcu.isMetaVar(varName)) {
-            if (!rph.isEnabled) {   // Don't combine into one IF because "rph" can be nil
+            if (!seh.isSefwEnabled()) { // Don't combine into one IF because "seh" can be nil
                 isInhom = 0
                 varValue = 1
             }
@@ -761,24 +795,35 @@ begintemplate InhomEditorSubWidget
         comp.mechStds[mechIdx][varTypeIdx].set(varName, varValue, arrayIndex)
         comp.updateIsMechVarTypeInhom()
         
-        if (isMechOrSynEditor) {
-            mechOpIdx = mmmowb.lastMechOpIdx
-            isCalledFromVarsEditor = (mechOpIdx == 1)
-            if (mechOpIdx == 2 && !isInhom) {
-                // !! need to unmap and show the parent widget again to hide the button
-            }
-        } else {
-            isCalledFromVarsEditor = 1
+        if (!isInhom) {
+            inhomAndStochLibrary.onMakingVarHomogen(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
         }
+        
+        updateThisAndParentWidgets(isInhom)
+        
+        showInhomStatusMsg()
+    }
+    
+    proc updateThisAndParentWidgets() { local isInhom
+        isInhom = $1
+        
+        updateIsInhomVarLabel(isInhom)
         
         if (isCalledFromVarsEditor) {
             varsEditorSubWidget.onApplyInInhomEditor(varIdx, arrayIndex, isInhom)
         }
         
-        if (!isMechOrSynEditor) {
+        if (isMechOrSynEditor) {
+            if (mmmowb.lastMechOpIdx == 2 && !isInhom) {
+                // !! need to unmap and show MechOpWidgetBase again to hide the button
+            }
+        } else {
             synManagerMainWidget.updateNumInhomVarsLabel()
         }
-        
+    }
+    
+    proc showInhomStatusMsg() {
+        strdef line1, title, line2, line3
         sprint(line1, "The inhomogeneity was applied to \"%s\" in %s. Now you can review stats curve or colormap.", varNameWithIndex, comp.name)
         title = "Inhomogeneity applied"
         if (varType == 1) { // 1: "PARAMETER"

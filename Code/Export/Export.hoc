@@ -1,13 +1,10 @@
 
-{ load_file("PythonUtilsForExport.hoc") }
-
-
 // !! make it localobj in exportCellToHocFile
 objref allNames
 
 // !!
-proc exportCellToHocFile() {
-    strdef outHocFilePathName, msg
+proc exportCellToHocFile() { local isEndFootPresent
+    strdef outHocFilePathName, line1, line2
     
     outHocFilePathName = $s1
     
@@ -37,13 +34,25 @@ proc exportCellToHocFile() {
     // !! think about a checkbox to open just saved file in default text editor
     mwh.startIntercepting()
     {
-        msg = "We don't export the changes made with Mech Manager%s."
+        line1 = "We don't export the biophysics of Soma%s"
+        line2 = "as well as the changes made with the biophys manager%s."
         if (isAstrocyteOrNeuron) {
-            sprint(msg, msg, "")
+            isEndFootPresent = 0
+            forsec "EndFoot" {
+                isEndFootPresent = 1
+                break
+            }
+            if (isEndFootPresent) {
+                sprint(line1, line1, ", Dendrites and End Foot")
+            } else {
+                sprint(line1, line1, " and Dendrites")
+            }
+            sprint(line2, line2, "")
         } else {
-            sprint(msg, msg, " and Syn Manager")
+            sprint(line1, line1, ", Dendrites, Axon and Extracellular Source")
+            sprint(line2, line2, " and the synapse manager")
         }
-        mwh.showNotImplementedWarning(msg)
+        mwh.showNotImplementedWarning(line1, line2)
         // !! also, the distance centre location is hardcoded in the exported file rather than actually exported
         mwh.showMessageBox("Export complete successfully", "Complete")
     }
@@ -63,7 +72,7 @@ func selectNanoHocFile() { localobj file
     sprint(defaultDirPath, "%sNanogeometry/", getcwd())
     file.chooser($s1, hint, "*.hoc", $s2, "Cancel", defaultDirPath)
     if (!file.chooser()) {
-        print "File wasn't selected"
+        // File wasn't selected
         return 0
     }
     
@@ -72,15 +81,17 @@ func selectNanoHocFile() { localobj file
 }
 
 // Save nanogeometry HOC file
-proc saveNanoHocFile() { local isSelected
+func saveNanoHocFile() { local isSelected
     strdef filePathName
     
     isSelected = selectNanoHocFile("w", "Save", filePathName)    // !! maybe propose default file name in style "<imported_name>_nano.hoc"
     if (!isSelected) {
-        return
+        return 1
     }
     
     exportCellToHocFile(filePathName)
+    
+    return 0
 }
 
 // Load and validate nanogeometry HOC file

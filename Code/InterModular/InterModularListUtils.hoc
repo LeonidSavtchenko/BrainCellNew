@@ -43,3 +43,27 @@ proc concatenateTwoLists() { localobj list1, list2, item2
         list1.append(item2)
     }
 }
+
+// As a side effect, the replaced item will not be selected anymore
+proc replaceItemInList() { local idx localobj list, item
+    list = $o1
+    item = $o2
+    idx = $3
+    // list.o(idx) = item       // Error
+    list.remove(idx)
+    list.insrt(idx, item)
+}
+
+begintemplate ItemOfFilteredBrowsedList
+
+    public idx, s
+    
+    idx = -1
+    strdef s
+    
+    proc init() {
+        idx = $1
+        s = $s2
+    }
+    
+endtemplate ItemOfFilteredBrowsedList

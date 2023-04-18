@@ -1,32 +1,18 @@
 
-begintemplate PPListItem
-
-    public mechIdx, mechName
-    
-    mechIdx = -1
-    strdef mechName
-    
-    proc init() {
-        mechIdx = $1
-        mechName = $s2
-    }
-    
-endtemplate PPListItem
-
 begintemplate SynManagerMainWidget
 
     public show, onSynLocChangedHandler, onListsFilterLevelChangedHandler, warnIfUserHasNotSelectedPPs, applyChangesToSynStrucIfNeeded, applyChangesToDirtyHomogenVarsIfNeeded, updateNumInhomVarsLabel, updateNumStochVarsLabel, dismissHandler
     
     external smAllSyns, synGroup, smAllComps
     external slw, smlfw
-    external mwh, mth, rph, inhomAndStochLibrary
+    external mwh, mth, seh, inhomAndStochLibrary
     external createEmptyPanel, createElasticSpacer, getGlobalVarsHint, stringEmpty, stringsEqual, stringToLowerCase, containsSubstring, dismissIfNotNil, codeContractViolation
     external enumSynCompIdxs
     external varsEditorSubWidget
     
     objref mainBox, deck1, deck2, deck3, deck4, deck5, deck6, deck7
     objref srcChoices, trgChoices, sngChoices
-    objref this
+    strdef distRangeVarLabel, numInhomVarsVarLabel, numStochVarsVarLabel, synLocVarLabel
     
     is3Or1PartInSynStruc = -1
     
@@ -36,7 +22,7 @@ begintemplate SynManagerMainWidget
     
     listBoxHeight = -1
     
-    strdef distRangeVarLabel, numInhomVarsVarLabel, numStochVarsVarLabel, synLocVarLabel
+    objref this
     
     
     proc init() {
@@ -99,9 +85,9 @@ begintemplate SynManagerMainWidget
                     {
                         xpanel("")
                         xlabel("Synapse structure:")
-                        sprint(text, "%s -> %s -> %s -> Section", smAllComps.o(enumSynCompIdxs.source).name, smAllComps.o(enumSynCompIdxs.netCon).name, smAllComps.o(enumSynCompIdxs.target).name)
+                        sprint(text, "%s -> %s -> %s -> Section", smAllComps.o(enumSynCompIdxs.srcPp).name, smAllComps.o(enumSynCompIdxs.netCon).name, smAllComps.o(enumSynCompIdxs.trgPp).name)
                         xradiobutton(text, "synStrucChangedHandler(1)", is3Or1PartInSynStruc)
-                        sprint(text, "%s -> Section", smAllComps.o(enumSynCompIdxs.single).name)
+                        sprint(text, "%s -> Section", smAllComps.o(enumSynCompIdxs.sngPp).name)
                         xradiobutton(text, "synStrucChangedHandler(0)", !is3Or1PartInSynStruc)
                         xpanel()
                     }
@@ -128,10 +114,10 @@ begintemplate SynManagerMainWidget
                         vBox3.intercept(1)
                         {
                             xpanel("")
-                            sprint(text, "%s:", smAllComps.o(enumSynCompIdxs.source).name)
+                            sprint(text, "%s:", smAllComps.o(enumSynCompIdxs.srcPp).name)
                             xlabel(text)
                             xpanel()
-                            srcChoices.browser("", "mechName")
+                            srcChoices.browser("", "s")
                             srcChoices.select_action("srcChoicesSelectHandler(hoc_ac_)")
                         }
                         vBox3.intercept(0)
@@ -140,10 +126,10 @@ begintemplate SynManagerMainWidget
                         vBox4.intercept(1)
                         {
                             xpanel("")
-                            sprint(text, "%s:", smAllComps.o(enumSynCompIdxs.target).name)
+                            sprint(text, "%s:", smAllComps.o(enumSynCompIdxs.trgPp).name)
                             xlabel(text)
                             xpanel()
-                            trgChoices.browser("", "mechName")
+                            trgChoices.browser("", "s")
                             trgChoices.select_action("trgChoicesSelectHandler(hoc_ac_)")
                         }
                         vBox4.intercept(0)
@@ -164,10 +150,10 @@ begintemplate SynManagerMainWidget
                         vBox6.intercept(1)
                         {
                             xpanel("")
-                            sprint(text, "%s:", smAllComps.o(enumSynCompIdxs.single).name)
+                            sprint(text, "%s:", smAllComps.o(enumSynCompIdxs.sngPp).name)
                             xlabel(text)
                             xpanel()
-                            sngChoices.browser("", "mechName")
+                            sngChoices.browser("", "s")
                             sngChoices.select_action("sngChoicesSelectHandler(hoc_ac_)")
                         }
                         vBox6.intercept(0)
@@ -197,8 +183,8 @@ begintemplate SynManagerMainWidget
                 deck2 = new Deck()
                 deck2.intercept(1)
                 {
-                    deck3 = createEditPPVarsDeck(enumSynCompIdxs.source)
-                    deck4 = createEditPPVarsDeck(enumSynCompIdxs.single)
+                    deck3 = createEditPPVarsDeck(enumSynCompIdxs.srcPp)
+                    deck4 = createEditPPVarsDeck(enumSynCompIdxs.sngPp)
                 }
                 deck2.intercept(0)
                 // deck2.flip_to(*)    // Will be done in synStrucChangedHandler below
@@ -206,7 +192,7 @@ begintemplate SynManagerMainWidget
                 deck5 = new Deck()
                 deck5.intercept(1)
                 {
-                    deck6 = createEditPPVarsDeck(enumSynCompIdxs.target)
+                    deck6 = createEditPPVarsDeck(enumSynCompIdxs.trgPp)
                     createEmptyPanel()
                 }
                 deck5.intercept(0)
@@ -258,8 +244,6 @@ begintemplate SynManagerMainWidget
         // so we have to destroy old Target/Single PPs and create new ones
         applyHandler(1)
         
-        // !! BUG: all inhomogeneities in PPs and NetCon-s applied earlier get a bit inconsistent with their models due to a small change in "dist"
-        
         if (!isReviewAfterApply) {
             return
         }
@@ -307,7 +291,7 @@ begintemplate SynManagerMainWidget
             
             stringToLowerCase(mechName, mechNameLower)
             
-            isForIntUseOnly = stringsEqual(mechName, rph.realMechName)
+            isForIntUseOnly = stringsEqual(mechName, seh.realMechName)
             isAccNCSrc = mth.isPointProcessAcceptableNetConSource(mechIdx)
             isAccNCTrg = mth.isPointProcessAcceptableNetConTarget(mechIdx)
             doesReqSec = mth.doesPointProcessRequireSection(mechIdx)
@@ -344,7 +328,7 @@ begintemplate SynManagerMainWidget
             // !! not sure about isAddToSngList: imagine a PP that has NetCon input, but can work even without a NetCon;
             //    we can add or remove !isAccNCTrg and !isAccNCSrc to the AND condition in any combination
             
-            newItem = new PPListItem(mechIdx, mechName)
+            newItem = new ItemOfFilteredBrowsedList(mechIdx, mechName)
             
             if (isAddToSrcList) {
                 appendAndSelectIfMechNameEqual(srcChoices, newItem, oldSrcSelMechName, &srcChoiceIdx)
@@ -376,18 +360,18 @@ begintemplate SynManagerMainWidget
             mwh.startIntercepting()
             {
                 if (srcChoices.selected() == -1) {
-                    showPleaseSelectMsg(enumSynCompIdxs.source)
+                    showPleaseSelectMsg(enumSynCompIdxs.srcPp)
                     isOK = 0
                 }
                 if (trgChoices.selected() == -1) {
-                    showPleaseSelectMsg(enumSynCompIdxs.target)
+                    showPleaseSelectMsg(enumSynCompIdxs.trgPp)
                     isOK = 0
                 }
             }
             mwh.endIntercepting()
         } else {
             if (sngChoices.selected() == -1) {
-                showPleaseSelectMsg(enumSynCompIdxs.single)
+                showPleaseSelectMsg(enumSynCompIdxs.sngPp)
                 isOK = 0
             }
         }
@@ -414,6 +398,11 @@ begintemplate SynManagerMainWidget
         getSelMechNameOrEmptyString(sngChoices, sngMechName)
         
         isSmthChanged = synGroup.applyChangesToStrucIfNeeded(is3Or1PartInSynStruc, srcMechIdx, trgMechIdx, sngMechIdx, srcMechName, trgMechName, sngMechName, isForceNewTrgOrSng)
+        
+        if (isSmthChanged) {
+            updateNumInhomVarsLabel()
+            updateNumStochVarsLabel()
+        }
         
         return isSmthChanged
     }
@@ -459,7 +448,7 @@ begintemplate SynManagerMainWidget
         list = $o1
         selIdx = list.selected()
         if (selIdx != -1) {
-            return list.o(selIdx).mechIdx
+            return list.o(selIdx).idx
         } else {
             return -1
         }
@@ -469,7 +458,7 @@ begintemplate SynManagerMainWidget
         list = $o1
         selIdx = list.selected()
         if (selIdx != -1) {
-            $s2 = list.o(selIdx).mechName
+            $s2 = list.o(selIdx).s
         } else {
             $s2 = ""
         }
@@ -481,7 +470,7 @@ begintemplate SynManagerMainWidget
         item = $o2
         oldSelMechName = $s3
         list.append(item)
-        if (stringsEqual(item.mechName, oldSelMechName)) {
+        if (stringsEqual(item.s, oldSelMechName)) {
             selIdx = list.count() - 1
             $&4 = selIdx
         }
@@ -499,7 +488,7 @@ begintemplate SynManagerMainWidget
             return 0
         }
         for idx = 0, list.count() - 1 {
-            if (stringsEqual(list.o(idx).mechName, ppName)) {
+            if (stringsEqual(list.o(idx).s, ppName)) {
                 return idx
             }
         }
@@ -541,17 +530,17 @@ begintemplate SynManagerMainWidget
     
     proc srcChoicesSelectHandler() {
         defSrcChoiceIdx = $1
-        flipEditPPVarsDeckAndDismissChilds(deck3, srcChoices, defSrcChoiceIdx, enumSynCompIdxs.source)
+        flipEditPPVarsDeckAndDismissChilds(deck3, srcChoices, defSrcChoiceIdx, enumSynCompIdxs.srcPp)
     }
     
     proc trgChoicesSelectHandler() {
         defTrgChoiceIdx = $1
-        flipEditPPVarsDeckAndDismissChilds(deck6, trgChoices, defTrgChoiceIdx, enumSynCompIdxs.target)
+        flipEditPPVarsDeckAndDismissChilds(deck6, trgChoices, defTrgChoiceIdx, enumSynCompIdxs.trgPp)
     }
     
     proc sngChoicesSelectHandler() {
         defSngChoiceIdx = $1
-        flipEditPPVarsDeckAndDismissChilds(deck4, sngChoices, defSngChoiceIdx, enumSynCompIdxs.single)
+        flipEditPPVarsDeckAndDismissChilds(deck4, sngChoices, defSngChoiceIdx, enumSynCompIdxs.sngPp)
     }
     
     proc flipEditPPVarsDeckAndDismissChilds() { local choiceIdx, synCompIdx, mechIdx, cardIdx localobj deck, choices
@@ -560,7 +549,7 @@ begintemplate SynManagerMainWidget
         choiceIdx = $3
         synCompIdx = $4
         if (choiceIdx != -1) {
-            mechIdx = choices.o(choiceIdx).mechIdx
+            mechIdx = choices.o(choiceIdx).idx
             cardIdx = 1 + mechIdx
             deck.flip_to(cardIdx)
         } else {
@@ -693,13 +682,13 @@ begintemplate SynManagerMainWidget
         varsEditorSubWidget.show()
     }
     
-    proc applyHandler() { local numArg, isForceNewTrgOrSng, isOK, isSmthChanged
+    proc applyHandler() { local numArg, isCalledOnSynLocChange, isOK, isForceNewTrgOrSng, isSmthChanged
         
         numArg = numarg()
         if (numArg == 0) {
-            isForceNewTrgOrSng = 0
+            isCalledOnSynLocChange = 0
         } else if (numArg == 1) {
-            isForceNewTrgOrSng = $1
+            isCalledOnSynLocChange = $1
         } else {
             codeContractViolation()
         }
@@ -711,8 +700,15 @@ begintemplate SynManagerMainWidget
         
         dismissChilds()
         
+        isForceNewTrgOrSng = isCalledOnSynLocChange
         isSmthChanged = applyChangesToSynStrucIfNeeded(isForceNewTrgOrSng)
         isSmthChanged = applyChangesToDirtyHomogenVarsIfNeeded() || isSmthChanged
+        
+        if (isCalledOnSynLocChange) {
+            // All inhomogeneities in PPs and NetCon-s applied earlier get a bit inconsistent with their models due to a small change in "dist",
+            // so we apply them again
+            inhomAndStochLibrary.onSynLocChange()
+        }
         
         if (isSmthChanged) {
             mwh.showMessageBox("All the changes were applied to synapses.", "Applied")

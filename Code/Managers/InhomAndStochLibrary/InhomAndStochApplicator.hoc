@@ -3,8 +3,10 @@ begintemplate InhomAndStochApplicator
     
     public startPlayingVars, stopPlayingVars, onInit, onStep
     
+    external smAllSyns
+    external inhomAndStochLibrary, seh
+    external eachItemInList
     external codeContractViolation
-    external inhomAndStochLibrary
     
     
     iterator eachActiveSpecialVarFromLib() { codeContractViolation() }
@@ -34,6 +36,7 @@ begintemplate InhomAndStochApplicator
         for eachActiveSpecialVarFromLib(specVar) {
             specVar.onStep()
         }
+        afterStep()
     }
     
     // All next staff is private
@@ -44,6 +47,20 @@ begintemplate InhomAndStochApplicator
         for specVarIdx = 0, activeSpecVars.count() - 1 {
             $o1 = activeSpecVars.o(specVarIdx)
             iterator_statement
+        }
+    }
+    
+    proc afterStep() { localobj nil, syn
+        if (seh == nil) {
+            return
+        }
+        if (!seh.isSefwEnabled()) {
+            return
+        }
+        for eachItemInList(syn, smAllSyns) {
+            // !! it would be better to set it back to 0 in MOD code rather than here,
+            //    but I couldn't figure out what type of block in MOD file should contain the assignment operator to execute it in the right time
+            syn.sefwPp.isAnyEventsOnThisIter = 0
         }
     }
     
