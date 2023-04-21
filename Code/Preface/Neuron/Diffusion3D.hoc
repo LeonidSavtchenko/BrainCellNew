@@ -109,31 +109,31 @@ PotassiumRelease(DelayInter1, IntervalRelease1, SwtichOn1)
 
 finitialize(v_init)     // !! Already moved to NanoBranchesManager.hoc
 
-xpanel("Position extra Potassium",0)
-xlabel("===============position====================")
-xvalue("x","x", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
-xvalue("y","y", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
-xvalue("z","z", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
-xvalue("Radius of source","ReleaseRadius", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
-xvalue("x_soma","x_soma", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
-xvalue("y_soma","y_soma", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
-xvalue("z_soma","z_soma", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
-xpanel(903,40)
-
-
-GluOut=0.0
-
-
-xpanel("Potassium extracellular release",0)
-xlabel("================== Potassium source ==================")
-xvalue("InitConcentration","input1.InitConcentration", 1,"", 0, 1 )
-xvalue("Offset of release","DelayInter1", 1, "PotassiumRelease(DelayInter1, IntervalRelease1, SwtichOn1)", 0, 1)
-xvalue("Numbers of release","SwtichOn1", 1, "PotassiumRelease(DelayInter1, IntervalRelease1, SwtichOn1)", 0, 1)
-xvalue("Interval between Release","IntervalRelease1", 1, "PotassiumRelease(DelayInter1, IntervalRelease1, SwtichOn1)", 0, 1)
-xvalue("Max distance of release","input1.Distance", 1,"", 0, 1 )
-xvalue("Diffusion coefficient","input1.Deff", 1,"", 0, 1 )
-xvalue("Decay time of potassium","input1.tau", 1,"", 0, 1 )
-xlabel("======================================================")
-xpanel(382,327)
+proc showExtraPotassiumControlPanels() {
+    xpanel("Position extra Potassium",0)
+    xlabel("===============position====================")
+    xvalue("x","x", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
+    xvalue("y","y", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
+    xvalue("z","z", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
+    xvalue("Radius of source","ReleaseRadius", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
+    xvalue("x_soma","x_soma", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
+    xvalue("y_soma","y_soma", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
+    xvalue("z_soma","z_soma", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
+    xpanel(903,40)
+    
+    // GluOut=0.0   // This was not used
+    
+    xpanel("Potassium extracellular release",0)
+    xlabel("================== Potassium source ==================")
+    xvalue("InitConcentration","input1.InitConcentration", 1,"", 0, 1 )
+    xvalue("Offset of release","DelayInter1", 1, "PotassiumRelease(DelayInter1, IntervalRelease1, SwtichOn1)", 0, 1)
+    xvalue("Numbers of release","SwtichOn1", 1, "PotassiumRelease(DelayInter1, IntervalRelease1, SwtichOn1)", 0, 1)
+    xvalue("Interval between Release","IntervalRelease1", 1, "PotassiumRelease(DelayInter1, IntervalRelease1, SwtichOn1)", 0, 1)
+    xvalue("Max distance of release","input1.Distance", 1,"", 0, 1 )
+    xvalue("Diffusion coefficient","input1.Deff", 1,"", 0, 1 )
+    xvalue("Decay time of potassium","input1.tau", 1,"", 0, 1 )
+    xlabel("======================================================")
+    xpanel(382,327)
+}
 
 //****************************************************************

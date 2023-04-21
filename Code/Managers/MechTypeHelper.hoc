@@ -9,7 +9,7 @@ if (isAstrocyteOrNeuron) {
 
 begintemplate MechTypeHelper
 
-    public getMechType, getNumMechs, getMechName, getNumVarTypes, getNumMechVars, doesMechHaveGlobalVars, doesMechHaveNotGlobalVars, getVarNameAndArraySize, getVarTypeName, getVarNameWithIndex, getVarNameWithIndexAndUnits, isDistMechSticky, checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar, convertVarTypeToVarTypeIdx, doesPointProcessRequireSection, isPointProcessAcceptableNetConSource, isPointProcessAcceptableNetConTarget
+    public getMechType, getNumMechs, getMechName, getMechIdx, getNumVarTypes, getNumMechVars, doesMechHaveGlobalVars, doesMechHaveNotGlobalVars, getVarNameAndArraySize, getVarTypeName, getVarNameWithIndex, getVarNameWithIndexAndUnits, isDistMechSticky, checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar, convertVarTypeToVarTypeIdx, doesPointProcessRequireSection, isPointProcessAcceptableNetConSource, isPointProcessAcceptableNetConTarget
     
     public morphologyMechIdx, diamVarType
     public extracellularMechName, ionSuffix, diamVarName
@@ -109,6 +109,15 @@ begintemplate MechTypeHelper
         mechType = mechTypes[enumDmPpNc]
         mechType.select(mechIdx)
         mechType.selected($s3)
+    }
+    
+    func getMechIdx() { local enumDmPpNc localobj mechType
+        strdef mechName
+        enumDmPpNc = $1
+        mechName = $s2
+        mechType = mechTypes[enumDmPpNc]
+        mechType.select(mechName)
+        return mechType.selected()
     }
     
     func isDistMechSticky() { local mechIdx

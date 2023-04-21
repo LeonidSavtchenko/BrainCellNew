@@ -41,6 +41,7 @@ begintemplate NanoBranchesManager
     
     external createAstrocyteNanoBranch, createNeuronNanoBranch, createRefsForNanoGeometry
     external Neuron_AddSynapses_reseed, Neuron_AddSynapses_delete
+    external initVoltage
     
     objref nanoBranches_flat    // !! Flat List of all AstrocyteNanoBranch or NeuronNanoBranch -- need to merge this with the logic from Exported/CreateNanoRefs_Exported.hoc !!
     objref randomBranchSeeder 
@@ -111,13 +112,8 @@ begintemplate NanoBranchesManager
             // !! maybe it would be easier to collect references while creating sections rather than search for sections with regex afterwards
             createRefsForNanoGeometry()
             
-            // !!
-            if (isAstrocyteOrNeuron) {
-                v_init = -85        // mV
-                finitialize(v_init)
-            } else {
-                v_init = -64.65
-            }
+            // !! it would be better to init the voltage just in nanogeometry
+            initVoltage()
             
             if (!isFirstReseeding && !isAstrocyteOrNeuron) {
                 Neuron_AddSynapses_reseed()

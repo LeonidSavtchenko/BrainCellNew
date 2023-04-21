@@ -1,0 +1,204 @@
+
+begintemplate CreateListOfInputVarsWidget
+
+    public show, onOneVarSelectHandler, onDefineVarGridOkHandler, dismissHandler
+    
+    external mwh
+    external enterVarExpression, replaceItemInList, unmapIfNotNil, codeContractViolation
+    
+    objref mainBox, exprsList
+    objref aoivWidgets[1], dg4ivWidget
+    objref this
+    
+    cloivWidIdx = -1
+    
+    numAoivWidgets = -1
+    
+    
+    proc init() { local aoivWidIdx
+        cloivWidIdx = $1
+        
+        numAoivWidgets = 2
+        
+        objref aoivWidgets[numAoivWidgets]
+        for aoivWidIdx = 0, numAoivWidgets - 1 {
+            aoivWidgets[aoivWidIdx] = new AddOneInputVarWidget(aoivWidIdx, this)
+        }
+        
+        dg4ivWidget = new DefineGridForInputVarWidget(this)
+        
+        exprsList = new List()
+        exprsList.append(new String("dendrite_ref.o(123).sec(0.25).cm"))    // !! just for test
+        exprsList.append(new String("smAllSyns.o(123).trgPp.g"))            //
+    }
+    
+    proc show() { localobj hBox, vBox
+        strdef text
+        
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            hBox = new HBox()
+            hBox.intercept(1)
+            {
+                vBox = new VBox()
+                vBox.intercept(1)
+                {
+                    xpanel("")
+                    if (cloivWidIdx == 0) {
+                        text = "Vars to expose in the settings file:"
+                    } else if (cloivWidIdx == 1) {
+                        text = "Vars to sweep:"
+                    } else {
+                        codeContractViolation()
+                    }
+                    xlabel(text)
+                    xpanel()
+                    exprsList.browser("", "s")
+                    exprsList.select(0)                                         // !! just for test
+                }
+                vBox.intercept(0)
+                vBox.map()
+                xpanel("")
+                xbutton("Add biophys var", "addBiophysVarHandler()")
+                xbutton("Add synapse var", "addSynVarHandler()")
+                xbutton("Add custom var", "addCustomVarHandler()")
+                xlabel("")
+                xbutton("Correct var", "correctVarHandler()")
+                xbutton("Delete var", "deleteVarHandler()")
+                
+                if (cloivWidIdx == 2) {
+                    xlabel("")
+                    xbutton("Define var grid", "defineVarGridHandler()")
+                }
+                xpanel()
+            }
+            hBox.intercept(0)
+            hBox.map()
+            xpanel("")
+            xbutton("OK", "okHandler()")
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Input variables", 110, 150, 350, 213)
+    }
+    
+    proc onOneVarSelectHandler() { local isDmOrSynPart, compIdx, mechIdx, varType, numVars
+        strdef varNameWithIndex, expr
+        
+        isDmOrSynPart = $1
+        compIdx = $2
+        mechIdx = $3
+        varType = $4
+        varNameWithIndex = $s5
+        
+        sprint(expr, "%d:%d/%d/%d/\"%s\"", isDmOrSynPart, compIdx, mechIdx, varType, varNameWithIndex)
+        
+        // !! make sure the expr is not present in the list
+        
+        exprsList.append(new String(expr))
+        numVars = exprsList.count()
+        exprsList.select(numVars - 1)
+    }
+    
+    proc onDefineVarGridOkHandler() {
+        mwh.showNotImplementedWarning()
+    }
+    
+    proc dismissHandler() {
+        dismissChilds()
+        unmapIfNotNil(mainBox)
+    }
+    
+    // All next staff is private
+    
+    
+    proc addBiophysVarHandler() {
+        dismissChilds()
+        aoivWidgets[0].show()
+    }
+    
+    proc addSynVarHandler() {
+        dismissChilds()
+        aoivWidgets[1].show()
+    }
+    
+    proc addCustomVarHandler() { local isCancel, numVars
+        strdef expr
+        
+        dismissChilds()
+        
+        expr = ""
+        isCancel = enterVarExpression(expr)
+        if (isCancel) {
+            return
+        }
+        
+        exprsList.append(new String(expr))
+        
+        numVars = exprsList.count()
+        exprsList.select(numVars - 1)
+    }
+    
+    proc correctVarHandler() { local selVarIdx, isCancel
+        strdef expr
+        
+        dismissChilds()
+        
+        selVarIdx = exprsList.selected()
+        if (selVarIdx == -1) {
+            // The list is empty
+            return
+        }
+        
+        expr = exprsList.o(selVarIdx).s
+        isCancel = enterVarExpression(expr)
+        if (isCancel) {
+            return
+        }
+        
+        replaceItemInList(exprsList, new String(expr), selVarIdx)
+        exprsList.select(selVarIdx)
+    }
+    
+    proc deleteVarHandler() { local selVarIdx, numVars
+        dismissChilds()
+        
+        selVarIdx = exprsList.selected()
+        if (selVarIdx == -1) {
+            // The list is empty
+            return
+        }
+        
+        exprsList.remove(selVarIdx)
+        
+        numVars = exprsList.count()
+        if (numVars == 0) {
+            return
+        }
+        selVarIdx -= 1
+        if (selVarIdx == -1) {
+            selVarIdx = 0
+        }
+        exprsList.select(selVarIdx)
+    }
+    
+    proc defineVarGridHandler() {
+        dismissChilds()
+        dg4ivWidget.show()
+    }
+    
+    proc okHandler() {
+        // !!
+        dismissHandler()
+    }
+    
+    proc dismissChilds() { local aoivWidIdx
+        for aoivWidIdx = 0, numAoivWidgets - 1 {
+            aoivWidgets[aoivWidIdx].dismissHandler()
+        }
+        dg4ivWidget.dismissHandler()
+    }
+    
+endtemplate CreateListOfInputVarsWidget

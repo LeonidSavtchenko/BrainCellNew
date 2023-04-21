@@ -15,7 +15,7 @@ proc initParamsMain() {
      insertGapJunc()
      CaGapFlux(jd, SwitchOffGapJunction)
     //***************************************************************************************
-    // !! InsertElectricMechanisms(1)   // !!!!!! the next my step
+    // !! InsertElectricMechanisms(1)   // !! it must be called here rather than just below
     if (isAstrocyteOrNeuron) {
         nanoBranchesManager.reseedBranches(nanoDistrLoaded, nanoDistrLoaded)    // !!
     }
@@ -23,21 +23,6 @@ proc initParamsMain() {
     InsertElectricMechanisms(1) // !! I had to move this lower because it uses refs to nanogeometry. but biophysics is affected by this move!!
     
     OnlySingleGluSimulations = 1 // parameter for Glu and Potassium single  voltage clamp mechanism
-    if (isAstrocyteOrNeuron) {
-        dt = 1
-        steps_per_ms = 1                // ms
-        tstop = 10000                   // ms
-        v_init = -85                    // mV    // \
-        finitialize(v_init)                      // - !! Already moved to NanoBranchesManager.hoc
-    } else {
-        v_init = -64.65                          // /
-        runStopAt = 5
-        runStopIn = 1
-        t = 0
-        tstop = 100
-        dt = 1
-        steps_per_ms = 10
-        screen_update_invl = 0.05
-        realtime = 0
-    }
+    
+    initVoltageAndRunControlParams()
 }

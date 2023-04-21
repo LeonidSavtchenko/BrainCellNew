@@ -17,6 +17,8 @@ if (!isAstrocyteOrNeuron) {
     { load_file("../Managers/SynManager/SynManager.hoc") }
 }
 
+{ load_file("../Export/Widgets/ExportWidgetsLoads.hoc") }
+
 
 // UI
 objref hBoxMainPanel
@@ -90,10 +92,11 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
         vBoxLeftPanel.intercept(1)
         {
             if (isBaseOrNanoStart) {
+                /* !!
                 xpanel("")
-                // !! xbutton("Import nanogeometry", "loadNanoHocFile()")
-                xbutton("Export nanogeometry", "saveNanoHocFile()")
+                xbutton("Import cell", "loadNanoHocFile()")
                 xpanel()
+                */
                 xpanel("")
                 xlabel("=============== Where to Seed the Nanostructures ===============")
                 xradiobutton("All dendrites", "isAllOrSomeDendritesSeeded = 1", isAllOrSomeDendritesSeeded == 1)
@@ -188,10 +191,15 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
         vBoxRightPanel.intercept(1)
         {
             xpanel("")
-            xbutton("Manage distr. mechs", "startMechManager()")
-            if (!isAstrocyteOrNeuron) {
-                xbutton("Manage synapses", "startSynManager()")
+            if (isBaseOrNanoStart && !isAstrocyteOrNeuron) {
+                xbutton("Edit extra potassium", "showExtraPotassiumControlPanels()")
+                xbutton("Insert electrode", "insertElectrode()")
             }
+            xbutton("Edit biophysics", "startMechManager()")
+            if (!isAstrocyteOrNeuron) {
+                xbutton("Edit synapses", "startSynManager()")
+            }
+            xbutton("Export cell", "startExportManager()")
             xpanel()
             xpanel("Various scenarios for calculating astrocyte dynamics")
             xlabel("====================== Simulations ======================")
@@ -233,10 +241,10 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
         vBoxRightPanel.map("Simulations")
     }
     hBoxMainPanel.intercept(0)
-    hBoxMainPanel.map("Repertoire of computation")
+    hBoxMainPanel.map("Repertoire of computation", 285, 0, -1, -1)
 }
 
-proc showRunPanel() {
+proc showRunControlPanel() {
     xpanel("RunControl", 0)
     xvalue("Init","v_init", 1,"stdinit()", 1, 1 )
     xbutton("Init & Run","run()")
@@ -250,11 +258,12 @@ proc showRunPanel() {
     xvalue("Points plotted/ms","steps_per_ms", 1,"setdt()", 0, 1 )
     xvalue("Scrn update invl","screen_update_invl", 1,"", 0, 1 )
     xvalue("Real Time","realtime", 0,"", 0, 1 )
-    if (isAstrocyteOrNeuron) {
-        xpanel(0,166)
-    } else {
-        xpanel(3,123)
-    }
+    xpanel(0, 125)
+}
+
+proc insertElectrode() {
+    load_file(1, "Code/Preface/Neuron/Electrod.hoc")
+    mwh.showMessageBox("IClamp was inserted into the centre of the first soma section.", "Please be advised that it will be deleted immediately once you close the \"PointProcessGroupManager\" widget.", "IClamp inserted")
 }
 
 proc startMechManager() {
@@ -263,4 +272,9 @@ proc startMechManager() {
 
 proc startSynManager() {
     createSynCompsAndShowSynManagerBaseWidget()
+}
+
+proc startExportManager() {
+    exportManagerMainWidget.dismissHandler()
+    exportManagerMainWidget.show()
 }

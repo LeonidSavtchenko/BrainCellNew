@@ -1,50 +1,23 @@
-objref ocbox_
+
 pwman_place(0,0,0)
 
-//Begin PointProcessGroupManager
 load_file("pointgrp.hoc")
-ocbox_ = new PointProcessGroupManager(0)
-object_push(ocbox_)
 
-ms = new MechanismStandard("IClamp")
-ms.set("del", 0, 0)
-ms.set("dur", 100, 0)
-ms.set("amp", 0, 0)
-mnews("IClamp", ms)
-select(0)
-execute("soma_ref.o(0).sec ocbox_.move(0.5)")
+objref ocbox_
+ocbox_ = new PointProcessGroupManager(0)
+
+// We have to keep this push-pop block at the top level rather than in a proc because otherwise it won't work
+object_push(ocbox_)
+{
+    ms = new MechanismStandard("IClamp")
+    ms.set("del", 0, 0)
+    ms.set("dur", 100, 0)
+    ms.set("amp", 0, 0)
+    mnews("IClamp", ms)
+    select(0)
+    execute("soma_ref.o(0).sec ocbox_.move(0.5)")
+}
 object_pop()
 
 ocbox_ = ocbox_.v1
 ocbox_.map("PointProcessGroupManager", 61, 576, 559.8, 371.7)
-
-//End PointProcessGroupManager
-
-
-// Run
-/* Now it's managed by Core/MainProgram.hoc and Core/MainUi.hoc
-xpanel("RunControl", 0)
-v_init = -64.65
-xvalue("Init","v_init", 1,"stdinit()", 1, 1 )
-xbutton("Init & Run","run()")
-xbutton("Stop","stoprun=1")
-runStopAt = 5
-xvalue("Continue til","runStopAt", 1,"{continuerun(runStopAt) stoprun=1}", 1, 1 )
-runStopIn = 1
-xvalue("Continue for","runStopIn", 1,"{continuerun(t + runStopIn) stoprun=1}", 1, 1 )
-xbutton("Single Step","steprun()")
-t = 0
-xvalue("t","t", 2 )
-tstop = 100
-xvalue("Tstop","tstop", 1,"tstop_changed()", 0, 1 )
-dt = 1
-xvalue("dt","dt", 0.1,"setdt()", 0, 1 )
-steps_per_ms = 10
-xvalue("Points plotted/ms","steps_per_ms", 1,"setdt()", 0, 1 )
-screen_update_invl = 0.05
-xvalue("Scrn update invl","screen_update_invl", 1,"", 0, 1 )
-realtime = 0
-xvalue("Real Time","realtime", 0,"", 0, 1 )
-xpanel(3,123)
-*/
-

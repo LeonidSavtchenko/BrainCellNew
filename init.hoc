@@ -42,11 +42,12 @@ proc roadmapChosenHandler() { local isLoaded localobj plotShape
             // (Don't encapsulate initNeuron() into "initNeuron.hoc" because the file browser will use different default folder)
         }
     } else {
+        initVoltageAndRunControlParams()
         prefaceCompleteHandler()
     }
 }
 
-// Don't rename this proc to "init" because Neuron will call it once user clicks "Init & Run"
+// Don't rename this proc to "init" because NEURON will call it once user clicks "Init & Run"
 proc theEntryPoint() {
 
     // !! code dupl. with Import.hoc
@@ -57,7 +58,7 @@ proc theEntryPoint() {
         printMsgAndStop("Python is not available")
     }
     
-    load_file("Code/Export/Export.hoc")
+    load_file("Code/Export/ExportCoreLoads.hoc")
     
     // Calling here just to show up all the Python warnings early
     sourcePythonCodeForExport()

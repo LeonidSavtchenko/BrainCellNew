@@ -34992,17 +34992,17 @@ ExtracellularSource {
 }
 //////////////////// End of geometry /////////////////////////////////////
 
-//////////////////// Start of soma biophysics ////////////////////////////
+//////////////////// Start of Soma biophysics ////////////////////////////
 // py!!:insertAllLinesFromFile('Code\\Neuron\\SomaBiophysics.hoc')
-//////////////////// End of soma biophysics //////////////////////////////
+//////////////////// End of Soma biophysics //////////////////////////////
 
-//////////////////// Start of dendrites biophysics ///////////////////////
+//////////////////// Start of Dendrites biophysics ///////////////////////
 // py!!:insertAllLinesFromFile('Code\\Neuron\\DendritesBiophysics.hoc')
-//////////////////// End of dendrites biophysics /////////////////////////
+//////////////////// End of Dendrites biophysics /////////////////////////
 
-//////////////////// Start of axon biophysics ////////////////////////////
+//////////////////// Start of Axon biophysics ////////////////////////////
 // py!!:insertAllLinesFromFile('Code\\Neuron\\AxonBiophysics.hoc')
-//////////////////// End of axon biophysics //////////////////////////////
+//////////////////// End of Axon biophysics //////////////////////////////
 
 //////////////////// Start of nanogeometry biophysics ////////////////////
 Vrest = -65.0
@@ -35080,34 +35080,27 @@ for idx = 0, NumberNanoBranches - 1 {
 
 //////////////////// End of nanogeometry biophysics //////////////////////
 
-//////////////////// Start of other biophysics ///////////////////////////
+//////////////////// Start of Other biophysics ///////////////////////////
 // py!!:insertAllLinesFromFile('Code\\Neuron\\OtherBiophysics.hoc')
-//////////////////// End of other biophysics /////////////////////////////
+//////////////////// End of Other biophysics /////////////////////////////
 
 // !! hardcoded rather than exported
 soma_ref.o(0).sec distance()
 
 //////////////////// Start of synapses ///////////////////////////////////
-SwtichOn = 1000
-IntervalSynapticActivity = 100.0
-weight = 0.0002
-noise = 1.0
 enumSynLoc = 0
 
 //////////////////////////////////////////////////////////////////////////
 
-// !! get rid of this once Syn Manager is ready
-// objref DistanceDistribution  // This was not used
-
 begintemplate Synapse
 
-    public source, netCon, target, single, rpefPp, rpefNetCon, sec_ref, connectionPoint, dist
+    public srcPp, netCon, trgPp, sngPp, sefwPp, sefwNetCon, sec_ref, connectionPoint, dist
     public getPointProcess, changeLocation, changeStructure
     
     // !! uncomment here and below once it's exported
     // external codeContractViolation
     
-    objref source, netCon, target, single, rpefPp, rpefNetCon, sec_ref
+    objref srcPp, netCon, trgPp, sngPp, sefwPp, sefwNetCon, sec_ref
     
     connectionPoint = -1
     dist = -1
@@ -35116,13 +35109,13 @@ begintemplate Synapse
     proc init() { local numArg
         numArg = numarg()
         if (numArg == 5) {
-            source = $o1
+            srcPp = $o1
             netCon = $o2
-            target = $o3
+            trgPp = $o3
             sec_ref = $o4
             connectionPoint = $5
         } else if (numArg == 3) {
-            single = $o1
+            sngPp = $o1
             sec_ref = $o2
             connectionPoint = $3
         } else {
@@ -35135,16 +35128,16 @@ begintemplate Synapse
         enumPpRoleExt = $1     // 0: "Source PP", 1: "Target PP", 2: "Single PP", 3: "Target PP or Single PP"
         
         if (enumPpRoleExt == 0) {
-            return source
+            return srcPp
         } else if (enumPpRoleExt == 1) {
-            return target
+            return trgPp
         } else if (enumPpRoleExt == 2) {
-            return single
+            return sngPp
         } else if (enumPpRoleExt == 3) {
             if (netCon != nil) {
-                return target
+                return trgPp
             } else {
-                return single
+                return sngPp
             }
         } else {
             // codeContractViolation()
@@ -35160,38 +35153,38 @@ begintemplate Synapse
     proc changeStructure() { local numArg localobj nil
         numArg = numarg()
         if (numArg == 1) {
-            // single -> Section
+            // sngPp -> Section
             
             netCon = nil        // Destroying old NetCon-s before all connected PPs
-            rpefNetCon = nil    //
+            sefwNetCon = nil    //
             
-            single = $o1
+            sngPp = $o1
             
-            source = nil
-            target = nil
-            rpefPp = nil
+            srcPp = nil
+            trgPp = nil
+            sefwPp = nil
         } else if (numArg == 3) {
-            // source -> netCon -> target -> Section
+            // srcPp -> netCon -> trgPp -> Section
             
             netCon = $o2        // Destroying old NetCon-s before all connected PPs
-            rpefNetCon = nil    //
+            sefwNetCon = nil    //
             
-            source = $o1
-            target = $o3
+            srcPp = $o1
+            trgPp = $o3
             
-            single = nil
-            rpefPp = nil
+            sngPp = nil
+            sefwPp = nil
         } else if (numArg == 5) {
-            // source -> netCon -> rpefPp -> rpefNetCon -> target -> Section
+            // srcPp -> netCon -> sefwPp -> sefwNetCon -> trgPp -> Section
             
             netCon = $o2        // Destroying old NetCon-s before all connected PPs
-            rpefNetCon = $o4    //
+            sefwNetCon = $o4    //
             
-            source = $o1
-            rpefPp = $o3
-            target = $o5
+            srcPp = $o1
+            sefwPp = $o3
+            trgPp = $o5
             
-            single = nil
+            sngPp = nil
         } else {
             // codeContractViolation()
         }
@@ -35214,10 +35207,19 @@ smAllSyns = new List()
 
 // This proc will be called each time after neuron nanogeometry reseeding
 // Create and connect all default synapses; the number is the same as the number of spines
-// Inputs (all taken from the top level): enumSynLoc, weight, IntervalSynapticActivity, SwtichOn, noise,
-//                                        nanoDistal_ref, nanoProximal_ref
-// !! code dupl. with SynGroup.getNewSecRefConnectionPointAndSpineNeckDiam
-proc Neuron_AddSynapses_reseed() { local numSyns, synIdx, connectionPoint localobj source, target, sec_ref, np_ref, netCon, synapse
+// Inputs (all taken from the top level): !!enumSynLoc, nanoDistal_ref, nanoProximal_ref
+// !! major code dupl. with SynGroup.getNewSecRefConnectionPointAndSpineNeckDiam
+proc Neuron_AddSynapses_reseed() { local defStart, defInterval, defNumber, defNoise, defDelay, defWeight, numSyns, synIdx, connectionPoint localobj srcPp, trgPp, sec_ref, np_ref, netCon, synapse
+    
+    // Default values for NetStim
+    defStart = 2
+    defInterval = 100
+    defNumber = 1000
+    defNoise = 1
+    
+    // Default values for NetCon
+    defDelay = 0
+    defWeight = 0.0002
     
     numSyns = nanoDistal_ref.count()
     
@@ -35226,13 +35228,13 @@ proc Neuron_AddSynapses_reseed() { local numSyns, synIdx, connectionPoint localo
     }
     
     for synIdx = 0, numSyns - 1 {
-        source = new NetStim()
+        srcPp = new NetStim()
         
         if (enumSynLoc == 0) {
             // Synapse is connected to the centre of spine_head
             connectionPoint = 0.5
             nanoDistal_ref.o(synIdx).sec {
-                target = new Exp2Syn(connectionPoint)
+                trgPp = new Exp2Syn(connectionPoint)
                 sec_ref = new SectionRef()
             }
         } else if (enumSynLoc == 1) {
@@ -35242,25 +35244,19 @@ proc Neuron_AddSynapses_reseed() { local numSyns, synIdx, connectionPoint localo
                 connectionPoint = parent_connection()
             }
             np_ref.parent {
-                target = new Exp2Syn(connectionPoint)
+                trgPp = new Exp2Syn(connectionPoint)
                 sec_ref = new SectionRef()
             }
         }
         
-        // !! get rid of this once Syn Manager is ready
-        // DistanceDistribution.x = dist
-        // print "distance = ", dist
-        // Conductance depended on distance. The formula is the same for all calculations
-        // ConDistance = 0.5125 + dist * 0.65 / 300
-        ConDistance = 1
+        srcPp.start = defStart
+        srcPp.interval = defInterval
+        srcPp.number = defNumber
+        srcPp.noise = defNoise
         
-        netCon = new NetCon(source, target, 0, 0, weight * ConDistance)
-        source.start = 2
-        source.interval = IntervalSynapticActivity
-        source.number = SwtichOn
-        source.noise = noise
+        netCon = new NetCon(srcPp, trgPp, 0, defDelay, defWeight)
         
-        synapse = new Synapse(source, netCon, target, sec_ref, connectionPoint)
+        synapse = new Synapse(srcPp, netCon, trgPp, sec_ref, connectionPoint)
         smAllSyns.append(synapse)
     }
 }

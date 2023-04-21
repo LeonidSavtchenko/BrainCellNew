@@ -8,7 +8,9 @@ begintemplate MechComp
     
     external mmAllComps
     external mwh, math, mth, mmmowb, mcu
-    external eachItemInList, stringsEqual, stringEndsWith, stringEmpty, joinStrings, concatenateTwoLists, codeContractViolation, printMsgAndStop
+    // !! external inhomAndStochLibrary
+    external stringsEqual, stringEndsWith, stringEmpty, joinStrings, concatenateTwoLists, codeContractViolation, printMsgAndStop
+    external eachItemInList
     
     strdef name
     enumDmPpNc = -1
@@ -261,6 +263,7 @@ begintemplate MechComp
                     // but that's not a problem (no warnings printed)
                     if (isMechInserted[mechIdx]) {
                         mechType.make()
+                        // !! inhomAndStochLibrary.onMechInsert(!!compIdx, mechIdx)
                         for varType = 1, 3 {    // 1: "PARAMETER", 2: "ASSIGNED", 3: "STATE"
                             varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
                             compMechStd = mechStds[mechIdx][varTypeIdx]
@@ -274,6 +277,7 @@ begintemplate MechComp
                                     tempMechStd.out(x)
                                 }
                             }
+                            // !! inhomAndStochLibrary.onMakingVarHomogen(0, !!compIdx, mechIdx, varType, !!varIdx, !!arrayIndex)
                         }
                         
                         if (mechIdx == mth.morphologyMechIdx) {
@@ -287,6 +291,7 @@ begintemplate MechComp
                         // Don't remove this IF because it would lead to warnings for "sticky" mechs
                         if (ismembrane(mechName)) {
                             mechType.remove()
+                            // !! inhomAndStochLibrary.onMechUninsert(!!compIdx, mechIdx)
                         }
                     }
                 }
@@ -376,7 +381,7 @@ begintemplate MechComp
                 sec_ref.sec {
                     segmentationHelper.subdivideSection()
                     
-                    distFuncHelper.onNewSection()   // For "Zebra (sections)" only
+                    distFuncHelper.onNewSection()   // Needed for "Zebra (sections)" only
                     
                     for (x, 0) {
                         mechStd.in(x)

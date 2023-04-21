@@ -9,7 +9,7 @@ begintemplate SynGroup
     
     external synManagerMainWidget
     external smAllSyns, smAllComps, nanoProximal_ref, nanoDistal_ref
-    external mwh, mth, math, mcu, rph, rngUtils
+    external mwh, mth, math, mcu, seh, rngUtils
     external stringsEqual, codeContractViolation
     external eachItemInList
     external enumSynCompIdxs, enumSynLoc
@@ -123,7 +123,7 @@ begintemplate SynGroup
         isScheduledRescanningOfDistMechs = 1    // !! for higher performance, it would be better to rescan only spine_neck.morphology
     }
     
-    func applyChangesToStrucIfNeeded() { local is3Or1PartInSynStruc_new, srcMechIdx, trgMechIdx, sngMechIdx, isForceNewTrgOrSng, is3Or1PartInSynStruc_old, enumTrgOrSngPpRole_old, isSrcMechNameUnchanged, isRpefPresenceUnchanged, isTrgMechNameUnchanged, seed localobj syn, srcPp, trgPp, netCon, rpefPp, rpefNetCon, oldPp, sngPp
+    func applyChangesToStrucIfNeeded() { local is3Or1PartInSynStruc_new, srcMechIdx, trgMechIdx, sngMechIdx, isForceNewTrgOrSng, is3Or1PartInSynStruc_old, enumTrgOrSngPpRole_old, isSefwEnabled, isSrcMechNameUnchanged, isSefwPresenceUnchanged, isTrgMechNameUnchanged, seed localobj syn, srcPp, trgPp, netCon, sefwPp, sefwNetCon, oldPp, sngPp
         strdef srcMechName, trgMechName, sngMechName, trgOrSngMechName_old, srcMechName_old, trgMechName_old, sngMechName_old
         
         is3Or1PartInSynStruc_new = $1
@@ -142,48 +142,54 @@ begintemplate SynGroup
         } else {
             enumTrgOrSngPpRole_old = 2
         }
+        getPpNameOrEmpty(0, srcMechName_old)
+        getPpNameOrEmpty(1, trgMechName_old)
+        getPpNameOrEmpty(2, sngMechName_old)
         getPpNameOrEmpty(enumTrgOrSngPpRole_old, trgOrSngMechName_old)
         
         if (is3Or1PartInSynStruc_new) {
-            getPpNameOrEmpty(0, srcMechName_old)
-            getPpNameOrEmpty(1, trgMechName_old)
+            isSefwEnabled = seh.isSefwEnabled()
             isSrcMechNameUnchanged = stringsEqual(srcMechName, srcMechName_old)
-            isRpefPresenceUnchanged = (rph.isEnabled == isRpefPresentInSynStruc())
+            isSefwPresenceUnchanged = (isSefwEnabled == isSefwPresentInSynStruc())
             isTrgMechNameUnchanged = stringsEqual(trgMechName, trgMechName_old)
-            if (!isForceNewTrgOrSng && isSrcMechNameUnchanged && isRpefPresenceUnchanged && isTrgMechNameUnchanged) {
+            if (!isForceNewTrgOrSng && isSrcMechNameUnchanged && isSefwPresenceUnchanged && isTrgMechNameUnchanged) {
                 return 0
             }
             
             for eachItemInList(syn, smAllSyns) {
                 srcPp = createNewSrcPpButTryToInherit(syn, srcMechIdx, srcMechName, isSrcMechNameUnchanged)
-                trgPp = createNewTrgOrSngPpButTryToInherit(syn, trgMechIdx, trgMechName, isForceNewTrgOrSng, enumSynCompIdxs.target, enumTrgOrSngPpRole_old, trgOrSngMechName_old)
-                if (!rph.isEnabled) {
+                trgPp = createNewTrgOrSngPpButTryToInherit(syn, trgMechIdx, trgMechName, isForceNewTrgOrSng, enumSynCompIdxs.trgPp, enumTrgOrSngPpRole_old, trgOrSngMechName_old)
+                if (!isSefwEnabled) {
                     netCon = createNewNetConButTryToInherit(syn, srcPp, trgPp, is3Or1PartInSynStruc_old)
                     syn.changeStructure(srcPp, netCon, trgPp)
                 } else {
-                    rph.createNewEventFilterButTryToInherit(syn, isRpefPresenceUnchanged, is3Or1PartInSynStruc_old, trgPp, rpefPp, rpefNetCon)
-                    netCon = createNewNetConButTryToInherit(syn, srcPp, rpefPp, is3Or1PartInSynStruc_old)
-                    syn.changeStructure(srcPp, netCon, rpefPp, rpefNetCon, trgPp)
+                    seh.createNewSynEventsFilterWatcherButTryToInherit(syn, isSefwPresenceUnchanged, is3Or1PartInSynStruc_old, trgPp, sefwPp, sefwNetCon)
+                    netCon = createNewNetConButTryToInherit(syn, srcPp, sefwPp, is3Or1PartInSynStruc_old)
+                    syn.changeStructure(srcPp, netCon, sefwPp, sefwNetCon, trgPp)
                 }
             }
-            if (rph.isEnabled) {
-                // It's enough to set the seed only once per rank (for the last rpefPp in our case)
-                seed = rngUtils.getSeedFor_RPH()
-                rpefPp.setSeed(seed)
+            if (isSefwEnabled) {
+                // It's enough to set the seed only once per rank (for the last sefwPp in our case)
+                seed = rngUtils.getSeedFor_SEFW()
+                sefwPp.setSeed(seed)
             }
         } else {
-            getPpNameOrEmpty(2, sngMechName_old)
             if (!isForceNewTrgOrSng && stringsEqual(sngMechName, sngMechName_old)) {
                 return 0
             }
             for eachItemInList(syn, smAllSyns) {
-                sngPp = createNewTrgOrSngPpButTryToInherit(syn, sngMechIdx, sngMechName, isForceNewTrgOrSng, enumSynCompIdxs.single, enumTrgOrSngPpRole_old, trgOrSngMechName_old)
+                sngPp = createNewTrgOrSngPpButTryToInherit(syn, sngMechIdx, sngMechName, isForceNewTrgOrSng, enumSynCompIdxs.sngPp, enumTrgOrSngPpRole_old, trgOrSngMechName_old)
                 syn.changeStructure(sngPp)
             }
         }
         
-        // !!
-        // inhomAndStochLibrary.onSynStrucChange()
+        if (is3Or1PartInSynStruc_new) {
+            sngMechName = ""
+        } else {
+            srcMechName = ""
+            trgMechName = ""
+        }
+        inhomAndStochLibrary.onSynStrucChange(srcMechName_old, trgMechName_old, sngMechName_old, srcMechName, trgMechName, sngMechName)
         
         return 1
     }
@@ -193,11 +199,11 @@ begintemplate SynGroup
         trgMechIdx = $2
         sngMechIdx = $3
         if (is3Or1PartInSynStruc()) {
-            isSmthChanged = ifMechDirtyThenApplyHomogenChanges(enumSynCompIdxs.source, srcMechIdx, 0)
-            isSmthChanged = ifMechDirtyThenApplyHomogenChanges(enumSynCompIdxs.netCon, 0,         -1) || isSmthChanged
-            isSmthChanged = ifMechDirtyThenApplyHomogenChanges(enumSynCompIdxs.target, trgMechIdx, 1) || isSmthChanged
+            isSmthChanged = ifMechDirtyThenApplyHomogenChanges(enumSynCompIdxs.srcPp, srcMechIdx, 0)
+            isSmthChanged = ifMechDirtyThenApplyHomogenChanges(enumSynCompIdxs.netCon, 0, -1) || isSmthChanged
+            isSmthChanged = ifMechDirtyThenApplyHomogenChanges(enumSynCompIdxs.trgPp, trgMechIdx, 1) || isSmthChanged
         } else {
-            isSmthChanged = ifMechDirtyThenApplyHomogenChanges(enumSynCompIdxs.single, sngMechIdx, 2)
+            isSmthChanged = ifMechDirtyThenApplyHomogenChanges(enumSynCompIdxs.sngPp, sngMechIdx, 2)
         }
         return isSmthChanged
     }
@@ -211,7 +217,7 @@ begintemplate SynGroup
             for synIdx = 0, smAllSyns.count() - 1 {
                 syn = smAllSyns.o(synIdx)
                 if (syn.sec_ref != prevSec_ref) {
-                    distFuncHelper.onNewSection()   // For "Zebra (sections)" only
+                    distFuncHelper.onNewSection()   // Needed for "Zebra (sections)" only
                 }
                 $o1 = syn
                 iterator_statement
@@ -277,11 +283,11 @@ begintemplate SynGroup
         isSrcMechNameUnchanged = $4
         
         if (isSrcMechNameUnchanged) {
-            return syn.source
+            return syn.srcPp
         }
         
         doesSrcPpRequireSection = mth.doesPointProcessRequireSection(mechIdx)
-        synCompIdx = enumSynCompIdxs.source
+        synCompIdx = enumSynCompIdxs.srcPp
         
         if (!doesSrcPpRequireSection) {
             mechType = mth.getMechType(1)
@@ -290,7 +296,7 @@ begintemplate SynGroup
             setDefaultVars(synCompIdx, mechIdx, outPp)
             return outPp
         } else {
-            return createNewPpAttachedToSectionButTryToInherit(syn.source, synCompIdx, mechIdx, mechName, syn.sec_ref, syn.connectionPoint, 0)
+            return createNewPpAttachedToSectionButTryToInherit(syn.srcPp, synCompIdx, mechIdx, mechName, syn.sec_ref, syn.connectionPoint, 0)
         }
     }
     
@@ -364,7 +370,7 @@ begintemplate SynGroup
         return pp_new
     }
     
-    func ifMechDirtyThenApplyHomogenChanges() { local compIdx, mechIdx, enumPpRole, isPPorNC, maxVarType, varType, varTypeIdx, varIdx, arraySize, arrayIndex localobj comp, syn, ppOrNetCon, rpefNetConOrNil, nil, compMechStd, tempMechStdExt
+    func ifMechDirtyThenApplyHomogenChanges() { local compIdx, mechIdx, enumPpRole, isPPorNC, maxVarType, varType, varTypeIdx localobj comp, syn, ppOrNetCon, sefwNetConOrNil, nil, compMechStd, tempMechStdExt
         strdef mechName, varName
         
         compIdx = $1
@@ -385,12 +391,12 @@ begintemplate SynGroup
         for eachItemInList(syn, smAllSyns) {
             if (isPPorNC) {
                 ppOrNetCon = syn.getPointProcess(enumPpRole)
-                rpefNetConOrNil = nil
+                sefwNetConOrNil = nil
                 maxVarType = 3
             } else {
                 ppOrNetCon = syn.netCon
-                if (rph.isEnabled) {
-                    rpefNetConOrNil = syn.rpefNetCon
+                if (seh.isSefwEnabled()) {
+                    sefwNetConOrNil = syn.sefwNetCon
                 }
                 maxVarType = 1
             }
@@ -399,8 +405,8 @@ begintemplate SynGroup
                 compMechStd = comp.mechStds[mechIdx][varTypeIdx]
                 if (!comp.isMechVarTypeInhom[mechIdx][varTypeIdx]) {
                     compMechStd.out(ppOrNetCon)
-                    if (rpefNetConOrNil != nil) {
-                        compMechStd.out(rpefNetConOrNil)
+                    if (sefwNetConOrNil != nil) {
+                        compMechStd.out(sefwNetConOrNil)
                     }
                 } else {
                     if (isPPorNC) {
@@ -411,13 +417,14 @@ begintemplate SynGroup
                     tempMechStdExt.in(ppOrNetCon)
                     mcu.copyAllVarsValuesExceptInhom(compMechStd, tempMechStdExt)
                     tempMechStdExt.out(ppOrNetCon)
-                    if (rpefNetConOrNil != nil) {
-                        tempMechStdExt.out(rpefNetConOrNil)
+                    if (sefwNetConOrNil != nil) {
+                        tempMechStdExt.out(sefwNetConOrNil)
                     }
                 }
+                // !! inhomAndStochLibrary.onMakingVarHomogen(!!enumDmPpNc, compIdx, mechIdx, varType, !!varIdx, !!arrayIndex)
             }
-            if (rpefNetConOrNil != nil) {
-                rpefNetConOrNil.delay = 0
+            if (sefwNetConOrNil != nil) {
+                sefwNetConOrNil.delay = 0
             }
         }
         
@@ -426,7 +433,7 @@ begintemplate SynGroup
         return 1
     }
     
-    // !! code dupl. with Neuron_AddSynapses_reseed
+    // !! major code dupl. with Neuron_AddSynapses_reseed
     proc getNewSecRefConnectionPointAndSpineNeckDiam() { local synIdx, synLocIdx, connectionPoint, spineNeckDiam localobj sec_ref, np_ref
         synIdx = $1
         
@@ -462,9 +469,9 @@ begintemplate SynGroup
         $&4 = spineNeckDiam
     }
     
-    func isRpefPresentInSynStruc() { localobj nil
+    func isSefwPresentInSynStruc() { localobj nil
         // It's a code contract that all the syns have the same structure
-        return (smAllSyns.o(0).rpefPp != nil)
+        return (smAllSyns.o(0).sefwPp != nil)
     }
     
     proc setDefaultVars() { local synCompIdx, mechIdx, numVarTypes, varTypeIdx localobj pp, comp
@@ -476,7 +483,8 @@ begintemplate SynGroup
         numVarTypes = mth.getNumVarTypes(comp.enumDmPpNc)
         
         for varTypeIdx = 0, numVarTypes - 1 {   // 0: "PARAMETER", 1: "ASSIGNED", 2: "STATE"
-            // !! BUG: This inserts NaN-s for inhomogen vars
+            // This inserts NaN-s for inhomogen vars,
+            // but we'll restore all inhomogeneities shortly downstream calling inhomAndStochLibrary.onSynStrucChange
             comp.mechStds[mechIdx][varTypeIdx].out(pp)
         }
     }

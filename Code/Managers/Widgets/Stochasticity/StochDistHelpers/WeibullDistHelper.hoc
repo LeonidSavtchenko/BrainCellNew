@@ -78,7 +78,7 @@ begintemplate WeibullDistHelper
         
         alpha = k
         beta = lambda ^ k
-        return rng.weibull(alpha, beta)     // !!! cannot achieve mean = 0
+        return rng.weibull(alpha, beta)     // !! cannot achieve mean = 0
     }
     
 endtemplate WeibullDistHelper

@@ -1,0 +1,84 @@
+
+begintemplate CreateListOfOutputVarsWidget
+
+    public show, dismissHandler
+    
+    external unmapIfNotNil
+    external eachItemInList
+    
+    objref mainBox
+    objref exprsList
+    
+    
+    proc init() {
+        exprsList = new List()
+    }
+    
+    proc show() { localobj graph, expr
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            xlabel("Please add all the vars you want to watch to the Graph below")
+            xlabel("using the standard tool \"Plot what?\" and then click \"OK\".")
+            xlabel("(You can use \"Delete\" to remove the vars added by mistake.)")
+            xpanel()
+            graph = new Graph()
+            for eachItemInList(expr, exprsList) {
+                // !! BUG: Segmentation violation
+                graph.addvar(expr.s)
+            }
+            graph.menu_remove("Crosshair")
+            graph.menu_remove("Pick Vector")
+            graph.menu_remove("Color/Brush")
+            graph.menu_remove("View Axis")
+            graph.menu_remove("New Axis")
+            graph.menu_remove("View Box")
+            graph.menu_remove("Erase Axis")
+            graph.menu_remove("Axis Type")      // !! this one is not deleted for some reason
+            graph.menu_remove("Keep Lines")
+            graph.menu_remove("Family Label?")
+            graph.menu_remove("Erase")
+            graph.menu_remove("Move Text")
+            graph.menu_remove("Change Text")
+            xpanel("")
+            xlabel("")
+            xbutton("OK", "okHandler()")
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Output variables", 150, 150, -1, -1)
+    }
+    
+    proc dismissHandler() {
+        unmapIfNotNil(mainBox)
+    }
+    
+    // All next staff is private
+    
+    
+    // !! better use Python: os.mkdir and shutil.rmtree()
+    proc okHandler() {
+        strdef tempFolderPath, sysCommand, sesFilePath
+        sprint(tempFolderPath, "%stemp_folder", getcwd())
+        // print tempFolderPath
+        sprint(sysCommand, "mkdir \"%s\"", tempFolderPath)
+        // print sysCommand
+        system(sysCommand)
+        sprint(sesFilePath, "%s/temp.ses", tempFolderPath)
+        // print sesFilePath
+        save_session(sesFilePath)
+        
+        // !! parse the expressions from the temp file
+        
+        // !! delete the temp folder
+        
+        exprsList.remove_all()                                      //
+        exprsList.append(new String("dendA1_0100.i_cap( 0.05 )"))   // !! just for test
+        exprsList.append(new String("axon[1].v( 0.05 )"))           //
+        
+        dismissHandler()
+    }
+    
+endtemplate CreateListOfOutputVarsWidget

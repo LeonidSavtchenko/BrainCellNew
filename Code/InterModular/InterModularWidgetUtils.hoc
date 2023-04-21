@@ -46,6 +46,11 @@ proc createElasticSpacer() { localobj deck
     deck.map()
 }
 
+proc createMetaVarHint() {
+    xlabel("* \"@\" means a meta variable; it's not a part of the standard \"NetCon\" class,")
+    xlabel("   but rather used by our program to filter events emitted by \"NetCon\"-s")
+}
+
 proc dismissIfNotNil() { localobj widget, nil
     widget = $o1
     if (widget != nil) {

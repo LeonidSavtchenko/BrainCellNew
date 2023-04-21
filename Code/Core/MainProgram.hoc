@@ -37,6 +37,6 @@ proc runMain() {
         initParamsMain()    // !! this does
     }
     sourceSimulations() // !!
-    showRunPanel()
+    showRunControlPanel()
     showMainUi()
 }

@@ -5,7 +5,7 @@ begintemplate SynNCComp
     public isMechVarInhom, prepareVarsEditorHeader, getDistRange, getSecList, markMechDirty, updateStatsCurve, applyInhomogeneity, updateIsMechVarTypeInhom, isAnyVarInhom
     public isMechVarTypeInhom, mechStds, isMechDirty
     
-    external mwh, mth, math, rph
+    external mwh, mth, math, seh
     external smAllSyns, synGroup
     external mcu, utils4FakeMech4NC
     external stringsEqual, codeContractViolation
@@ -105,7 +105,7 @@ begintemplate SynNCComp
                 return
             }
         } else {
-            if (firstSyn.rpefPp == nil) {
+            if (firstSyn.sefwPp == nil) {
                 // The actual synapses don't have the release probability event filter PPs
                 return
             }
@@ -114,15 +114,15 @@ begintemplate SynNCComp
         if (!isMetaVar) {
             mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
         } else {
-            mechStd = new MechanismStandard(rph.realMechName, rph.realVarType)
+            mechStd = new MechanismStandard(seh.realMechName, seh.realVarType)
         }
         
         for synGroup.updateStatsCurveIter(syn, graph, &y, &yMin, &yMax) {
             if (!isMetaVar) {
                 y = utils4FakeMech4NC.getNetConVar(syn.netCon, varNameWithIndex)
             } else {
-                mechStd.in(syn.rpefPp)
-                y = mechStd.get(rph.realVarName, rph.realArrayIndex)
+                mechStd.in(syn.sefwPp)
+                y = mechStd.get(seh.realVarName, seh.realArrayIndex)
             }
         }
         
@@ -130,7 +130,7 @@ begintemplate SynNCComp
         $&3 = yMax
     }
     
-    proc applyInhomogeneity() { local varType, arraySize, arrayIndex, isMetaVar, isWeightVar, y localobj distFuncHelper, firstNetCon, mechStd, syn, thisPp
+    proc applyInhomogeneity() { local varType, arraySize, arrayIndex, isMetaVar, isSefwEnabled, isWeightVar, y localobj distFuncHelper, firstNetCon, mechStd, syn, thisPp
         strdef mechName, varName, varNameWithIndex
         
         mechName = $s1  // Just placeholders
@@ -145,8 +145,9 @@ begintemplate SynNCComp
         }
         
         isMetaVar = mcu.isMetaVar(varName)
+        isSefwEnabled = seh.isSefwEnabled()
         
-        if (isMetaVar && !rph.isEnabled) {
+        if (isMetaVar && !isSefwEnabled) {
             return
         }
         
@@ -154,7 +155,7 @@ begintemplate SynNCComp
             mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
             isWeightVar = stringsEqual(varName, "weight")
         } else {
-            mechStd = new MechanismStandard(rph.realMechName, rph.realVarType)
+            mechStd = new MechanismStandard(seh.realMechName, seh.realVarType)
         }
         
         for synGroup.applyInhomogeneityIter(syn, distFuncHelper) {
@@ -162,15 +163,15 @@ begintemplate SynNCComp
             if (!isMetaVar) {
                 firstNetCon = syn.netCon
                 utils4FakeMech4NC.setNetConVar(firstNetCon, varNameWithIndex, y)
-                if (rph.isEnabled && isWeightVar) {
-                    syn.rpefNetCon.weight = firstNetCon.weight
+                if (isSefwEnabled && isWeightVar) {
+                    syn.sefwNetCon.weight = firstNetCon.weight
                 }
             } else {
-                thisPp = syn.rpefPp
+                thisPp = syn.sefwPp
                 mechStd.in(thisPp)
                 // BUG: "variable_domain" used in "MechanismStandard.panel()" is ignored in "MechanismStandard.set()" and "MechanismStandard.out()",
                 //      so we can use any invalid value here without even a warning
-                mechStd.set(rph.realVarName, y, rph.realArrayIndex)
+                mechStd.set(seh.realVarName, y, seh.realArrayIndex)
                 mechStd.out(thisPp)
             }
         }

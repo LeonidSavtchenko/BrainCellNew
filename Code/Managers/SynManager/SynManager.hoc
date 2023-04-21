@@ -1,6 +1,4 @@
 
-objref smAllComps
-
 { load_file("SynManagerLoads.hoc") }
 
 
@@ -10,10 +8,10 @@ proc createSynComps() {
     smAllComps.append(new SynNCComp())
     smAllComps.append(new SynPPComp("Target PP", 1))
     smAllComps.append(new SynPPComp("Single PP", 2))
-    enumSynCompIdxs.source = 0
+    enumSynCompIdxs.srcPp = 0
     enumSynCompIdxs.netCon = 1
-    enumSynCompIdxs.target = 2
-    enumSynCompIdxs.single = 3
+    enumSynCompIdxs.trgPp = 2
+    enumSynCompIdxs.sngPp = 3
 }
 
 proc createSynCompsAndShowSynManagerBaseWidget() { localobj nil
