@@ -1,19 +1,25 @@
 
 import os
 from neuron import h, hoc, nrn
+from OtherUtils import codeContractViolation
 
 
 class Generators:
-    """!!"""
     
     hocObj = hoc.HocObject()
     
+    # Other data members that will be added in the ctor:
+    #   exportOptions
+    
+    def __init__(self):
+        self.exportOptions = self.hocObj.exportOptions
+        
     def getAllCreateStatementsExceptNanogeometry(self):
-        """!!input: allNames (List of String-s, taken from the top level)
-        output: a string like 'create name1, name2[123], name3[456][7], ...'"""
+        # input:  allNames (List of String-s, taken from the top level)
+        # output: a string like 'create name1, name2[123], name3[456][7], ...'
         
         if len(self.hocObj.allNames) == 0:
-            _codeContractViolation()
+            codeContractViolation()
         
         createdNames = []
         for name in self.hocObj.allNames:
@@ -63,7 +69,7 @@ class Generators:
                 allLines.extend(newLines)
         return allLines
         
-    # !! ask Lesha whether to split topology by blocks for soma, dendrites, axon, nanogeometry, other
+    # !! maybe split topology by blocks for soma, dendrites, axon, nanogeometry, other
     def initTopology(self):
         lines = []
         for sec in h.allsec():
@@ -85,7 +91,9 @@ class Generators:
     # !! for file "Geometry\Astrocyte\New Style\AstrocyteBasicGeometry.hoc", we have:
     #    soma[0] { ... pt3dadd(0.23000000417232513, 5.829999923706055, 0.0, 7.22599983215332)
     #    why garbage in x?
-    # !! ask Lesha whether to split geometry by blocks for soma, dendrites, axon, nanogeometry, other
+    # !! for file "Geometry\Neuron\cellmorphology.hoc", the value of "y" passed to "pt3dadd" is unstable,
+    #    i.e. it varies from one export to other
+    # !! maybe split geometry by blocks for soma, dendrites, axon, nanogeometry, other
     # !! investigate at which stage of the program the 3D-coordinates of 1st point of 1st imported dendrite become changed (at least in the next files: AstrocyteBasicGeometry.hoc и cellmorphology.hoc)
     #    "connect" command does not change them, so maybe finitialize?
     def initGeometry(self):
@@ -110,8 +118,191 @@ class Generators:
             inText = inFile.read()
         return inText.splitlines()  # Removing all newline characters here
     
+    # !! BUG: In rare cases, an error "procedure too big" may occur when user loads the exported file.
+    #         This error takes place while sourcing one of obfunc-s named "getListOfSecRefsFor*Comp".
+    #         The root cause is that the base geometry file imported earlier
+    #         created so many sections on the top level, that we cannot create now in the scope of just one obfunc.
+    #         To fix this error, we'll have to init all list_ref-s on the top level rather than in the obfunc-s.
+    def createMechComps(self):
+        lines = []
+        
+        mmAllComps = self.hocObj.mmAllComps
+        
+        # !! do not export biophysics if turned off in exportOptions
+        
+        # Create number of obfunc-s to prepare "list_ref" for each comp
+        obfuncNames = []
+        for comp in mmAllComps:
+            obfuncNameId = self._prepareUniqueNameId(comp.name)
+            obfuncName = 'getListOfSecRefsFor{}Comp'.format(obfuncNameId)
+            obfuncNames.append(obfuncName)
+            lines.append('obfunc {}() {{ local idx1, idx2 localobj list_ref'.format(obfuncName))
+            lines.append('    list_ref = new List()')
+            newLines = []
+            for sec_ref in comp.list_ref:
+                newLines.append('    {} list_ref.append(new SectionRef())'.format(sec_ref.sec))
+            newLines = self._insertLoopsToShorten(newLines)
+            lines.extend(newLines)
+            lines.append('    return list_ref')
+            lines.append('}')
+            lines.append('')
+        
+        # Create number of proc-s to prepare and set "isMechInserted" and "mechStds" for each comp
+        procNames = []
+        mth = self.hocObj.mth
+        enumDmPpNc = 0
+        varType = 1     # "PARAMETER"
+        varTypeIdx = 0  #
+        for comp in mmAllComps:
+            procNameId = self._prepareUniqueNameId(comp.name)
+            procName = 'init{}Comp'.format(procNameId)
+            procNames.append(procName)
+            lines.append('proc {}() {{ localobj comp, mechStd'.format(procName))
+            lines.append('    comp = $o1')
+            lines.append('    ')
+            numMechs = int(mth.getNumMechs(enumDmPpNc))
+            for mechIdx in range(numMechs):
+                if comp.isMechInserted[mechIdx]:
+                    lines.append('    comp.isMechInserted[{}] = 1'.format(mechIdx))
+            lines.append('    ')
+            for mechIdx in range(numMechs):
+                if not comp.isMechInserted[mechIdx]:
+                    continue
+                mechName = h.ref('')
+                mth.getMechName(enumDmPpNc, mechIdx, mechName)
+                mechName = mechName[0]
+                defaultMechStd = h.MechanismStandard(mechName, varType)
+                lines.append('    mechStd = new MechanismStandard("{}", {})'.format(mechName, varType))
+                numVars = int(mth.getNumMechVars(enumDmPpNc, mechIdx, varType))
+                for varIdx in range(numVars):
+                    varName = h.ref('')
+                    arraySize = int(mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName))
+                    varName = varName[0]
+                    for arrayIndex in range(arraySize):
+                        value = comp.mechStds[mechIdx][varTypeIdx].get(varName, arrayIndex)
+                        defaultValue = defaultMechStd.get(varName, arrayIndex)
+                        if value == defaultValue:
+                            continue
+                        # !! BUG: When user turns off the export of inhom models in exportOptions, we still assign "nan" here
+                        if arraySize == 1:
+                            lines.append('    mechStd.set("{}", {})'.format(varName, value))
+                        else:
+                            lines.append('    mechStd.set("{}", {}, {})'.format(varName, value, arrayIndex))
+                lines.append('    comp.mechStds[{}] = mechStd'.format(mechIdx))
+                lines.append('    ')
+            lines[-1] = '}'
+            lines.append('')
+            
+        lines.append('objref mmAllComps, comp')
+        lines.append('mmAllComps = new List()')
+        lines.append('')
+        
+        for (comp, obfuncName, procName) in zip(mmAllComps, obfuncNames, procNames):
+            lines.append('comp = new MechComp_("{}", {}())'.format(comp.name, obfuncName))
+            lines.append('{}(comp)'.format(procName))
+            lines.append('{ mmAllComps.append(comp) }')
+            lines.append('')
+            
+        return lines
+        
+    # !! major code dupl. with insertAllUsedStochFuncs
+    def insertAllUsedDistFuncs(self):
+        if not self.exportOptions.isExportInhomModels():
+            return self._nothingHereHint()
+            
+        lines = []
+        
+        distFuncCatIdxToFileNameDict = {}
+        distFuncCatIdxToFileNameDict[0] = 'DistFuncGroupAHelper.hoc'
+        distFuncCatIdxToFileNameDict[1] = 'DistFuncGroupBDHelper.hoc'
+        distFuncCatIdxToFileNameDict[2] = 'DistFuncGroupCHelper.hoc'
+        distFuncCatIdxToFileNameDict[3] = 'DistFuncGroupEFHelper.hoc'
+        distFuncCatIdxToFileNameDict[4] = 'DistFuncGroupGHelper.hoc'
+        
+        distFuncCatIdxs = set()
+        for activeSpecVar in h.inhomAndStochLibrary.activeSpecVars:
+            # !! need to filter the models depending on the exportOptions
+            if not (activeSpecVar.isInhom and activeSpecVar.varType == 1):  # 1: "PARAMETER"
+                continue
+            distFuncCatIdxs.add(activeSpecVar.distFuncCatIdx)
+            
+        for distFuncCatIdx in sorted(distFuncCatIdxs):
+            fileName = distFuncCatIdxToFileNameDict[distFuncCatIdx]
+            relFilePathName = 'Code\\Managers\\Widgets\\Inhomogeneity\\DistFuncHelpers\\Exported\\' + fileName
+            newLines = self.insertAllLinesFromFile(relFilePathName)
+            lines.extend(newLines)
+            
+        return self._linesOrNothingHereHint(lines)
+        
+    # !! major code dupl. with insertAllUsedDistFuncs
+    def insertAllUsedStochFuncs(self):
+        if not self.exportOptions.isExportStochModels():
+            return self._nothingHereHint()
+            
+        lines = []
+        
+        stochFuncIdxToFileNameDict = {}
+        stochFuncIdxToFileNameDict[0] = 'UniformDistHelper.hoc'
+        stochFuncIdxToFileNameDict[1] = 'NormalDistHelper.hoc'
+        stochFuncIdxToFileNameDict[2] = 'LogNormalDistHelper.hoc'
+        stochFuncIdxToFileNameDict[3] = 'NegExpDistHelper.hoc'
+        stochFuncIdxToFileNameDict[4] = 'ErlangDistHelper.hoc'
+        stochFuncIdxToFileNameDict[5] = 'WeibullDistHelper.hoc'
+        
+        stochFuncCatIdxToFileNameDict = {}
+        stochFuncCatIdxToFileNameDict[0] = 'StochFuncGroupAHelper.hoc'
+        stochFuncCatIdxToFileNameDict[1] = 'StochFuncGroupBDHelper.hoc'
+        stochFuncCatIdxToFileNameDict[2] = 'StochFuncGroupCHelper.hoc'
+        stochFuncCatIdxToFileNameDict[3] = 'StochFuncGroupEFHelper.hoc'
+        stochFuncCatIdxToFileNameDict[4] = 'StochFuncGroupGHelper.hoc'
+        
+        # !! need to filter the models depending on the exportOptions
+        
+        stochFuncCatIdxs = set()
+        stochFuncIdxs = set()
+        for activeSpecVar in h.inhomAndStochLibrary.activeSpecVars:
+            if not (activeSpecVar.isStoch and activeSpecVar.varType == 1):  # 1: "PARAMETER"
+                continue
+            stochFuncCatIdx = activeSpecVar.stochFuncCatIdx
+            stochFuncCatIdxs.add(stochFuncCatIdx)
+            if stochFuncCatIdx == 0:
+                stochFuncIdxs.add(activeSpecVar.stochFuncIdx)
+            
+        for stochFuncIdx in sorted(stochFuncIdxs):
+            fileName = stochFuncIdxToFileNameDict[stochFuncIdx]
+            relFilePathName = 'Code\\Managers\\Widgets\\Stochasticity\\StochDistHelpers\\Exported\\' + fileName
+            newLines = self.insertAllLinesFromFile(relFilePathName)
+            lines.extend(newLines)
+            
+        for stochFuncCatIdx in sorted(stochFuncCatIdxs):
+            fileName = stochFuncCatIdxToFileNameDict[stochFuncCatIdx]
+            relFilePathName = 'Code\\Managers\\Widgets\\Stochasticity\\StochFuncHelpers\\Exported\\' + fileName
+            newLines = self.insertAllLinesFromFile(relFilePathName)
+            lines.extend(newLines)
+            
+        return self._linesOrNothingHereHint(lines)
+        
+    def initSynComps(self):
+        if not self.exportOptions.isExportSyns:
+            return self._nothingHereHint()
+            
+        lines = []
+        
+        # !!
+        
+        return self._linesOrNothingHereHint(lines)
+        
+    def insertAltRunControlWidget(self):
+        if not self.exportOptions.isExportStochModels():
+            return self._nothingHereHint()
+            
+        lines = self.insertAllLinesFromFile('Code\\Core\\Widgets\\Exported\\alt_stdrun.hoc')
+        newLines = self.insertAllLinesFromFile('Code\\Core\\Widgets\\Exported\\AltRunControlWidget.hoc')
+        lines.extend(newLines)
+        
+        return lines
+        
     def _getHocVar(self, varName):
-        """!!"""
         return eval('self.hocObj.' + varName)   # !! maybe can do it via refletion
         
     def _generateAssignment(self, varName, isIntegerOrDouble):
@@ -121,13 +312,149 @@ class Generators:
         return '{} = {}'.format(varName, value)
         
     def _isSecObjOrArray(self, secObj):
-        """!!"""
         tp = type(secObj)
-        # !! can I use switch here?
+        # !! we could use "match-case" here, but it was introduced only in Python 3.10 (2021),
+        #    and user may have an older version installed
         if tp == nrn.Section:
             return 1
         elif tp == hoc.HocObject:
             return 0
         else:
-            _codeContractViolation()
+            codeContractViolation()
             
+    def _prepareUniqueNameId(self, name):
+        if len(name) == 0 or name[0] == ' ' or name[-1] == ' ' or '  ' in name:
+            # Keep in sync with hoc:chooseUniqueNameForCompartmentForMechManager
+            codeContractViolation()
+        # !! BUG: Two different names "A1" and "A 1" will have the same ID
+        return name.replace(' ', '')
+        
+    # !! Currenly this method cannot produce the nested loops of depth 3 and higher.
+    #    The depth 2 is sufficient to export astrocyte nanogeometry in the shortest way,
+    #    but in general case it's not enough because the imported geometry file may store the sections
+    #    in arbitrary n-dimentional structures
+    def _insertLoopsToShorten(self, lines):
+        lines, isShortened = self._insertLoopsToShortenCore(lines, 'idx2', False)
+        
+        if isShortened:
+            lines2 = self._wrapInnerCycles(lines)
+            lines2, isShortened = self._insertLoopsToShortenCore(lines2, 'idx1', True)
+            if isShortened:
+                lines = self._unwrapInnerCycles(lines2)
+            
+        return lines
+        
+    def _insertLoopsToShortenCore(self, lines, idxVarName, isSecondIteration):
+    
+        outLines = []
+        
+        isShortened = False
+        
+        isInsideBlock = False
+        firstParsedIdx = -1
+        prevParsedIdx = -1
+        prevLine = ''
+        prevParsedPattern = ''
+        
+        # !! it would be better to sort lines here because user could Merge/Split compartments and so shuffle the sections,
+        #    but simple "sorted(lines)" won't work until we prepend each index with zeros so that all corresponding indices
+        #    have the same length
+        for line in lines:
+            idx2 = self._rfindExt(line, ']', isSecondIteration)
+            if idx2 == -1:
+                if isInsideBlock:
+                    isShortened = self._finishBlock(outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName) or isShortened
+                    isInsideBlock = False
+                outLines.append(line)
+                continue
+            idx1 = self._rfindExt(line, '[', isSecondIteration)
+            if idx1 == -1:
+                codeContractViolation()
+            idx1 += 1
+            thisParsedIdx = int(line[idx1 : idx2])
+            thisParsedPattern = '{}{}{}'.format(line[: idx1], idxVarName, line[idx2 :])
+            if not isInsideBlock:
+                # Found a new block
+                firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern = self._startBlock(thisParsedIdx, line, thisParsedPattern)
+                isInsideBlock = True
+            else:
+                if thisParsedPattern == prevParsedPattern and thisParsedIdx == prevParsedIdx + 1:
+                    # Continue parsing this block
+                    prevParsedIdx = thisParsedIdx
+                else:
+                    # The block is over
+                    isShortened = self._finishBlock(outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName) or isShortened
+                    firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern = self._startBlock(thisParsedIdx, line, thisParsedPattern)
+                    isInsideBlock = True
+        
+        if isInsideBlock:
+            isShortened = self._finishBlock(outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName) or isShortened
+        
+        return outLines, isShortened
+        
+    def _startBlock(self, thisParsedIdx, line, thisParsedPattern):
+        return thisParsedIdx, thisParsedIdx, line, thisParsedPattern
+        
+    def _finishBlock(self, outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName):
+        if prevParsedIdx != firstParsedIdx:
+            outLines.append('    for {} = {}, {} {{'.format(idxVarName, firstParsedIdx, prevParsedIdx))
+            outLines.append('    ' + prevParsedPattern)
+            outLines.append('    }')
+            return True
+        else:
+            outLines.append(prevLine)
+            return False
+        
+    def _wrapInnerCycles(self, lines):
+        outLines = []
+        
+        isInsideBlock = False
+        linesBlock = []
+        for line in lines:
+            if ' for ' in line:
+                isInsideBlock = True
+                linesBlock.append(line)
+            elif ' }' in line:
+                linesBlock.append(line)
+                outLines.append('\n'.join(linesBlock))
+                isInsideBlock = False
+                linesBlock = []
+            elif isInsideBlock:
+                linesBlock.append(line)
+            else:
+                outLines.append(line)
+                
+        if isInsideBlock:
+            codeContractViolation()
+            
+        return outLines
+        
+    def _unwrapInnerCycles(self, lines):
+        outLines = []
+        for line in lines:
+            if '\n' in line:
+                newLines = line.split('\n')
+                outLines.append(newLines[0])
+                newLines = ['    ' + newLine for newLine in newLines[1 :]]
+                outLines.extend(newLines)
+            else:
+                outLines.append(line)
+        return outLines
+        
+    def _rfindExt(self, line, marker, isSecondIteration):
+        idx = line.rfind(marker)
+        if idx == -1:
+            return idx
+        if isSecondIteration:
+            idx = line.rfind(marker, 0, idx)
+        return idx
+        
+    def _nothingHereHint(self):
+        return '// (Nothing here)'
+        
+    def _linesOrNothingHereHint(self, lines):
+        if len(lines) != 0:
+            return lines
+        else:
+            return self._nothingHereHint()
+        

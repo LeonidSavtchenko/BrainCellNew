@@ -144,7 +144,7 @@ begintemplate SynPPComp
             thisPp = syn.getPointProcess(enumPpRole)
             mechStd.in(thisPp)
             y = distFuncHelper.calculateAt(syn.dist)
-            // BUG: "variable_domain" used in "MechanismStandard.panel()" is ignored in "MechanismStandard.set()" and "MechanismStandard.out()",
+            // !! BUG: "variable_domain" used in "MechanismStandard.panel()" is ignored in "MechanismStandard.set()" and "MechanismStandard.out()",
             //      so we can use any invalid value here without even a warning
             mechStd.set(varName, y, arrayIndex)
             mechStd.out(thisPp)

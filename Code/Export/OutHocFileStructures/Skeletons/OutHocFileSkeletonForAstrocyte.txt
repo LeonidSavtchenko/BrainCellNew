@@ -1,0 +1,94 @@
+
+py:getIntegerValueFromTopLevel('isAstrocyteOrNeuron')
+
+py:getAllCreateStatementsExceptNanogeometry()
+
+py:getIntegerValueFromTopLevel('NumberDendrites')
+py:getIntegerValueFromTopLevel('NumberLeavesPerStalk')
+py:getIntegerValueFromTopLevel('NumberNanoBranches')
+
+begintemplate AstrocyteNanoBranch
+    public LargeGlia, SmallGlia
+    create LargeGlia[1], SmallGlia[1]
+    external NumberLeavesPerStalk
+    proc init() {
+        create LargeGlia[NumberLeavesPerStalk], SmallGlia[NumberLeavesPerStalk]
+    }
+endtemplate AstrocyteNanoBranch
+
+objref astrocyteNanoBranch[NumberNanoBranches]
+for idx = 0, NumberNanoBranches - 1 {
+    astrocyteNanoBranch[idx] = new AstrocyteNanoBranch()
+}
+
+//////////////////// Start of section references /////////////////////////
+// !!! only soma_ref.o(0) is used below (dendrite_ref is not used anywhere)
+objref soma_ref, dendrite_ref
+
+// !!! BUG: usedNamesForSoma and usedNamesForDendrites are not defined if we import nanogeometry and export it again
+
+// Soma
+py:createListOfSectionRef('usedNamesForSoma', 'soma_ref')
+
+// Dendrites
+py:createListOfSectionRef('usedNamesForDendrites', 'dendrite_ref')
+
+// Nanogeometry
+py:insertAllLinesFromFile('Code\\NanoCore\\Exported\\CreateNanoRefs_Exported.hoc')
+
+createRefsForNanoGeometry()
+//////////////////// End of section references ///////////////////////////
+
+//////////////////// Start of topology ///////////////////////////////////
+py:initTopology()
+//////////////////// End of topology /////////////////////////////////////
+
+//////////////////// Start of geometry ///////////////////////////////////
+py:initGeometry()
+//////////////////// End of geometry /////////////////////////////////////
+
+// !! remove this block once we export the random g_pas in LargeGlia
+//////////////////// Start of nanogeometry biophysics ////////////////////
+py:getDoubleValueFromTopLevel('GPassive')
+py:getIntegerValueFromTopLevel('currentMechanismSetup')
+py:getDoubleValueFromTopLevel('DensityGluTransporters')
+
+py:insertAllLinesFromFile('Code\\NanoCore\\Astrocyte\\Exported\\AstrocyteNanoBranch_Exported.hoc')
+
+for idx = 0, NumberNanoBranches - 1 {
+    initAstrocyteBiophysics(astrocyteNanoBranch[idx])
+}
+
+//////////////////// End of nanogeometry biophysics //////////////////////
+
+// !! hardcoded rather than exported
+soma_ref.o(0).sec distance()
+
+//////////////////// Start of compartments and homogen biophysics ////////
+py:insertAllLinesFromFile('Code\\Export\\OutHocFileStructures\\ReducedHocTemplates\\ReducedHocTemplatesForBothAstrocyteAndNeuron.hoc')
+
+py:createMechComps()
+
+for compIdx = 0, mmAllComps.count() - 1 {
+    mmAllComps.o(compIdx).initHomogenBiophysics()
+}
+
+//////////////////// End of compartments and homogen biophysics //////////
+
+//////////////////// Start of inhomogen biophysics ///////////////////////
+
+py:insertAllUsedDistFuncs()
+
+//////////////////// End of inhomogen biophysics /////////////////////////
+
+//////////////////// Start of stoch models ///////////////////////////////
+
+py:insertAllUsedStochFuncs()
+
+//////////////////// End of stoch models /////////////////////////////////
+
+//////////////////// Start of AltRunControl widget ///////////////////////
+
+py:insertAltRunControlWidget()
+
+//////////////////// End of AltRunControl widget /////////////////////////

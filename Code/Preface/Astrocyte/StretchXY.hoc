@@ -1,5 +1,5 @@
 
-load_file("../GetMaxDendriticLength.hoc")
+{ load_file("../GetMaxDendriticLength.hoc") }
 
 // 3D modification of Astro geometry reconstructed from real astrocyte
 // File was added at 2 Apr 2018

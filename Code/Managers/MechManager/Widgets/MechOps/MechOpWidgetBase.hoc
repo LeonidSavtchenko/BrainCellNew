@@ -5,7 +5,8 @@ begintemplate MechOpWidgetBase
     external msmBaseWidget
     external mmAllComps
     external mwh, mth, mcu
-    external eachItemInList, stringEmpty
+    external stringEmpty
+    external eachItemInList
     
     public isDirty, lastMechOpIdx
     public switchToOtherMechOpViewHandler, ifDirtyThenProposeUserToApplyChanges, dismissHandler
@@ -230,7 +231,7 @@ begintemplate MechOpWidgetBase
                         xpanel()
                     } else {
                         // Just a horizontal spacer
-                        // BUG: when user makes the window width too small, this spacer "pushes" the left-hand panel(s) too much
+                        // !! BUG: when user makes the window width too small, this spacer "pushes" the left-hand panel(s) too much
                         for colIdx = colIdx + 1, numCols - 1 {
                             spacerBox = new VBox()
                             spacerBox.map("", 0, 0, colWidth, rowHeight)

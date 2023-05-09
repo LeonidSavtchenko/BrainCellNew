@@ -26,8 +26,8 @@ proc neuronPostImportHandler() {
 
     Boxspines.unmap()
     
-    { load_file("Code/Preface/CommonPreface.hoc") }
-    { load_file("Code/Preface/Neuron/initNew.hoc") }
+    load_file("Code/Preface/CommonPreface.hoc")
+    load_file("Code/Preface/Neuron/initNew.hoc")
     
     // Neuron simulation preface complete
     prefaceCompleteHandler()

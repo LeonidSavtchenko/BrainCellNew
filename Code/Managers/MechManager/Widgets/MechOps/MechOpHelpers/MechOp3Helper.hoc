@@ -4,11 +4,10 @@
 begintemplate MechOp3Helper
 
     public getHeader, isSkipBlock, insertBlock, dismissChilds
-    public defineStochFuncSubWidget
     public title, isRequireApply, itemTypeIdx
     
     external mmAllComps
-    external math, mth, mwh, mmmowb, mcu, inhomAndStochLibrary
+    external mth, mmmowb, mcu, inhomAndStochLibrary
     external dismissIfNotNil
     
     objref defineStochFuncSubWidget
@@ -52,7 +51,7 @@ begintemplate MechOp3Helper
         return 1
     }
     
-    func insertBlock() { local compIdx, mechIdx, numInsertedItems, varType, varTypeIdx, numMechVars, varIdx, arraySize, arrayIndex, isStoch localobj comp
+    func insertBlock() { local compIdx, mechIdx, numInsertedItems, varType, varTypeIdx, numVars, varIdx, arraySize, arrayIndex, isStoch localobj comp
         strdef name, varTypeName, varName, varNameWithIndexAndUnits, text, handlerHocCommand
         
         compIdx = $1
@@ -68,8 +67,8 @@ begintemplate MechOp3Helper
                 continue
             }
             mth.getVarTypeName(varType, varTypeName)
-            numMechVars = mth.getNumMechVars(0, mechIdx, varType)
-            for varIdx = 0, numMechVars - 1 {
+            numVars = mth.getNumMechVars(0, mechIdx, varType)
+            for varIdx = 0, numVars - 1 {
                 arraySize = mth.getVarNameAndArraySize(0, mechIdx, varType, varIdx, varName)
                 for arrayIndex = 0, arraySize - 1 {
                     isStoch = inhomAndStochLibrary.isStochEnabledFor(0, compIdx, mechIdx, varType, varIdx, arrayIndex)

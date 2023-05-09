@@ -4,6 +4,7 @@ begintemplate BoundingHelper
     public prepareForPdfAndCdfBounding, makeSureBoundsOK, calcPdf, calcCdf, generateFirstBoundedValue, generateNextBoundedValue, isUntouched
     public where, mode, min, max
     public minBoundVarName, maxBoundVarName
+    public colourizationHelper
     
     external mwh
     

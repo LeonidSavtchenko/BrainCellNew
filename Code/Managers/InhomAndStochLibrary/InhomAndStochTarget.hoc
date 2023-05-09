@@ -1,8 +1,8 @@
 
 begintemplate InhomAndStochTarget
 
-    public isEqual, isStochEnabled, updateInhom, updateStoch, setPlayIfPossible, stopPlayingVars, onInit, onStep, restoreInhomogeneity, disableInhomOrStoch
-    public isDmOrSynPart, compIdx, mechIdx, mechName, isInhom, isStoch
+    public makeOrUpdateInhom, makeOrUpdateStoch, isEqual, isStochEnabled, getInhomModelData, getStochModelData, setPlayIfPossible, stopPlayingVars, onInit, onStep, restoreInhomogeneity, disableInhomOrStoch
+    public isDmOrSynPart, compIdx, mechIdx, mechName, varType, isInhom, distFuncCatIdx, distFuncIdx, isStoch, stochFuncCatIdx, stochFuncIdx
     
     external smAllSyns
     external mwh, rngUtils, mth, compUtils
@@ -22,12 +22,14 @@ begintemplate InhomAndStochTarget
     strdef varName
     arraySize = -1
     arrayIndex = -1
-    objref distFuncHelper
+    objref segmentationHelper, distFuncHelper
     objref boundingHelper, stochFuncHelper
     
     objref list_ref
     
     isInhom = -1
+    distFuncCatIdx = -1
+    distFuncIdx = -1
     isStoch = -1
     stochFuncCatIdx = -1
     stochFuncIdx = -1
@@ -37,26 +39,13 @@ begintemplate InhomAndStochTarget
     objref this
     
     
-    proc init() { local numArg localobj nil
-        numArg = numarg()
-        
-        if (numArg != 7 && numArg != 11) {
-            codeContractViolation()
-        }
-        
+    proc init() {
         enumDmPpNc = $1
         compIdx = $2
         mechIdx = $3
         varType = $4
         varIdx = $5
         arrayIndex = $6
-        distFuncHelper = $o7
-        if (numArg == 11) {
-            boundingHelper = $o8
-            stochFuncHelper = $o9
-            stochFuncCatIdx = $10
-            stochFuncIdx = $11
-        }
         
         isDmOrSynPart = (enumDmPpNc == 0)
         
@@ -77,10 +66,23 @@ begintemplate InhomAndStochTarget
             //   than "sprint"-ing and executing a HOC-command for direct var assignment
             execute("tempMechStd = new FakeMechanismStandardForNetCon()", this)     // The template is not loaded for astrocytes
         }
-        
-        isInhom = (distFuncHelper != nil)
-        isStoch = (boundingHelper != nil)
-        
+    }
+    
+    proc makeOrUpdateInhom() {
+        segmentationHelper = $o1
+        distFuncHelper = $o2
+        distFuncCatIdx = $3
+        distFuncIdx = $4
+        isInhom = 1
+        setIsPlayable()
+    }
+    
+    proc makeOrUpdateStoch() {
+        boundingHelper = $o1
+        stochFuncHelper = $o2
+        stochFuncCatIdx = $3
+        stochFuncIdx = $4
+        isStoch = 1
         setIsPlayable()
     }
     
@@ -88,18 +90,24 @@ begintemplate InhomAndStochTarget
         return (enumDmPpNc == $1 && compIdx == $2 && mechIdx == $3 && varType == $4 && varIdx == $5 && arrayIndex == $6)
     }
     
-    proc updateInhom() {
-        distFuncHelper = $o1
-        isInhom = 1
+    proc getInhomModelData() {
+        if (!isInhom) {
+            codeContractViolation()
+        }
+        $o1 = segmentationHelper
+        $o2 = distFuncHelper
+        $&3 = distFuncCatIdx
+        $&4 = distFuncIdx
     }
     
-    proc updateStoch() {
-        boundingHelper = $o1
-        stochFuncHelper = $o2
-        stochFuncCatIdx = $3
-        stochFuncIdx = $4
-        isStoch = 1
-        setIsPlayable()
+    proc getStochModelData() {
+        if (!isStoch) {
+            codeContractViolation()
+        }
+        $o1 = boundingHelper
+        $o2 = stochFuncHelper
+        $&3 = stochFuncCatIdx
+        $&4 = stochFuncIdx
     }
     
     func setPlayIfPossible() { local x, homogenValue localobj sec_ref
@@ -265,7 +273,10 @@ begintemplate InhomAndStochTarget
         isInhomOrStoch = $1
         if (isInhomOrStoch) {
             isInhom = 0
+            segmentationHelper = nil
             distFuncHelper = nil
+            distFuncCatIdx = -1
+            distFuncIdx = -1
             setIsPlayable()
             return !isStoch
         } else {

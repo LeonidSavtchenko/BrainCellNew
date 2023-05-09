@@ -1,0 +1,128 @@
+
+// !! BUG: PSD and ACF are shown incorrectly for these sequences
+//         maybe we need to swap left and right parts before calling Vector.spctrm
+
+begintemplate StochFuncGroupGHelper
+
+    public selectedHandler, showPdf, showCdf, firstDice, nextDice, dismissHandler
+    public parentWidget
+    public value
+    
+    external codeContractViolation
+    
+    objref mainBox, parentWidget
+    
+    // 0: "1, 0, 0, 0, 0, ..."
+    // 1: "1, 1, 1, 1, 1, ..."
+    // 2: "1, 0, -1, 0, 1, ..."
+    // 3: "1, -1, 1, -1, 1, ..."
+    // 4: "y(m) = sin(2 * PI * m * n / SampleSize), m = 0, 1, ..., SampleSize - 1"
+    modelIdx = -1
+    value = -1
+    
+    isCosOrSin = -1
+    m = -1
+    n = -1
+    sign = -1
+    
+    
+    proc init() {
+        modelIdx = $1
+        parentWidget = $o2
+        
+        if (modelIdx < 0 || modelIdx > 4) {
+            codeContractViolation()
+        }
+        
+        if (modelIdx == 4) {
+            isCosOrSin = 0  // sin
+            n = 123.45
+        }
+    }
+    
+    func selectedHandler() {
+        if (modelIdx != 4) {
+            return 0
+        }
+        
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            xradiobutton("sin", "sinOrCosChangedHandler(0)", isCosOrSin == 0)
+            xradiobutton("cos", "sinOrCosChangedHandler(1)", isCosOrSin == 1)
+            xpvalue("n", &n, 1)
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Stoch model params", 210, 525, -1, -1)
+        
+        return 0
+    }
+    
+    proc showPdf() {
+        codeContractViolation()
+    }
+    
+    proc showCdf() {
+        codeContractViolation()
+    }
+    
+    func firstDice() {
+        if (modelIdx == 2) {
+            sign = 1
+            value = 1
+        } else if (modelIdx == 4) {
+            m = 0
+            value = diceSinOrCosFunc()
+        } else {
+            value = 1
+        }
+        return value
+    }
+    
+    func nextDice() {
+        if (modelIdx == 0) {
+            value = 0
+        } else if (modelIdx == 1) {
+            // Nothing here
+        } else if (modelIdx == 2) {
+            value = (1 - abs(value)) * sign
+            if (value == 0) {
+                sign = -sign
+            }
+        } else if (modelIdx == 3) {
+            value = -value
+        } else {
+            value = diceSinOrCosFunc()
+        }
+        return value
+    }
+    
+    proc dismissHandler() { localobj nil
+        if (mainBox != nil) {
+            if (mainBox.ismapped()) {
+                mainBox.unmap()
+            }
+        }
+    }
+    
+    // All next staff is private
+    
+    
+    proc sinOrCosChangedHandler() {
+        isCosOrSin = $1
+    }
+    
+    func diceSinOrCosFunc() { local arg
+        arg = 2 * PI * m * n / parentWidget.sampleSize
+        m += 1
+        if (isCosOrSin) {
+            return cos(arg)
+        } else {
+            return sin(arg)
+        }
+    }
+    
+endtemplate StochFuncGroupGHelper

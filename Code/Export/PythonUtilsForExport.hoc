@@ -1,9 +1,8 @@
 
-// !!
 proc sourcePythonCodeForExport() { local status
     strdef pyCommand
     
-    pyCommand = "import sys\nimport os\nsys.path.append(os.getcwd() + '\\Code\\Export\\PythonCode')\nfrom Framework import *"
+    pyCommand = "import sys\nimport os\nsys.path.append(os.getcwd() + '\\Code\\Export\\PythonCode')\nfrom Framework import *\nfrom GraphUtils import GraphUtils"
     
     status = nrnpython(pyCommand)
     if (!status) {
@@ -11,8 +10,6 @@ proc sourcePythonCodeForExport() { local status
     }
 }
 
-// !!
-// $s1 - !!
 proc callPythonExportCore() { local status
     strdef outHocFilePathName, pyCommand
     
@@ -27,9 +24,9 @@ proc callPythonExportCore() { local status
 }
 
 // !! maybe move to other place
-// $s1 - !!
 proc printPythonErrMsgAndStop() {
-    strdef msg
-    sprint(msg, "Exception raised in Python code (caught in %s)", $s1)
+    strdef where, msg
+    where = $s1
+    sprint(msg, "Exception raised in Python code (caught in %s)", where)
     printMsgAndStop(msg)
 }

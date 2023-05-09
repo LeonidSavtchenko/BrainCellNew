@@ -2,18 +2,20 @@
 // !!
 // BUGs:
 //  callers are commented for:
-//      onMakingVarHomogen (2 of 3 are commented), onMechInsert, onMechUninsert
+//      * onMakingVarHomogen (2 of 3 are commented), onMechInsert, onMechUninsert
 //  implementations are missing or incomplete for:
-//      onNanoReseedOrUpdate, onCompSplit, onCompMerge
+//      * onNanoReseedOrUpdate, onCompSplit, onCompMerge
 //  both caller and implementation are missing for:
-//      onRescanInMechManager (if we find out that user has made an inhomogen var homogen, then we need to remove the inhomogen model from this library)
-//      onChangingNsegInMechManager (if nseg was increased for already inhomogen comp, then we need to re-apply all inhomogen models again for this comp)
+//      * onRescanInMechManager (if we find out that user has made an inhomogen var homogen, then we need to remove the inhomogen model from this library)
+//      * onChangingNsegInMechManager (if nseg was increased for already inhomogen comp, then we need to re-apply all inhomogen models again for this comp;
+//          to achieve this, we'll have to store segmentationHelper in MechComp rather than in InhomAndStochTarget)
+//      * onMovingDistanceCentre (we need to re-apply all inhomogen models)
 
 // !! create a few specialized iterators to simplify the loops in this template (e.g. eachActiveSpecVarInSyn)
 
 begintemplate InhomAndStochLibrary
     
-    public isStochEnabledFor, onInhomApply, onStochApply, onMakingVarHomogen, onStochDisable, onNanoReseedOrUpdate
+    public isInhomEnabledFor, isStochEnabledFor, onInhomApply, onStochApply, getInhomModelDataFor, getStochModelDataFor, onMakingVarHomogen, onStochDisable, onNanoReseedOrUpdate
     public getNumInhomVarsForDistMechs, getNumStochVarsForDistMechs, onMechInsert, onMechUninsert, onCompSplit, onCompMerge
     public getNumInhomVarsForSyns, getNumStochVarsForSyns, isAnyStochVarsForSyns, onSynLocChange, onSynStrucChange
     
@@ -33,53 +35,82 @@ begintemplate InhomAndStochLibrary
     }
     
     // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
-    func isStochEnabledFor() {
-        idx = findActiveSpecVar($1, $2, $3, $4, $5, $6)
-        if (idx == activeSpecVars.count()) {
+    func isInhomEnabledFor() { localobj actSpecVar, nil
+        actSpecVar = findActiveSpecVar($1, $2, $3, $4, $5, $6)
+        if (actSpecVar == nil) {
             // Not found
             return 0
         }
-        return activeSpecVars.o(idx).isStoch
+        return actSpecVar.isInhom
     }
     
-    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, distFuncHelper
-    proc onInhomApply() { local idx
-        idx = findActiveSpecVar($1, $2, $3, $4, $5, $6)
-        if (idx == activeSpecVars.count()) {
-            // Not found - create
-            activeSpecVars.append(new InhomAndStochTarget($1, $2, $3, $4, $5, $6, $o7))
-        } else {
-            // Found - update
-            activeSpecVars.o(idx).updateInhom($o7)
+    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
+    func isStochEnabledFor() { localobj actSpecVar, nil
+        actSpecVar = findActiveSpecVar($1, $2, $3, $4, $5, $6)
+        if (actSpecVar == nil) {
+            // Not found
+            return 0
         }
+        return actSpecVar.isStoch
+    }
+    
+    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, segmentationHelper, distFuncHelper, distFuncCatIdx, distFuncIdx
+    proc onInhomApply() { localobj actSpecVar
+        actSpecVar = findOrCreateActiveSpecVar($1, $2, $3, $4, $5, $6)
+        actSpecVar.makeOrUpdateInhom($o7, $o8, $9, $10)
     }
     
     // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, boundingHelper, stochFuncHelper, stochFuncCatIdx, stochFuncIdx
-    func onStochApply() { local idx, wasStoch localobj nil, activeSpecVar
-        idx = findActiveSpecVar($1, $2, $3, $4, $5, $6)
-        if (idx == activeSpecVars.count()) {
-            // Not found - create
-            activeSpecVars.append(new InhomAndStochTarget($1, $2, $3, $4, $5, $6, nil, $o7, $o8, $9, $10))
-            return 0
+    // out: wasStoch
+    func onStochApply() { local wasFoundOrCreated, wasStoch localobj actSpecVar
+        actSpecVar = findOrCreateActiveSpecVar($1, $2, $3, $4, $5, $6, &wasFoundOrCreated)
+        if (wasFoundOrCreated) {
+            wasStoch = actSpecVar.isStoch
+        } else {
+            wasStoch = 0
         }
-        // Found - update
-        activeSpecVar = activeSpecVars.o(idx)
-        wasStoch = activeSpecVar.isStoch
-        activeSpecVar.updateStoch($o7, $o8, $9, $10)
+        actSpecVar.makeOrUpdateStoch($o7, $o8, $9, $10)
         return wasStoch
+    }
+    
+    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
+    // out: segmentationHelper, distFuncHelper, distFuncCatIdx, distFuncIdx
+    proc getInhomModelDataFor() { localobj actSpecVar, nil
+        actSpecVar = findActiveSpecVar($1, $2, $3, $4, $5, $6)
+        if (actSpecVar == nil) {
+            // Not found
+            codeContractViolation()
+        }
+        if (!actSpecVar.isInhom) {
+            codeContractViolation()
+        }
+        actSpecVar.getInhomModelData($o7, $o8, &$&9, &$&10)
+    }
+    
+    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
+    // out: boundingHelper, stochFuncHelper, stochFuncCatIdx, stochFuncIdx
+    proc getStochModelDataFor() { localobj actSpecVar, nil
+        actSpecVar = findActiveSpecVar($1, $2, $3, $4, $5, $6)
+        if (actSpecVar == nil) {
+            // Not found
+            codeContractViolation()
+        }
+        if (!actSpecVar.isStoch) {
+            codeContractViolation()
+        }
+        actSpecVar.getStochModelData($o7, $o8, &$&9, &$&10)
     }
     
     // !! uncomment the callers for this method (2 of 3 are commented)
     // !! major code dupl. with onStochDisable
     // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
-    proc onMakingVarHomogen() { local idx, isStochDisabledAsWell
-        idx = findActiveSpecVar($1, $2, $3, $4, $5, $6)
-        if (idx == activeSpecVars.count()) {
+    proc onMakingVarHomogen() { local idx, isStochDisabledAsWell localobj actSpecVar, nil
+        actSpecVar = findActiveSpecVar($1, $2, $3, $4, $5, $6, &idx)
+        if (actSpecVar == nil) {
             // Not found
             return
         }
-        // Found
-        isStochDisabledAsWell = activeSpecVars.o(idx).disableInhomOrStoch(1)
+        isStochDisabledAsWell = actSpecVar.disableInhomOrStoch(1)
         if (isStochDisabledAsWell) {
             activeSpecVars.remove(idx)
         }
@@ -87,20 +118,19 @@ begintemplate InhomAndStochLibrary
     
     // !! major code dupl. with onMakingVarHomogen
     // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
-    func onStochDisable() { local idx, wasStoch, isInhomDisabledAsWell localobj activeSpecVar
-        idx = findActiveSpecVar($1, $2, $3, $4, $5, $6)
-        if (idx == activeSpecVars.count()) {
+    // out: wasStoch
+    func onStochDisable() { local idx, wasStoch, isInhomDisabledAsWell localobj actSpecVar, nil
+        actSpecVar = findActiveSpecVar($1, $2, $3, $4, $5, $6, &idx)
+        if (actSpecVar == nil) {
             // Not found
             return 0
         }
-        // Found
-        activeSpecVar = activeSpecVars.o(idx)
-        wasStoch = activeSpecVar.isStoch
-        isInhomDisabledAsWell = activeSpecVar.disableInhomOrStoch(0)
+        wasStoch = actSpecVar.isStoch
+        isInhomDisabledAsWell = actSpecVar.disableInhomOrStoch(0)
         if (isInhomDisabledAsWell) {
             activeSpecVars.remove(idx)
         }
-        // !! do I need to restore the old value for the var here?
+        // !! do I need to restore the old value for the var here (i.e. the value before applying the stochasticity)?
         return wasStoch
     }
     
@@ -368,6 +398,57 @@ begintemplate InhomAndStochLibrary
     // All next staff is private
     
     
+    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
+    // out: actSpecVarOrNil, (opt) idxOrMinusOne
+    obfunc findActiveSpecVar() { local numArg, idx localobj actSpecVar, nil
+        numArg = numarg()
+        if (numArg < 6 || numArg > 7) {
+            codeContractViolation()
+        }
+        
+        // Not many inhomAndStochTarget-s, so hashless comparison works just fine
+        for idx = 0, activeSpecVars.count() - 1 {
+            actSpecVar = activeSpecVars.o(idx)
+            if (actSpecVar.isEqual($1, $2, $3, $4, $5, $6)) {
+                break
+            }
+        }
+        
+        if (idx == activeSpecVars.count()) {
+            // Not found
+            actSpecVar = nil
+            idx = -1
+        }
+        
+        if (numArg == 7) {
+            $&7 = idx
+        }
+        
+        return actSpecVar
+    }
+    
+    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
+    // out: actSpecVar, (opt) isFoundOrCreated
+    obfunc findOrCreateActiveSpecVar() { local numArg, isFound localobj actSpecVar, nil
+        numArg = numarg()
+        if (numArg < 6 || numArg > 7) {
+            codeContractViolation()
+        }
+        
+        actSpecVar = findActiveSpecVar($1, $2, $3, $4, $5, $6)
+        isFound = (actSpecVar != nil)
+        if (!isFound) {
+            actSpecVar = new InhomAndStochTarget($1, $2, $3, $4, $5, $6)
+            activeSpecVars.append(actSpecVar)
+        }
+        
+        if (numArg == 7) {
+            $&7 = isFound
+        }
+        
+        return actSpecVar
+    }
+    
     // in: isDmOrSynPart, isInhomOrStoch
     func getNumInhomOrStochVars() { local isDmOrSynPart, isInhomOrStoch, numVars localobj actSpecVar
         isDmOrSynPart = $1
@@ -389,18 +470,6 @@ begintemplate InhomAndStochLibrary
             numVars += 1
         }
         return numVars
-    }
-    
-    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
-    func findActiveSpecVar() { local actSpecVarIdx localobj actSpecVar
-        // Not many inhomAndStochTarget-s, so hashless comparison works just fine
-        for actSpecVarIdx = 0, activeSpecVars.count() - 1 {
-            actSpecVar = activeSpecVars.o(actSpecVarIdx)
-            if (actSpecVar.isEqual($1, $2, $3, $4, $5, $6)) {
-                break
-            }
-        }
-        return actSpecVarIdx
     }
     
     proc correctCompIdxsAfterSplit() { local splitCompIdx localobj specVars, specVar

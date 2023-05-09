@@ -1,5 +1,5 @@
-//load_file("SimPotassium.hoc")
-//load_file("runcontrol.ses")
+//{load_file("SimPotassium.hoc")}
+//{load_file("runcontrol.ses")}
 
 //RunAstroPotasasium()
 

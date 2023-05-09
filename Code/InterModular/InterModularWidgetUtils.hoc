@@ -46,6 +46,22 @@ proc createElasticSpacer() { localobj deck
     deck.map()
 }
 
+obfunc openDeck() { localobj deck
+    deck = new Deck()
+    deck.intercept(1)
+    return deck
+}
+
+proc closeDeck() { local cardIdx, width, height localobj deck
+    deck = $o1
+    cardIdx = $2
+    width = $3
+    height = $4
+    deck.intercept(0)
+    deck.flip_to(cardIdx)
+    deck.map("", 0, 0, width, height)
+}
+
 proc createMetaVarHint() {
     xlabel("* \"@\" means a meta variable; it's not a part of the standard \"NetCon\" class,")
     xlabel("   but rather used by our program to filter events emitted by \"NetCon\"-s")

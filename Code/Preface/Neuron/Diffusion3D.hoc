@@ -6,7 +6,12 @@ create ExtracellularSource
 BasicK=2.5  // !! Defined the same in Biophys.hoc
 
 
-{ load_file("Exported/Diffusion3D_Exported.hoc") }
+// !! this proc is also called for neuron nanogeometry after reseeding
+proc Neuron_Diffusion3D_init() {
+    insert IKa
+    ko_IKa=BasicK
+    gk_IKa=0
+}
 
 
 forall {
@@ -109,31 +114,45 @@ PotassiumRelease(DelayInter1, IntervalRelease1, SwtichOn1)
 
 finitialize(v_init)     // !! Already moved to NanoBranchesManager.hoc
 
+objref exPotasPosBox, exPotasParamsBox
+
 proc showExtraPotassiumControlPanels() {
-    xpanel("Position extra Potassium",0)
-    xlabel("===============position====================")
-    xvalue("x","x", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
-    xvalue("y","y", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
-    xvalue("z","z", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
-    xvalue("Radius of source","ReleaseRadius", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
-    xvalue("x_soma","x_soma", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
-    xvalue("y_soma","y_soma", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
-    xvalue("z_soma","z_soma", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
-    xpanel(903,40)
+    exPotasPosBox = new VBox()
+    exPotasPosBox.intercept(1)
+    {
+        xpanel("")
+        xlabel("===============position====================")
+        xvalue("x","x", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
+        xvalue("y","y", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
+        xvalue("z","z", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
+        xvalue("Radius of source","ReleaseRadius", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
+        xvalue("x_soma","x_soma", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
+        xvalue("y_soma","y_soma", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
+        xvalue("z_soma","z_soma", 1, "ExtracellularSourceXYZ(x, y, z, ReleaseRadius, x_soma, y_soma, z_soma)", 0, 1)
+        xpanel()
+    }
+    exPotasPosBox.intercept(0)
+    exPotasPosBox.map("Position extra Potassium", 903, 40, -1, -1)
     
     // GluOut=0.0   // This was not used
     
-    xpanel("Potassium extracellular release",0)
-    xlabel("================== Potassium source ==================")
-    xvalue("InitConcentration","input1.InitConcentration", 1,"", 0, 1 )
-    xvalue("Offset of release","DelayInter1", 1, "PotassiumRelease(DelayInter1, IntervalRelease1, SwtichOn1)", 0, 1)
-    xvalue("Numbers of release","SwtichOn1", 1, "PotassiumRelease(DelayInter1, IntervalRelease1, SwtichOn1)", 0, 1)
-    xvalue("Interval between Release","IntervalRelease1", 1, "PotassiumRelease(DelayInter1, IntervalRelease1, SwtichOn1)", 0, 1)
-    xvalue("Max distance of release","input1.Distance", 1,"", 0, 1 )
-    xvalue("Diffusion coefficient","input1.Deff", 1,"", 0, 1 )
-    xvalue("Decay time of potassium","input1.tau", 1,"", 0, 1 )
-    xlabel("======================================================")
-    xpanel(382,327)
+    exPotasParamsBox = new VBox()
+    exPotasParamsBox.intercept(1)
+    {
+        xpanel("")
+        xlabel("================== Potassium source ==================")
+        xvalue("InitConcentration","input1.InitConcentration", 1,"", 0, 1 )
+        xvalue("Offset of release","DelayInter1", 1, "PotassiumRelease(DelayInter1, IntervalRelease1, SwtichOn1)", 0, 1)
+        xvalue("Numbers of release","SwtichOn1", 1, "PotassiumRelease(DelayInter1, IntervalRelease1, SwtichOn1)", 0, 1)
+        xvalue("Interval between Release","IntervalRelease1", 1, "PotassiumRelease(DelayInter1, IntervalRelease1, SwtichOn1)", 0, 1)
+        xvalue("Max distance of release","input1.Distance", 1,"", 0, 1 )
+        xvalue("Diffusion coefficient","input1.Deff", 1,"", 0, 1 )
+        xvalue("Decay time of potassium","input1.tau", 1,"", 0, 1 )
+        xlabel("======================================================")
+        xpanel()
+    }
+    exPotasParamsBox.intercept(0)
+    exPotasParamsBox.map("Potassium extracellular release", 382, 327, -1, -1)
 }
 
 //****************************************************************

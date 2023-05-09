@@ -1,4 +1,7 @@
 
+// !!! Do not forget to export GLOBAL-s
+
+
 // !! make it localobj in exportCellToHocFile
 objref allNames
 
@@ -25,11 +28,9 @@ proc exportCellToHocFile() { local isEndFootPresent
     }
     mwh.hidePleaseWaitBox()
     
-    // !! maybe need to dump values like celsius, v_init etc., call finitialize... - ask Lesha
+    // !! maybe need to dump values like celsius, v_init etc., call finitialize...
     
     // !! maybe add smth. like "access <soma_name>[0]" in the end
-    
-    // !! maybe here I need to copy nrnmech.dll from the root folder to the folder selected by user - ask Lesha
     
     // !! think about a checkbox to open just saved file in default text editor
     mwh.startIntercepting()
@@ -52,6 +53,7 @@ proc exportCellToHocFile() { local isEndFootPresent
             sprint(line1, line1, ", Dendrites, Axon and Extracellular Source")
             sprint(line2, line2, " and the synapse manager")
         }
+        // !!! say that we don't export ASSIGNED and STATE
         mwh.showNotImplementedWarning(line1, line2)
         // !! also, the distance centre location is hardcoded in the exported file rather than actually exported
         mwh.showMessageBox("Export complete successfully", "Complete")

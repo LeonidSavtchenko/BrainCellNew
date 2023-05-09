@@ -39,11 +39,12 @@ SpineHeadNSeg = 7
 variable_domain(&SpineHeadNSeg, 2, inf)
 
 
-// The next "declaration" is needed just to bind the template's external at the file sourcing time
-// (it will be defined after the file sourcing and before the first call)
-proc initNeuronBiophysics() { codeContractViolation() }
+// The next "declarations" are needed just to bind the template's external-s at the file sourcing time
+// (they will be defined after the file sourcing and before the first call)
+proc Neuron_Biophysics_init() { codeContractViolation() }
+proc Neuron_Diffusion3D_init() { codeContractViolation() }
 
-// Keep this template in sync with its reduced counterpart at Export/OutHocFileSkeletons/OutHocFileSkeletonForNeuron.txt
+// Keep this template in sync with its reduced counterpart at Export/OutHocFileStructures/Skeletons/OutHocFileSkeletonForNeuron.txt
 
 begintemplate NeuronNanoBranch
     
@@ -64,8 +65,8 @@ begintemplate NeuronNanoBranch
     
     external isFirstReseeding
     
-    // proc
-    external initNeuronBiophysics
+    // proc-s
+    external Neuron_Biophysics_init, Neuron_Diffusion3D_init
     
     create spine_neck
     create spine_head
@@ -112,7 +113,29 @@ begintemplate NeuronNanoBranch
     
     // !!
     proc initBiophysics() {
-        initNeuronBiophysics(this)
+        // !! warning: g_pas is assigned here and in Preface/Neuron/Biophys.hoc -> proc Neuron_Biophysics_init for neuron nanogeometry
+        spine_neck {
+            Ra = 150
+            insert pas
+            g_pas = 0.01
+        }
+        spine_head {
+            Ra = 150
+            insert pas
+            g_pas = 0.01
+        }
+        
+        // !!
+        if (!isFirstReseeding) {
+            spine_neck {
+                Neuron_Biophysics_init()
+                Neuron_Diffusion3D_init()
+            }
+            spine_head {
+                Neuron_Biophysics_init()
+                Neuron_Diffusion3D_init()
+            }
+        }
     }
     
     // !!
@@ -201,9 +224,6 @@ begintemplate NeuronNanoBranch
     }
     
 endtemplate NeuronNanoBranch
-
-
-{ load_file("Exported/NeuronNanoBranch_Exported.hoc") }
 
 
 obfunc createNeuronNanoBranch() { local isUniformOrNormal

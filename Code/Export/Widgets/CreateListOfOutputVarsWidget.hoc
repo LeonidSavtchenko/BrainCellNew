@@ -3,18 +3,26 @@ begintemplate CreateListOfOutputVarsWidget
 
     public show, dismissHandler
     
-    external unmapIfNotNil
+    external mwh, pyObj
+    external addVarToGraph, unmapIfNotNil
     external eachItemInList
     
     objref mainBox
-    objref exprsList
+    objref varsList
+    
+    isRecordAndSaveWithAPCounts = -1
+    isSaveToTxtOrBinFile = -1
     
     
     proc init() {
-        exprsList = new List()
+        varsList = new List()
+        isRecordAndSaveWithAPCounts = 0
+        isSaveToTxtOrBinFile = 1
     }
     
-    proc show() { localobj graph, expr
+    proc show() { localobj graph, var, apcList
+        strdef text
+        
         mainBox = new VBox()
         mainBox.intercept(1)
         {
@@ -24,9 +32,8 @@ begintemplate CreateListOfOutputVarsWidget
             xlabel("(You can use \"Delete\" to remove the vars added by mistake.)")
             xpanel()
             graph = new Graph()
-            for eachItemInList(expr, exprsList) {
-                // !! BUG: Segmentation violation
-                graph.addvar(expr.s)
+            for eachItemInList(var, varsList) {
+                addVarToGraph(graph, var.s)
             }
             graph.menu_remove("Crosshair")
             graph.menu_remove("Pick Vector")
@@ -43,12 +50,23 @@ begintemplate CreateListOfOutputVarsWidget
             graph.menu_remove("Change Text")
             xpanel("")
             xlabel("")
+            apcList = new List("APCount")
+            sprint(text, "Record and save the times with all existing APCount-s (%d detected)", apcList.count())
+            xcheckbox(text, &isRecordAndSaveWithAPCounts, "recordAndSaveWithAPCountsCheckBoxHandler()")
+            xlabel("")
+            xlabel("Save to:")
+            xradiobutton("TXT file", "isSaveToTxtOrBinFile = 1", isSaveToTxtOrBinFile == 1)
+            xradiobutton("BIN file", "isSaveToTxtOrBinFile = 0", isSaveToTxtOrBinFile == 0)
+            xlabel("")
             xbutton("OK", "okHandler()")
             xpanel()
         }
         mainBox.intercept(0)
         mainBox.dismiss_action("dismissHandler()")
         mainBox.map("Output variables", 150, 150, -1, -1)
+        
+        // Keep the var name in sync with GraphUtils.parseVarsFromTheGraph
+        graph.save_name("someUniqueNameForTheParsedGraph")
     }
     
     proc dismissHandler() {
@@ -58,25 +76,20 @@ begintemplate CreateListOfOutputVarsWidget
     // All next staff is private
     
     
-    // !! better use Python: os.mkdir and shutil.rmtree()
+    proc recordAndSaveWithAPCountsCheckBoxHandler() {
+        strdef line1, line2, line3
+        if (!isRecordAndSaveWithAPCounts) {
+            return
+        }
+        line1 = "You can use the next standard widgets to add new or edit existing APCount-s:"
+        line2 = "* Tools -> Point Processes -> Managers -> Point Manager"
+        line3 = "* Tools -> Point Processes -> Managers -> Point Group"
+        mwh.showMessageBox(line1, line2, line3, "APCount-s")
+    }
+    
     proc okHandler() {
-        strdef tempFolderPath, sysCommand, sesFilePath
-        sprint(tempFolderPath, "%stemp_folder", getcwd())
-        // print tempFolderPath
-        sprint(sysCommand, "mkdir \"%s\"", tempFolderPath)
-        // print sysCommand
-        system(sysCommand)
-        sprint(sesFilePath, "%s/temp.ses", tempFolderPath)
-        // print sesFilePath
-        save_session(sesFilePath)
-        
-        // !! parse the expressions from the temp file
-        
-        // !! delete the temp folder
-        
-        exprsList.remove_all()                                      //
-        exprsList.append(new String("dendA1_0100.i_cap( 0.05 )"))   // !! just for test
-        exprsList.append(new String("axon[1].v( 0.05 )"))           //
+        varsList.remove_all()
+        pyObj.GraphUtils.parseVarsFromTheGraph(varsList)
         
         dismissHandler()
     }

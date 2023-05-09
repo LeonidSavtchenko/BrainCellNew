@@ -6,6 +6,17 @@ if (isAstrocyteOrNeuron) {
     objref smAllSyns, enumSynCompIdxs, seh
 }
 
+proc loadIfNotDeclared() {
+    strdef templName, hocFileRelPathName
+    templName = $s1
+    hocFileRelPathName = $s2
+    if (!name_declared(templName)) {
+        load_file(hocFileRelPathName)
+    } else if (isBaseOrNanoStart) {
+        codeContractViolation()
+    }
+}
+
 { load_file("MechTypeHelper.hoc") }
 
 { load_file("InhomAndStochLibrary/InhomAndStochTarget.hoc") }
@@ -14,23 +25,23 @@ if (isAstrocyteOrNeuron) {
 
 { load_file("Widgets/Inhomogeneity/DistFuncHelpers/PythonUtils/PythonUtilsForDistFuncs.hoc") }
 { load_file("Widgets/Inhomogeneity/DistFuncHelpers/FileUtilsForDistFuncs.hoc") }
-{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupAHelper.hoc") }
-{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupsBDHelper.hoc") }
-{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupCHelper.hoc") }
-{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupsEFHelper.hoc") }
-{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupGHelper.hoc") }
+loadIfNotDeclared("DistFuncGroupAHelper", "Widgets/Inhomogeneity/DistFuncHelpers/Exported/DistFuncGroupAHelper.hoc")
+loadIfNotDeclared("DistFuncGroupsBDHelper", "Widgets/Inhomogeneity/DistFuncHelpers/Exported/DistFuncGroupsBDHelper.hoc")
+loadIfNotDeclared("DistFuncGroupCHelper", "Widgets/Inhomogeneity/DistFuncHelpers/Exported/DistFuncGroupCHelper.hoc")
+loadIfNotDeclared("DistFuncGroupsEFHelper", "Widgets/Inhomogeneity/DistFuncHelpers/Exported/DistFuncGroupsEFHelper.hoc")
+loadIfNotDeclared("DistFuncGroupGHelper", "Widgets/Inhomogeneity/DistFuncHelpers/Exported/DistFuncGroupGHelper.hoc")
 { load_file("Widgets/Inhomogeneity/InhomEditorSectionUtils.hoc") }
 { load_file("Widgets/Inhomogeneity/InhomEditorSubWidget.hoc") }
 
 { load_file("Widgets/Stochasticity/StochDistHelpers/PythonUtils/PythonUtilsForStochDists.hoc") }
-{ load_file("Widgets/Stochasticity/StochDistHelpers/UniformDistHelper.hoc") }
-{ load_file("Widgets/Stochasticity/StochDistHelpers/NormalDistHelper.hoc") }
-{ load_file("Widgets/Stochasticity/StochDistHelpers/LogNormalDistHelper.hoc") }
-{ load_file("Widgets/Stochasticity/StochDistHelpers/NegExpDistHelper.hoc") }
-{ load_file("Widgets/Stochasticity/StochDistHelpers/ErlangDistHelper.hoc") }
-{ load_file("Widgets/Stochasticity/StochDistHelpers/WeibullDistHelper.hoc") }
-{ load_file("Widgets/Stochasticity/StochFuncHelpers/StochFuncGroupAHelper.hoc") }
-{ load_file("Widgets/Stochasticity/StochFuncHelpers/StochFuncGroupGHelper.hoc") }
+loadIfNotDeclared("UniformDistHelper", "Widgets/Stochasticity/StochDistHelpers/Exported/UniformDistHelper.hoc")
+loadIfNotDeclared("NormalDistHelper", "Widgets/Stochasticity/StochDistHelpers/Exported/NormalDistHelper.hoc")
+loadIfNotDeclared("LogNormalDistHelper", "Widgets/Stochasticity/StochDistHelpers/Exported/LogNormalDistHelper.hoc")
+loadIfNotDeclared("NegExpDistHelper", "Widgets/Stochasticity/StochDistHelpers/Exported/NegExpDistHelper.hoc")
+loadIfNotDeclared("ErlangDistHelper", "Widgets/Stochasticity/StochDistHelpers/Exported/ErlangDistHelper.hoc")
+loadIfNotDeclared("WeibullDistHelper", "Widgets/Stochasticity/StochDistHelpers/Exported/WeibullDistHelper.hoc")
+loadIfNotDeclared("StochFuncGroupAHelper", "Widgets/Stochasticity/StochFuncHelpers/Exported/StochFuncGroupAHelper.hoc")
+loadIfNotDeclared("StochFuncGroupGHelper", "Widgets/Stochasticity/StochFuncHelpers/Exported/StochFuncGroupGHelper.hoc")
 { load_file("Widgets/Stochasticity/ColourizationHelper.hoc") }
 { load_file("Widgets/Stochasticity/BoundingHelper.hoc") }
 { load_file("Widgets/Stochasticity/StochEditorSubWidget.hoc") }

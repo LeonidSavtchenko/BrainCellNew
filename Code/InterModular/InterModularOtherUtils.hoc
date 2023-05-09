@@ -25,3 +25,12 @@ iterator eachPointInGrid() { local minValue, maxValue, numPts, step, idx
         $&1 += step     // !! "$&1 = minValue + zero_based_idx * step" would be more accurate, but slower
     }
 }
+
+// Keeping this proc on the top level rather than in a template because otherwise
+// Graph.addvar would fail due to missing access to the section
+proc addVarToGraph() { localobj graph
+    strdef varStr
+    graph = $o1
+    varStr = $s2
+    graph.addvar(varStr)
+}

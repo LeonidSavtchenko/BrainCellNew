@@ -1,7 +1,7 @@
 
 pwman_place(0,0,0)
 
-load_file("pointgrp.hoc")
+{ load_file("pointgrp.hoc") }
 
 objref ocbox_
 ocbox_ = new PointProcessGroupManager(0)

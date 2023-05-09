@@ -18,3 +18,5 @@ objref stochTestGraph
 exportManagerMainWidget.show()
 
 { chdir("..") }     // Without this, getcwd() will return different path compared to the start from "init.hoc"
+
+sourcePythonCodeForExport()

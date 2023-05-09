@@ -15,8 +15,8 @@ begintemplate InhomEditorSubWidget
     
     objref segmentationHelper
     
-    distFuncIdx = -1
     distFuncCatIdx = -1
+    distFuncIdx = -1
     double distFuncIdxs[5]
     zebraDistFuncCatIdx = -1
     
@@ -51,7 +51,7 @@ begintemplate InhomEditorSubWidget
     isCancel = -1
     
     
-    proc init() { local inf, isInhom
+    proc init() { local isInhom1, isInhom2, custExprDistFuncCatIdx, custFuncDistFuncCatIdx, inf localobj distFuncHelper
     
         enumDmPpNc = $1
         compIdx = $2
@@ -72,41 +72,15 @@ begintemplate InhomEditorSubWidget
         
         if (isMechOrSynEditor) {
             isCalledFromVarsEditor = (mmmowb.lastMechOpIdx == 1)
-        } else {
-            isCalledFromVarsEditor = 1
-        }
-        
-        if (isMechOrSynEditor) {
-            inf = math.inf
             
-            // !! can be moved to show (local)
+            // !! can be made local for proc "show"
             totalNsegVarName = "total_nseg"
             minNsegVarName = "min_nseg"
             
-            // Have to "execute" this because the template is not loaded when !isMechOrSynEditor, so we catch "SegmentationHelper is not a template"
-            execute("segmentationHelper = new SegmentationHelper(xMax - xMin)", this)
-            
-            // variable_domain(&segmentationHelper.total_nseg, 1, math.inf)     // Error here: Cannot find the symbol associated with the pointer when called from Python. Use a string instead of pointer argument
-            variable_domain(&segmentationHelper.total_nseg, 1, inf)
-            // variable_domain(&segmentationHelper.min_nseg, 1, segmentationHelper.total_nseg)  // Unfortunately, this won't change the upper limit for min_nseg once total_nseg changes
-            variable_domain(&segmentationHelper.min_nseg, 1, inf)
-            
             getDistMechVarRangeOutside(comp.list_ref, mechName, varType, varName, arrayIndex, &yMinOut, &yMaxOut)
-        }
-        
-        distFuncIdx = 1
-        distFuncCatIdx = 0
-        zebraDistFuncCatIdx = 4
-        
-        isInhom = comp.isMechVarInhom(mechIdx, varTypeIdx, varName, arrayIndex)
-        
-        if (!isInhom) {
-            showCurveOrColormapIdx = 0
         } else {
-            // !! need to restore the old UI state: distFuncCatIdx, distFuncIdx, params in dist func etc. (maybe segmentationHelper.*)
-            showCurveOrColormapIdx = 1
+            isCalledFromVarsEditor = 1
         }
-        showAllOrThisCompIdx = 0
         
         distFuncHelpers[0] = new DistFuncGroupAHelper(0, this)
         distFuncHelpers[1] = new DistFuncGroupAHelper(1, this)
@@ -124,9 +98,57 @@ begintemplate InhomEditorSubWidget
         distFuncHelpers[13] = new DistFuncGroupsEFHelper(2, this, distFuncHelpers[11])
         distFuncHelpers[14] = new DistFuncGroupGHelper(0, this)
         distFuncHelpers[15] = new DistFuncGroupGHelper(1, this)
+        
+        custExprDistFuncCatIdx = 1
+        custFuncDistFuncCatIdx = 2
+        zebraDistFuncCatIdx = 4
+        
+        // The difference between these two values takes place for morphology\diam and LargeGlia\g_pas
+        // because they are inhomogen by fact even though their models are not stored in inhomAndStochLibrary
+        isInhom1 = inhomAndStochLibrary.isInhomEnabledFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
+        isInhom2 = comp.isMechVarInhom(mechIdx, varTypeIdx, varName, arrayIndex)
+        
+        if (!isInhom1) {
+            if (isMechOrSynEditor) {
+                inf = math.inf
+                
+                // Have to "execute" this because the template is not loaded when !isMechOrSynEditor, so we catch "SegmentationHelper is not a template"
+                execute("segmentationHelper = new SegmentationHelper(xMax - xMin)", this)
+                
+                // variable_domain(&segmentationHelper.total_nseg, 1, math.inf)     // Error here: Cannot find the symbol associated with the pointer when called from Python. Use a string instead of pointer argument
+                variable_domain(&segmentationHelper.total_nseg, 1, inf)
+                // variable_domain(&segmentationHelper.min_nseg, 1, segmentationHelper.total_nseg)  // Unfortunately, this won't change the upper limit for min_nseg once total_nseg changes
+                variable_domain(&segmentationHelper.min_nseg, 1, inf)
+            }
+            
+            distFuncCatIdx = 0
+            distFuncIdx = 1
+        } else {
+            // Restoring the old UI state: segmentationHelper, distFuncHelper, distFuncCatIdx, distFuncIdx
+            inhomAndStochLibrary.getInhomModelDataFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, segmentationHelper, distFuncHelper, &distFuncCatIdx, &distFuncIdx)
+            distFuncHelper.parentWidget = this
+            if (distFuncCatIdx == custExprDistFuncCatIdx || distFuncCatIdx == custFuncDistFuncCatIdx) {
+                // Preventing showing up the string or file dialog
+                distFuncHelper.isSkipOneSelect = 1
+            }
+            distFuncHelpers[distFuncIdx] = distFuncHelper
+        }
+        
+        showCurveOrColormapIdx = isInhom2
+        
+        // Default selections
+        distFuncIdxs[0] = 1
+        distFuncIdxs[1] = 5
+        distFuncIdxs[2] = 7
+        distFuncIdxs[3] = 11
+        distFuncIdxs[zebraDistFuncCatIdx] = 14
+        // Overwrite one value for the case when user opens an old model
+        distFuncIdxs[distFuncCatIdx] = distFuncIdx
+        
+        showAllOrThisCompIdx = 0
     }
     
-    proc show() { local isInhom, isStoch localobj secList, hBox1, hBox2, hBox3, hBox4, hBox5, vBox1, vBox2, vBox3, vBox4
+    proc show() { local isInhom, isStoch, idx localobj secList, hBox1, hBox2, hBox3, hBox4, hBox5, vBox1, vBox2, vBox3, vBox4
         strdef compName, varNameWithIndexAndUnits, text, yesNo, what, when
         
         compName = comp.name
@@ -266,44 +288,41 @@ begintemplate InhomEditorSubWidget
                         deck3.intercept(1)
                         {
                             xpanel("")
-                            if (distFuncCatIdx != 0) {
-                                codeContractViolation()
-                            }
-                            distFuncIdxs[distFuncCatIdx] = distFuncIdx
-                            xradiobutton("Constant: a0", "distFuncChangedHandler(0)", distFuncIdx == 0)
-                            xradiobutton("Linear: a0 + a1 * x", "distFuncChangedHandler(1)", distFuncIdx == 1)
-                            xradiobutton("Quadratic: a0 + a1 * x + a2 * x^2", "distFuncChangedHandler(2)", distFuncIdx == 2)
-                            xradiobutton("Poly-rational: (a0 + a1 * x + a2 * x^2) / (b0 + b1 * x + b2 * x^2)", "distFuncChangedHandler(3)", distFuncIdx == 3)
-                            xradiobutton("Exponential: a + b * exp(c * x)", "distFuncChangedHandler(4)", distFuncIdx == 4)
+                            idx = distFuncIdxs[0]
+                            xradiobutton("Constant: a0", "distFuncChangedHandler(0)", idx == 0)
+                            xradiobutton("Linear: a0 + a1 * x", "distFuncChangedHandler(1)", idx == 1)
+                            xradiobutton("Quadratic: a0 + a1 * x + a2 * x^2", "distFuncChangedHandler(2)", idx == 2)
+                            xradiobutton("Poly-rational: (a0 + a1 * x + a2 * x^2) / (b0 + b1 * x + b2 * x^2)", "distFuncChangedHandler(3)", idx == 3)
+                            xradiobutton("Exponential: a + b * exp(c * x)", "distFuncChangedHandler(4)", idx == 4)
                             xpanel()
                             xpanel("")
-                            distFuncIdxs[1] = 5
-                            xradiobutton("Enter HOC expression (one-liner)", "distFuncChangedHandler(5)", 1)
-                            xradiobutton("Enter Python expression (one-liner)", "distFuncChangedHandler(6)", 0)
+                            idx = distFuncIdxs[1]
+                            xradiobutton("Enter HOC expression (one-liner)", "distFuncChangedHandler(5)", idx == 5)
+                            xradiobutton("Enter Python expression (one-liner)", "distFuncChangedHandler(6)", idx == 6)
                             xpanel()
                             xpanel("")
-                            distFuncIdxs[2] = 7
-                            xradiobutton("Load HOC function from file", "distFuncChangedHandler(7)", 1)
-                            xradiobutton("Load Python function from file", "distFuncChangedHandler(8)", 0)
-                            xradiobutton("Use already defined/loaded HOC function", "distFuncChangedHandler(9)", 0)
-                            xradiobutton("Use already defined/loaded Python function", "distFuncChangedHandler(10)", 0)
+                            idx = distFuncIdxs[2]
+                            xradiobutton("Load HOC function from file", "distFuncChangedHandler(7)", idx == 7)
+                            xradiobutton("Load Python function from file", "distFuncChangedHandler(8)", idx == 8)
+                            xradiobutton("Use already defined/loaded HOC function", "distFuncChangedHandler(9)", idx == 9)
+                            xradiobutton("Use already defined/loaded Python function", "distFuncChangedHandler(10)", idx == 10)
                             xpanel()
                             xpanel("")
-                            distFuncIdxs[3] = 11
-                            xradiobutton("Enter table + linear interpolation", "distFuncChangedHandler(11)", 1)
-                            xradiobutton("Load table from Text file + linear interpolation", "distFuncChangedHandler(12)", 0)
-                            xradiobutton("Load table from Excel file + linear interpolation", "distFuncChangedHandler(13)", 0)
+                            idx = distFuncIdxs[3]
+                            xradiobutton("Enter table + linear interpolation", "distFuncChangedHandler(11)", idx == 11)
+                            xradiobutton("Load table from Text file + linear interpolation", "distFuncChangedHandler(12)", idx == 12)
+                            xradiobutton("Load table from Excel file + linear interpolation", "distFuncChangedHandler(13)", idx == 13)
                             xpanel()
                             xpanel("")
-                            distFuncIdxs[zebraDistFuncCatIdx] = 14
                             if (isMechOrSynEditor) {
                                 what = ""
                             } else {
                                 what = "/PPs"
                             }
                             sprint(text, "Zebra (segments%s, check subdivision on colormap for small \"nseg\")", what)
-                            xradiobutton(text, "distFuncChangedHandler(14)", 1)
-                            xradiobutton("Zebra (sections)", "distFuncChangedHandler(15)", 0)
+                            idx = distFuncIdxs[zebraDistFuncCatIdx]
+                            xradiobutton(text, "distFuncChangedHandler(14)", idx == 14)
+                            xradiobutton("Zebra (sections)", "distFuncChangedHandler(15)", idx == 15)
                             xpanel()
                         }
                         deck3.intercept(0)
@@ -528,6 +547,9 @@ begintemplate InhomEditorSubWidget
         distFuncIdxs[distFuncCatIdx] = distFuncIdx
         
         distFuncHelper = distFuncHelpers[distFuncIdx]
+        
+        // For the case if the next command won't finish (when user just ignores the string or file dialog)
+        isCancel = 1
         
         isCancel = distFuncHelper.selectedHandler()
         if (isCancel) {
@@ -771,7 +793,7 @@ begintemplate InhomEditorSubWidget
             comp.applyInhomogeneity(mechName, varType, varName, arraySize, arrayIndex, distFuncHelper)
         }
         
-        inhomAndStochLibrary.onInhomApply(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, distFuncHelper)
+        inhomAndStochLibrary.onInhomApply(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, segmentationHelper, distFuncHelper, distFuncCatIdx, distFuncIdx)
         
         updateStatsCurve(&yMin, &yMax)
         

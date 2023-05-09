@@ -25,7 +25,7 @@ MaxLenStalk = 0.3                               // um
 proc initAstrocyteBiophysics() { codeContractViolation() }
 proc updateAstrocyteBiophysics() { codeContractViolation() }
 
-// Keep this template in sync with its reduced counterpart at Export/OutHocFileSkeletons/OutHocFileSkeletonForAstrocyte.txt
+// Keep this template in sync with its reduced counterpart at Export/OutHocFileStructures/Skeletons/OutHocFileSkeletonForAstrocyte.txt
 
 begintemplate AstrocyteNanoBranch
     

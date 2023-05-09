@@ -1,5 +1,6 @@
 
 from neuron import hoc, nrn
+from OtherUtils import codeContractViolation
 from Generators import *
 
 
@@ -7,19 +8,16 @@ from Generators import *
 genStartMarker = 'py:'
 genEndMarker = ')'
 
+
 class _GenInfo:
-    """!!"""
     
     def __init__(self, startIdx, endIdx, pyCall):
-        """!!"""
         self.startIdx = startIdx
         self.endIdx = endIdx
         self.pyCall = pyCall
-        
+
 def exportCore(outHocFilePathName):
-    """!!
-    Other input: isAstrocyteOrNeuron (taken from the top level)"""
-    
+
     hocObj = hoc.HocObject()
     isAstrocyteOrNeuron = hocObj.isAstrocyteOrNeuron
     
@@ -27,7 +25,7 @@ def exportCore(outHocFilePathName):
         inSkeletonFileName = 'OutHocFileSkeletonForAstrocyte.txt'
     else:
         inSkeletonFileName = 'OutHocFileSkeletonForNeuron.txt'
-    inSkeletonFileRelPathName = 'Code\\Export\\OutHocFileSkeletons\\' + inSkeletonFileName
+    inSkeletonFileRelPathName = 'Code\\Export\\OutHocFileStructures\\Skeletons\\' + inSkeletonFileName
     
     with open(inSkeletonFileRelPathName, 'r') as inFile:
         lines = inFile.readlines()      # Preserving all newline characters here
@@ -47,13 +45,12 @@ def exportCore(outHocFilePathName):
         elif tp == list:
             _insertLines(lines, lineIdx, genRes)
         else:
-            _codeContractViolation()
+            codeContractViolation()
     
     with open(outHocFilePathName, 'w') as outFile:
         outFile.writelines(lines)
 
 def _findAllGenerators(lines):
-    """!!"""
     lineIdxToGenInfoDict = {}
     for lineIdx in range(len(lines)):
         line = lines[lineIdx]
@@ -63,25 +60,20 @@ def _findAllGenerators(lines):
         pyCallIdx = startIdx + len(genStartMarker)
         endIdx = line.find(genEndMarker, pyCallIdx)
         if endIdx == -1:
-            _codeContractViolation()
+            codeContractViolation()
         endIdx += 1
         testIdx = line.find(genStartMarker, endIdx)
         if testIdx != -1:
             # More than 1 generator in the same line: Not implemented
-            _codeContractViolation()
+            codeContractViolation()
         lineIdxToGenInfoDict[lineIdx] = _GenInfo(startIdx, endIdx, line[pyCallIdx : endIdx])
     return lineIdxToGenInfoDict
 
 def _insertSubstring(lines, lineIdx, startIdx, endIdx, genSubstring):
-    """!!"""
     line = lines[lineIdx]
     line = line[: startIdx] + genSubstring + line[endIdx :]
     lines[lineIdx] = line
 
 def _insertLines(lines, lineIdx, genLines):
-    """!!"""
     lines[lineIdx : lineIdx + 1] = [genLine + '\n' for genLine in genLines]
     
-    
-def _codeContractViolation():
-    raise Exception('Bug in Exporter: Code contract violation')

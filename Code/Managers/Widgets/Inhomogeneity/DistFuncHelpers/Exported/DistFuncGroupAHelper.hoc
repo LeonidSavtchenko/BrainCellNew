@@ -1,0 +1,107 @@
+
+begintemplate DistFuncGroupAHelper
+
+    public selectedHandler, calculateAt, onNewSection, dismissHandler
+    public mainBox
+    public parentWidget
+    
+    external codeContractViolation
+    
+    objref mainBox, parentWidget
+    
+    modelIdx = -1
+    double params[1]
+    
+    
+    proc init() {
+        modelIdx = $1
+        parentWidget = $o2
+        
+        if (modelIdx < 0 || modelIdx > 4) {
+            codeContractViolation()
+        }
+        double params[6]
+        if (modelIdx < 3) {
+            params[1] = 0.1
+            params[2] = 0.0005
+        } else if (modelIdx == 3) {
+            params[1] = 1
+            params[3] = 1
+            params[4] = 0.01
+            params[5] = 2e-4
+        } else {
+            params[1] = 1
+            params[2] = -0.01
+        }
+    }
+    
+    func selectedHandler() {
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            if (modelIdx != 4) {
+                xpvalue("a0", &params[0], 1, "valueChangedHandler()")   // !! if modelIdx == 0, then maybe make it equal to the initial value of the mech's variable
+                if (modelIdx >= 1) {
+                    xpvalue("a1", &params[1], 1, "valueChangedHandler()")
+                    if (modelIdx >= 2) {
+                        xpvalue("a2", &params[2], 1, "valueChangedHandler()")
+                        if (modelIdx == 3) {
+                            xpvalue("b0", &params[3], 1, "valueChangedHandler()")
+                            xpvalue("b1", &params[4], 1, "valueChangedHandler()")
+                            xpvalue("b2", &params[5], 1, "valueChangedHandler()")
+                        }
+                    }
+                }
+            } else {
+                xpvalue("a", &params[0], 1, "valueChangedHandler()")
+                xpvalue("b", &params[1], 1, "valueChangedHandler()")
+                xpvalue("c", &params[2], 1, "valueChangedHandler()")
+            }
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Distance func params", 210, 525, -1, -1)
+        
+        return 0
+    }
+    
+    func calculateAt() { local x, xSq, y
+        x = $1
+        if (modelIdx != 4) {
+            y = params[0]
+            if (modelIdx >= 1) {
+                y += params[1] * x
+                if (modelIdx >= 2) {
+                    xSq = x * x
+                    y += params[2] * xSq
+                    if (modelIdx == 3) {
+                        y /= params[3] + params[4] * x + params[5] * xSq
+                    }
+                }
+            }
+            return y
+        } else {
+            return params[0] + params[1] * exp(params[2] * x)
+        }
+    }
+    
+    proc onNewSection() {
+        // Nothing here
+    }
+    
+    proc dismissHandler() {
+        if (mainBox.ismapped()) {
+            mainBox.unmap()
+        }
+    }
+    
+    
+    // All next proc-s are private
+    
+    proc valueChangedHandler() {
+        parentWidget.updateCurves()
+    }
+    
+endtemplate DistFuncGroupAHelper

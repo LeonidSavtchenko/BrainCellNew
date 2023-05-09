@@ -41,8 +41,8 @@ proc showAstrocyteLevelOfNanoDetailWidget() {
 
 showAstrocyteLevelOfNanoDetailWidget()
 
-load_file("nrngui.hoc")
-load_file("../../Core/NanoDistrFromFile.hoc")
+{ load_file("nrngui.hoc") }
+{ load_file("../../Core/NanoDistrFromFile.hoc") }
 
 // UI
 objref vBoxSelectGeometry, plotShapeGeometry, vBoxSelectGeometryReal
@@ -127,7 +127,7 @@ proc initMainProgram() {
     plotShapeGeometry.unmap()
     Boxleaves.unmap()
     
-    { load_file("Code/Preface/CommonPreface.hoc") }
+    load_file("Code/Preface/CommonPreface.hoc")
     
     // Astrocyte simulation preface complete
     prefaceCompleteHandler()

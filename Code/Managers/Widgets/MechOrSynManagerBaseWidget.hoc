@@ -1,6 +1,6 @@
 
-{ load_file("../../Core/Widgets/alt_stdrun.hoc") }
-{ load_file("../../Core/Widgets/AltRunControlWidget.hoc") }
+{ load_file("../../Core/Widgets/Exported/alt_stdrun.hoc") }
+loadIfNotDeclared("AltRunControlWidget", "../../Core/Widgets/Exported/AltRunControlWidget.hoc")
 
 
 isScheduledRescanningOfDistMechs = 0

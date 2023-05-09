@@ -1,0 +1,91 @@
+
+py:getIntegerValueFromTopLevel('isAstrocyteOrNeuron')
+
+py:getAllCreateStatementsExceptNanogeometry()
+
+py:getIntegerValueFromTopLevel('NumberDendrites')
+py:getIntegerValueFromTopLevel('NumberNanoBranches')
+
+begintemplate NeuronNanoBranch
+    public spine_neck, spine_head
+    create spine_neck, spine_head
+endtemplate NeuronNanoBranch
+
+objref neuronNanoBranch[NumberNanoBranches]
+for idx = 0, NumberNanoBranches - 1 {
+    neuronNanoBranch[idx] = new NeuronNanoBranch()
+}
+
+//////////////////// Start of section references /////////////////////////
+// !!! only soma_ref.o(0) is used below (dendrite_ref and axon_ref are not used anywhere)
+objref soma_ref, dendrite_ref, axon_ref
+
+// !!! BUG: usedNamesForSoma, usedNamesForDendrites and usedNamesForAxon are not defined if we import nanogeometry and export it again
+
+// Soma
+py:createListOfSectionRef('usedNamesForSoma', 'soma_ref')
+
+// Dendrites
+py:createListOfSectionRef('usedNamesForDendrites', 'dendrite_ref')
+
+// Axon
+py:createListOfSectionRef('usedNamesForAxon', 'axon_ref')
+
+// Nanogeometry
+py:insertAllLinesFromFile('Code\\NanoCore\\Exported\\CreateNanoRefs_Exported.hoc')
+
+createRefsForNanoGeometry()
+//////////////////// End of section references ///////////////////////////
+
+//////////////////// Start of topology ///////////////////////////////////
+py:initTopology()
+//////////////////// End of topology /////////////////////////////////////
+
+//////////////////// Start of geometry ///////////////////////////////////
+py:initGeometry()
+//////////////////// End of geometry /////////////////////////////////////
+
+// !! hardcoded rather than exported
+soma_ref.o(0).sec distance()
+
+//////////////////// Start of synapses ///////////////////////////////////
+py:getIntegerValueFromTopLevel('enumSynLoc')
+
+//////////////////////////////////////////////////////////////////////////
+py:insertAllLinesFromFile('Code\\Preface\\Neuron\\Exported\\AddSynapses_Exported.hoc')
+//////////////////// End of synapses /////////////////////////////////////
+
+//////////////////// Start of compartments and homogen biophysics ////////
+py:insertAllLinesFromFile('Code\\Export\\OutHocFileStructures\\ReducedHocTemplates\\ReducedHocTemplatesForBothAstrocyteAndNeuron.hoc')
+
+py:createMechComps()
+
+for compIdx = 0, mmAllComps.count() - 1 {
+    mmAllComps.o(compIdx).initHomogenBiophysics()
+}
+
+//////////////////// End of compartments and homogen biophysics //////////
+
+//////////////////// Start of inhomogen biophysics ///////////////////////
+
+py:insertAllUsedDistFuncs()
+
+//////////////////// End of inhomogen biophysics /////////////////////////
+
+//////////////////// Start of synapse compartments ///////////////////////
+py:insertAllLinesFromFile('Code\\Export\\OutHocFileStructures\\ReducedHocTemplates\\ReducedHocTemplatesForNeuronOnly.hoc')
+
+py:initSynComps()
+//////////////////// End of synapse compartments /////////////////////////
+
+//////////////////// Start of stoch models ///////////////////////////////
+
+py:insertAllUsedStochFuncs()
+
+//////////////////// End of stoch models /////////////////////////////////
+
+//////////////////// Start of AltRunControl widget ///////////////////////
+
+py:insertAltRunControlWidget()
+
+//////////////////// End of AltRunControl widget /////////////////////////

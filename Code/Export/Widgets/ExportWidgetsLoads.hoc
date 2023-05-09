@@ -1,4 +1,6 @@
 
+{ load_file("ItemOfInputVarsBrowsedList.hoc") }
+
 { load_file("AddOneInputVarWidget.hoc") }
 { load_file("DefineGridForInputVarWidget.hoc") }
 { load_file("CreateListOfInputVarsWidget.hoc") }

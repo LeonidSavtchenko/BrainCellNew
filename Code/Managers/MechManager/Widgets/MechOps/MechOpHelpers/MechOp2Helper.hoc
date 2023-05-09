@@ -4,11 +4,10 @@
 begintemplate MechOp2Helper
 
     public getHeader, isSkipBlock, insertBlock, dismissChilds
-    public defineDistFuncSubWidget
     public title, isRequireApply, itemTypeIdx
     
     external mmAllComps
-    external mwh, mth, mmmowb, mcu
+    external mth, mmmowb, mcu
     external dismissIfNotNil
     
     objref defineDistFuncSubWidget
@@ -52,7 +51,7 @@ begintemplate MechOp2Helper
         return 1
     }
     
-    func insertBlock() { local compIdx, mechIdx, numInsertedItems, varType, varTypeIdx, numMechVars, varIdx, arraySize, arrayIndex, isInhom localobj comp
+    func insertBlock() { local compIdx, mechIdx, numInsertedItems, varType, varTypeIdx, numVars, varIdx, arraySize, arrayIndex, isInhom localobj comp
         strdef name, varTypeName, varName, varNameWithIndexAndUnits, text, handlerHocCommand
         
         compIdx = $1
@@ -68,8 +67,8 @@ begintemplate MechOp2Helper
                 continue
             }
             mth.getVarTypeName(varType, varTypeName)
-            numMechVars = mth.getNumMechVars(0, mechIdx, varType)
-            for varIdx = 0, numMechVars - 1 {
+            numVars = mth.getNumMechVars(0, mechIdx, varType)
+            for varIdx = 0, numVars - 1 {
                 arraySize = mth.getVarNameAndArraySize(0, mechIdx, varType, varIdx, varName)
                 for arrayIndex = 0, arraySize - 1 {
                     isInhom = comp.isMechVarInhom(mechIdx, varTypeIdx, varName, arrayIndex)
