@@ -1,7 +1,7 @@
 
 begintemplate DistFuncGroupsEFHelper
 
-    public selectedHandler, calculateAt, onNewSection, setLoadedTextAndData, dismissHandler
+    public selectedHandler, calculateAt, onNewSection, setLoadedTextAndData, exportParams, importParams, dismissHandler
     public parentWidget
     
     external mwh
@@ -87,6 +87,22 @@ begintemplate DistFuncGroupsEFHelper
         tableText = $s1
         x_model = $o2
         y_model = $o3
+    }
+    
+    proc exportParams() { localobj vecOfVals, listOfStrs
+        vecOfVals = $o1
+        listOfStrs = $o2
+        
+        // !! not implemented
+        codeContractViolation()
+    }
+    
+    proc importParams() { localobj vecOfVals, listOfStrs
+        vecOfVals = $o1
+        listOfStrs = $o2
+        
+        // !! not implemented
+        codeContractViolation()
     }
     
     proc dismissHandler() {

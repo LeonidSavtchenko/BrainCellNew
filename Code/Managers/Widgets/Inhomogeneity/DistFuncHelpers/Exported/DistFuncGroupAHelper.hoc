@@ -1,7 +1,7 @@
 
 begintemplate DistFuncGroupAHelper
 
-    public selectedHandler, calculateAt, onNewSection, dismissHandler
+    public selectedHandler, calculateAt, onNewSection, exportParams, importParams, dismissHandler
     public mainBox
     public parentWidget
     
@@ -12,15 +12,17 @@ begintemplate DistFuncGroupAHelper
     modelIdx = -1
     double params[1]
     
+    numParams = -1
+    
     
     proc init() {
         modelIdx = $1
         parentWidget = $o2
         
-        if (modelIdx < 0 || modelIdx > 4) {
-            codeContractViolation()
-        }
-        double params[6]
+        checkModelIdx()
+        
+        numParams = 6
+        double params[numParams]
         if (modelIdx < 3) {
             params[1] = 0.1
             params[2] = 0.0005
@@ -91,6 +93,32 @@ begintemplate DistFuncGroupAHelper
         // Nothing here
     }
     
+    proc exportParams() { local idx localobj vecOfVals, listOfStrs
+        vecOfVals = $o1
+        listOfStrs = $o2    // Not used
+        
+        vecOfVals.resize(numParams + 1)
+        vecOfVals.x(0) = modelIdx
+        for idx = 0, numParams - 1 {
+            vecOfVals.x(1 + idx) = params[idx]
+        }
+    }
+    
+    proc importParams() { local idx localobj vecOfVals, listOfStrs
+        vecOfVals = $o1
+        listOfStrs = $o2    // Not used
+        
+        if (vecOfVals.size() != numParams + 1 || listOfStrs.count() != 0) {
+            codeContractViolation()
+        }
+        
+        modelIdx = vecOfVals.x(0)
+        checkModelIdx()
+        for idx = 0, numParams - 1 {
+            params[idx] = vecOfVals.x(1 + idx)
+        }
+    }
+    
     proc dismissHandler() {
         if (mainBox.ismapped()) {
             mainBox.unmap()
@@ -102,6 +130,12 @@ begintemplate DistFuncGroupAHelper
     
     proc valueChangedHandler() {
         parentWidget.updateCurves()
+    }
+    
+    proc checkModelIdx() {
+        if (modelIdx < 0 || modelIdx > 4) {
+            codeContractViolation()
+        }
     }
     
 endtemplate DistFuncGroupAHelper

@@ -116,7 +116,7 @@ class Generators:
         absFilePathName = os.getcwd() + '\\' + relFilePathName
         with open(absFilePathName, 'r') as inFile:
             inText = inFile.read()
-        return inText.splitlines()  # Removing all newline characters here
+        return inText.strip().splitlines()  # All newline characters are removed here
     
     # !! BUG: In rare cases, an error "procedure too big" may occur when user loads the exported file.
     #         This error takes place while sourcing one of obfunc-s named "getListOfSecRefsFor*Comp".
@@ -151,8 +151,6 @@ class Generators:
         procNames = []
         mth = self.hocObj.mth
         enumDmPpNc = 0
-        varType = 1     # "PARAMETER"
-        varTypeIdx = 0  #
         for comp in mmAllComps:
             procNameId = self._prepareUniqueNameId(comp.name)
             procName = 'init{}Comp'.format(procNameId)
@@ -171,25 +169,39 @@ class Generators:
                 mechName = h.ref('')
                 mth.getMechName(enumDmPpNc, mechIdx, mechName)
                 mechName = mechName[0]
-                defaultMechStd = h.MechanismStandard(mechName, varType)
-                lines.append('    mechStd = new MechanismStandard("{}", {})'.format(mechName, varType))
-                numVars = int(mth.getNumMechVars(enumDmPpNc, mechIdx, varType))
-                for varIdx in range(numVars):
-                    varName = h.ref('')
-                    arraySize = int(mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName))
-                    varName = varName[0]
-                    for arrayIndex in range(arraySize):
-                        value = comp.mechStds[mechIdx][varTypeIdx].get(varName, arrayIndex)
-                        defaultValue = defaultMechStd.get(varName, arrayIndex)
-                        if value == defaultValue:
-                            continue
-                        # !! BUG: When user turns off the export of inhom models in exportOptions, we still assign "nan" here
-                        if arraySize == 1:
-                            lines.append('    mechStd.set("{}", {})'.format(varName, value))
-                        else:
-                            lines.append('    mechStd.set("{}", {}, {})'.format(varName, value, arrayIndex))
-                lines.append('    comp.mechStds[{}] = mechStd'.format(mechIdx))
-                lines.append('    ')
+                for varType in range(1, 4): # 1: "PARAMETER", 2: "ASSIGNED", 3: "STATE"
+                    varTypeIdx = varType - 1
+                    varTypeName = h.ref('')
+                    mth.getVarTypeName(varType, varTypeName)
+                    varTypeName = varTypeName[0]
+                    defaultMechStd = h.MechanismStandard(mechName, varType)
+                    newLines = []
+                    isAllDefault = True
+                    newLines.append('    mechStd = new MechanismStandard("{}", {})    // {}'.format(mechName, varType, varTypeName))
+                    numVars = int(mth.getNumMechVars(enumDmPpNc, mechIdx, varType))
+                    for varIdx in range(numVars):
+                        varName = h.ref('')
+                        arraySize = int(mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName))
+                        varName = varName[0]
+                        for arrayIndex in range(arraySize):
+                            value = comp.mechStds[mechIdx][varTypeIdx].get(varName, arrayIndex)
+                            defaultValue = defaultMechStd.get(varName, arrayIndex)
+                            # !! not sure about the 2nd condition in IF below,
+                            #    but it found out for ASSIGNED "ko_IKa" from "IPotassium.mod" that its default value
+                            #    is different depending on the moment when we created a new MechanismStandard:
+                            #    just after the start of our program (defaultValue = 0) or now (defaultValue = 2.5)
+                            if (varType == 1 and value == defaultValue) or (varType > 1 and value == 0):
+                                continue
+                            # !! BUG: When user turns off the export of inhom models in exportOptions, we still assign "nan" here
+                            if arraySize == 1:
+                                newLines.append('    mechStd.set("{}", {})'.format(varName, value))
+                            else:
+                                newLines.append('    mechStd.set("{}", {}, {})'.format(varName, value, arrayIndex))
+                            isAllDefault = False
+                    newLines.append('    comp.mechStds[{}][{}] = mechStd'.format(mechIdx, varTypeIdx))
+                    newLines.append('    ')
+                    if not isAllDefault:
+                        lines.extend(newLines)
             lines[-1] = '}'
             lines.append('')
             
@@ -214,9 +226,9 @@ class Generators:
         
         distFuncCatIdxToFileNameDict = {}
         distFuncCatIdxToFileNameDict[0] = 'DistFuncGroupAHelper.hoc'
-        distFuncCatIdxToFileNameDict[1] = 'DistFuncGroupBDHelper.hoc'
+        distFuncCatIdxToFileNameDict[1] = 'DistFuncGroupsBDHelper.hoc'
         distFuncCatIdxToFileNameDict[2] = 'DistFuncGroupCHelper.hoc'
-        distFuncCatIdxToFileNameDict[3] = 'DistFuncGroupEFHelper.hoc'
+        distFuncCatIdxToFileNameDict[3] = 'DistFuncGroupsEFHelper.hoc'
         distFuncCatIdxToFileNameDict[4] = 'DistFuncGroupGHelper.hoc'
         
         distFuncCatIdxs = set()
@@ -226,13 +238,41 @@ class Generators:
                 continue
             distFuncCatIdxs.add(activeSpecVar.distFuncCatIdx)
             
-        for distFuncCatIdx in sorted(distFuncCatIdxs):
-            fileName = distFuncCatIdxToFileNameDict[distFuncCatIdx]
-            relFilePathName = 'Code\\Managers\\Widgets\\Inhomogeneity\\DistFuncHelpers\\Exported\\' + fileName
-            newLines = self.insertAllLinesFromFile(relFilePathName)
-            lines.extend(newLines)
-            
+        relDirPath = 'Code\\Managers\\Widgets\\Inhomogeneity\\DistFuncHelpers\\Exported'
+        self._exportSomeFilesFromThisDir(lines, relDirPath, distFuncCatIdxs, distFuncCatIdxToFileNameDict)
+        
         return self._linesOrNothingHereHint(lines)
+        
+    def createInhomModels(self):
+        lines = []
+        
+        if not self.exportOptions.isExportInhomModels():
+            return lines
+            
+        lines.append('objref distFuncHelpers, distFuncHelper, vecOfValues, listOfStrs')
+        lines.append('distFuncHelpers = new List()')
+        for activeSpecVar in h.inhomAndStochLibrary.activeSpecVars:
+            # !! need to filter the models depending on the exportOptions
+            if not (activeSpecVar.isInhom and activeSpecVar.varType == 1):  # 1: "PARAMETER"
+                continue
+            distFuncHelper = activeSpecVar.distFuncHelper
+            # !! BUG: DistFuncGroupCHelper and DistFuncGroupsEFHelper require different approaches here
+            modelIdx = distFuncHelper.modelIdx
+            templName = self._getTemplateName(distFuncHelper)
+            lines.append('distFuncHelper = new {}({}, nil)'.format(templName, modelIdx))
+            lines.append('vecOfValues = new Vector()')
+            vecOfValues = h.Vector()
+            listOfStrs = h.List()
+            distFuncHelper.exportParams(vecOfValues, listOfStrs)
+            for value in vecOfValues:
+                lines.append('{{ vecOfValues.append({}) }}'.format(value))  # Max. precision is applied here automatically
+            lines.append('listOfStrs = new List()')
+            for string in listOfStrs:
+                lines.append('{{ listOfStrs.append(new String("{}")) }}'.format(string.s))
+            lines.append('{ distFuncHelper.importParams(vecOfValues, listOfStrs) }')
+            lines.append('{ distFuncHelpers.append(distFuncHelper) }')
+            
+        return lines
         
     # !! major code dupl. with insertAllUsedDistFuncs
     def insertAllUsedStochFuncs(self):
@@ -251,9 +291,9 @@ class Generators:
         
         stochFuncCatIdxToFileNameDict = {}
         stochFuncCatIdxToFileNameDict[0] = 'StochFuncGroupAHelper.hoc'
-        stochFuncCatIdxToFileNameDict[1] = 'StochFuncGroupBDHelper.hoc'
+        stochFuncCatIdxToFileNameDict[1] = 'StochFuncGroupsBDHelper.hoc'
         stochFuncCatIdxToFileNameDict[2] = 'StochFuncGroupCHelper.hoc'
-        stochFuncCatIdxToFileNameDict[3] = 'StochFuncGroupEFHelper.hoc'
+        stochFuncCatIdxToFileNameDict[3] = 'StochFuncGroupsEFHelper.hoc'
         stochFuncCatIdxToFileNameDict[4] = 'StochFuncGroupGHelper.hoc'
         
         # !! need to filter the models depending on the exportOptions
@@ -268,29 +308,24 @@ class Generators:
             if stochFuncCatIdx == 0:
                 stochFuncIdxs.add(activeSpecVar.stochFuncIdx)
             
-        for stochFuncIdx in sorted(stochFuncIdxs):
-            fileName = stochFuncIdxToFileNameDict[stochFuncIdx]
-            relFilePathName = 'Code\\Managers\\Widgets\\Stochasticity\\StochDistHelpers\\Exported\\' + fileName
-            newLines = self.insertAllLinesFromFile(relFilePathName)
-            lines.extend(newLines)
-            
-        for stochFuncCatIdx in sorted(stochFuncCatIdxs):
-            fileName = stochFuncCatIdxToFileNameDict[stochFuncCatIdx]
-            relFilePathName = 'Code\\Managers\\Widgets\\Stochasticity\\StochFuncHelpers\\Exported\\' + fileName
-            newLines = self.insertAllLinesFromFile(relFilePathName)
-            lines.extend(newLines)
-            
+        relDirPath = 'Code\\Managers\\Widgets\\Stochasticity\\StochDistHelpers\\Exported'
+        self._exportSomeFilesFromThisDir(lines, relDirPath, stochFuncIdxs, stochFuncIdxToFileNameDict)
+        
+        relDirPath = 'Code\\Managers\\Widgets\\Stochasticity\\StochFuncHelpers\\Exported'
+        self._exportSomeFilesFromThisDir(lines, relDirPath, stochFuncCatIdxs, stochFuncCatIdxToFileNameDict)
+        
         return self._linesOrNothingHereHint(lines)
         
     def initSynComps(self):
         if not self.exportOptions.isExportSyns:
             return self._nothingHereHint()
             
-        lines = []
+        relFilePathName = 'Code\\Export\\OutHocFileStructures\\ReducedVersions\\ReducedSynPPComp.hoc'
+        lines = self.insertAllLinesFromFile(relFilePathName)
         
         # !!
         
-        return self._linesOrNothingHereHint(lines)
+        return lines
         
     def insertAltRunControlWidget(self):
         if not self.exportOptions.isExportStochModels():
@@ -449,6 +484,12 @@ class Generators:
             idx = line.rfind(marker, 0, idx)
         return idx
         
+    def _getTemplateName(self, hocTemplInst):
+        templName = str(hocTemplInst)
+        idx = templName.index('[')
+        templName = templName[: idx]
+        return templName
+        
     def _nothingHereHint(self):
         return '// (Nothing here)'
         
@@ -457,4 +498,15 @@ class Generators:
             return lines
         else:
             return self._nothingHereHint()
-        
+            
+    def _exportSomeFilesFromThisDir(self, lines, relDirPath, idxs, idxToFileNameDict):
+        isFirstDistFunc = True
+        for idx in sorted(idxs):
+            if not isFirstDistFunc:
+                lines.append('')
+            fileName = idxToFileNameDict[idx]
+            relFilePathName = relDirPath + '\\' + fileName
+            newLines = self.insertAllLinesFromFile(relFilePathName)
+            lines.extend(newLines)
+            isFirstDistFunc = False
+            

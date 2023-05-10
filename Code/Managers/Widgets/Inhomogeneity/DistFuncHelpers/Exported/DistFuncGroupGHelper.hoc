@@ -1,7 +1,7 @@
 
 begintemplate DistFuncGroupGHelper
 
-    public selectedHandler, calculateAt, onNewSection, dismissHandler
+    public selectedHandler, calculateAt, onNewSection, exportParams, importParams, dismissHandler
     public parentWidget
     public value
     
@@ -40,6 +40,22 @@ begintemplate DistFuncGroupGHelper
         if (modelIdx == 1) {
             value = -value
         }
+    }
+    
+    proc exportParams() { localobj vecOfVals, listOfStrs
+        vecOfVals = $o1
+        listOfStrs = $o2
+        
+        // !! not implemented
+        codeContractViolation()
+    }
+    
+    proc importParams() { localobj vecOfVals, listOfStrs
+        vecOfVals = $o1
+        listOfStrs = $o2
+        
+        // !! not implemented
+        codeContractViolation()
     }
     
     proc dismissHandler() {

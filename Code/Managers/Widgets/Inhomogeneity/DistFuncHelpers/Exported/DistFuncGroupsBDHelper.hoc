@@ -3,7 +3,7 @@ userDefinedHocDistFuncResult = -1   // !! get rid of this: the user function mus
 
 begintemplate DistFuncGroupsBDHelper
 
-    public selectedHandler, calculateAt, onNewSection, dismissHandler
+    public selectedHandler, calculateAt, onNewSection, exportParams, importParams, dismissHandler
     public parentWidget, isSkipOneSelect
     public modelIdx     // For DistFuncGroupCHelper
     
@@ -24,9 +24,7 @@ begintemplate DistFuncGroupsBDHelper
         modelIdx = $1
         parentWidget = $o2  // !! not used
         
-        if (modelIdx < 0 || modelIdx > 3) {
-            codeContractViolation()
-        }
+        checkModelIdx()
         
         oneLinerHocDistFuncName = "mechManagerOneLinerHocDistFunc"
         oneLinerHocDistFuncBody = "x/10 + 50*sin(2*PI*x/200) * tanh(x/100)"
@@ -117,6 +115,38 @@ begintemplate DistFuncGroupsBDHelper
         // Nothing here
     }
     
+    proc exportParams() { localobj vecOfVals, listOfStrs
+        vecOfVals = $o1
+        listOfStrs = $o2
+        
+        vecOfVals.resize(1)
+        vecOfVals.x(0) = modelIdx
+        listOfStrs.append(new String(oneLinerHocDistFuncName))
+        listOfStrs.append(new String(oneLinerHocDistFuncBody))
+        listOfStrs.append(new String(oneLinerPyDistFuncName))
+        listOfStrs.append(new String(oneLinerPyDistFuncBody))
+        listOfStrs.append(new String(userDefinedHocDistFuncName))
+        listOfStrs.append(new String(userDefinedPyDistFuncName))
+    }
+    
+    proc importParams() { localobj vecOfVals, listOfStrs
+        vecOfVals = $o1
+        listOfStrs = $o2
+        
+        if (vecOfVals.size() != 1 || listOfStrs.count() != 6) {
+            codeContractViolation()
+        }
+        
+        modelIdx = vecOfVals.x(0)
+        checkModelIdx()
+        oneLinerHocDistFuncName = listOfStrs.o(0).s
+        oneLinerHocDistFuncBody = listOfStrs.o(1).s
+        oneLinerPyDistFuncName = listOfStrs.o(2).s
+        oneLinerPyDistFuncBody = listOfStrs.o(3).s
+        userDefinedHocDistFuncName = listOfStrs.o(4).s
+        userDefinedPyDistFuncName = listOfStrs.o(5).s
+    }
+    
     proc dismissHandler() {
         // Nothing here
     }
@@ -152,6 +182,12 @@ begintemplate DistFuncGroupsBDHelper
         execute(hocCommand)
         
         return userDefinedHocDistFuncResult
+    }
+    
+    proc checkModelIdx() {
+        if (modelIdx < 0 || modelIdx > 3) {
+            codeContractViolation()
+        }
     }
     
 endtemplate DistFuncGroupsBDHelper

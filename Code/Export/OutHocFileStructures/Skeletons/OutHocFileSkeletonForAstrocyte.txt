@@ -21,7 +21,16 @@ for idx = 0, NumberNanoBranches - 1 {
     astrocyteNanoBranch[idx] = new AstrocyteNanoBranch()
 }
 
+//////////////////// Start of utils //////////////////////////////////////
+
+py:insertAllLinesFromFile('Code\\InterModular\\Exported\\InterModularErrWarnUtils_Exported.hoc')
+
+py:insertAllLinesFromFile('Code\\Export\\OutHocFileStructures\\ReducedVersions\\ReducedMath.hoc')
+
+//////////////////// End of utils ////////////////////////////////////////
+
 //////////////////// Start of section references /////////////////////////
+
 // !!! only soma_ref.o(0) is used below (dendrite_ref is not used anywhere)
 objref soma_ref, dendrite_ref
 
@@ -34,21 +43,28 @@ py:createListOfSectionRef('usedNamesForSoma', 'soma_ref')
 py:createListOfSectionRef('usedNamesForDendrites', 'dendrite_ref')
 
 // Nanogeometry
+
 py:insertAllLinesFromFile('Code\\NanoCore\\Exported\\CreateNanoRefs_Exported.hoc')
 
 createRefsForNanoGeometry()
+
 //////////////////// End of section references ///////////////////////////
 
 //////////////////// Start of topology ///////////////////////////////////
+
 py:initTopology()
+
 //////////////////// End of topology /////////////////////////////////////
 
 //////////////////// Start of geometry ///////////////////////////////////
+
 py:initGeometry()
+
 //////////////////// End of geometry /////////////////////////////////////
 
 // !! remove this block once we export the random g_pas in LargeGlia
 //////////////////// Start of nanogeometry biophysics ////////////////////
+
 py:getDoubleValueFromTopLevel('GPassive')
 py:getIntegerValueFromTopLevel('currentMechanismSetup')
 py:getDoubleValueFromTopLevel('DensityGluTransporters')
@@ -65,7 +81,8 @@ for idx = 0, NumberNanoBranches - 1 {
 soma_ref.o(0).sec distance()
 
 //////////////////// Start of compartments and homogen biophysics ////////
-py:insertAllLinesFromFile('Code\\Export\\OutHocFileStructures\\ReducedHocTemplates\\ReducedHocTemplatesForBothAstrocyteAndNeuron.hoc')
+
+py:insertAllLinesFromFile('Code\\Export\\OutHocFileStructures\\ReducedVersions\\ReducedMechComp.hoc')
 
 py:createMechComps()
 
@@ -73,11 +90,15 @@ for compIdx = 0, mmAllComps.count() - 1 {
     mmAllComps.o(compIdx).initHomogenBiophysics()
 }
 
+// !!! BUG: we don't export GLOBAL-s
+
 //////////////////// End of compartments and homogen biophysics //////////
 
 //////////////////// Start of inhomogen biophysics ///////////////////////
 
 py:insertAllUsedDistFuncs()
+
+py:createInhomModels()
 
 //////////////////// End of inhomogen biophysics /////////////////////////
 

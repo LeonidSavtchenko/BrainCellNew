@@ -17,7 +17,4 @@ proc printMsgAndRaiseError() {
     execerror($s1)
 }
 
-// Report the bug, print the call stack and stop
-proc codeContractViolation() {
-    execerror("\n\n    Bug in Cell program: Code contract violation", "\n    Please report this problem to the developer along with the call stack shown below\n")
-}
+{ load_file("Exported/InterModularErrWarnUtils_Exported.hoc") }

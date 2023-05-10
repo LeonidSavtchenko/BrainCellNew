@@ -1,0 +1,9 @@
+
+objref nil
+
+nan = -1
+{ sscanf("nan", "%f", &nan) }
+
+func isNaN() {
+    return !($1 == $1)  // Do not replace with "!="
+}
