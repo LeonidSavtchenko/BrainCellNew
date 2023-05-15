@@ -1,5 +1,5 @@
 
-begintemplate SynPPComp_
+begintemplate ReducedSynPPComp
 
     public mechStds
     
@@ -18,4 +18,4 @@ begintemplate SynPPComp_
         objref mechStds[numMechs][3]    // 0: "PARAMETER", 1: "ASSIGNED", 2: "STATE"
     }
     
-endtemplate SynPPComp_
+endtemplate ReducedSynPPComp

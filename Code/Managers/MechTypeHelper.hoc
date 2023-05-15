@@ -11,8 +11,8 @@ begintemplate MechTypeHelper
 
     public getMechType, getNumMechs, getMechName, getMechIdx, getNumVarTypes, getNumMechVars, doesMechHaveGlobalVars, doesMechHaveNotGlobalVars, getVarNameAndArraySize, getVarTypeName, getVarNameWithIndex, getVarNameWithIndexAndUnits, isDistMechSticky, checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar, convertVarTypeToVarTypeIdx, doesPointProcessRequireSection, isPointProcessAcceptableNetConSource, isPointProcessAcceptableNetConTarget
     
-    public morphologyMechIdx, diamVarType
-    public extracellularMechName, ionSuffix, diamVarName
+    public morphologyMechIdx, diamVarType, diamVarName
+    public extracellularMechName, ionSuffix
     
     external mwh
     external stringsEqual, stringEndsWith, stringEmpty, codeContractViolation

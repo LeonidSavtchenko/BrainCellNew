@@ -29,9 +29,20 @@ begintemplate InhomAndStochLibrary
     objref activeSpecVars, inactiveSpecVars
     
     
-    proc init() {
+    proc init() { local numArg localobj impRedObj, impActSpecVar
         activeSpecVars = new List()
         inactiveSpecVars = new List()
+        
+        numArg = numarg()
+        if (numArg == 1) {
+            // Load data from the imported reduced template
+            impRedObj = $o1
+            for eachItemInList(impActSpecVar, impRedObj.activeSpecVars) {
+                activeSpecVars.append(new InhomAndStochTarget(impActSpecVar))
+            }
+        } else if (numArg != 0) {
+            codeContractViolation()
+        }
     }
     
     // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
@@ -515,5 +526,16 @@ begintemplate InhomAndStochLibrary
 endtemplate InhomAndStochLibrary
 
 
-objref inhomAndStochLibrary
-inhomAndStochLibrary = new InhomAndStochLibrary()
+proc createOrImportInhomAndStochLibrary() { localobj nil
+    if (inhomAndStochLibrary == nil) {
+        inhomAndStochLibrary = new InhomAndStochLibrary()
+    } else {
+        if (isBaseOrNanoStart) {
+            codeContractViolation()
+        }
+        // Load data from the imported reduced template
+        inhomAndStochLibrary = new InhomAndStochLibrary(inhomAndStochLibrary)
+    }
+}
+
+createOrImportInhomAndStochLibrary()

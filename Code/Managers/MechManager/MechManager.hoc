@@ -4,6 +4,8 @@
 
 proc analyzeSectsAndCreateComps() { localobj endFoot_ref, ecSource_ref, other_ref
     
+    // !!! maybe I will have to delete everything from inhomAndStochLibrary or, at least,
+    //     delete all "verbatim" models to avoid making copies for them on each Rescan
     mwh.showPleaseWaitBox("Analyzing all comp \\ sect \\ segm \\ mech \\ varType \\ var \\ arrayIndex.")
     {
         mmAllComps = new List()

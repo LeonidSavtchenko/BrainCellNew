@@ -107,26 +107,38 @@ begintemplate StochEditorSubWidget
         }
         
         // The ctor-s below will access parentWidget.boundingHelper, so we have to set it earlier
-        stochFuncHelpers[0] = new StochFuncGroupAHelper(0, this)
-        stochFuncHelpers[1] = new StochFuncGroupAHelper(1, this)
-        stochFuncHelpers[2] = new StochFuncGroupAHelper(2, this)
-        stochFuncHelpers[3] = new StochFuncGroupAHelper(3, this)
-        stochFuncHelpers[4] = new StochFuncGroupAHelper(4, this)
-        stochFuncHelpers[5] = new StochFuncGroupAHelper(5, this)
-        stochFuncHelpers[6] = new DistFuncGroupsBDHelper(0, this)                           // v !! just stubs
-        stochFuncHelpers[7] = new DistFuncGroupsBDHelper(1, this)
-        stochFuncHelpers[10] = new DistFuncGroupsBDHelper(2, this)
-        stochFuncHelpers[11] = new DistFuncGroupsBDHelper(3, this)
-        stochFuncHelpers[8] = new DistFuncGroupCHelper(stochFuncHelpers[10], this)
-        stochFuncHelpers[9] = new DistFuncGroupCHelper(stochFuncHelpers[11], this)
-        stochFuncHelpers[12] = new DistFuncGroupsEFHelper(0, this)
-        stochFuncHelpers[13] = new DistFuncGroupsEFHelper(1, this, stochFuncHelpers[12])
-        stochFuncHelpers[14] = new DistFuncGroupsEFHelper(2, this, stochFuncHelpers[12])    // ^ !! just stubs
-        stochFuncHelpers[15] = new StochFuncGroupGHelper(0, this)
-        stochFuncHelpers[16] = new StochFuncGroupGHelper(1, this)
-        stochFuncHelpers[17] = new StochFuncGroupGHelper(2, this)
-        stochFuncHelpers[18] = new StochFuncGroupGHelper(3, this)
-        stochFuncHelpers[19] = new StochFuncGroupGHelper(4, this)
+        
+        // Simple model
+        stochFuncHelpers[0] = new SimpleModelStochFuncHelper(0, this)
+        stochFuncHelpers[1] = new SimpleModelStochFuncHelper(1, this)
+        stochFuncHelpers[2] = new SimpleModelStochFuncHelper(2, this)
+        stochFuncHelpers[3] = new SimpleModelStochFuncHelper(3, this)
+        stochFuncHelpers[4] = new SimpleModelStochFuncHelper(4, this)
+        stochFuncHelpers[5] = new SimpleModelStochFuncHelper(5, this)
+        
+        // Custom expression (one-liner)
+        stochFuncHelpers[6] = new CustomCodeDistFuncHelper(0, this)                                 // v !! just stubs
+        stochFuncHelpers[7] = new CustomCodeDistFuncHelper(1, this)
+        
+        // Custom function -> Use already defined/loaded HOC/Python function
+        stochFuncHelpers[10] = new CustomCodeDistFuncHelper(2, this)
+        stochFuncHelpers[11] = new CustomCodeDistFuncHelper(3, this)
+        
+        // Custom function -> Load HOC/Python function from file
+        stochFuncHelpers[8] = new CodeFromFileDistFuncHelper(stochFuncHelpers[10], this)
+        stochFuncHelpers[9] = new CodeFromFileDistFuncHelper(stochFuncHelpers[11], this)
+        
+        // Table + linear interpolation
+        stochFuncHelpers[12] = new TablePlusLinInterpDistFuncHelper(0, this)
+        stochFuncHelpers[13] = new TablePlusLinInterpDistFuncHelper(1, this, stochFuncHelpers[12])
+        stochFuncHelpers[14] = new TablePlusLinInterpDistFuncHelper(2, this, stochFuncHelpers[12])  // ^ !! just stubs
+        
+        // Special
+        stochFuncHelpers[15] = new SpecialStochFuncHelper(0, this)
+        stochFuncHelpers[16] = new SpecialStochFuncHelper(1, this)
+        stochFuncHelpers[17] = new SpecialStochFuncHelper(2, this)
+        stochFuncHelpers[18] = new SpecialStochFuncHelper(3, this)
+        stochFuncHelpers[19] = new SpecialStochFuncHelper(4, this)
         
         custExprStochFuncCatIdx = 1
         custFuncStochFuncCatIdx = 2

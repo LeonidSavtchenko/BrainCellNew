@@ -208,26 +208,28 @@ begintemplate SynGroup
         return isSmthChanged
     }
     
-    iterator applyInhomogeneityIter() { local synIdx localobj distFuncHelper, prevSec_ref, nil, syn
+    iterator applyInhomogeneityIter() { local synIdx localobj distFuncHelper, nil, prevSec_ref, syn
         distFuncHelper = $o2
         
         mwh.showPleaseWaitBox("Applying inhomogeneity.")
+        distFuncHelper.onJustBeforeFirstSection()
         {
             prevSec_ref = nil
             for synIdx = 0, smAllSyns.count() - 1 {
                 syn = smAllSyns.o(synIdx)
                 if (syn.sec_ref != prevSec_ref) {
-                    distFuncHelper.onNewSection()   // Needed for "Zebra (sections)" only
+                    distFuncHelper.onNewSection()
                 }
                 $o1 = syn
                 iterator_statement
                 prevSec_ref = syn.sec_ref
             }
         }
+        distFuncHelper.onJustAfterLastSection()
         mwh.hidePleaseWaitBox()
     }
     
-    iterator updateStatsCurveIter() { local synIdx, y, yMin, yMax localobj syn, graph
+    iterator updateStatsCurveIter() { local yMin, yMax, synIdx, y localobj graph, syn
         graph = $o2
         yMin = $&4
         yMax = $&5

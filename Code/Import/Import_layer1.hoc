@@ -20,7 +20,7 @@ proc importSwcFileFromZipArchive_layer1() {
 
 // Import SWC or any other file supported by NLMorphologyConverter
 // $s1 - Input file path and name
-proc importSwcOrOtherFile_layer1() { local isSomaMissing, isAxonMissing, isAxonMissingAndRequired
+proc importSwcOrOtherFile_layer1() { local isSomaMissing, isAxonMissing, somaDiamAndLenOrMinusOne, isAxonMissingAndRequired
     strdef inFilePathName, hocFilePathName
     
     inFilePathName = $s1

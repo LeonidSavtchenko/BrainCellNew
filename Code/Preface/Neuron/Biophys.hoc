@@ -79,5 +79,5 @@ soma_ref.o(0).sec {
             gkabar_kap = KMULTP
             
             e_pas=Vrest g_pas = 1/RmSoma Ra=RaSoma //cm=CmSoma
-        finitialize(v)  // !! Maybe remove because now it's done in NanoBranchesManager.hoc
+        { finitialize(v) }  // !! Maybe remove because now it's done in NanoBranchesManager.hoc
     }

@@ -53,7 +53,7 @@ begintemplate CellularCompartmentsWidget
     // $s1 - The compartment name
     // $2 - 0/1/2 value indicating soma/dendrites/axon
     // $o3 - The default state flags for checkboxes (Vector)
-    proc createAndInitOnePanel() { local compartmentType localobj selectionFlags, vBox
+    proc createAndInitOnePanel() { local compartmentType, idx localobj selectionFlags, vBox
         strdef compartmentName, title, handlerHocCommand
         
         compartmentName = $s1

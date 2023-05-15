@@ -61,10 +61,13 @@ proc showSelectedGeometry() {
 
 
 
+isAstrocyteBaseGeometryImported = 0
+
 // Loads geometry file.
 proc loadGeometryFile() {
-    importHocOrSwcOrZipOrOtherFile()
+    importHocOrSwcOrZipOrOtherFile("isAstrocyteBaseGeometryImported = 1")
 }
+
 //************************************************************************
 // Geometry of EndFoot
 proc loadGeometryEndFootFile() {
@@ -72,20 +75,23 @@ proc loadGeometryEndFootFile() {
 }
 
 proc loadGeometryEndFootFile_afterImport() {
-	MD=1    // Initial diameter of main branch 
-	ML=101  // Initial length of main branch
-	SD =1   // Initial diameter of small branch
-	SL=11	// Initial length of small branch
-	InsertM=1
-	
-	load_file("Code/Preface/Astrocyte/EndFootNew.hoc")
-	xpanel("EndFoof Geometry",0)
-	xvalue("Main diameter (um)","MD", 1, "setEndFoot(MD, ML, SD, SL)", 0, 1)
+
+    isAstrocyteBaseGeometryImported = 1
+    
+    MD=1    // Initial diameter of main branch
+    ML=101  // Initial length of main branch
+    SD =1   // Initial diameter of small branch
+    SL=11   // Initial length of small branch
+    InsertM=1
+    
+    load_file("Code/Preface/Astrocyte/EndFootNew.hoc")
+    xpanel("EndFoof Geometry",0)
+    xvalue("Main diameter (um)","MD", 1, "setEndFoot(MD, ML, SD, SL)", 0, 1)
     xvalue("Main Length (um),","ML", 1, "setEndFoot(MD, ML, SD, SL)", 0, 1)
-	xvalue("Small diameter (um)","SD", 1, "setEndFoot(MD, ML, SD, SL)", 0, 1)
-	xvalue("Small length (um)","SL", 1, "setEndFoot(MD, ML, SD, SL)", 0, 1)
-	xbutton("Insert Mechanism","InsertAllMechanism()")
-    xpanel()	
+    xvalue("Small diameter (um)","SD", 1, "setEndFoot(MD, ML, SD, SL)", 0, 1)
+    xvalue("Small length (um)","SL", 1, "setEndFoot(MD, ML, SD, SL)", 0, 1)
+    xbutton("Insert Mechanism","InsertAllMechanism()")
+    xpanel()
 }
 
 //************************************************************************
@@ -96,6 +102,9 @@ proc loadGeometryFileReconstract() {
 }
 
 proc loadGeometryFileReconstract_afterImport() {
+
+    isAstrocyteBaseGeometryImported = 1
+    
     load_file("Code/Preface/Astrocyte/StretchXY.hoc")
 //*************************************************************************************
 // These data need to check from reconstructed Astrocyte
@@ -123,6 +132,11 @@ proc loadGeometryFileReconstract_afterImport() {
 // Close geometry window and show main program UI.
 proc initMainProgram() {
 
+    if (!isAstrocyteBaseGeometryImported) {
+        mwh.showWarningBox("Please load some geometry file first.")
+        return
+    }
+    
     vBoxSelectGeometry.unmap()
     plotShapeGeometry.unmap()
     Boxleaves.unmap()

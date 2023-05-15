@@ -1,0 +1,155 @@
+
+// https://www.neuron.yale.edu/neuron/static/new_doc/programming/math/random.html
+// https://docs.python.org/3/library/random.html#real-valued-distributions
+// https://www.mathworks.com/help/stats/supported-distributions.html
+
+begintemplate SimpleModelStochFuncHelper
+
+    public selectedHandler, valueChangedHandler, showPdf, showCdf, firstDice, nextDice, dismissHandler
+    public mainBox, distHelper, rng
+    public parentWidget
+    
+    external mwh, math, rngUtils
+    external codeContractViolation
+    external eachPointInGrid
+    
+    objref mainBox, parentWidget, boundingHelper, this
+    objref distHelper
+    
+    modelIdx = -1
+    objref rng
+    
+    numPts4Curve = -1
+    
+    
+    proc init() {
+        modelIdx = $1
+        parentWidget = $o2
+        boundingHelper = parentWidget.boundingHelper
+        
+        numPts4Curve = 1000     // !! hardcode
+        
+        // !! notes:
+        //    1. we use "execute" below to be able to skip export of unused templates without "*DistHelper is not a template" errors when the exported file is loaded
+        //    2. many of the *DistHelper-s below use quantities which should be calculated and stored internally
+        //       before the loops calling calcPdf and calcCdf to achieve better performance
+        //       e.g. lambda ^ k, sigma * sqrt(2 * PI) etc.
+        if (modelIdx == 0) {
+            execute("distHelper = new UniformDistHelper(this)", this)
+        } else if (modelIdx == 1) {
+            execute("distHelper = new NormalDistHelper(this)", this)
+        } else if (modelIdx == 2) {
+            execute("distHelper = new LogNormalDistHelper(this)", this)
+        } else if (modelIdx == 3) {
+            execute("distHelper = new NegExpDistHelper(this)", this)
+        } else if (modelIdx == 4) {
+            execute("distHelper = new ErlangDistHelper(this)", this)
+        } else if (modelIdx == 5) {
+            execute("distHelper = new WeibullDistHelper(this)", this)
+        } else {
+            codeContractViolation()
+        }
+        
+        rng = rngUtils.getFor_stochFunc_withUniqueSeed()
+    }
+    
+    func selectedHandler() {
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            // !! maybe add a label to indicate whether the distribution is symmetric/asymmetric, continuous/discrete
+            distHelper.addParamsToPanel()
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Stoch model params", 210, 525, -1, -1)
+        
+        if (modelIdx > 1) {
+            mwh.showWarningBox("This is an asymmetric distribution.", "That means, adding such a noise to a variable will shift its mean value (defined elsewhere).")
+        }
+        
+        return 0
+    }
+    
+    proc valueChangedHandler() {
+        parentWidget.updateModelCurves()
+    }
+    
+    proc showPdf() { local xMin, xMax, x, y localobj graph
+        graph = $o1
+        
+        getXminXmaxForGraph(&xMin, &xMax)
+        
+        graph.erase()
+        graph.beginline()
+        
+        math.disableGreedyComparison()  // Needed for calcPdf
+        {
+            // !! for some simple dists (e.g. Uniform, Triangular) we don't need this cycle by the grid to plot PDF
+            // !! for some edgy dists (e.g. Uniform, NegExp) it would be nice to add extra points at sharp edges to have a precise graph
+            for eachPointInGrid(&x, xMin, xMax, numPts4Curve) {
+                y = boundingHelper.calcPdf(x)
+                graph.line(x, y)
+            }
+        }
+        math.restoreGreedyComparison()
+        
+        graph.exec_menu("View = plot")
+        graph.flush()
+    }
+    
+    // !! major code dupl. with showPdf
+    proc showCdf() { local xMin, xMax, x, y localobj graph
+        graph = $o1
+        
+        getXminXmaxForGraph(&xMin, &xMax)
+        
+        graph.erase()
+        graph.beginline()
+        
+        math.disableGreedyComparison()  // Needed for calcCdf
+        {
+            for eachPointInGrid(&x, xMin, xMax, numPts4Curve) {
+                y = boundingHelper.calcCdf(x)
+                graph.line(x, y)
+            }
+        }
+        math.restoreGreedyComparison()
+        
+        graph.exec_menu("View = plot")
+        graph.flush()
+    }
+    
+    func firstDice() {
+        // The bounding is ignored here, and that's by design
+        return distHelper.firstDice(rng)
+    }
+    
+    func nextDice() {
+        // The bounding is ignored here, and that's by design
+        return rng.repick()
+    }
+    
+    proc dismissHandler() { localobj nil
+        if (mainBox != nil) {
+            if (mainBox.ismapped()) {
+                mainBox.unmap()
+            }
+        }
+    }
+    
+    
+    // All next staff is private
+    
+    proc getXminXmaxForGraph() { local mean, sigma, halfRange
+        // The bounding is ignored here, and that's by design
+        mean = distHelper.getMean()
+        sigma = distHelper.getStdDev()
+        halfRange = 5 * sigma   // !! hardcode
+        $&1 = mean - halfRange
+        $&2 = mean + halfRange
+    }
+    
+endtemplate SimpleModelStochFuncHelper

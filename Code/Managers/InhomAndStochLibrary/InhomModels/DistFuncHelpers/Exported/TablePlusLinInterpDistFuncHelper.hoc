@@ -1,0 +1,285 @@
+
+begintemplate TablePlusLinInterpDistFuncHelper
+
+    public selectedHandler, calculateAt, onJustBeforeFirstSection, onNewSection, onJustAfterLastSection, setLoadedTextAndData, exportParams, importParams, dismissHandler
+    public parentWidget
+    
+    external mwh
+    external selectDistFuncInputFile, joinStrings, codeContractViolation
+    
+    modelIdx = -1
+    objref parentWidget
+    objref model0HelperOrNil
+    
+    objref mainBox, textEditor
+    objref x_model, y_model
+    
+    strdef tableText
+    
+    
+    proc init() { local numArg
+        numArg = numarg()
+        if (numArg < 2 || numArg > 3) {
+            codeContractViolation()
+        }
+        
+        modelIdx = $1
+        parentWidget = $o2
+        
+        if (numArg == 3) {
+            if (modelIdx == 0) {
+                codeContractViolation()
+            }
+            model0HelperOrNil = $o3
+        }
+        
+        if (modelIdx < 0 || modelIdx > 2) {
+            codeContractViolation()
+        }
+        
+        x_model = new Vector()
+        y_model = new Vector()
+        
+        if (modelIdx == 0) {
+            parseAllText("60 30\n150 55\n190 -10\n220 25\n255 15")
+        }
+    }
+    
+    func selectedHandler() {
+        if (modelIdx == 2) {
+            mwh.showNotImplementedWarning()
+            return 1
+        }
+        
+        if (modelIdx == 0) {
+            return selectedHandlerForModel0()
+        } else {
+            return selectedHandlerForModels12()
+        }
+    }
+    
+    func calculateAt() { local x, y localobj x_in, y_out
+        x = $1
+        
+        if (x_model.size() == 0) {
+            // Some error occurred earlier; now just prevent a crash in Vector.interpolate below
+            return -1
+        }
+        
+        // !! it's inefficient to calculate the points 1-by-1 while Vector.interpolate supports vectorized input/output
+        x_in = new Vector(1)
+        x_in.x[0] = x
+        y_out = new Vector()    // !! 1?
+        y_out.interpolate(x_in, x_model, y_model)
+        y = y_out.x[0]
+        
+        return y
+    }
+    
+    proc onJustBeforeFirstSection() {
+        // Nothing here
+    }
+    
+    proc onNewSection() {
+        // Nothing here
+    }
+    
+    proc onJustAfterLastSection() {
+        // Nothing here
+    }
+    
+    proc setLoadedTextAndData() {
+        if (modelIdx != 0) {
+            codeContractViolation()
+        }
+        tableText = $s1
+        x_model = $o2
+        y_model = $o3
+    }
+    
+    proc exportParams() { localobj vecOfVals, listOfStrs
+        vecOfVals = $o1
+        listOfStrs = $o2
+        
+        // !! not implemented
+        codeContractViolation()
+    }
+    
+    proc importParams() { localobj vecOfVals, listOfStrs
+        vecOfVals = $o1
+        listOfStrs = $o2
+        
+        // !! not implemented
+        codeContractViolation()
+    }
+    
+    proc dismissHandler() {
+        if (modelIdx != 0) {
+            return
+        }
+        tableText = textEditor.text()
+        if (mainBox.ismapped()) {
+            mainBox.unmap()
+        }
+    }
+    
+    // All next func-s/proc-s are private
+    
+    
+    func selectedHandlerForModel0() {
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            xlabel("Enter the table below")
+            xlabel("Column 1 is X")
+            xlabel("Column 2 is Y")
+            xpanel()
+            textEditor = new TextEditor(tableText, 10, 1)
+            textEditor.map()
+            xpanel("")
+            xbutton("OK", "okHandlerForModel0()")
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("X-Y table", 310, 375, -1, -1)
+        
+        return 0
+    }
+    
+    func selectedHandlerForModels12() { local isChosen, status1, status2 localobj file, x_model_new, y_model_new
+        strdef filePathName, line
+        
+        if (modelIdx == 1) {
+            isChosen = selectDistFuncInputFile("Text", "*.txt", filePathName)
+        } else {
+            isChosen = selectDistFuncInputFile("Excel", "*.xlsx", filePathName)
+        }
+        
+        if (!isChosen) {
+            return 1
+        }
+        
+        // Just for the case of early exit due to an error
+        x_model.resize(0)
+        y_model.resize(0)
+        
+        tableText = ""
+        x_model_new = new Vector()
+        y_model_new = new Vector()
+        
+        if (modelIdx == 1) {
+            file = new File()
+            file.ropen(filePathName)
+            while (1) {
+                status1 = file.gets(line)
+                if (status1 == -1) {        // End of the file
+                    break
+                }
+                
+                joinStrings(tableText, line, "")
+                
+                status2 = parseOneLine(line, x_model_new, y_model_new)
+                if (status2 == 1) {         // Invalid row
+                    return 1
+                }
+            }
+        } else {
+            // !! not implemented
+            return 1
+        }
+        
+        if (x_model_new.size() == 0) {
+            mwh.showWarningBox("The input table is empty. Please make sure it has at least one row (with two values per row).")
+            return 1
+        }
+        
+        if (x_model_new.size() != y_model_new.size()) {
+            codeContractViolation()
+        }
+        
+        x_model = x_model_new
+        y_model = y_model_new
+        model0HelperOrNil.setLoadedTextAndData(tableText, x_model, y_model)     // !! it would be better to set tableText earlier (even on incorrect table format, along with empty x_model and y_model)
+        
+        return 0
+    }
+    
+    func parseAllText() { local status, idx localobj strFunc, x_model_new, y_model_new
+        strdef tableText_temp, line
+        
+        tableText = $s1
+        
+        // Just for the case of early exit due to an error
+        x_model.resize(0)
+        y_model.resize(0)
+        
+        sprint(tableText_temp, "%s", tableText)
+        x_model_new = new Vector()
+        y_model_new = new Vector()
+        
+        strFunc = new StringFunctions()
+        
+        while (1) {
+            idx = strFunc.head(tableText_temp, "\n", line)
+            if (idx == -1) {            // Last row of the table
+                line = tableText_temp
+            }
+            
+            status = parseOneLine(line, x_model_new, y_model_new)
+            if (status == 1) {          // Invalid row
+                return 1
+            }
+            
+            idx = strFunc.tail(tableText_temp, "\n", tableText_temp)
+            if (idx == -1) {            // Empty line
+                break
+            }
+        }
+        
+        if (x_model_new.size() == 0) {
+            mwh.showWarningBox("Please enter at least one row of the table (with two values per row).")
+            return 1
+        }
+        
+        if (x_model_new.size() != y_model_new.size()) {
+            codeContractViolation()
+        }
+        
+        x_model = x_model_new
+        y_model = y_model_new
+        
+        return 0
+    }
+    
+    // Returns: 0/1 status: 0 is OK, 1 is an invalid row
+    func parseOneLine() { local numParsedValues, x_sc, y_sc, temp_sc localobj x_model_new, y_model_new
+        strdef line
+        
+        line = $s1
+        x_model_new = $o2
+        y_model_new = $o3
+        
+        // !! BUG: a letter in the middle of a number is considered the end of the line (leading to false positive or inconsistent error message)
+        numParsedValues = sscanf(line, "%lf%lf%lf", &x_sc, &y_sc, &temp_sc)
+        if (numParsedValues == -1) {
+            return 0    // Empty line
+        }
+        if (numParsedValues != 2) {
+            mwh.showWarningBox("There is an invalid row in the table (not two values per row).")
+            return 1    // Invalid row
+        }
+        
+        x_model_new.append(x_sc)
+        y_model_new.append(y_sc)
+        
+        return 0        // A row with 2 values
+    }
+    
+    proc okHandlerForModel0() {
+        parseAllText(textEditor.text())
+        parentWidget.updateCurves()
+    }
+    
+endtemplate TablePlusLinInterpDistFuncHelper

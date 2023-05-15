@@ -6,8 +6,8 @@
 objref allNames
 
 // !!
-proc exportCellToHocFile() { local isEndFootPresent
-    strdef outHocFilePathName, line1, line2
+proc exportCellToHocFile() {
+    strdef outHocFilePathName, line
     
     outHocFilePathName = $s1
     
@@ -30,31 +30,16 @@ proc exportCellToHocFile() { local isEndFootPresent
     
     // !! maybe need to dump values like celsius, v_init etc., call finitialize...
     
-    // !! maybe add smth. like "access <soma_name>[0]" in the end
-    
     // !! think about a checkbox to open just saved file in default text editor
     mwh.startIntercepting()
     {
-        line1 = "We don't export the biophysics of Soma%s"
-        line2 = "as well as the changes made with the biophys manager%s."
+        line = "We don't export some changes made with the biophys manager%s."
         if (isAstrocyteOrNeuron) {
-            isEndFootPresent = 0
-            forsec "EndFoot" {
-                isEndFootPresent = 1
-                break
-            }
-            if (isEndFootPresent) {
-                sprint(line1, line1, ", Dendrites and End Foot")
-            } else {
-                sprint(line1, line1, " and Dendrites")
-            }
-            sprint(line2, line2, "")
+            sprint(line, line, "")
         } else {
-            sprint(line1, line1, ", Dendrites, Axon and Extracellular Source")
-            sprint(line2, line2, " and the synapse manager")
+            sprint(line, line, " and the synapse manager")
         }
-        // !!! say that we don't export ASSIGNED and STATE
-        mwh.showNotImplementedWarning(line1, line2)
+        mwh.showNotImplementedWarning(line)
         // !! also, the distance centre location is hardcoded in the exported file rather than actually exported
         mwh.showMessageBox("Export complete successfully", "Complete")
     }

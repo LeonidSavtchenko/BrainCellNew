@@ -1,61 +1,4 @@
 
-begintemplate ExportOptions
-
-    public isExportDistMechs, isExportDistMechInhoms, isExportDistMechStochs, isExportSyns, isExportSynInhoms, isExportSynStochs, isCreateParamsHoc, isExposeModelVars, isCreateRunnerHoc, isRecordAndSaveModelVars, isMakeSweepForModelVars, isCopyDll, isNewOrExistingDll
-    public isExportInhomModels, isExportStochModels
-    
-    external isAstrocyteOrNeuron
-    external inhomAndStochLibrary
-    
-    isExportDistMechs = -1
-    isExportDistMechInhoms = -1
-    isExportDistMechStochs = -1
-    isExportSyns = -1
-    isExportSynInhoms = -1
-    isExportSynStochs = -1
-    isCreateParamsHoc = -1
-    isExposeModelVars = -1
-    isCreateRunnerHoc = -1
-    isRecordAndSaveModelVars = -1
-    isMakeSweepForModelVars = -1
-    isCopyDll = -1
-    isNewOrExistingDll = -1
-    
-    
-    proc init() {
-        isExportDistMechs = 1
-        isExportDistMechInhoms = 1
-        isExportDistMechStochs = 1
-        isExportSyns = 1
-        isExportSynInhoms = 1
-        isExportSynStochs = 1
-        isCreateParamsHoc = 0
-        isExposeModelVars = 0
-        isCreateRunnerHoc = 0
-        isRecordAndSaveModelVars = 0
-        isMakeSweepForModelVars = 0
-        isCopyDll = 0
-        isNewOrExistingDll = 0
-    }
-    
-    func isExportInhomModels() { local biophysCond, synCond
-        biophysCond = (isExportDistMechs && isExportDistMechInhoms && inhomAndStochLibrary.getNumInhomVarsForDistMechs() != 0)
-        synCond = (!isAstrocyteOrNeuron && isExportSyns && isExportSynInhoms && inhomAndStochLibrary.getNumInhomVarsForSyns() != 0)
-        return biophysCond || synCond
-    }
-    
-    func isExportStochModels() { local biophysCond, synCond
-        biophysCond = (isExportDistMechs && isExportDistMechStochs && inhomAndStochLibrary.getNumStochVarsForDistMechs() != 0)
-        synCond = (!isAstrocyteOrNeuron && isExportSyns && isExportSynStochs && inhomAndStochLibrary.getNumStochVarsForSyns() != 0)
-        return biophysCond || synCond
-    }
-    
-endtemplate ExportOptions
-
-objref exportOptions
-exportOptions = new ExportOptions()
-
-
 begintemplate ExportManagerMainWidget
 
     public show, dismissHandler
@@ -72,7 +15,6 @@ begintemplate ExportManagerMainWidget
     
     firstColWidth = -1
     secondColWidth = -1
-    slotHeight = -1
     
     
     proc init() {
@@ -85,10 +27,9 @@ begintemplate ExportManagerMainWidget
         
         firstColWidth = 140
         secondColWidth = 450
-        slotHeight = 50
     }
     
-    proc show() { local numInhomVars, numStochVars localobj hBox, deck
+    proc show() { local slotHeight, numInhomVars, numStochVars localobj hBox, deck
         
         compUtils.makeSureAllCompsCreated()     // Needed for AddOneInputVarWidget
         
@@ -96,12 +37,13 @@ begintemplate ExportManagerMainWidget
         mainBox.intercept(1)
         {
             xpanel("")
-            xlabel("The minimum exported data include all topology and geometry (with nanogeometry).")
+            xlabel("The minimum exported data includes all topology and geometry (with nanogeometry) and division of all sections into compartments.")
             xlabel("Please choose what other data must be exported:")
             xpanel()
             hBox = new HBox()
             hBox.intercept(1)
             {
+                slotHeight = 86
                 // It turns out, the usage of Deck-s with just 1 card everywhere in the left column
                 // gives a nicer UI compared to other options (VBox, HBox or no-box)
                 deck = openDeck()
@@ -113,7 +55,7 @@ begintemplate ExportManagerMainWidget
                 closeDeck(deck, 0, firstColWidth, slotHeight)
                 numInhomVars = inhomAndStochLibrary.getNumInhomVarsForDistMechs()
                 numStochVars = inhomAndStochLibrary.getNumStochVarsForDistMechs()
-                deck1 = createInhomStochDeck(numInhomVars, numStochVars, &exportOptions.isExportDistMechInhoms, &exportOptions.isExportDistMechStochs, exportOptions.isExportDistMechs)
+                deck1 = createInhomStochDeck(1, numInhomVars, numStochVars, &exportOptions.isExportDistMechAssignedAndState, &exportOptions.isExportDistMechInhoms, &exportOptions.isExportDistMechStochs, exportOptions.isExportDistMechs, slotHeight)
             }
             hBox.intercept(0)
             hBox.map()
@@ -121,6 +63,7 @@ begintemplate ExportManagerMainWidget
                 hBox = new HBox()
                 hBox.intercept(1)
                 {
+                    slotHeight = 53
                     deck = openDeck()
                     {
                         xpanel("")
@@ -130,7 +73,7 @@ begintemplate ExportManagerMainWidget
                     closeDeck(deck, 0, firstColWidth, slotHeight)
                     numInhomVars = inhomAndStochLibrary.getNumInhomVarsForSyns()
                     numStochVars = inhomAndStochLibrary.getNumStochVarsForSyns()
-                    deck2 = createInhomStochDeck(numInhomVars, numStochVars, &exportOptions.isExportSynInhoms, &exportOptions.isExportSynStochs, exportOptions.isExportSyns)
+                    deck2 = createInhomStochDeck(0, numInhomVars, numStochVars, &exportOptions.isExportSynAssignedAndState, &exportOptions.isExportSynInhoms, &exportOptions.isExportSynStochs, exportOptions.isExportSyns, slotHeight)
                 }
                 hBox.intercept(0)
                 hBox.map()
@@ -142,13 +85,14 @@ begintemplate ExportManagerMainWidget
             hBox = new HBox()
             hBox.intercept(1)
             {
+                slotHeight = 89
                 deck = openDeck()
                 {
                     xpanel("")
                     xcheckbox("Create \"params.hoc\"", &exportOptions.isCreateParamsHoc, "createParamsHocCheckBoxHandler()")
                     xpanel()
                 }
-                closeDeck(deck, 0, firstColWidth, 2 * slotHeight)
+                closeDeck(deck, 0, firstColWidth, slotHeight)
                 deck3 = openDeck()
                 {
                     createEmptyPanel()
@@ -160,13 +104,14 @@ begintemplate ExportManagerMainWidget
                     xcheckbox("Expose some vars (I will select them)", &exportOptions.isExposeModelVars, "varsSelectorCheckBoxHandler(0, exportOptions.isExposeModelVars)")
                     xpanel()
                 }
-                closeDeck(deck3, exportOptions.isCreateParamsHoc, secondColWidth, 2 * slotHeight)
+                closeDeck(deck3, exportOptions.isCreateParamsHoc, secondColWidth, slotHeight)
             }
             hBox.intercept(0)
             hBox.map()
             hBox = new HBox()
             hBox.intercept(1)
             {
+                slotHeight = 38
                 deck = openDeck()
                 {
                     xpanel("")
@@ -189,6 +134,7 @@ begintemplate ExportManagerMainWidget
             hBox = new HBox()
             hBox.intercept(1)
             {
+                slotHeight = 38
                 deck = openDeck()
                 {
                     xpanel("")
@@ -226,21 +172,29 @@ begintemplate ExportManagerMainWidget
     // All next staff is private
     
     
-    obfunc createInhomStochDeck() { local numInhomVars, numStochVars, cardIdx localobj deck
+    obfunc createInhomStochDeck() { local isInhomOrStoch, numInhomVars, numStochVars, cardIdx, slotHeight localobj deck
         strdef text
         
-        numInhomVars = $1
-        numStochVars = $2
-        cardIdx = $5
+        isInhomOrStoch = $1
+        numInhomVars = $2
+        numStochVars = $3
+        cardIdx = $7
+        slotHeight = $8
         
         deck = openDeck()
         {
             createEmptyPanel()
             xpanel("")
-            sprint(text, "With inhom vars (%d detected)", numInhomVars)
-            xcheckbox(text, &$&3)
-            sprint(text, "With stoch vars (%d detected)", numStochVars)
-            xcheckbox(text, &$&4)
+            xcheckbox("With ASSIGNED and STATE vars", &$&4)
+            if (isInhomOrStoch) {
+                xlabel("       (in most cases, you don't need to export them explicitly, but some MOD files don't init a var")
+                xlabel("        automatically in the INITIAL block expecting that we set a nonzero value from HOC code)")
+                // !! ideally, we should propose user to select the mechs that require such export
+            }
+            sprint(text, "With inhom models (%d detected)", numInhomVars)
+            xcheckbox(text, &$&5)
+            sprint(text, "With stoch models (%d detected)", numStochVars)
+            xcheckbox(text, &$&6)
             xpanel()
         }
         closeDeck(deck, cardIdx, secondColWidth, slotHeight)

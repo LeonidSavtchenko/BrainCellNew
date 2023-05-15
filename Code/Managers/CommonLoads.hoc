@@ -1,6 +1,14 @@
 
 objref msmBaseWidget, mechManagerMainWidget, synManagerMainWidget, varsEditorSubWidget
-objref mth, mmmowb, mcu, synGroup, spineNeckDiamCache, inhomAndStochLibrary
+objref mth, mmmowb, mcu, synGroup, spineNeckDiamCache
+
+if (!name_declared("inhomAndStochLibrary")) {
+    // Don't remove "execute" here because otherwise "inhomAndStochLibrary" would get declared
+    // just before the call of "name_declared" in the IF expression (a weird NEURON behaviour)
+    execute("objref inhomAndStochLibrary")
+} else if (isBaseOrNanoStart) {
+    codeContractViolation()
+}
 
 if (isAstrocyteOrNeuron) {
     objref smAllSyns, enumSynCompIdxs, seh
@@ -19,29 +27,12 @@ proc loadIfNotDeclared() {
 
 { load_file("MechTypeHelper.hoc") }
 
-{ load_file("InhomAndStochLibrary/InhomAndStochTarget.hoc") }
-{ load_file("InhomAndStochLibrary/InhomAndStochLibrary.hoc") }
-{ load_file("InhomAndStochLibrary/InhomAndStochApplicator.hoc") }
+{ load_file("InhomAndStochLibrary/InhomAndStochLibraryLoads.hoc") }
 
-{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/PythonUtils/PythonUtilsForDistFuncs.hoc") }
-{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/FileUtilsForDistFuncs.hoc") }
-loadIfNotDeclared("DistFuncGroupAHelper", "Widgets/Inhomogeneity/DistFuncHelpers/Exported/DistFuncGroupAHelper.hoc")
-loadIfNotDeclared("DistFuncGroupsBDHelper", "Widgets/Inhomogeneity/DistFuncHelpers/Exported/DistFuncGroupsBDHelper.hoc")
-loadIfNotDeclared("DistFuncGroupCHelper", "Widgets/Inhomogeneity/DistFuncHelpers/Exported/DistFuncGroupCHelper.hoc")
-loadIfNotDeclared("DistFuncGroupsEFHelper", "Widgets/Inhomogeneity/DistFuncHelpers/Exported/DistFuncGroupsEFHelper.hoc")
-loadIfNotDeclared("DistFuncGroupGHelper", "Widgets/Inhomogeneity/DistFuncHelpers/Exported/DistFuncGroupGHelper.hoc")
 { load_file("Widgets/Inhomogeneity/InhomEditorSectionUtils.hoc") }
+{ load_file("Widgets/Inhomogeneity/SegmentationHelper.hoc") }
 { load_file("Widgets/Inhomogeneity/InhomEditorSubWidget.hoc") }
 
-{ load_file("Widgets/Stochasticity/StochDistHelpers/PythonUtils/PythonUtilsForStochDists.hoc") }
-loadIfNotDeclared("UniformDistHelper", "Widgets/Stochasticity/StochDistHelpers/Exported/UniformDistHelper.hoc")
-loadIfNotDeclared("NormalDistHelper", "Widgets/Stochasticity/StochDistHelpers/Exported/NormalDistHelper.hoc")
-loadIfNotDeclared("LogNormalDistHelper", "Widgets/Stochasticity/StochDistHelpers/Exported/LogNormalDistHelper.hoc")
-loadIfNotDeclared("NegExpDistHelper", "Widgets/Stochasticity/StochDistHelpers/Exported/NegExpDistHelper.hoc")
-loadIfNotDeclared("ErlangDistHelper", "Widgets/Stochasticity/StochDistHelpers/Exported/ErlangDistHelper.hoc")
-loadIfNotDeclared("WeibullDistHelper", "Widgets/Stochasticity/StochDistHelpers/Exported/WeibullDistHelper.hoc")
-loadIfNotDeclared("StochFuncGroupAHelper", "Widgets/Stochasticity/StochFuncHelpers/Exported/StochFuncGroupAHelper.hoc")
-loadIfNotDeclared("StochFuncGroupGHelper", "Widgets/Stochasticity/StochFuncHelpers/Exported/StochFuncGroupGHelper.hoc")
 { load_file("Widgets/Stochasticity/ColourizationHelper.hoc") }
 { load_file("Widgets/Stochasticity/BoundingHelper.hoc") }
 { load_file("Widgets/Stochasticity/StochEditorSubWidget.hoc") }

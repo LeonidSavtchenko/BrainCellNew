@@ -112,7 +112,7 @@ PotassiumRelease(DelayInter1, IntervalRelease1, SwtichOn1)
 
 // ***** Initialization *****
 
-finitialize(v_init)     // !! Already moved to NanoBranchesManager.hoc
+{ finitialize(v_init) }     // !! Already moved to NanoBranchesManager.hoc
 
 objref exPotasPosBox, exPotasParamsBox
 

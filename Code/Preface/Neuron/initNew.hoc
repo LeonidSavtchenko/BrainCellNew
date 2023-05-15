@@ -11,7 +11,7 @@ access soma_ref.o(0).sec    // !! is that needed?
 { load_file("AddSynapses.hoc") }
 { load_file("Diffusion3D.hoc") }
 
-finitialize()   // !! Already moved to NanoBranchesManager.hoc
+{ finitialize() }   // !! Already moved to NanoBranchesManager.hoc
 
 
 objref apc

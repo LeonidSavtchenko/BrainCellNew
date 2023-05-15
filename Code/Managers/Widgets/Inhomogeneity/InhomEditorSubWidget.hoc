@@ -82,22 +82,34 @@ begintemplate InhomEditorSubWidget
             isCalledFromVarsEditor = 1
         }
         
-        distFuncHelpers[0] = new DistFuncGroupAHelper(0, this)
-        distFuncHelpers[1] = new DistFuncGroupAHelper(1, this)
-        distFuncHelpers[2] = new DistFuncGroupAHelper(2, this)
-        distFuncHelpers[3] = new DistFuncGroupAHelper(3, this)
-        distFuncHelpers[4] = new DistFuncGroupAHelper(4, this)
-        distFuncHelpers[5] = new DistFuncGroupsBDHelper(0, this)
-        distFuncHelpers[6] = new DistFuncGroupsBDHelper(1, this)
-        distFuncHelpers[9] = new DistFuncGroupsBDHelper(2, this)
-        distFuncHelpers[10] = new DistFuncGroupsBDHelper(3, this)
-        distFuncHelpers[7] = new DistFuncGroupCHelper(distFuncHelpers[9], this)
-        distFuncHelpers[8] = new DistFuncGroupCHelper(distFuncHelpers[10], this)
-        distFuncHelpers[11] = new DistFuncGroupsEFHelper(0, this)
-        distFuncHelpers[12] = new DistFuncGroupsEFHelper(1, this, distFuncHelpers[11])
-        distFuncHelpers[13] = new DistFuncGroupsEFHelper(2, this, distFuncHelpers[11])
-        distFuncHelpers[14] = new DistFuncGroupGHelper(0, this)
-        distFuncHelpers[15] = new DistFuncGroupGHelper(1, this)
+        // Simple model
+        distFuncHelpers[0] = new SimpleModelDistFuncHelper(0, this)
+        distFuncHelpers[1] = new SimpleModelDistFuncHelper(1, this)
+        distFuncHelpers[2] = new SimpleModelDistFuncHelper(2, this)
+        distFuncHelpers[3] = new SimpleModelDistFuncHelper(3, this)
+        distFuncHelpers[4] = new SimpleModelDistFuncHelper(4, this)
+        
+        // Custom expression (one-liner)
+        distFuncHelpers[5] = new CustomCodeDistFuncHelper(0, this)
+        distFuncHelpers[6] = new CustomCodeDistFuncHelper(1, this)
+        
+        // Custom function -> Use already defined/loaded HOC/Python function
+        distFuncHelpers[9] = new CustomCodeDistFuncHelper(2, this)
+        distFuncHelpers[10] = new CustomCodeDistFuncHelper(3, this)
+        
+        // Custom function -> Load HOC/Python function from file
+        distFuncHelpers[7] = new CodeFromFileDistFuncHelper(distFuncHelpers[9], this)
+        distFuncHelpers[8] = new CodeFromFileDistFuncHelper(distFuncHelpers[10], this)
+        
+        // Table + linear interpolation
+        distFuncHelpers[11] = new TablePlusLinInterpDistFuncHelper(0, this)
+        distFuncHelpers[12] = new TablePlusLinInterpDistFuncHelper(1, this, distFuncHelpers[11])
+        distFuncHelpers[13] = new TablePlusLinInterpDistFuncHelper(2, this, distFuncHelpers[11])
+        
+        // Special
+        distFuncHelpers[14] = new SpecialDistFuncHelper(0, this)
+        distFuncHelpers[15] = new SpecialDistFuncHelper(1, this)
+        // !!! distFuncHelpers[16] = 
         
         custExprDistFuncCatIdx = 1
         custFuncDistFuncCatIdx = 2
@@ -315,14 +327,14 @@ begintemplate InhomEditorSubWidget
                             xpanel()
                             xpanel("")
                             if (isMechOrSynEditor) {
-                                what = ""
+                                what = "segments (check subdivision on colormap for small \"nseg\")"
                             } else {
-                                what = "/PPs"
+                                what = "PPs (check synapse locations on colormap)"
                             }
-                            sprint(text, "Zebra (segments%s, check subdivision on colormap for small \"nseg\")", what)
+                            sprint(text, "Zebra by %s", what)
                             idx = distFuncIdxs[zebraDistFuncCatIdx]
                             xradiobutton(text, "distFuncChangedHandler(14)", idx == 14)
-                            xradiobutton("Zebra (sections)", "distFuncChangedHandler(15)", idx == 15)
+                            xradiobutton("Zebra by sections (click \"Apply\" a few times)", "distFuncChangedHandler(15)", idx == 15)
                             xpanel()
                         }
                         deck3.intercept(0)

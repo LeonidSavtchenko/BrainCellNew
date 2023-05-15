@@ -140,7 +140,7 @@ begintemplate MechOpWidgetBase
     // $1 - The mech operation index
     // $2 - 0/1 flag indicating if we construct a comp-centric or mech-centric view
     // $&3 (out) - The current panel index
-    iterator createHeaderEmptyPanelsFooter() { local mechOpIdx, maxNumPanels, isRequireApply, panCandIdx, panActIdx, isSkipPanel, rowIdx, colIdx, isSwitchToCompOrMechCentricView localobj mechOpHelper, sliderBox, hBoxes, hBox, spacerBox, nil
+    iterator createHeaderEmptyPanelsFooter() { local mechOpIdx, maxNumPanels, isRequireApply, colIdx, rowIdx, panCandIdx, panActIdx, isSkipPanel, isSwitchToCompOrMechCentricView localobj mechOpHelper, sliderBox, hBoxes, hBox, spacerBox, nil
         strdef headerLine1, headerLine3, switchToKeyword, buttonText, buttonHocCommand
         
         mechOpIdx = $1

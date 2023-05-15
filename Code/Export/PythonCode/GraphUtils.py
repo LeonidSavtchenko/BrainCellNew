@@ -47,6 +47,7 @@ class GraphUtils:
         
         shutil.rmtree(tempFolderPath)
     
+    
     def _createOrCleanUpTempFolder(tempFolderPath):
         if os.path.exists(tempFolderPath):
             for fileName in os.listdir(tempFolderPath):

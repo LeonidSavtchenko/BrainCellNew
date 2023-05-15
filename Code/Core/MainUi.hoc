@@ -275,6 +275,8 @@ proc startSynManager() {
 }
 
 proc startExportManager() {
+    dismissIfNotNil(msmBaseWidget)
+    
     exportManagerMainWidget.dismissHandler()
     exportManagerMainWidget.show()
 }

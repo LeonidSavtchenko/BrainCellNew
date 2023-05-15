@@ -9,7 +9,7 @@ objref roadmapWidget
 { load_file("Code/InterModular/AllInterModularUtils.hoc") }
 
 proc prefaceCompleteHandler() {
-    { load_file("Code/Core/MainProgram.hoc") }
+    load_file("Code/Core/MainProgram.hoc")
     runMain()
 }
 
@@ -30,14 +30,14 @@ proc roadmapChosenHandler() { local isLoaded localobj plotShape
         }
     }
     
-    { load_file("Code/Core/Utils.hoc") }
+    load_file("Code/Core/Utils.hoc")
     
     if (isBaseOrNanoStart) {
-        { load_file("Code/Import/Import.hoc") }
+        load_file("Code/Import/Import.hoc")
         if (isAstrocyteOrNeuron) {
-            { load_file("Code/Preface/Astrocyte/initAstrocyte.hoc") }   // This will call prefaceCompleteHandler() in the end
+            load_file("Code/Preface/Astrocyte/initAstrocyte.hoc")       // This will call prefaceCompleteHandler() in the end
         } else {
-            { load_file("Code/Preface/Neuron/initNeuron.hoc") }
+            load_file("Code/Preface/Neuron/initNeuron.hoc")
             initNeuron()    // This will call prefaceCompleteHandler() in the end
             // (Don't encapsulate initNeuron() into "initNeuron.hoc" because the file browser will use different default folder)
         }

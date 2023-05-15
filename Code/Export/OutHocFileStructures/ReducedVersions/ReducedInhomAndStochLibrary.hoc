@@ -1,0 +1,11 @@
+
+begintemplate ReducedInhomAndStochLibrary
+    public activeSpecVars
+    objref activeSpecVars
+    proc init() {
+        activeSpecVars = new List()
+    }
+endtemplate ReducedInhomAndStochLibrary
+
+objref inhomAndStochLibrary
+inhomAndStochLibrary = new ReducedInhomAndStochLibrary()

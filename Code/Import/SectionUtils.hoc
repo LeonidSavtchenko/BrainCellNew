@@ -3,7 +3,7 @@
 // $o1 - The dendrite names (List of String-s, each name can be for either standalone section object or section array)
 // Returns the number of dendrites
 // !! maybe use findSecArrayOrObjectIterator
-func getNumberOfDendrites() { local idx, totalNumDend, numDend localobj dendriteSectionNames
+func getNumberOfDendrites() { local totalNumDend, idx, numDend localobj dendriteSectionNames
     strdef findSecRegex
     
     dendriteSectionNames = $o1
@@ -57,7 +57,7 @@ proc deleteExtraDendrites() { local idx
 // $s1 - The name
 // $2 - 0/1 flag indicating that we need to find only the first element in section array
 // $3 - 0/1 flag indicating that we need to call codeContractViolation if nothing found 
-iterator findSecArrayOrObjectIterator() { local isFirstOnly, isFound
+iterator findSecArrayOrObjectIterator() { local isFirstOnly, isCodeContractViolationIfNothingFound, isFound
     strdef secArrayOrObjName, findSecRegex
     
     secArrayOrObjName = $s1
@@ -93,7 +93,7 @@ iterator findSecArrayOrObjectIterator() { local isFirstOnly, isFound
 // Get names of all sections being the topological roots
 // $o1 (optional) - Section names being the scope of search (List of String-s); if omitted, then the scope is the entire cell (i.e. all existing sections)
 // Returns The names (List of String-s); empty means "nevermind"
-obfunc getNamesOfAllTopologicalRoots() { local numArg localobj secList, usedNames, namesOfTopoRoots
+obfunc getNamesOfAllTopologicalRoots() { local numArg localobj usedNames, secList, namesOfTopoRoots
     
     numArg = numarg()
     

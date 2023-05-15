@@ -1,28 +1,31 @@
 
 import os
 from neuron import h, hoc, nrn
-from OtherUtils import codeContractViolation
+from OtherUtils import *
 
 
 class Generators:
     
-    hocObj = hoc.HocObject()
+    _defaultNseg = 1
+    _defaultRa = 35.4
+    
+    _hocObj = hoc.HocObject()
     
     # Other data members that will be added in the ctor:
-    #   exportOptions
+    #   _exportOptions
     
     def __init__(self):
-        self.exportOptions = self.hocObj.exportOptions
+        self._exportOptions = self._hocObj.exportOptions
         
     def getAllCreateStatementsExceptNanogeometry(self):
         # input:  allNames (List of String-s, taken from the top level)
         # output: a string like 'create name1, name2[123], name3[456][7], ...'
         
-        if len(self.hocObj.allNames) == 0:
+        if len(self._hocObj.allNames) == 0:
             codeContractViolation()
         
         createdNames = []
-        for name in self.hocObj.allNames:
+        for name in self._hocObj.allNames:
             createdName = name.s
             
             # !! update this logic once I correct\\replace getAllSectionNames which produces allNames
@@ -43,12 +46,6 @@ class Generators:
         resStr = 'create ' + ', '.join(createdNames)
         
         return resStr
-        
-    def getIntegerValueFromTopLevel(self, varName):
-        return self._generateAssignment(varName, True)
-        
-    def getDoubleValueFromTopLevel(self, varName):
-        return self._generateAssignment(varName, False)
         
     def createListOfSectionRef(self, usedNamesHocListName, secRefHocListName):
         allLines = []
@@ -106,29 +103,55 @@ class Generators:
                 # Max. precision is applied here automatically
                 line = '    pt3dadd({}, {}, {}, {})'.format(sec.x3d(ptIdx), sec.y3d(ptIdx), sec.z3d(ptIdx), sec.diam3d(ptIdx))
                 lines.append(line)
-            if sec.nseg != 1:
+            if sec.nseg != self._defaultNseg:
                 line = '    nseg = {}'.format(sec.nseg)
+                lines.append(line)
+            if sec.Ra != self._defaultRa:
+                line = '    Ra = {}'.format(sec.Ra)
                 lines.append(line)
             lines.append('}')
         return lines
         
-    def insertAllLinesFromFile(self, relFilePathName):
-        absFilePathName = os.getcwd() + '\\' + relFilePathName
-        with open(absFilePathName, 'r') as inFile:
-            inText = inFile.read()
-        return inText.strip().splitlines()  # All newline characters are removed here
-    
+    # !!! remove this block once we export the random g_pas in LargeGlia
+    def initAstrocyteNanogeometryBiophysics(self):
+        if not self._hocObj.isAstrocyteOrNeuron:
+            codeContractViolation()
+            
+        if not self._exportOptions.isExportDistMechs:
+            return emptyParagraphHint()
+            
+        lines = []
+        
+        lines.append(self.getDoubleValueFromTopLevel('GPassive'))
+        lines.append(self.getIntegerValueFromTopLevel('currentMechanismSetup'))
+        lines.append(self.getDoubleValueFromTopLevel('DensityGluTransporters'))
+        lines.append('')
+        
+        newLines = self.insertAllLinesFromFile('Code\\NanoCore\\Astrocyte\\Exported\\AstrocyteNanoBranch_Exported.hoc')
+        lines.extend(newLines)
+        lines.append('')
+        
+        lines.append('for idx = 0, NumberNanoBranches - 1 {')
+        lines.append('    initAstrocyteBiophysics(astrocyteNanoBranch[idx])')
+        lines.append('}')
+        
+        return lines
+        
     # !! BUG: In rare cases, an error "procedure too big" may occur when user loads the exported file.
     #         This error takes place while sourcing one of obfunc-s named "getListOfSecRefsFor*Comp".
     #         The root cause is that the base geometry file imported earlier
     #         created so many sections on the top level, that we cannot create now in the scope of just one obfunc.
     #         To fix this error, we'll have to init all list_ref-s on the top level rather than in the obfunc-s.
-    def createMechComps(self):
-        lines = []
+    def createReducedMechComps(self):
+    
+        if not self._exportOptions.isExportDistMechs:
+            fileName = 'ReducedMechComp1.hoc'   # name, list_ref
+        else:
+            fileName = 'ReducedMechComp2.hoc'   # name, list_ref, isMechInserted, mechStds
+        lines = self.insertAllLinesFromReducedVersionFile(fileName)
+        lines.append('')
         
-        mmAllComps = self.hocObj.mmAllComps
-        
-        # !! do not export biophysics if turned off in exportOptions
+        mmAllComps = self._hocObj.mmAllComps
         
         # Create number of obfunc-s to prepare "list_ref" for each comp
         obfuncNames = []
@@ -147,13 +170,32 @@ class Generators:
             lines.append('}')
             lines.append('')
         
+        lines.append('objref mmAllComps, comp')
+        lines.append('mmAllComps = new List()')
+        lines.append('')
+        
+        for (comp, obfuncName) in zip(mmAllComps, obfuncNames):
+            lines.append('comp = new ReducedMechComp("{}", {}())'.format(comp.name, obfuncName))
+            lines.append('{ mmAllComps.append(comp) }')
+            lines.append('')
+            
+        return lines
+        
+    def initHomogenBiophysics(self):
+        if not self._exportOptions.isExportDistMechs:
+            return emptyParagraphHint()
+            
+        lines = []
+        
+        mmAllComps = self._hocObj.mmAllComps
+        
         # Create number of proc-s to prepare and set "isMechInserted" and "mechStds" for each comp
         procNames = []
-        mth = self.hocObj.mth
+        mth = self._hocObj.mth
         enumDmPpNc = 0
         for comp in mmAllComps:
             procNameId = self._prepareUniqueNameId(comp.name)
-            procName = 'init{}Comp'.format(procNameId)
+            procName = 'addHomogenBiophysInfoTo{}Comp'.format(procNameId)
             procNames.append(procName)
             lines.append('proc {}() {{ localobj comp, mechStd'.format(procName))
             lines.append('    comp = $o1')
@@ -169,8 +211,12 @@ class Generators:
                 mechName = h.ref('')
                 mth.getMechName(enumDmPpNc, mechIdx, mechName)
                 mechName = mechName[0]
-                for varType in range(1, 4): # 1: "PARAMETER", 2: "ASSIGNED", 3: "STATE"
-                    varTypeIdx = varType - 1
+                if self._exportOptions.isExportDistMechAssignedAndState:
+                    maxVarType = 3
+                else:
+                    maxVarType = 1
+                for varType in range(1, maxVarType + 1):    # 1: "PARAMETER", 2: "ASSIGNED", 3: "STATE"
+                    varTypeIdx = int(mth.convertVarTypeToVarTypeIdx(varType))
                     varTypeName = h.ref('')
                     mth.getVarTypeName(varType, varTypeName)
                     varTypeName = varTypeName[0]
@@ -192,7 +238,7 @@ class Generators:
                             #    just after the start of our program (defaultValue = 0) or now (defaultValue = 2.5)
                             if (varType == 1 and value == defaultValue) or (varType > 1 and value == 0):
                                 continue
-                            # !! BUG: When user turns off the export of inhom models in exportOptions, we still assign "nan" here
+                            # !! BUG: When user turns off the export of inhom models in _exportOptions, we still assign "nan" here
                             if arraySize == 1:
                                 newLines.append('    mechStd.set("{}", {})'.format(varName, value))
                             else:
@@ -205,79 +251,85 @@ class Generators:
             lines[-1] = '}'
             lines.append('')
             
-        lines.append('objref mmAllComps, comp')
-        lines.append('mmAllComps = new List()')
-        lines.append('')
-        
-        for (comp, obfuncName, procName) in zip(mmAllComps, obfuncNames, procNames):
-            lines.append('comp = new MechComp_("{}", {}())'.format(comp.name, obfuncName))
+        for compIdx in range(len(mmAllComps)):
+            lines.append('comp = mmAllComps.o({})'.format(compIdx))
+            procName = procNames[compIdx]
             lines.append('{}(comp)'.format(procName))
-            lines.append('{ mmAllComps.append(comp) }')
             lines.append('')
             
+        lines.append('for compIdx = 0, mmAllComps.count() - 1 {')
+        lines.append('    comp = mmAllComps.o(compIdx)')
+        lines.append('    comp.initHomogenBiophysics()')
+        lines.append('}')
+        
+        # !!! BUG: we don't export GLOBAL-s
+        
         return lines
         
-    # !! major code dupl. with insertAllUsedStochFuncs
+    def createInhomAndStochLibrary(self):
+        if not (self._exportOptions.isExportAnyDistFuncs() or self._exportOptions.isExportAnyStochFuncs()):
+            return emptyParagraphHint()
+            
+        lines = []
+        
+        newLines = self.insertAllLinesFromReducedVersionFile('ReducedInhomAndStochTarget.hoc')
+        lines.extend(newLines)
+        lines.append('')
+        
+        newLines = self.insertAllLinesFromReducedVersionFile('ReducedInhomAndStochLibrary.hoc')
+        lines.extend(newLines)
+        lines.append('')
+        
+        lines.append('objref actSpecVar')
+        
+        return lines
+        
+    def createReducedSynComps(self):
+        if not self._exportOptions.isExportSyns:
+            return emptyParagraphHint()
+            
+        lines = self.insertAllLinesFromReducedVersionFile('ReducedSynPPComp.hoc')
+        lines.append('')
+        
+        # !!
+        
+        return lines
+        
+    # !! some code dupl. with insertAllUsedStochFuncs
     def insertAllUsedDistFuncs(self):
-        if not self.exportOptions.isExportInhomModels():
-            return self._nothingHereHint()
+        if not self._exportOptions.isExportAnyDistFuncs():
+            return emptyParagraphHint()
             
         lines = []
         
         distFuncCatIdxToFileNameDict = {}
-        distFuncCatIdxToFileNameDict[0] = 'DistFuncGroupAHelper.hoc'
-        distFuncCatIdxToFileNameDict[1] = 'DistFuncGroupsBDHelper.hoc'
-        distFuncCatIdxToFileNameDict[2] = 'DistFuncGroupCHelper.hoc'
-        distFuncCatIdxToFileNameDict[3] = 'DistFuncGroupsEFHelper.hoc'
-        distFuncCatIdxToFileNameDict[4] = 'DistFuncGroupGHelper.hoc'
+        distFuncCatIdxToFileNameDict[0] = 'SimpleModelDistFuncHelper.hoc'
+        distFuncCatIdxToFileNameDict[1] = 'CustomCodeDistFuncHelper.hoc'
+        distFuncCatIdxToFileNameDict[2] = 'CodeFromFileDistFuncHelper.hoc'
+        distFuncCatIdxToFileNameDict[3] = 'TablePlusLinInterpDistFuncHelper.hoc'
+        distFuncCatIdxToFileNameDict[4] = 'SpecialDistFuncHelper.hoc'
+        # !!! distFuncCatIdxToFileNameDict[!!5] = 'VerbatimDistFuncHelper.hoc'
         
         distFuncCatIdxs = set()
         for activeSpecVar in h.inhomAndStochLibrary.activeSpecVars:
-            # !! need to filter the models depending on the exportOptions
-            if not (activeSpecVar.isInhom and activeSpecVar.varType == 1):  # 1: "PARAMETER"
+            if not self._exportOptions.isExportedInhomVar(activeSpecVar):
                 continue
             distFuncCatIdxs.add(activeSpecVar.distFuncCatIdx)
             
-        relDirPath = 'Code\\Managers\\Widgets\\Inhomogeneity\\DistFuncHelpers\\Exported'
+        relDirPath = 'Code\\Managers\\InhomAndStochLibrary\\InhomModels\\DistFuncHelpers\\Exported'
         self._exportSomeFilesFromThisDir(lines, relDirPath, distFuncCatIdxs, distFuncCatIdxToFileNameDict)
+        lines.append('')
         
-        return self._linesOrNothingHereHint(lines)
-        
-    def createInhomModels(self):
-        lines = []
-        
-        if not self.exportOptions.isExportInhomModels():
-            return lines
+        if self._exportOptions.isExportAnyInhomBiophysModels():
+            newLines = self.insertAllLinesFromReducedVersionFile('ReducedSegmentationHelper.hoc')
+            lines.extend(newLines)
             
-        lines.append('objref distFuncHelpers, distFuncHelper, vecOfValues, listOfStrs')
-        lines.append('distFuncHelpers = new List()')
-        for activeSpecVar in h.inhomAndStochLibrary.activeSpecVars:
-            # !! need to filter the models depending on the exportOptions
-            if not (activeSpecVar.isInhom and activeSpecVar.varType == 1):  # 1: "PARAMETER"
-                continue
-            distFuncHelper = activeSpecVar.distFuncHelper
-            # !! BUG: DistFuncGroupCHelper and DistFuncGroupsEFHelper require different approaches here
-            modelIdx = distFuncHelper.modelIdx
-            templName = self._getTemplateName(distFuncHelper)
-            lines.append('distFuncHelper = new {}({}, nil)'.format(templName, modelIdx))
-            lines.append('vecOfValues = new Vector()')
-            vecOfValues = h.Vector()
-            listOfStrs = h.List()
-            distFuncHelper.exportParams(vecOfValues, listOfStrs)
-            for value in vecOfValues:
-                lines.append('{{ vecOfValues.append({}) }}'.format(value))  # Max. precision is applied here automatically
-            lines.append('listOfStrs = new List()')
-            for string in listOfStrs:
-                lines.append('{{ listOfStrs.append(new String("{}")) }}'.format(string.s))
-            lines.append('{ distFuncHelper.importParams(vecOfValues, listOfStrs) }')
-            lines.append('{ distFuncHelpers.append(distFuncHelper) }')
-            
-        return lines
+        return self._linesOrEmptyParagraphHint(lines)
         
-    # !! major code dupl. with insertAllUsedDistFuncs
+    # !! some code dupl. with insertAllUsedDistFuncs
     def insertAllUsedStochFuncs(self):
-        if not self.exportOptions.isExportStochModels():
-            return self._nothingHereHint()
+        if not self._exportOptions.isExportAnyStochFuncs():
+            return emptyParagraphHint()
             
         lines = []
         
@@ -290,55 +342,159 @@ class Generators:
         stochFuncIdxToFileNameDict[5] = 'WeibullDistHelper.hoc'
         
         stochFuncCatIdxToFileNameDict = {}
-        stochFuncCatIdxToFileNameDict[0] = 'StochFuncGroupAHelper.hoc'
-        stochFuncCatIdxToFileNameDict[1] = 'StochFuncGroupsBDHelper.hoc'
-        stochFuncCatIdxToFileNameDict[2] = 'StochFuncGroupCHelper.hoc'
-        stochFuncCatIdxToFileNameDict[3] = 'StochFuncGroupsEFHelper.hoc'
-        stochFuncCatIdxToFileNameDict[4] = 'StochFuncGroupGHelper.hoc'
-        
-        # !! need to filter the models depending on the exportOptions
+        stochFuncCatIdxToFileNameDict[0] = 'SimpleModelStochFuncHelper.hoc'
+        stochFuncCatIdxToFileNameDict[1] = 'CustomCodeDistFuncHelper.hoc'           # v !! just stubs
+        stochFuncCatIdxToFileNameDict[2] = 'CodeFromFileDistFuncHelper.hoc'
+        stochFuncCatIdxToFileNameDict[3] = 'TablePlusLinInterpDistFuncHelper.hoc'   # ^ !! just stubs
+        stochFuncCatIdxToFileNameDict[4] = 'SpecialStochFuncHelper.hoc'
         
         stochFuncCatIdxs = set()
         stochFuncIdxs = set()
         for activeSpecVar in h.inhomAndStochLibrary.activeSpecVars:
-            if not (activeSpecVar.isStoch and activeSpecVar.varType == 1):  # 1: "PARAMETER"
+            if not self._exportOptions.isExportedStochVar(activeSpecVar):
                 continue
             stochFuncCatIdx = activeSpecVar.stochFuncCatIdx
             stochFuncCatIdxs.add(stochFuncCatIdx)
             if stochFuncCatIdx == 0:
                 stochFuncIdxs.add(activeSpecVar.stochFuncIdx)
             
-        relDirPath = 'Code\\Managers\\Widgets\\Stochasticity\\StochDistHelpers\\Exported'
+        # !!! just a temp solution (we need to bind these names as templates' external-s even though they won't be used)
+        lines.append('objref callPythonFunction, definePythonFunction, inhomAndStochApplicator, joinStrings, loadPythonFile, math, mwh, printMsgAndRaiseError, rngUtils, selectDistFuncInputFile, specMath, stochTestGraph')
+        lines.append('iterator eachPointInGrid() { codeContractViolation() }')
+        lines.append('')
+        
+        relDirPath = 'Code\\Managers\\InhomAndStochLibrary\\StochModels\\StochDistHelpers\\Exported'
         self._exportSomeFilesFromThisDir(lines, relDirPath, stochFuncIdxs, stochFuncIdxToFileNameDict)
         
-        relDirPath = 'Code\\Managers\\Widgets\\Stochasticity\\StochFuncHelpers\\Exported'
+        relDirPath = 'Code\\Managers\\InhomAndStochLibrary\\StochModels\\StochFuncHelpers\\Exported'
         self._exportSomeFilesFromThisDir(lines, relDirPath, stochFuncCatIdxs, stochFuncCatIdxToFileNameDict)
         
-        return self._linesOrNothingHereHint(lines)
+        return self._linesOrEmptyParagraphHint(lines)
         
-    def initSynComps(self):
-        if not self.exportOptions.isExportSyns:
-            return self._nothingHereHint()
+    def createInhomBiophysModels(self):
+        if not self._exportOptions.isExportAnyInhomBiophysModels():
+            return emptyParagraphHint()
             
-        relFilePathName = 'Code\\Export\\OutHocFileStructures\\ReducedVersions\\ReducedSynPPComp.hoc'
-        lines = self.insertAllLinesFromFile(relFilePathName)
+        lines = []
         
-        # !!
+        lines.append('objref segmentationHelper, distFuncHelper, vecOfVals, listOfStrs')
+        lines.append('')
+        for activeSpecVar in h.inhomAndStochLibrary.activeSpecVars:
+            if not self._exportOptions.isExportedInhomBiophysVar(activeSpecVar):
+                continue
+            distFuncHelper = activeSpecVar.distFuncHelper
+            segmentationHelper = activeSpecVar.segmentationHelper
+            
+            lines.append('segmentationHelper = new ReducedSegmentationHelper()')
+            lines.append('segmentationHelper.segmentationMode = {}'.format(int(segmentationHelper.segmentationMode)))
+            lines.append('segmentationHelper.total_nseg = {}'.format(int(segmentationHelper.total_nseg)))
+            lines.append('segmentationHelper.min_nseg = {}'.format(int(segmentationHelper.min_nseg)))
+            
+            # !! BUG: CodeFromFileDistFuncHelper and TablePlusLinInterpDistFuncHelper require different approaches here
+            templName = self._getTemplateName(distFuncHelper)
+            lines.append('distFuncHelper = new {}({}, nil)'.format(templName, int(distFuncHelper.modelIdx)))
+            lines.append('vecOfVals = new Vector()')
+            vecOfVals = h.Vector()
+            listOfStrs = h.List()
+            distFuncHelper.exportParams(vecOfVals, listOfStrs)
+            for value in vecOfVals:
+                lines.append('{{ vecOfVals.append({}) }}'.format(value))    # Max. precision is applied here automatically
+            lines.append('listOfStrs = new List()')
+            for string in listOfStrs:
+                lines.append('{{ listOfStrs.append(new String("{}")) }}'.format(string.s))
+            lines.append('{ distFuncHelper.importParams(vecOfVals, listOfStrs) }')
+            lines.append('actSpecVar = new ReducedInhomAndStochTarget({}, {}, {}, {}, {}, {})'.format(int(activeSpecVar.enumDmPpNc), int(activeSpecVar.compIdx), int(activeSpecVar.mechIdx), int(activeSpecVar.varType), int(activeSpecVar.varIdx), int(activeSpecVar.arrayIndex)))
+            lines.append('{{ actSpecVar.makeInhom(segmentationHelper, distFuncHelper, {}, {}) }}'.format(int(activeSpecVar.distFuncCatIdx), int(activeSpecVar.distFuncIdx)))
+            lines.append('{ inhomAndStochLibrary.activeSpecVars.append(actSpecVar) }')
+            lines.append('')
+            
+        lines.append('for actSpecVarIdx = 0, inhomAndStochLibrary.activeSpecVars.count() - 1 {')
+        lines.append('    inhomAndStochLibrary.activeSpecVars.o(actSpecVarIdx).applyBiophysInhomogeneity()')
+        lines.append('}')
+        
+        return lines
+        
+    def createStochBiophysModels(self):
+        if not self._exportOptions.isExportAnyStochBiophysModels():
+            return emptyParagraphHint()
+            
+        lines = []
+        
+        lines.append('// !! not implemented')
+        
+        # for activeSpecVar in h.inhomAndStochLibrary.activeSpecVars:
+        #     if not self._exportOptions.isExportedStochBiophysVar(activeSpecVar):
+        #         continue
+        #     !!
+        
+        return lines
+        
+    def createInhomSynModels(self):
+        if not self._exportOptions.isExportAnyInhomSynModels():
+            return emptyParagraphHint()
+            
+        lines = []
+        
+        lines.append('// !! not implemented')
+        
+        # for activeSpecVar in h.inhomAndStochLibrary.activeSpecVars:
+        #     if not self._exportOptions.isExportedInhomSynVar(activeSpecVar):
+        #         continue
+        #     !!
+        
+        return lines
+        
+    def createStochSynModels(self):
+        if not self._exportOptions.isExportAnyStochSynModels():
+            return emptyParagraphHint()
+            
+        lines = []
+        
+        lines.append('// !! not implemented')
+        
+        # for activeSpecVar in h.inhomAndStochLibrary.activeSpecVars:
+        #     if not self._exportOptions.isExportedStochSynVar(activeSpecVar):
+        #         continue
+        #     !!
         
         return lines
         
     def insertAltRunControlWidget(self):
-        if not self.exportOptions.isExportStochModels():
-            return self._nothingHereHint()
+        if not self._exportOptions.isExportAnyStochFuncs():
+            return emptyParagraphHint()
             
         lines = self.insertAllLinesFromFile('Code\\Core\\Widgets\\Exported\\alt_stdrun.hoc')
+        lines.append('')
+        
         newLines = self.insertAllLinesFromFile('Code\\Core\\Widgets\\Exported\\AltRunControlWidget.hoc')
         lines.extend(newLines)
+        lines.append('')
+        
+        lines.append('objref altRunControlWidget')
+        lines.append('altRunControlWidget = new AltRunControlWidget()')
+        lines.append('altRunControlWidget.show()')
         
         return lines
         
+    def insertAllLinesFromFile(self, relFilePathName):
+        absFilePathName = os.getcwd() + '\\' + relFilePathName
+        with open(absFilePathName, 'r') as inFile:
+            inText = inFile.read()
+        return inText.strip().splitlines()  # All newline characters are removed here
+        
+    def insertAllLinesFromReducedVersionFile(self, fileName):
+        relFilePathName = 'Code\\Export\\OutHocFileStructures\\ReducedVersions\\' + fileName
+        return self.insertAllLinesFromFile(relFilePathName)
+        
+    def getIntegerValueFromTopLevel(self, varName):
+        return self._generateAssignment(varName, True)
+        
+    def getDoubleValueFromTopLevel(self, varName):
+        return self._generateAssignment(varName, False)
+        
+        
     def _getHocVar(self, varName):
-        return eval('self.hocObj.' + varName)   # !! maybe can do it via refletion
+        return eval('self._hocObj.' + varName)  # !! maybe can do it via refletion
         
     def _generateAssignment(self, varName, isIntegerOrDouble):
         value = self._getHocVar(varName)
@@ -490,14 +646,11 @@ class Generators:
         templName = templName[: idx]
         return templName
         
-    def _nothingHereHint(self):
-        return '// (Nothing here)'
-        
-    def _linesOrNothingHereHint(self, lines):
+    def _linesOrEmptyParagraphHint(self, lines):
         if len(lines) != 0:
             return lines
         else:
-            return self._nothingHereHint()
+            return emptyParagraphHint()
             
     def _exportSomeFilesFromThisDir(self, lines, relDirPath, idxs, idxToFileNameDict):
         isFirstDistFunc = True
@@ -508,5 +661,6 @@ class Generators:
             relFilePathName = relDirPath + '\\' + fileName
             newLines = self.insertAllLinesFromFile(relFilePathName)
             lines.extend(newLines)
+            lines.append('')
             isFirstDistFunc = False
             

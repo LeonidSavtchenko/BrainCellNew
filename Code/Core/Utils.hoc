@@ -2,7 +2,7 @@
 // Removes item from the vector if it's inside.
 // $o1 - Vector to remove from
 // $o2 - Item to remove
-proc removeIfExists() {
+proc removeIfExists() { local itemIndex
     itemIndex = $o1.index($o2)
     if (itemIndex != -1){
         $o1.remove(itemIndex)

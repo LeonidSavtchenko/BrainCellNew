@@ -6,11 +6,13 @@ loadIfNotDeclared("AltRunControlWidget", "../../Core/Widgets/Exported/AltRunCont
 isScheduledRescanningOfDistMechs = 0
 isScheduledCachingOfSpineNeckDiams = 0
 
+objref exportManagerMainWidget
+
 begintemplate MechOrSynManagerBaseWidget
 
     public show, showMechManagerHandler, showSynManagerHandler, showAltRunControlHandler, onNanoReseedOrUpdateHandler, dismissHandler
     
-    external mechManagerMainWidget, synManagerMainWidget
+    external mechManagerMainWidget, synManagerMainWidget, exportManagerMainWidget
     external mmAllComps, smAllSyns, synGroup
     external mwh, spineNeckDiamCache
     external inhomAndStochLibrary
@@ -46,6 +48,7 @@ begintemplate MechOrSynManagerBaseWidget
     }
     
     proc showMechManagerHandler() { localobj nil
+        dismissIfNotNil(exportManagerMainWidget)
         dismissIfNotNil(mechManagerMainWidget)
         
         if (mmAllComps.count() == 0) {
@@ -64,6 +67,7 @@ begintemplate MechOrSynManagerBaseWidget
     }
     
     proc showSynManagerHandler() { local isDisconnected, xMin, xMax localobj nil
+        dismissIfNotNil(exportManagerMainWidget)
         dismissIfNotNil(synManagerMainWidget)
         
         if (smAllSyns.count() == 0) {

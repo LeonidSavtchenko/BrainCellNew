@@ -3,7 +3,7 @@
 
 // Load some test cell
 { load_file("../Nanogeometry/cellmorphology+nano.hoc") }
-isAstrocyteOrNeuron = 0
+isBaseOrNanoStart = 0
 
 objref stochTestPlotShape
 stochTestPlotShape = new PlotShape()

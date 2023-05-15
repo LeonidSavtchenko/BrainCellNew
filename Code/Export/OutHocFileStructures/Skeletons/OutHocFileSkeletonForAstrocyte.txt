@@ -1,6 +1,16 @@
 
 py:getIntegerValueFromTopLevel('isAstrocyteOrNeuron')
 
+//////////////////// Start of utils //////////////////////////////////////
+
+py:insertAllLinesFromReducedVersionFile('ReducedMath.hoc')
+
+py:insertAllLinesFromFile('Code\\InterModular\\Exported\\InterModularErrWarnUtils_Exported.hoc')
+
+//////////////////// End of utils ////////////////////////////////////////
+
+//////////////////// Start of sections ///////////////////////////////////
+
 py:getAllCreateStatementsExceptNanogeometry()
 
 py:getIntegerValueFromTopLevel('NumberDendrites')
@@ -21,15 +31,9 @@ for idx = 0, NumberNanoBranches - 1 {
     astrocyteNanoBranch[idx] = new AstrocyteNanoBranch()
 }
 
-//////////////////// Start of utils //////////////////////////////////////
+//////////////////// End of sections /////////////////////////////////////
 
-py:insertAllLinesFromFile('Code\\InterModular\\Exported\\InterModularErrWarnUtils_Exported.hoc')
-
-py:insertAllLinesFromFile('Code\\Export\\OutHocFileStructures\\ReducedVersions\\ReducedMath.hoc')
-
-//////////////////// End of utils ////////////////////////////////////////
-
-//////////////////// Start of section references /////////////////////////
+//////////////////// Start of section references (deprecated) ////////////
 
 // !!! only soma_ref.o(0) is used below (dendrite_ref is not used anywhere)
 objref soma_ref, dendrite_ref
@@ -48,7 +52,7 @@ py:insertAllLinesFromFile('Code\\NanoCore\\Exported\\CreateNanoRefs_Exported.hoc
 
 createRefsForNanoGeometry()
 
-//////////////////// End of section references ///////////////////////////
+//////////////////// End of section references (deprecated) //////////////
 
 //////////////////// Start of topology ///////////////////////////////////
 
@@ -56,60 +60,73 @@ py:initTopology()
 
 //////////////////// End of topology /////////////////////////////////////
 
-//////////////////// Start of geometry ///////////////////////////////////
+//////////////////// Start of geometry, nseg, Ra /////////////////////////
 
 py:initGeometry()
 
-//////////////////// End of geometry /////////////////////////////////////
+//////////////////// End of geometry, nseg, Ra ///////////////////////////
 
-// !! remove this block once we export the random g_pas in LargeGlia
-//////////////////// Start of nanogeometry biophysics ////////////////////
+//////////////////// Start of distance centre ////////////////////////////
 
-py:getDoubleValueFromTopLevel('GPassive')
-py:getIntegerValueFromTopLevel('currentMechanismSetup')
-py:getDoubleValueFromTopLevel('DensityGluTransporters')
+// !!! BUG: hardcoded rather than exported
 
-py:insertAllLinesFromFile('Code\\NanoCore\\Astrocyte\\Exported\\AstrocyteNanoBranch_Exported.hoc')
-
-for idx = 0, NumberNanoBranches - 1 {
-    initAstrocyteBiophysics(astrocyteNanoBranch[idx])
-}
-
-//////////////////// End of nanogeometry biophysics //////////////////////
-
-// !! hardcoded rather than exported
+// The distance centre
 soma_ref.o(0).sec distance()
 
-//////////////////// Start of compartments and homogen biophysics ////////
+//////////////////// End of distance centre //////////////////////////////
 
-py:insertAllLinesFromFile('Code\\Export\\OutHocFileStructures\\ReducedVersions\\ReducedMechComp.hoc')
+//////////////////// Start of nanogeometry biophysics (deprecated) ///////
 
-py:createMechComps()
+py:initAstrocyteNanogeometryBiophysics()
 
-for compIdx = 0, mmAllComps.count() - 1 {
-    mmAllComps.o(compIdx).initHomogenBiophysics()
-}
+//////////////////// End of nanogeometry biophysics (deprecated) /////////
 
-// !!! BUG: we don't export GLOBAL-s
+//////////////////// Start of compartments ///////////////////////////////
 
-//////////////////// End of compartments and homogen biophysics //////////
+py:createReducedMechComps()
 
-//////////////////// Start of inhomogen biophysics ///////////////////////
+//////////////////// End of compartments /////////////////////////////////
+
+//////////////////// Start of homogen biophysics /////////////////////////
+
+py:initHomogenBiophysics()
+
+//////////////////// End of homogen biophysics ///////////////////////////
+
+//////////////////// Start of inhom and stoch library ////////////////////
+
+py:createInhomAndStochLibrary()
+
+//////////////////// End of inhom and stoch library //////////////////////
+
+//////////////////// Start of dist funcs /////////////////////////////////
 
 py:insertAllUsedDistFuncs()
 
-py:createInhomModels()
+//////////////////// End of dist funcs ///////////////////////////////////
 
-//////////////////// End of inhomogen biophysics /////////////////////////
-
-//////////////////// Start of stoch models ///////////////////////////////
+//////////////////// Start of stoch funcs ////////////////////////////////
 
 py:insertAllUsedStochFuncs()
 
-//////////////////// End of stoch models /////////////////////////////////
+//////////////////// End of stoch funcs //////////////////////////////////
+
+//////////////////// Start of inhom biophys models ///////////////////////
+
+py:createInhomBiophysModels()
+
+//////////////////// End of inhom biophys models /////////////////////////
+
+//////////////////// Start of stoch biophys models ///////////////////////
+
+py:createStochBiophysModels()
+
+//////////////////// End of stoch biophys models /////////////////////////
 
 //////////////////// Start of AltRunControl widget ///////////////////////
 
 py:insertAltRunControlWidget()
 
 //////////////////// End of AltRunControl widget /////////////////////////
+
+access soma_ref.o(0).sec

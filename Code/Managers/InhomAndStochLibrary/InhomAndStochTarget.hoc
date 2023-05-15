@@ -22,6 +22,7 @@ begintemplate InhomAndStochTarget
     strdef varName
     arraySize = -1
     arrayIndex = -1
+    
     objref segmentationHelper, distFuncHelper
     objref boundingHelper, stochFuncHelper
     
@@ -39,13 +40,28 @@ begintemplate InhomAndStochTarget
     objref this
     
     
-    proc init() {
-        enumDmPpNc = $1
-        compIdx = $2
-        mechIdx = $3
-        varType = $4
-        varIdx = $5
-        arrayIndex = $6
+    proc init() { local numArg localobj impRedObj, nil
+        numArg = numarg()
+        
+        if (numArg == 1) {
+            // Load data from the imported reduced template (part 1)
+            impRedObj = $o1
+            enumDmPpNc = impRedObj.enumDmPpNc
+            compIdx = impRedObj.compIdx
+            mechIdx = impRedObj.mechIdx
+            varType = impRedObj.varType
+            varIdx = impRedObj.varIdx
+            arrayIndex = impRedObj.arrayIndex
+        } else if (numArg == 6) {
+            enumDmPpNc = $1
+            compIdx = $2
+            mechIdx = $3
+            varType = $4
+            varIdx = $5
+            arrayIndex = $6
+        } else {
+            codeContractViolation()
+        }
         
         isDmOrSynPart = (enumDmPpNc == 0)
         
@@ -63,9 +79,29 @@ begintemplate InhomAndStochTarget
             tempMechStd = new MechanismStandard(mechName, varType)
         } else {
             // !! need to test if using this "Fake*" template with "in-set-out" workflow we still achieve better performance
-            //   than "sprint"-ing and executing a HOC-command for direct var assignment
+            //    than "sprint"-ing and executing a HOC-command for direct var assignment
             execute("tempMechStd = new FakeMechanismStandardForNetCon()", this)     // The template is not loaded for astrocytes
         }
+        
+        if (impRedObj == nil) {
+            return
+        }
+        
+        // Load data from the imported reduced template (part 2)
+        
+        segmentationHelper = impRedObj.segmentationHelper
+        distFuncHelper = impRedObj.distFuncHelper
+        distFuncCatIdx = impRedObj.distFuncCatIdx
+        distFuncIdx = impRedObj.distFuncIdx
+        isInhom = impRedObj.isInhom
+        
+        boundingHelper = impRedObj.boundingHelper
+        stochFuncHelper = impRedObj.stochFuncHelper
+        stochFuncCatIdx = impRedObj.stochFuncCatIdx
+        stochFuncIdx = impRedObj.stochFuncIdx
+        isStoch = impRedObj.isStoch
+        
+        setIsPlayable()
     }
     
     proc makeOrUpdateInhom() {
@@ -177,11 +213,12 @@ begintemplate InhomAndStochTarget
             homogenValue = baseMechStd.get(varName, arrayIndex)
         }
         
+        distFuncHelper.onJustBeforeFirstSection()
         if (isDmOrSynPart) {
             for eachItemInList(sec_ref, list_ref) {
                 sec_ref.sec {
                     if (isInhom) {
-                        distFuncHelper.onNewSection()   // Needed for "Zebra (sections)" only
+                        distFuncHelper.onNewSection()
                     }
                     for (x, 0) {
                         // The base value
@@ -210,7 +247,7 @@ begintemplate InhomAndStochTarget
             prevSec_ref = nil
             for eachItemInList(syn, smAllSyns) {
                 if (syn.sec_ref != prevSec_ref && isInhom) {
-                    distFuncHelper.onNewSection()   // Needed for "Zebra (sections)" only
+                    distFuncHelper.onNewSection()
                 }
                 
                 if (!syn.sefwPp.isAnyEventsOnThisIter) {
@@ -252,6 +289,7 @@ begintemplate InhomAndStochTarget
                 prevSec_ref = syn.sec_ref
             }
         }
+        distFuncHelper.onJustAfterLastSection()
     }
     
     // Keep in sync with "onStep"

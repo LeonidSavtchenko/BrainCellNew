@@ -4,8 +4,6 @@
 { load_file("Widgets/CompOps/MechManagerCompOpMergeSubWidget.hoc") }
 { load_file("Widgets/CompOps/MechManagerCompOpWidget.hoc") }
 
-{ load_file("Widgets/MechOps/Inhomogeneity/SegmentationHelper.hoc") }
-
 { load_file("Widgets/MechOps/MechOpHelpers/MechOp0Helper.hoc") }
 { load_file("Widgets/MechOps/MechOpHelpers/MechOp1Helper.hoc") }
 { load_file("Widgets/MechOps/MechOpHelpers/MechOp2Helper.hoc") }

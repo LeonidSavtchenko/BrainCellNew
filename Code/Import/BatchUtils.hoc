@@ -21,7 +21,7 @@ proc createOrCleanUpTempFolder() { local status
 // $s2 - Output folder path and name
 // $s3 (Output) - The SWC file path and name
 proc unzipArchiveWith7ZipAndRenameInputFile() { local status
-    strdef inZipFilePathName, appPathNameTempl, appPathName, outFolderPathName, sysCommandTempl, sysCommand, outSwcFileName, outSwcFilePathName
+    strdef inZipFilePathName, outFolderPathName, appPathNameTempl, appPathName, sysCommandTempl, sysCommand, outSwcFileName, outSwcFilePathName
     
     inZipFilePathName = $s1
     outFolderPathName = $s2
@@ -48,7 +48,7 @@ proc unzipArchiveWith7ZipAndRenameInputFile() { local status
 // $s1 - Input file path and name
 // $s2 - Output report file path and name
 proc createReportFileWithNLMorphologyConverter() { local status
-    strdef inFilePathName, appPathNameTempl, appPathName, outFilePathName, sysCommandTempl, sysCommand
+    strdef inFilePathName, outFilePathName, appPathNameTempl, appPathName, sysCommandTempl, sysCommand
     
     inFilePathName = $s1
     outFilePathName = $s2
