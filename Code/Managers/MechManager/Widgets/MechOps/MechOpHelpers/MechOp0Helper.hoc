@@ -46,8 +46,8 @@ begintemplate MechOp0Helper
         // No childs
     }
     
+    // All next staff is private
     
-    // All next proc-s are private
     
     proc prepareCheckboxHandlerHocCommand() { local compIdx, mechIdx
         strdef hocCommandTemplate

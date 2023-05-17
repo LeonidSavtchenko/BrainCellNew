@@ -1,0 +1,45 @@
+
+begintemplate StochFuncsCatalogue
+
+    public simpleModelStochFuncCatIdx, custExprStochFuncCatIdx, custFuncStochFuncCatIdx, specialStochFuncCatIdx
+    public numStochFuncs, tableFromTextFileStochFuncIdx, tableFromExcelFileStochFuncIdx
+    public doesStochFuncUseStringOrFileDialog, isNotImplStochFuncCat
+    
+    simpleModelStochFuncCatIdx = -1
+    custExprStochFuncCatIdx = -1
+    custFuncStochFuncCatIdx = -1
+    specialStochFuncCatIdx = -1
+    
+    numStochFuncs = -1
+    
+    tableFromTextFileStochFuncIdx =  -1
+    tableFromExcelFileStochFuncIdx =  -1
+    
+    
+    proc init() {
+        simpleModelStochFuncCatIdx = 0
+        custExprStochFuncCatIdx = 1
+        custFuncStochFuncCatIdx = 2
+        specialStochFuncCatIdx = 4
+        
+        numStochFuncs = 20
+        
+        tableFromTextFileStochFuncIdx = 13
+        tableFromExcelFileStochFuncIdx = 14
+    }
+    
+    func doesStochFuncUseStringOrFileDialog() { local stochFuncCatIdx, stochFuncIdx
+        stochFuncCatIdx = $1
+        stochFuncIdx = $2
+        return (stochFuncCatIdx == custExprStochFuncCatIdx || stochFuncCatIdx == custFuncStochFuncCatIdx || stochFuncIdx == tableFromTextFileStochFuncIdx || stochFuncIdx == tableFromExcelFileStochFuncIdx)
+    }
+    
+    func isNotImplStochFuncCat() { local stochFuncCatIdx
+        stochFuncCatIdx = $1
+        return (stochFuncCatIdx > simpleModelStochFuncCatIdx && stochFuncCatIdx < specialStochFuncCatIdx)
+    }
+    
+endtemplate StochFuncsCatalogue
+
+objref sfc
+sfc = new StochFuncsCatalogue()

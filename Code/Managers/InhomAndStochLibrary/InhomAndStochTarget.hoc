@@ -209,16 +209,18 @@ begintemplate InhomAndStochTarget
                 codeContractViolation()
             }
         }
-        if (!isInhom) {
+        
+        if (isInhom) {
+            distFuncHelper.onJustBeforeFirstSection()
+        } else {
             homogenValue = baseMechStd.get(varName, arrayIndex)
         }
         
-        distFuncHelper.onJustBeforeFirstSection()
         if (isDmOrSynPart) {
             for eachItemInList(sec_ref, list_ref) {
                 sec_ref.sec {
                     if (isInhom) {
-                        distFuncHelper.onNewSection()
+                        distFuncHelper.onJustBeforeNewSection()
                     }
                     for (x, 0) {
                         // The base value
@@ -247,7 +249,7 @@ begintemplate InhomAndStochTarget
             prevSec_ref = nil
             for eachItemInList(syn, smAllSyns) {
                 if (syn.sec_ref != prevSec_ref && isInhom) {
-                    distFuncHelper.onNewSection()
+                    distFuncHelper.onJustBeforeNewSection()
                 }
                 
                 if (!syn.sefwPp.isAnyEventsOnThisIter) {
@@ -289,7 +291,10 @@ begintemplate InhomAndStochTarget
                 prevSec_ref = syn.sec_ref
             }
         }
-        distFuncHelper.onJustAfterLastSection()
+        
+        if (isInhom) {
+            distFuncHelper.onJustAfterLastSection()
+        }
     }
     
     // Keep in sync with "onStep"

@@ -2,7 +2,7 @@
 begintemplate SynNCComp
 
     public name, enumDmPpNc, isMechVarTypeInhom, mechStds
-    public isMechVarInhom, prepareVarsEditorHeader, getDistRange, getSecList, markMechDirty, updateStatsCurve, applyInhomogeneity, updateIsMechVarTypeInhom, isAnyVarInhom
+    public isMechVarInhom, prepareVarsEditorHeader, getDistRange, getSecList, markMechDirty, updateStatsCurve, updateVerbatimModelCurve, applyInhomogeneity, updateIsMechVarTypeInhom, isAnyVarInhom
     public isMechVarTypeInhom, mechStds, isMechDirty
     
     external mwh, mth, math, seh
@@ -128,6 +128,11 @@ begintemplate SynNCComp
         
         $&2 = yMin
         $&3 = yMax
+    }
+    
+    proc updateVerbatimModelCurve() {
+        // It's a code contract that all the syns have homogeneous NetCon-s at the time of new SynNCComp-s construction
+        codeContractViolation()
     }
     
     proc applyInhomogeneity() { local varType, arraySize, arrayIndex, isMetaVar, isSefwEnabled, isWeightVar, y localobj distFuncHelper, firstNetCon, mechStd, syn, thisPp

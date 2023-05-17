@@ -1,4 +1,6 @@
 
+// !! BUG: not ready for export
+
 // !! BUG: PSD and ACF are shown incorrectly for these sequences
 //         maybe we need to swap left and right parts before calling Vector.spctrm
 
@@ -28,7 +30,6 @@ begintemplate SpecialStochFuncHelper
     
     proc init() {
         modelIdx = $1
-        parentWidget = $o2
         
         if (modelIdx < 0 || modelIdx > 4) {
             codeContractViolation()
@@ -86,7 +87,7 @@ begintemplate SpecialStochFuncHelper
         if (modelIdx == 0) {
             value = 0
         } else if (modelIdx == 1) {
-            // Nothing here
+            // Empty by design
         } else if (modelIdx == 2) {
             value = (1 - abs(value)) * sign
             if (value == 0) {

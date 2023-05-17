@@ -1,15 +1,16 @@
 //////////////////// Table of contents ///////////////////////////////////
 /*
-    Line 18:            Utils
-    Line 36:            Sections
-    Line 55:            Section references (deprecated)
-    Line 289:           Topology
-    Line 3417:          Geometry, nseg, Ra
-    Line 38164:         Distance centre
-    Line 38173:         Synapses
-    Line 38349:         Compartments
-    Line 38633:         Homogen biophysics
-    Line 39307:         Synapse compartments
+    Line 19:            Utils
+    Line 77:            Sections
+    Line 96:            Imported section names
+    Line 269:           Section references
+    Line 501:           Topology
+    Line 3629:          Geometry, nseg, Ra
+    Line 38376:         Distance centre
+    Line 38385:         Synapses
+    Line 38561:         Compartments
+    Line 38845:         Homogen biophysics
+    Line 39519:         Synapse compartments
 */
 //////////////////////////////////////////////////////////////////////////
 
@@ -26,9 +27,49 @@ func isNaN() {
     return !($1 == $1)  // Do not replace with "!="
 }
 
-// Report the bug, print the call stack and stop
+// Report the bug, print the call stack, raise the error
 proc codeContractViolation() {
     execerror("\n\n    Bug in Cell program: Code contract violation", "\n    Please report this problem to the developer along with the call stack shown below\n")
+}
+
+// Print the message, print the call stack, raise the error
+// $s1 - The message
+proc printMsgAndRaiseError() {
+    execerror($s1)
+}
+
+// An iterator to simplify looping over all elements of the List a bit.
+// Basically, we replace this:
+//     local idx localobj item
+//     for idx = 0, list.count() - 1 {
+//         item = list.o(idx)
+//         do_smth(item)
+//     }
+// with this:
+//     localobj item
+//     for eachItemInList(item, list) {
+//         do_smth(item)
+//     }
+// There are some limitations:
+//  1. iterator_statement cannot contain "return" (otherwise we'll catch Segmentation violation)
+//  2. We cannot create another iterator which calls eachItemInList inside (otherwise the outer iterator "forgets" its input arguments on 2nd iteration)
+// $o1 (output) - An element of the List
+// $o2 - The List
+// $3 (optional) - The first index (0 by default)
+iterator eachItemInList() { local numArg, firstIdx, idx localobj list
+    list = $o2
+    numArg = numarg()
+    if (numArg == 2) {
+        firstIdx = 0
+    } else if (numArg == 3) {
+        firstIdx = $3
+    } else {
+        codeContractViolation()
+    }
+    for idx = firstIdx, list.count() - 1 {
+        $o1 = list.o(idx)
+        iterator_statement
+    }
 }
 
 //////////////////// End of utils ////////////////////////////////////////
@@ -52,12 +93,183 @@ for idx = 0, NumberNanoBranches - 1 {
 
 //////////////////// End of sections /////////////////////////////////////
 
-//////////////////// Start of section references (deprecated) ////////////
+//////////////////// Start of imported section names /////////////////////
 
-// !!! only soma_ref.o(0) is used below (dendrite_ref and axon_ref are not used anywhere)
+// These names are stored here just to be able to import this file back into the main program and then export again
+
+// Soma
+objref usedNamesForSoma
+usedNamesForSoma = new List()
+{ usedNamesForSoma.append(new String("s")) }
+
+// Dendrites
+objref usedNamesForDendrites
+usedNamesForDendrites = new List()
+{ usedNamesForDendrites.append(new String("dendA1_0")) }
+{ usedNamesForDendrites.append(new String("dendA1_00")) }
+{ usedNamesForDendrites.append(new String("dendA1_01")) }
+{ usedNamesForDendrites.append(new String("dendA1_010")) }
+{ usedNamesForDendrites.append(new String("dendA1_0100")) }
+{ usedNamesForDendrites.append(new String("dendA1_01000")) }
+{ usedNamesForDendrites.append(new String("dendA1_01001")) }
+{ usedNamesForDendrites.append(new String("dendA1_0101")) }
+{ usedNamesForDendrites.append(new String("dendA1_01010")) }
+{ usedNamesForDendrites.append(new String("dendA1_01011")) }
+{ usedNamesForDendrites.append(new String("dendA1_011")) }
+{ usedNamesForDendrites.append(new String("dendA1_0110")) }
+{ usedNamesForDendrites.append(new String("dendA1_01100")) }
+{ usedNamesForDendrites.append(new String("dendA1_01101")) }
+{ usedNamesForDendrites.append(new String("dendA1_0111")) }
+{ usedNamesForDendrites.append(new String("dendA2_0")) }
+{ usedNamesForDendrites.append(new String("dendA2_00")) }
+{ usedNamesForDendrites.append(new String("dendA2_01")) }
+{ usedNamesForDendrites.append(new String("dendA2_010")) }
+{ usedNamesForDendrites.append(new String("dendA2_0100")) }
+{ usedNamesForDendrites.append(new String("dendA2_01000")) }
+{ usedNamesForDendrites.append(new String("dendA2_01001")) }
+{ usedNamesForDendrites.append(new String("dendA2_0101")) }
+{ usedNamesForDendrites.append(new String("dendA2_01010")) }
+{ usedNamesForDendrites.append(new String("dendA2_010100")) }
+{ usedNamesForDendrites.append(new String("dendA2_010101")) }
+{ usedNamesForDendrites.append(new String("dendA2_0101010")) }
+{ usedNamesForDendrites.append(new String("dendA2_01010100")) }
+{ usedNamesForDendrites.append(new String("dendA2_01010101")) }
+{ usedNamesForDendrites.append(new String("dendA2_0101011")) }
+{ usedNamesForDendrites.append(new String("dendA2_01011")) }
+{ usedNamesForDendrites.append(new String("dendA2_010110")) }
+{ usedNamesForDendrites.append(new String("dendA2_010111")) }
+{ usedNamesForDendrites.append(new String("dendA2_0101110")) }
+{ usedNamesForDendrites.append(new String("dendA2_0101111")) }
+{ usedNamesForDendrites.append(new String("dendA2_011")) }
+{ usedNamesForDendrites.append(new String("dendA2_0110")) }
+{ usedNamesForDendrites.append(new String("dendA2_01100")) }
+{ usedNamesForDendrites.append(new String("dendA2_01101")) }
+{ usedNamesForDendrites.append(new String("dendA2_0111")) }
+{ usedNamesForDendrites.append(new String("dendA2_01110")) }
+{ usedNamesForDendrites.append(new String("dendA2_01111")) }
+{ usedNamesForDendrites.append(new String("dendA2_011110")) }
+{ usedNamesForDendrites.append(new String("dendA2_011111")) }
+{ usedNamesForDendrites.append(new String("dendA2_0111110")) }
+{ usedNamesForDendrites.append(new String("dendA2_0111111")) }
+{ usedNamesForDendrites.append(new String("dendA3_0")) }
+{ usedNamesForDendrites.append(new String("dendA3_00")) }
+{ usedNamesForDendrites.append(new String("dendA3_000")) }
+{ usedNamesForDendrites.append(new String("dendA3_001")) }
+{ usedNamesForDendrites.append(new String("dendA3_0010")) }
+{ usedNamesForDendrites.append(new String("dendA3_0011")) }
+{ usedNamesForDendrites.append(new String("dendA3_00110")) }
+{ usedNamesForDendrites.append(new String("dendA3_00111")) }
+{ usedNamesForDendrites.append(new String("dendA3_01")) }
+{ usedNamesForDendrites.append(new String("dendA3_010")) }
+{ usedNamesForDendrites.append(new String("dendA3_0100")) }
+{ usedNamesForDendrites.append(new String("dendA3_0101")) }
+{ usedNamesForDendrites.append(new String("dendA3_011")) }
+{ usedNamesForDendrites.append(new String("dendA3_0110")) }
+{ usedNamesForDendrites.append(new String("dendA3_0111")) }
+{ usedNamesForDendrites.append(new String("dendA4_0")) }
+{ usedNamesForDendrites.append(new String("dendA4_00")) }
+{ usedNamesForDendrites.append(new String("dendA4_01")) }
+{ usedNamesForDendrites.append(new String("dendA4_010")) }
+{ usedNamesForDendrites.append(new String("dendA4_011")) }
+{ usedNamesForDendrites.append(new String("dendA4_0110")) }
+{ usedNamesForDendrites.append(new String("dendA4_01100")) }
+{ usedNamesForDendrites.append(new String("dendA4_01101")) }
+{ usedNamesForDendrites.append(new String("dendA4_0111")) }
+{ usedNamesForDendrites.append(new String("dendA4_01110")) }
+{ usedNamesForDendrites.append(new String("dendA4_011100")) }
+{ usedNamesForDendrites.append(new String("dendA4_011101")) }
+{ usedNamesForDendrites.append(new String("dendA4_01111")) }
+{ usedNamesForDendrites.append(new String("dendA5_0")) }
+{ usedNamesForDendrites.append(new String("dendA5_00")) }
+{ usedNamesForDendrites.append(new String("dendA5_01")) }
+{ usedNamesForDendrites.append(new String("dendA5_010")) }
+{ usedNamesForDendrites.append(new String("dendA5_0100")) }
+{ usedNamesForDendrites.append(new String("dendA5_0101")) }
+{ usedNamesForDendrites.append(new String("dendA5_011")) }
+{ usedNamesForDendrites.append(new String("dendA5_0110")) }
+{ usedNamesForDendrites.append(new String("dendA5_01100")) }
+{ usedNamesForDendrites.append(new String("dendA5_01101")) }
+{ usedNamesForDendrites.append(new String("dendA5_011010")) }
+{ usedNamesForDendrites.append(new String("dendA5_011011")) }
+{ usedNamesForDendrites.append(new String("dendA5_0110110")) }
+{ usedNamesForDendrites.append(new String("dendA5_0110111")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111")) }
+{ usedNamesForDendrites.append(new String("dendA5_01110")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111")) }
+{ usedNamesForDendrites.append(new String("dendA5_011110")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111100")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111101")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111110")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111100")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111101")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111010")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111011")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111110110")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111110111")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111111")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111110")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111111")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111110")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111111")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111111110")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111111100")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111111101")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111111111")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111111110")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111111111")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111111110")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111111111")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111111111110")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111111111100")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111111111101")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111111111111")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111111111110")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111111111100")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111111111101")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111111111111010")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111111111110100")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111111111110101")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111111111111011")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111111111111")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111111111110")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111111111111")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111111111111110")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111111111111111")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111111111111110")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111111111111111")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111111111111110")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111111111111111100")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111111111111111101")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111111111111111010")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111111111111111011")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111111111111110110")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111111111111110111")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111111111111111")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111111111111111110")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111111111111111111")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111111111111111110")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111111111111111100")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111111111111111101")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111111111111111111010")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111111111111111111011")) }
+{ usedNamesForDendrites.append(new String("dendA5_01111111111111111111")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111111111111111110")) }
+{ usedNamesForDendrites.append(new String("dendA5_011111111111111111111")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111111111111111111110")) }
+{ usedNamesForDendrites.append(new String("dendA5_0111111111111111111111")) }
+
+// Axon
+objref usedNamesForAxon
+usedNamesForAxon = new List()
+{ usedNamesForAxon.append(new String("axon")) }
+
+//////////////////// End of imported section names ///////////////////////
+
+//////////////////// Start of section references /////////////////////////
+
+// dendrite_ref and axon_ref are not used in this file, but required to import it back into the main program
 objref soma_ref, dendrite_ref, axon_ref
-
-// !!! BUG: usedNamesForSoma, usedNamesForDendrites and usedNamesForAxon are not defined if we import nanogeometry and export it again
 
 // Soma
 soma_ref = new List()
@@ -221,7 +433,7 @@ dendA5_0111111111111111111111 dendrite_ref.append(new SectionRef())
 
 // Axon
 axon_ref = new List()
-for idx = 0, 2 - 1 {
+for idx = 0, 1 {
     axon[idx] axon_ref.append(new SectionRef())
 }
 
@@ -284,7 +496,7 @@ proc createRefsForNanoGeometry() { localobj nil
 
 createRefsForNanoGeometry()
 
-//////////////////// End of section references (deprecated) //////////////
+//////////////////// End of section references ///////////////////////////
 
 //////////////////// Start of topology ///////////////////////////////////
 

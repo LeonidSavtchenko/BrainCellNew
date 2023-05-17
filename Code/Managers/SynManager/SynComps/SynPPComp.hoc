@@ -2,7 +2,7 @@
 begintemplate SynPPComp
 
     public name, enumDmPpNc, enumPpRole, isMechVarTypeInhom, mechStds
-    public isMechVarInhom, prepareVarsEditorHeader, getDistRange, getSecList, markMechDirty, updateStatsCurve, applyInhomogeneity, updateIsMechVarTypeInhom, isAnyVarInhom
+    public isMechVarInhom, prepareVarsEditorHeader, getDistRange, getSecList, markMechDirty, updateStatsCurve, updateVerbatimModelCurve, applyInhomogeneity, updateIsMechVarTypeInhom, isAnyVarInhom
     public isMechVarTypeInhom, mechStds, isMechDirty
     
     external mwh, mth, math, mcu
@@ -122,6 +122,11 @@ begintemplate SynPPComp
         
         $&2 = yMin
         $&3 = yMax
+    }
+    
+    proc updateVerbatimModelCurve() {
+        // It's a code contract that all the syns have homogeneous PP-s at the time of new SynPPComp-s construction
+        codeContractViolation()
     }
     
     proc applyInhomogeneity() { local varType, arraySize, arrayIndex, y localobj distFuncHelper, mechStd, syn, thisPp

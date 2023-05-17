@@ -20,11 +20,6 @@ MinLenStalk = 0.1                               // um
 MaxLenStalk = 0.3                               // um
 
 
-// The next "declarations" are needed just to bind the template's external-s at the file sourcing time
-// (they will be defined after the file sourcing and before the first call)
-proc initAstrocyteBiophysics() { codeContractViolation() }
-proc updateAstrocyteBiophysics() { codeContractViolation() }
-
 // Keep this template in sync with its reduced counterpart at Export/OutHocFileStructures/Skeletons/OutHocFileSkeletonForAstrocyte.txt
 
 begintemplate AstrocyteNanoBranch
@@ -47,8 +42,8 @@ begintemplate AstrocyteNanoBranch
     // func
     external getDiameterFromDistr
     
-    // proc-s
-    external initAstrocyteBiophysics, updateAstrocyteBiophysics
+    // Scalars
+    external GPassive, currentMechanismSetup, DensityGluTransporters
     
     // It turns out that variable size is not allowed here: we'll get the strange error "LargeGlia not an array variable" in procs below while sourcing this file
     // create LargeGlia[NumberLeavesPerStalk]
@@ -57,8 +52,6 @@ begintemplate AstrocyteNanoBranch
     // This works just like a declaration of arrays, and we'll define them in proc init()
     create LargeGlia[1]
     create SmallGlia[1]
-    
-    objref this
     
     
     // !!
@@ -112,8 +105,43 @@ begintemplate AstrocyteNanoBranch
     }
     
     // !!
-    proc initBiophysics() {
-        initAstrocyteBiophysics(this)
+    proc initBiophysics() { local leafIdx
+        // !! copied from setLeavesCommonParams
+        for leafIdx = 0, NumberLeavesPerStalk - 1 {
+            LargeGlia[leafIdx] {
+                nseg = 1
+                Ra = 100        // Ohm cm
+                cm = 0.8        // uF/cm2
+                
+                insert pas
+                e_pas = -85     // mV
+                
+                insert k_ion
+                ko_k_ion=3
+                ki_k_ion=110
+                
+                insert kir4
+                gkir_kir4=0
+            }
+            SmallGlia[leafIdx] {
+                nseg = 1
+                Ra = 100        // Ohm cm
+                cm = 0.8        // uF/cm2
+                
+                insert pas
+                e_pas = -85     // mV
+                
+                insert k_ion
+                ko_k_ion=3
+                ki_k_ion=110
+                
+                insert kir4
+                gkir_kir4=0
+               // g_pas = 1/11150 // mho/cm2
+            }
+        }
+        
+        updateBiophysics(1, 1)
     }
     
     // !!
@@ -158,17 +186,37 @@ begintemplate AstrocyteNanoBranch
     }
     
     // !!
-    proc updateBiophysics() { local isUpdateLeaves, isUpdateStalks
+    proc updateBiophysics() { local isUpdateLeaves, isUpdateStalks, leafIdx
         isUpdateLeaves = $1
         isUpdateStalks = $2
         
-        updateAstrocyteBiophysics(this, isUpdateLeaves, isUpdateStalks)
+        if (!isUpdateLeaves && !isUpdateStalks) {
+            codeContractViolation()
+        }
+        
+        for leafIdx = 0, NumberLeavesPerStalk - 1 {
+            if (isUpdateLeaves) {
+                // !! copied from setLeaves
+                LargeGlia[leafIdx] {
+                    g_pas = (1 + diam / (2 * L)) * GPassive //(1/11150)  // mho/cm2
+                    
+                    if (currentMechanismSetup == 1) {
+                        density_GluTrans = (1 + diam / (2 * L)) * DensityGluTransporters
+                    }
+                }
+            }
+            if (isUpdateStalks) {
+                // !! copied from setStalks
+                SmallGlia[leafIdx] {
+                    if (currentMechanismSetup == 1) {
+                        density_GluTrans = DensityGluTransporters               // !! maybe move it to init?
+                    }
+                }
+            }
+        }
     }
-    
+
 endtemplate AstrocyteNanoBranch
-
-
-{ load_file("Exported/AstrocyteNanoBranch_Exported.hoc") }
 
 
 obfunc createAstrocyteNanoBranch() { local isLeavesDiamDistrFromFileOrUniform, isStalksDiamDistrFromFileOrUniform

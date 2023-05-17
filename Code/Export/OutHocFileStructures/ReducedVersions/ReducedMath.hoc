@@ -1,6 +1,4 @@
 
-objref nil
-
 nan = -1
 { sscanf("nan", "%f", &nan) }
 

@@ -1,5 +1,11 @@
 
-// Report the bug, print the call stack and stop
+// Report the bug, print the call stack, raise the error
 proc codeContractViolation() {
     execerror("\n\n    Bug in Cell program: Code contract violation", "\n    Please report this problem to the developer along with the call stack shown below\n")
+}
+
+// Print the message, print the call stack, raise the error
+// $s1 - The message
+proc printMsgAndRaiseError() {
+    execerror($s1)
 }

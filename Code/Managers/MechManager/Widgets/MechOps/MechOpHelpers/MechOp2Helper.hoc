@@ -90,8 +90,8 @@ begintemplate MechOp2Helper
         dismissIfNotNil(defineDistFuncSubWidget)
     }
     
+    // All next staff is private
     
-    // All next proc-s are private
     
     proc defineDistFuncHandler() { local compIdx, mechIdx, varType, varIdx, arrayIndex
         compIdx = $1

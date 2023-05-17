@@ -71,8 +71,6 @@ begintemplate NeuronNanoBranch
     create spine_neck
     create spine_head
     
-    objref this
-    
     
     // !!
     proc init() { local isUniformOrNormal

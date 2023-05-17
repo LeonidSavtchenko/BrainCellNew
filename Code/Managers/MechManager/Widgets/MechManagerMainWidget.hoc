@@ -117,7 +117,7 @@ begintemplate MechManagerMainWidget
         if (mmcoWidget == nil) {
             mmcoWidget = new MechManagerCompOpWidget(this)
         } else {
-            // Nothing here, we won't destroy mmcoWidget because it could be the caller of this proc, and so its destruction can lead to Segmentation violation
+            // Empty by design, we won't destroy mmcoWidget because it could be the caller of this proc, and so its destruction can lead to Segmentation violation
         }
         mmcoWidget.show(compOpIdx)
     }

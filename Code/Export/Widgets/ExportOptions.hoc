@@ -2,8 +2,9 @@
 begintemplate ExportOptions
 
     public isExportDistMechs, isExportDistMechAssignedAndState, isExportDistMechInhoms, isExportDistMechStochs, isExportSyns, isExportSynAssignedAndState, isExportSynInhoms, isExportSynStochs, isCreateParamsHoc, isExposeModelVars, isCreateRunnerHoc, isRecordAndSaveModelVars, isMakeSweepForModelVars, isCopyDll, isNewOrExistingDll
-    public isExportAnyDistFuncs, isExportAnyStochFuncs, isExportAnyInhomBiophysModels, isExportAnyStochBiophysModels, isExportAnyInhomSynModels, isExportAnyStochSynModels
+    public isExportAnyDistFuncs, isExportAnyStochFuncs, isExportAnyInhomBiophysModels, isExportSegmentationHelper, isExportAnyStochBiophysModels, isExportAnyInhomSynModels, isExportAnyStochSynModels
     public isExportedInhomVar, isExportedStochVar, isExportedInhomBiophysVar, isExportedStochBiophysVar, isExportedInhomSynVar, isExportedStochSynVar
+    public isPythonRequired
     
     external isAstrocyteOrNeuron
     external inhomAndStochLibrary
@@ -53,6 +54,10 @@ begintemplate ExportOptions
     
     func isExportAnyInhomBiophysModels() {
         return (isExportDistMechs && isExportDistMechInhoms && inhomAndStochLibrary.getNumInhomVarsForDistMechs() != 0)
+    }
+    
+    func isExportSegmentationHelper() {
+        return (isExportDistMechs && isExportDistMechInhoms && inhomAndStochLibrary.isAnyNonVerbatimInhomVarsForDistMechs())
     }
     
     func isExportAnyStochBiophysModels() {
@@ -147,6 +152,11 @@ begintemplate ExportOptions
         activeSpecVar = $o1
         // 1: "PARAMETER"
         return !isAstrocyteOrNeuron && isExportSyns && activeSpecVar.isStoch && !activeSpecVar.isDmOrSynPart && (activeSpecVar.varType == 1 || isExportSynAssignedAndState)
+    }
+    
+    func isPythonRequired() {
+        // !!!! just a temporary implementation
+        return isExportSegmentationHelper()
     }
     
 endtemplate ExportOptions

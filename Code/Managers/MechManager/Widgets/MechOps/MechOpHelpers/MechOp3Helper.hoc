@@ -90,8 +90,8 @@ begintemplate MechOp3Helper
         dismissIfNotNil(defineStochFuncSubWidget)
     }
     
+    // All next staff is private
     
-    // All next proc-s are private
     
     proc defineStochFuncHandler() { local compIdx, mechIdx, varType, varIdx, arrayIndex
         compIdx = $1

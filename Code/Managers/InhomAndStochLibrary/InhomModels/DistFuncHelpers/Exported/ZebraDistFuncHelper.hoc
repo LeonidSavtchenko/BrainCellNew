@@ -1,0 +1,78 @@
+
+// !! BUG: not ready for export
+
+begintemplate ZebraDistFuncHelper
+
+    public selectedHandler, calculateAt, onJustBeforeFirstSection, onJustBeforeNewSection, onJustAfterLastSection, exportParams, importParams, dismissHandler
+    public parentWidget
+    public value
+    
+    external codeContractViolation
+    
+    objref parentWidget
+    
+    modelIdx = -1
+    firstValue = -1
+    value = -1
+    
+    
+    proc init() {
+        modelIdx = $1
+        
+        if (modelIdx < 0 || modelIdx > 1) {
+            codeContractViolation()
+        }
+        
+        firstValue = -1
+        value = -1
+    }
+    
+    func selectedHandler() {
+        return 0    // Both Graph-s will be hidden
+    }
+    
+    func calculateAt() { local y
+        y = value
+        if (modelIdx == 0) {
+            value = -value
+        }
+        return y
+    }
+    
+    proc onJustBeforeFirstSection() {
+        value = firstValue
+        firstValue = -firstValue    // Each click on "Apply" inverts the pattern
+    }
+    
+    // The only template where this proc does smth
+    proc onJustBeforeNewSection() {
+        if (modelIdx == 1) {
+            value = -value
+        }
+    }
+    
+    proc onJustAfterLastSection() {
+        // Empty by design
+    }
+    
+    proc exportParams() { localobj vecOfVals, listOfStrs
+        vecOfVals = $o1
+        listOfStrs = $o2
+        
+        // !! not implemented
+        codeContractViolation()
+    }
+    
+    proc importParams() { localobj vecOfVals, listOfStrs
+        vecOfVals = $o1
+        listOfStrs = $o2
+        
+        // !! not implemented
+        codeContractViolation()
+    }
+    
+    proc dismissHandler() {
+        // Empty by design
+    }
+    
+endtemplate ZebraDistFuncHelper

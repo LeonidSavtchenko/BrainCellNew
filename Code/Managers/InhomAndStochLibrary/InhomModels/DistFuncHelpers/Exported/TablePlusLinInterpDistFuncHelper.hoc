@@ -1,8 +1,10 @@
 
+// !! BUG: not ready for export
+
 begintemplate TablePlusLinInterpDistFuncHelper
 
-    public selectedHandler, calculateAt, onJustBeforeFirstSection, onNewSection, onJustAfterLastSection, setLoadedTextAndData, exportParams, importParams, dismissHandler
-    public parentWidget
+    public selectedHandler, calculateAt, onJustBeforeFirstSection, onJustBeforeNewSection, onJustAfterLastSection, setLoadedTextAndData, exportParams, importParams, dismissHandler
+    public parentWidget, isSkipOneSelect
     
     external mwh
     external selectDistFuncInputFile, joinStrings, codeContractViolation
@@ -16,21 +18,22 @@ begintemplate TablePlusLinInterpDistFuncHelper
     
     strdef tableText
     
+    isSkipOneSelect = -1
+    
     
     proc init() { local numArg
         numArg = numarg()
-        if (numArg < 2 || numArg > 3) {
+        if (numArg < 1 || numArg > 2) {
             codeContractViolation()
         }
         
         modelIdx = $1
-        parentWidget = $o2
         
-        if (numArg == 3) {
+        if (numArg == 2) {
             if (modelIdx == 0) {
                 codeContractViolation()
             }
-            model0HelperOrNil = $o3
+            model0HelperOrNil = $o2
         }
         
         if (modelIdx < 0 || modelIdx > 2) {
@@ -43,12 +46,19 @@ begintemplate TablePlusLinInterpDistFuncHelper
         if (modelIdx == 0) {
             parseAllText("60 30\n150 55\n190 -10\n220 25\n255 15")
         }
+        
+        isSkipOneSelect = 0
     }
     
     func selectedHandler() {
         if (modelIdx == 2) {
             mwh.showNotImplementedWarning()
             return 1
+        }
+        
+        if (isSkipOneSelect) {
+            isSkipOneSelect = 0
+            return 0
         }
         
         if (modelIdx == 0) {
@@ -77,15 +87,15 @@ begintemplate TablePlusLinInterpDistFuncHelper
     }
     
     proc onJustBeforeFirstSection() {
-        // Nothing here
+        // Empty by design
     }
     
-    proc onNewSection() {
-        // Nothing here
+    proc onJustBeforeNewSection() {
+        // Empty by design
     }
     
     proc onJustAfterLastSection() {
-        // Nothing here
+        // Empty by design
     }
     
     proc setLoadedTextAndData() {
@@ -97,20 +107,31 @@ begintemplate TablePlusLinInterpDistFuncHelper
         y_model = $o3
     }
     
-    proc exportParams() { localobj vecOfVals, listOfStrs
+    proc exportParams() { local n localobj vecOfVals, listOfStrs
         vecOfVals = $o1
         listOfStrs = $o2
         
-        // !! not implemented
-        codeContractViolation()
+        n = x_model.size()
+        vecOfVals.resize(1 + 2 * n)
+        vecOfVals.x(0) = modelIdx
+        vecOfVals.copy(x_model, 1)
+        vecOfVals.copy(y_model, 1 + n)
+        
+        listOfStrs.append(new String(tableText))
     }
     
-    proc importParams() { localobj vecOfVals, listOfStrs
+    proc importParams() { local n localobj vecOfVals, listOfStrs
         vecOfVals = $o1
         listOfStrs = $o2
         
-        // !! not implemented
-        codeContractViolation()
+        modelIdx = vecOfVals.x(0)
+        n = (vecOfVals.size() - 1) / 2
+        x_model = new Vector(n)
+        y_model = new Vector(n)
+        x_model.copy(vecOfVals, 1)
+        y_model.copy(vecOfVals, 1 + n)
+        
+        tableText = listOfStrs.o(0).s
     }
     
     proc dismissHandler() {

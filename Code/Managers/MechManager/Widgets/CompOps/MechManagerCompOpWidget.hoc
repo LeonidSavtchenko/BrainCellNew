@@ -163,6 +163,9 @@ begintemplate MechManagerCompOpWidget
         
         inhomAndStochLibrary.onCompSplit(splitCompIdx)
         
+        // !!!
+        newComp.finishAllVerbatimInhomProtos(splitCompIdx + 1)
+        
         updateWidgetsAfterOp()
         
         if (status == 2) {

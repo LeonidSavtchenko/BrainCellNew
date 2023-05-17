@@ -16,12 +16,13 @@
 begintemplate InhomAndStochLibrary
     
     public isInhomEnabledFor, isStochEnabledFor, onInhomApply, onStochApply, getInhomModelDataFor, getStochModelDataFor, onMakingVarHomogen, onStochDisable, onNanoReseedOrUpdate
-    public getNumInhomVarsForDistMechs, getNumStochVarsForDistMechs, onMechInsert, onMechUninsert, onCompSplit, onCompMerge
+    public isAnyNonVerbatimInhomVarsForDistMechs, getNumInhomVarsForDistMechs, getNumStochVarsForDistMechs, onMechInsert, onMechUninsert, onCompSplit, onCompMerge
     public getNumInhomVarsForSyns, getNumStochVarsForSyns, isAnyStochVarsForSyns, onSynLocChange, onSynStrucChange
+    public doesThisVarHaveVerbatimInhomModel
     
     public activeSpecVars
     
-    external mwh, math
+    external mwh, math, dfc
     external stringsEqual, stringEmpty, concatenateTwoLists, codeContractViolation
     external eachItemInList
     external enumSynCompIdxs
@@ -270,6 +271,17 @@ begintemplate InhomAndStochLibrary
         // !! mwh.showNotImplementedWarning()
     }
     
+    func isAnyNonVerbatimInhomVarsForDistMechs() { local isFound localobj actSpecVar
+        isFound = 0
+        for eachItemInList(actSpecVar, activeSpecVars) {
+            if (actSpecVar.isDmOrSynPart && actSpecVar.isInhom && actSpecVar.distFuncIdx != dfc.verbatimDistFuncIdx) {
+                isFound = 1
+                break
+            }
+        }
+        return isFound
+    }
+    
     func getNumInhomVarsForDistMechs() {
         return getNumInhomOrStochVars(1, 1)
     }
@@ -404,6 +416,19 @@ begintemplate InhomAndStochLibrary
         // Commit all the changes to the library
         concatenateTwoLists(activeSpecVars, newActSpecVars)
         concatenateTwoLists(inactiveSpecVars, newInactSpecVars)
+    }
+    
+    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
+    func doesThisVarHaveVerbatimInhomModel() { localobj actSpecVar, nil
+        actSpecVar = findActiveSpecVar($1, $2, $3, $4, $5, $6)
+        if (actSpecVar == nil) {
+            // Not found
+            return 0
+        }
+        if (!actSpecVar.isInhom) {
+            return 0
+        }
+        return (actSpecVar.distFuncIdx == dfc.verbatimDistFuncIdx)
     }
     
     // All next staff is private

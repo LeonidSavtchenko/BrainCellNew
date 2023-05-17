@@ -1,14 +1,16 @@
 
-userDefinedHocDistFuncResult = -1   // !! get rid of this: the user function must assign value to a public scalar living in the template below
+userDefinedHocDistFuncArgument = -1
+userDefinedHocDistFuncResult = -1
 
 begintemplate CustomCodeDistFuncHelper
 
-    public selectedHandler, calculateAt, onJustBeforeFirstSection, onNewSection, onJustAfterLastSection, exportParams, importParams, dismissHandler
+    public selectedHandler, calculateAt, onJustBeforeFirstSection, onJustBeforeNewSection, onJustAfterLastSection, exportParams, importParams, dismissHandler
     public parentWidget, isSkipOneSelect
     public modelIdx     // For CodeFromFileDistFuncHelper
     
-    external definePythonFunction, callPythonFunction, codeContractViolation, printMsgAndRaiseError
-    external userDefinedHocDistFuncResult
+    external codeContractViolation, printMsgAndRaiseError
+    external pyObj
+    external userDefinedHocDistFuncArgument, userDefinedHocDistFuncResult
     
     objref parentWidget, this
     
@@ -20,20 +22,26 @@ begintemplate CustomCodeDistFuncHelper
     isSkipOneSelect = -1
     
     
-    proc init() {
-        modelIdx = $1
-        parentWidget = $o2  // !! not used
-        
-        checkModelIdx()
-        
-        oneLinerHocDistFuncName = "mechManagerOneLinerHocDistFunc"
-        oneLinerHocDistFuncBody = "x/10 + 50*sin(2*PI*x/200) * tanh(x/100)"
-        
-        oneLinerPyDistFuncName = "mechManagerOneLinerPyDistFunc"
-        oneLinerPyDistFuncBody = "x/10 + 50*sin(2*pi*x/200) * tanh(x/100)"
-        
-        userDefinedHocDistFuncName = "myDistFunc"
-        userDefinedPyDistFuncName = "myDistFunc"
+    proc init() { local numArg
+        numArg = numarg()
+        if (numArg == 0) {
+            // Empty by design (we are being created in the exported file, so will be inited in proc importParams shortly downstream)
+        } else if (numArg == 1) {
+            modelIdx = $1
+            
+            checkModelIdx()
+            
+            oneLinerHocDistFuncName = "mechManagerOneLinerHocDistFunc"
+            oneLinerHocDistFuncBody = "x/10 + 50*sin(2*PI*x/200) * tanh(x/100)"
+            
+            oneLinerPyDistFuncName = "mechManagerOneLinerPyDistFunc"
+            oneLinerPyDistFuncBody = "x/10 + 50*sin(2*pi*x/200) * tanh(x/100)"
+            
+            userDefinedHocDistFuncName = "myDistFunc"
+            userDefinedPyDistFuncName = "myDistFunc"
+        } else {
+            codeContractViolation()
+        }
         
         isSkipOneSelect = 0
     }
@@ -112,15 +120,15 @@ begintemplate CustomCodeDistFuncHelper
     }
     
     proc onJustBeforeFirstSection() {
-        // Nothing here
+        // Empty by design
     }
     
-    proc onNewSection() {
-        // Nothing here
+    proc onJustBeforeNewSection() {
+        // Empty by design
     }
     
     proc onJustAfterLastSection() {
-        // Nothing here
+        // Empty by design
     }
     
     proc exportParams() { localobj vecOfVals, listOfStrs
@@ -153,14 +161,22 @@ begintemplate CustomCodeDistFuncHelper
         oneLinerPyDistFuncBody = listOfStrs.o(3).s
         userDefinedHocDistFuncName = listOfStrs.o(4).s
         userDefinedPyDistFuncName = listOfStrs.o(5).s
+        
+        if (modelIdx == 0) {
+            defineHocFunction(oneLinerHocDistFuncName, oneLinerHocDistFuncBody)
+        } else if (modelIdx == 1) {
+            definePythonFunction(oneLinerPyDistFuncName, oneLinerPyDistFuncBody)
+        } else {
+            codeContractViolation()
+        }
     }
     
     proc dismissHandler() {
-        // Nothing here
+        // Empty by design
     }
     
+    // All next staff is private
     
-    // All next proc-s are private
     
     func mechManagerOneLinerHocDistFunc() { codeContractViolation() }
     
@@ -178,18 +194,48 @@ begintemplate CustomCodeDistFuncHelper
         }
     }
     
-    func callUserDefinedHocDistFunc() { local x
+    func callUserDefinedHocDistFunc() {
         strdef userDefinedHocDistFuncName, hocCommand
         
         userDefinedHocDistFuncName = $s1
-        x = $2
+        userDefinedHocDistFuncArgument = $2
         
-        // !! 1. invent a better way to pass x without "sprint" (maybe from Python accessing hocObj.x)
-        // !! 2. the result must be assigned to a public scalar living in this template (just for encapsulation)
-        sprint(hocCommand, "userDefinedHocDistFuncResult = %s(%.15e)", userDefinedHocDistFuncName, x)
+        // !! try to invent a better way to call a top-level func encapsulating both x and y into this template;
+        //    think about push_object in HOC or hocObj.* in Python or execute(*, this) in HOC
+        sprint(hocCommand, "userDefinedHocDistFuncResult = %s(userDefinedHocDistFuncArgument)", userDefinedHocDistFuncName)
         execute(hocCommand)
         
         return userDefinedHocDistFuncResult
+    }
+    
+    proc definePythonFunction() { local status
+        strdef oneLinerPyDistFuncName, oneLinerPyDistFuncBody, pyCommand
+        
+        oneLinerPyDistFuncName = $s1
+        oneLinerPyDistFuncBody = $s2
+        
+        sprint(pyCommand, "from math import *\ndef %s(x):\n    return %s", oneLinerPyDistFuncName, oneLinerPyDistFuncBody)
+        status = nrnpython(pyCommand)
+        if (!status) {
+            printMsgAndRaiseError("Exception raised in Python code (caught in definePythonFunction)")
+        }
+    }
+    
+    func callPythonFunction() { local x, status
+        strdef oneLinerPyDistFuncName, pyCommand
+        
+        oneLinerPyDistFuncName = $s1
+        x = $2
+        
+        pyObj.x = x
+        
+        sprint(pyCommand, "y = %s(x)", oneLinerPyDistFuncName)
+        status = nrnpython(pyCommand)
+        if (!status) {
+            printMsgAndRaiseError("Exception raised in Python code (caught in callPythonFunction)")
+        }
+        
+        return pyObj.y
     }
     
     proc checkModelIdx() {

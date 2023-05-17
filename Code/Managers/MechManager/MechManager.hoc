@@ -2,10 +2,10 @@
 { load_file("MechManagerLoads.hoc") }
 
 
-proc analyzeSectsAndCreateComps() { localobj endFoot_ref, ecSource_ref, other_ref
+proc analyzeSectsAndCreateComps() { local compIdx localobj endFoot_ref, ecSource_ref, other_ref, comp
     
-    // !!! maybe I will have to delete everything from inhomAndStochLibrary or, at least,
-    //     delete all "verbatim" models to avoid making copies for them on each Rescan
+    // !!!! maybe I will have to delete everything from inhomAndStochLibrary (showing YES/NO dialog for confirmation)
+    
     mwh.showPleaseWaitBox("Analyzing all comp \\ sect \\ segm \\ mech \\ varType \\ var \\ arrayIndex.")
     {
         mmAllComps = new List()
@@ -42,6 +42,11 @@ proc analyzeSectsAndCreateComps() { localobj endFoot_ref, ecSource_ref, other_re
         if (other_ref.count() != 0) {
             mmAllComps.append(new MechComp("Other", other_ref))
         }
+        
+        for compIdx = 0, mmAllComps.count() - 1 {
+            comp = mmAllComps.o(compIdx)
+            comp.finishAllVerbatimInhomProtos(compIdx)
+        }
     }
     mwh.hidePleaseWaitBox()
     
@@ -50,7 +55,7 @@ proc analyzeSectsAndCreateComps() { localobj endFoot_ref, ecSource_ref, other_re
 
 isConvertedFromReducedMechCompTemplates = 0
 
-proc analyzeSectsCreateCompsShowMechManagerBaseWidget() { localobj nil, editableComps, reducedComp
+proc makeSureMechCompsCreatedOrImported() { localobj nil, editableComps, reducedComp
     
     if (mmAllComps == nil) {
         analyzeSectsAndCreateComps()
@@ -62,6 +67,11 @@ proc analyzeSectsCreateCompsShowMechManagerBaseWidget() { localobj nil, editable
         mmAllComps = editableComps
         isConvertedFromReducedMechCompTemplates = 1
     }
+}
+
+proc makeSureMechCompsCreatedOrImportedThenShowMechManagerBaseWidget() {
+
+    makeSureMechCompsCreatedOrImported()
     
     dismissIfNotNil(msmBaseWidget)
     msmBaseWidget = new MechOrSynManagerBaseWidget(1)

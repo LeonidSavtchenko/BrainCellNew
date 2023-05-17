@@ -26,6 +26,7 @@ stochTestGraph = new Graph()
 { load_file("../Code/Managers/CommonLoads.hoc") }
 { load_file("../Code/Managers/SynManager/SynManager.hoc") }
 
+// !!! makeSureSynCompsCreatedOrImportedThenShowSynManagerBaseWidget()
 createSynCompsAndShowSynManagerBaseWidget()
 
 { chdir("..") }     // Without this, getcwd() will return different path compared to the start from "init.hoc"

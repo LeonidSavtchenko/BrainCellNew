@@ -267,11 +267,12 @@ proc insertElectrode() {
 }
 
 proc startMechManager() {
-    analyzeSectsCreateCompsShowMechManagerBaseWidget()
+    makeSureMechCompsCreatedOrImportedThenShowMechManagerBaseWidget()
 }
 
 proc startSynManager() {
     createSynCompsAndShowSynManagerBaseWidget()
+    // !!! makeSureSynCompsCreatedOrImportedThenShowSynManagerBaseWidget()
 }
 
 proc startExportManager() {

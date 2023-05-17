@@ -1,7 +1,9 @@
 
+// !! BUG: not ready for export
+
 begintemplate CodeFromFileDistFuncHelper
 
-    public selectedHandler, calculateAt, onJustBeforeFirstSection, onNewSection, onJustAfterLastSection, exportParams, importParams, dismissHandler
+    public selectedHandler, calculateAt, onJustBeforeFirstSection, onJustBeforeNewSection, onJustAfterLastSection, exportParams, importParams, dismissHandler
     public parentWidget, isSkipOneSelect
     
     external mwh
@@ -16,7 +18,6 @@ begintemplate CodeFromFileDistFuncHelper
     
     proc init() {
         nestedHelper = $o1
-        parentWidget = $o2  // !! not used
         
         modelIdx = nestedHelper.modelIdx - 2
         
@@ -65,15 +66,15 @@ begintemplate CodeFromFileDistFuncHelper
     }
     
     proc onJustBeforeFirstSection() {
-        // Nothing here
+        // Empty by design
     }
     
-    proc onNewSection() {
-        // Nothing here
+    proc onJustBeforeNewSection() {
+        // Empty by design
     }
     
     proc onJustAfterLastSection() {
-        // Nothing here
+        // Empty by design
     }
     
     proc exportParams() { localobj vecOfVals, listOfStrs
@@ -93,7 +94,7 @@ begintemplate CodeFromFileDistFuncHelper
     }
     
     proc dismissHandler() {
-        // Nothing here
+        // Empty by design
     }
     
 endtemplate CodeFromFileDistFuncHelper

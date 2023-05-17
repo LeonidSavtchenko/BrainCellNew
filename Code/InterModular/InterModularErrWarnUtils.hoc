@@ -1,20 +1,10 @@
 
-// !! think about: show_errmess_always
+{ load_file("Exported/InterModularErrWarnUtils_Exported.hoc") }
 
-// !! maybe deprecated
-// !! once integrated to Cell, "stop" won't work in the same way, so we'll need to use the warning box
+// !! maybe deprecated in favour of mwh staff or printMsgAndRaiseError
 // Print message and stop
 // $s1 - The message
 proc printMsgAndStop() {
     print $s1
     stop    // This doesn't stop actually, but unwinds the call stack and continues from the next top-level command. so rename the proc!!
 }
-
-// !! maybe not needed
-// Print message and raise error
-// $s1 - The message
-proc printMsgAndRaiseError() {
-    execerror($s1)
-}
-
-{ load_file("Exported/InterModularErrWarnUtils_Exported.hoc") }

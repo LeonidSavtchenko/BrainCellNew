@@ -196,7 +196,7 @@ begintemplate VarsEditorWidget
         }
     }
     
-    // All next proc-s are private
+    // All next staff is private
     
     
     proc editHomogenVarHandler() { local varIdx, arrayIndex, value

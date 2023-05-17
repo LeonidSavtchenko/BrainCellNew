@@ -17,6 +17,37 @@ class Generators:
     def __init__(self):
         self._exportOptions = self._hocObj.exportOptions
         
+    def getUtils(self):
+        lines = []
+        
+        lines.append('objref nil')
+        lines.append('')
+        
+        newLines = self.insertAllLinesFromReducedVersionFile('ReducedMath.hoc')
+        lines.extend(newLines)
+        lines.append('')
+        
+        newLines = self.insertAllLinesFromFile('Code\\InterModular\\Exported\\InterModularErrWarnUtils_Exported.hoc')
+        lines.extend(newLines)
+        lines.append('')
+        
+        newLines = self.insertAllLinesFromFile('Code\\InterModular\\Exported\\InterModularListUtils_Exported.hoc')
+        lines.extend(newLines)
+        
+        if not self._exportOptions.isPythonRequired():
+            return lines
+            
+        lines.append('')
+        lines.append('if (!nrnpython("")) {')
+        lines.append('    print "Python is not available"')
+        lines.append('    stop')
+        lines.append('}')
+        lines.append('')
+        lines.append('objref pyObj')
+        lines.append('pyObj = new PythonObject()')
+        
+        return lines
+        
     def getAllCreateStatementsExceptNanogeometry(self):
         # input:  allNames (List of String-s, taken from the top level)
         # output: a string like 'create name1, name2[123], name3[456][7], ...'
@@ -60,7 +91,7 @@ class Generators:
                 allLines.append(newLine)
             else:
                 newLines = [
-                    'for idx = 0, {} - 1 {{'.format(len(secObj)),
+                    'for idx = 0, {} {{'.format(len(secObj) - 1),
                     '    {}[idx] {}.append(new SectionRef())'.format(usedName, secRefHocListName),
                     '}']
                 allLines.extend(newLines)
@@ -110,31 +141,6 @@ class Generators:
                 line = '    Ra = {}'.format(sec.Ra)
                 lines.append(line)
             lines.append('}')
-        return lines
-        
-    # !!! remove this block once we export the random g_pas in LargeGlia
-    def initAstrocyteNanogeometryBiophysics(self):
-        if not self._hocObj.isAstrocyteOrNeuron:
-            codeContractViolation()
-            
-        if not self._exportOptions.isExportDistMechs:
-            return emptyParagraphHint()
-            
-        lines = []
-        
-        lines.append(self.getDoubleValueFromTopLevel('GPassive'))
-        lines.append(self.getIntegerValueFromTopLevel('currentMechanismSetup'))
-        lines.append(self.getDoubleValueFromTopLevel('DensityGluTransporters'))
-        lines.append('')
-        
-        newLines = self.insertAllLinesFromFile('Code\\NanoCore\\Astrocyte\\Exported\\AstrocyteNanoBranch_Exported.hoc')
-        lines.extend(newLines)
-        lines.append('')
-        
-        lines.append('for idx = 0, NumberNanoBranches - 1 {')
-        lines.append('    initAstrocyteBiophysics(astrocyteNanoBranch[idx])')
-        lines.append('}')
-        
         return lines
         
     # !! BUG: In rare cases, an error "procedure too big" may occur when user loads the exported file.
@@ -302,25 +308,18 @@ class Generators:
             
         lines = []
         
-        distFuncCatIdxToFileNameDict = {}
-        distFuncCatIdxToFileNameDict[0] = 'SimpleModelDistFuncHelper.hoc'
-        distFuncCatIdxToFileNameDict[1] = 'CustomCodeDistFuncHelper.hoc'
-        distFuncCatIdxToFileNameDict[2] = 'CodeFromFileDistFuncHelper.hoc'
-        distFuncCatIdxToFileNameDict[3] = 'TablePlusLinInterpDistFuncHelper.hoc'
-        distFuncCatIdxToFileNameDict[4] = 'SpecialDistFuncHelper.hoc'
-        # !!! distFuncCatIdxToFileNameDict[!!5] = 'VerbatimDistFuncHelper.hoc'
-        
-        distFuncCatIdxs = set()
+        dfhTemplNames = set()
         for activeSpecVar in h.inhomAndStochLibrary.activeSpecVars:
             if not self._exportOptions.isExportedInhomVar(activeSpecVar):
                 continue
-            distFuncCatIdxs.add(activeSpecVar.distFuncCatIdx)
+            # !! BUG: this is not enough for CodeFromFileDistFuncHelper because it may contain a nested helper object
+            dfhTemplNames.add(self._getTemplateName(activeSpecVar.distFuncHelper))
             
         relDirPath = 'Code\\Managers\\InhomAndStochLibrary\\InhomModels\\DistFuncHelpers\\Exported'
-        self._exportSomeFilesFromThisDir(lines, relDirPath, distFuncCatIdxs, distFuncCatIdxToFileNameDict)
+        self._exportTheseTemplatesFromThisDir(lines, relDirPath, dfhTemplNames)
         lines.append('')
         
-        if self._exportOptions.isExportAnyInhomBiophysModels():
+        if self._exportOptions.isExportSegmentationHelper():
             newLines = self.insertAllLinesFromReducedVersionFile('ReducedSegmentationHelper.hoc')
             lines.extend(newLines)
             
@@ -333,30 +332,16 @@ class Generators:
             
         lines = []
         
-        stochFuncIdxToFileNameDict = {}
-        stochFuncIdxToFileNameDict[0] = 'UniformDistHelper.hoc'
-        stochFuncIdxToFileNameDict[1] = 'NormalDistHelper.hoc'
-        stochFuncIdxToFileNameDict[2] = 'LogNormalDistHelper.hoc'
-        stochFuncIdxToFileNameDict[3] = 'NegExpDistHelper.hoc'
-        stochFuncIdxToFileNameDict[4] = 'ErlangDistHelper.hoc'
-        stochFuncIdxToFileNameDict[5] = 'WeibullDistHelper.hoc'
-        
-        stochFuncCatIdxToFileNameDict = {}
-        stochFuncCatIdxToFileNameDict[0] = 'SimpleModelStochFuncHelper.hoc'
-        stochFuncCatIdxToFileNameDict[1] = 'CustomCodeDistFuncHelper.hoc'           # v !! just stubs
-        stochFuncCatIdxToFileNameDict[2] = 'CodeFromFileDistFuncHelper.hoc'
-        stochFuncCatIdxToFileNameDict[3] = 'TablePlusLinInterpDistFuncHelper.hoc'   # ^ !! just stubs
-        stochFuncCatIdxToFileNameDict[4] = 'SpecialStochFuncHelper.hoc'
-        
-        stochFuncCatIdxs = set()
-        stochFuncIdxs = set()
+        sdhTemplNames = set()
+        sfhTemplNames = set()
         for activeSpecVar in h.inhomAndStochLibrary.activeSpecVars:
             if not self._exportOptions.isExportedStochVar(activeSpecVar):
                 continue
-            stochFuncCatIdx = activeSpecVar.stochFuncCatIdx
-            stochFuncCatIdxs.add(stochFuncCatIdx)
-            if stochFuncCatIdx == 0:
-                stochFuncIdxs.add(activeSpecVar.stochFuncIdx)
+            stochFuncHelper = activeSpecVar.stochFuncHelper
+            if stochFuncHelper.stochFuncCatIdx == self._hocObj.sfc.simpleModelStochFuncCatIdx:
+                sdhTemplNames.add(self._getTemplateName(stochFuncHelper.distHelper))
+            # !! BUG: this is not enough for CodeFromFileStochFuncHelper because it may contain a nested helper object
+            sfhTemplNames.append(self._getTemplateName(stochFuncHelper))
             
         # !!! just a temp solution (we need to bind these names as templates' external-s even though they won't be used)
         lines.append('objref callPythonFunction, definePythonFunction, inhomAndStochApplicator, joinStrings, loadPythonFile, math, mwh, printMsgAndRaiseError, rngUtils, selectDistFuncInputFile, specMath, stochTestGraph')
@@ -364,10 +349,10 @@ class Generators:
         lines.append('')
         
         relDirPath = 'Code\\Managers\\InhomAndStochLibrary\\StochModels\\StochDistHelpers\\Exported'
-        self._exportSomeFilesFromThisDir(lines, relDirPath, stochFuncIdxs, stochFuncIdxToFileNameDict)
+        self._exportTheseTemplatesFromThisDir(lines, relDirPath, sdhTemplNames)
         
         relDirPath = 'Code\\Managers\\InhomAndStochLibrary\\StochModels\\StochFuncHelpers\\Exported'
-        self._exportSomeFilesFromThisDir(lines, relDirPath, stochFuncCatIdxs, stochFuncCatIdxToFileNameDict)
+        self._exportTheseTemplatesFromThisDir(lines, relDirPath, sfhTemplNames)
         
         return self._linesOrEmptyParagraphHint(lines)
         
@@ -385,14 +370,18 @@ class Generators:
             distFuncHelper = activeSpecVar.distFuncHelper
             segmentationHelper = activeSpecVar.segmentationHelper
             
-            lines.append('segmentationHelper = new ReducedSegmentationHelper()')
-            lines.append('segmentationHelper.segmentationMode = {}'.format(int(segmentationHelper.segmentationMode)))
-            lines.append('segmentationHelper.total_nseg = {}'.format(int(segmentationHelper.total_nseg)))
-            lines.append('segmentationHelper.min_nseg = {}'.format(int(segmentationHelper.min_nseg)))
-            
-            # !! BUG: CodeFromFileDistFuncHelper and TablePlusLinInterpDistFuncHelper require different approaches here
+            if segmentationHelper is not None:
+                lines.append('segmentationHelper = new ReducedSegmentationHelper()')
+                lines.append('segmentationHelper.segmentationMode = {}'.format(int(segmentationHelper.segmentationMode)))
+                lines.append('segmentationHelper.total_nseg = {}'.format(int(segmentationHelper.total_nseg)))
+                lines.append('segmentationHelper.min_nseg = {}'.format(int(segmentationHelper.min_nseg)))
+            else:
+                lines.append('segmentationHelper = nil')
+                
+            # !!! BUG: CodeFromFileDistFuncHelper and TablePlusLinInterpDistFuncHelper require initialization of the nested *DistFuncHelper object here;
+            #          maybe export the nested object only (when user leaves InhomEditorSubWidget, replace the parent with the child)
             templName = self._getTemplateName(distFuncHelper)
-            lines.append('distFuncHelper = new {}({}, nil)'.format(templName, int(distFuncHelper.modelIdx)))
+            lines.append('distFuncHelper = new {}()'.format(templName))
             lines.append('vecOfVals = new Vector()')
             vecOfVals = h.Vector()
             listOfStrs = h.List()
@@ -492,6 +481,14 @@ class Generators:
     def getDoubleValueFromTopLevel(self, varName):
         return self._generateAssignment(varName, False)
         
+    def getListOfStringsFromTopLevel(self, varName):
+        lines = []
+        lines.append('objref {}'.format(varName))
+        lines.append('{} = new List()'.format(varName))
+        listOfStrs = self._getHocVar(varName)
+        for thisStr in listOfStrs:
+            lines.append('{{ {}.append(new String("{}")) }}'.format(varName, thisStr.s))
+        return lines
         
     def _getHocVar(self, varName):
         return eval('self._hocObj.' + varName)  # !! maybe can do it via refletion
@@ -652,15 +649,14 @@ class Generators:
         else:
             return emptyParagraphHint()
             
-    def _exportSomeFilesFromThisDir(self, lines, relDirPath, idxs, idxToFileNameDict):
-        isFirstDistFunc = True
-        for idx in sorted(idxs):
-            if not isFirstDistFunc:
+    def _exportTheseTemplatesFromThisDir(self, lines, relDirPath, templNames):
+        isFirstTemplate = True
+        for templName in templNames:
+            if not isFirstTemplate:
                 lines.append('')
-            fileName = idxToFileNameDict[idx]
-            relFilePathName = relDirPath + '\\' + fileName
+            relFilePathName = relDirPath + '\\' + templName + '.hoc'
             newLines = self.insertAllLinesFromFile(relFilePathName)
             lines.extend(newLines)
             lines.append('')
-            isFirstDistFunc = False
+            isFirstTemplate = False
             

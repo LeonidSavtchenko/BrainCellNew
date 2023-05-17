@@ -31,7 +31,7 @@ begintemplate ExportManagerMainWidget
     
     proc show() { local slotHeight, numInhomVars, numStochVars localobj hBox, deck
         
-        compUtils.makeSureAllCompsCreated()     // Needed for AddOneInputVarWidget
+        compUtils.makeSureAllCompsCreatedOrImported()
         
         mainBox = new VBox()
         mainBox.intercept(1)

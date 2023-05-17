@@ -73,7 +73,7 @@ begintemplate ReducedInhomAndStochTarget
         distFuncHelper.onJustBeforeFirstSection()
         for secIdx = 0, list_ref.count() - 1 {
             list_ref.o(secIdx).sec {
-                distFuncHelper.onNewSection()
+                distFuncHelper.onJustBeforeNewSection()
                 for (x, 0) {
                     mechStd.in(x)
                     dist = distance(x)

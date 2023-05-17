@@ -1,4 +1,6 @@
 
+// !! BUG: not ready for export
+
 // https://www.neuron.yale.edu/neuron/static/new_doc/programming/math/random.html
 // https://docs.python.org/3/library/random.html#real-valued-distributions
 // https://www.mathworks.com/help/stats/supported-distributions.html
@@ -24,8 +26,6 @@ begintemplate SimpleModelStochFuncHelper
     
     proc init() {
         modelIdx = $1
-        parentWidget = $o2
-        boundingHelper = parentWidget.boundingHelper
         
         numPts4Curve = 1000     // !! hardcode
         
@@ -90,7 +90,7 @@ begintemplate SimpleModelStochFuncHelper
             // !! for some simple dists (e.g. Uniform, Triangular) we don't need this cycle by the grid to plot PDF
             // !! for some edgy dists (e.g. Uniform, NegExp) it would be nice to add extra points at sharp edges to have a precise graph
             for eachPointInGrid(&x, xMin, xMax, numPts4Curve) {
-                y = boundingHelper.calcPdf(x)
+                y = parentWidget.boundingHelper.calcPdf(x)
                 graph.line(x, y)
             }
         }
@@ -112,7 +112,7 @@ begintemplate SimpleModelStochFuncHelper
         math.disableGreedyComparison()  // Needed for calcCdf
         {
             for eachPointInGrid(&x, xMin, xMax, numPts4Curve) {
-                y = boundingHelper.calcCdf(x)
+                y = parentWidget.boundingHelper.calcCdf(x)
                 graph.line(x, y)
             }
         }

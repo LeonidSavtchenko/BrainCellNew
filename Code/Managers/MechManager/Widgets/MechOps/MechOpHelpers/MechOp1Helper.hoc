@@ -67,8 +67,8 @@ begintemplate MechOp1Helper
         dismissIfNotNil(varsEditorSubWidget)
     }
     
+    // All next staff is private
     
-    // All next proc-s are private
     
     proc insertGlobalItem() { local mechIdx
         mechIdx = $1

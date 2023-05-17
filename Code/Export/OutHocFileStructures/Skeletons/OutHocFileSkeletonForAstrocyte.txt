@@ -3,9 +3,7 @@ py:getIntegerValueFromTopLevel('isAstrocyteOrNeuron')
 
 //////////////////// Start of utils //////////////////////////////////////
 
-py:insertAllLinesFromReducedVersionFile('ReducedMath.hoc')
-
-py:insertAllLinesFromFile('Code\\InterModular\\Exported\\InterModularErrWarnUtils_Exported.hoc')
+py:getUtils()
 
 //////////////////// End of utils ////////////////////////////////////////
 
@@ -33,12 +31,22 @@ for idx = 0, NumberNanoBranches - 1 {
 
 //////////////////// End of sections /////////////////////////////////////
 
-//////////////////// Start of section references (deprecated) ////////////
+//////////////////// Start of imported section names /////////////////////
 
-// !!! only soma_ref.o(0) is used below (dendrite_ref is not used anywhere)
+// These names are stored here just to be able to import this file back into the main program and then export again
+
+// Soma
+py:getListOfStringsFromTopLevel('usedNamesForSoma')
+
+// Dendrites
+py:getListOfStringsFromTopLevel('usedNamesForDendrites')
+
+//////////////////// End of imported section names ///////////////////////
+
+//////////////////// Start of section references /////////////////////////
+
+// dendrite_ref is not used in this file, but required to import it back into the main program
 objref soma_ref, dendrite_ref
-
-// !!! BUG: usedNamesForSoma and usedNamesForDendrites are not defined if we import nanogeometry and export it again
 
 // Soma
 py:createListOfSectionRef('usedNamesForSoma', 'soma_ref')
@@ -52,7 +60,7 @@ py:insertAllLinesFromFile('Code\\NanoCore\\Exported\\CreateNanoRefs_Exported.hoc
 
 createRefsForNanoGeometry()
 
-//////////////////// End of section references (deprecated) //////////////
+//////////////////// End of section references ///////////////////////////
 
 //////////////////// Start of topology ///////////////////////////////////
 
@@ -74,12 +82,6 @@ py:initGeometry()
 soma_ref.o(0).sec distance()
 
 //////////////////// End of distance centre //////////////////////////////
-
-//////////////////// Start of nanogeometry biophysics (deprecated) ///////
-
-py:initAstrocyteNanogeometryBiophysics()
-
-//////////////////// End of nanogeometry biophysics (deprecated) /////////
 
 //////////////////// Start of compartments ///////////////////////////////
 

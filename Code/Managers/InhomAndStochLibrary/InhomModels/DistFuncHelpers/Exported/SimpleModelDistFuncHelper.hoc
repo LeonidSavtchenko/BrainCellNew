@@ -1,7 +1,7 @@
 
 begintemplate SimpleModelDistFuncHelper
 
-    public selectedHandler, calculateAt, onJustBeforeFirstSection, onNewSection, onJustAfterLastSection, exportParams, importParams, dismissHandler
+    public selectedHandler, calculateAt, onJustBeforeFirstSection, onJustBeforeNewSection, onJustAfterLastSection, exportParams, importParams, dismissHandler
     public mainBox
     public parentWidget
     
@@ -15,25 +15,33 @@ begintemplate SimpleModelDistFuncHelper
     numParams = -1
     
     
-    proc init() {
-        modelIdx = $1
-        parentWidget = $o2
-        
-        checkModelIdx()
-        
+    proc init() { local numArg
+    
         numParams = 6
         double params[numParams]
-        if (modelIdx < 3) {
-            params[1] = 0.1
-            params[2] = 0.0005
-        } else if (modelIdx == 3) {
-            params[1] = 1
-            params[3] = 1
-            params[4] = 0.01
-            params[5] = 2e-4
+        
+        numArg = numarg()
+        if (numArg == 0) {
+            // Empty by design (we are being created in the exported file, so will be inited in proc importParams shortly downstream)
+        } else if (numArg == 1) {
+            modelIdx = $1
+            
+            checkModelIdx()
+            
+            if (modelIdx < 3) {
+                params[1] = 0.1
+                params[2] = 0.0005
+            } else if (modelIdx == 3) {
+                params[1] = 1
+                params[3] = 1
+                params[4] = 0.01
+                params[5] = 2e-4
+            } else {
+                params[1] = 1
+                params[2] = -0.01
+            }
         } else {
-            params[1] = 1
-            params[2] = -0.01
+            codeContractViolation()
         }
     }
     
@@ -90,20 +98,20 @@ begintemplate SimpleModelDistFuncHelper
     }
     
     proc onJustBeforeFirstSection() {
-        // Nothing here
+        // Empty by design
     }
     
-    proc onNewSection() {
-        // Nothing here
+    proc onJustBeforeNewSection() {
+        // Empty by design
     }
     
     proc onJustAfterLastSection() {
-        // Nothing here
+        // Empty by design
     }
     
     proc exportParams() { local idx localobj vecOfVals, listOfStrs
         vecOfVals = $o1
-        listOfStrs = $o2    // Not used
+        listOfStrs = $o2    // Not used by design
         
         vecOfVals.resize(numParams + 1)
         vecOfVals.x(0) = modelIdx
@@ -114,7 +122,7 @@ begintemplate SimpleModelDistFuncHelper
     
     proc importParams() { local idx localobj vecOfVals, listOfStrs
         vecOfVals = $o1
-        listOfStrs = $o2    // Not used
+        listOfStrs = $o2    // Not used by design
         
         if (vecOfVals.size() != numParams + 1 || listOfStrs.count() != 0) {
             codeContractViolation()
@@ -133,8 +141,8 @@ begintemplate SimpleModelDistFuncHelper
         }
     }
     
+    // All next staff is private
     
-    // All next proc-s are private
     
     proc valueChangedHandler() {
         parentWidget.updateCurves()

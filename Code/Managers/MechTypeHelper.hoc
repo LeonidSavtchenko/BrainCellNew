@@ -296,7 +296,7 @@ begintemplate MechTypeHelper
         return mechTypes[1].is_netcon_target(mechIdx)
     }
     
-    // All next proc-s are private
+    // All next staff is private
     
     
     proc checkDistMechCodeContract() { local mechIdx

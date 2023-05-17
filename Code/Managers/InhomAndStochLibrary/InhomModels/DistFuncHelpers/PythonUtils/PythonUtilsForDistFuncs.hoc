@@ -1,34 +1,4 @@
 
-proc definePythonFunction() { local status
-    strdef oneLinerPyDistFuncName, oneLinerPyDistFuncBody, pyCommand
-    
-    oneLinerPyDistFuncName = $s1
-    oneLinerPyDistFuncBody = $s2
-    
-    sprint(pyCommand, "from math import *\ndef %s(x):\n    return %s", oneLinerPyDistFuncName, oneLinerPyDistFuncBody)
-    status = nrnpython(pyCommand)
-    if (!status) {
-        printMsgAndRaiseError("Exception raised in Python code (caught in definePythonFunction)")
-    }
-}
-
-func callPythonFunction() { local x, status
-    strdef oneLinerPyDistFuncName, pyCommand
-    
-    oneLinerPyDistFuncName = $s1
-    x = $2
-    
-    pyObj.x = x
-    
-    sprint(pyCommand, "y = %s(x)", oneLinerPyDistFuncName)
-    status = nrnpython(pyCommand)
-    if (!status) {
-        printMsgAndRaiseError("Exception raised in Python code (caught in callPythonFunction)")
-    }
-    
-    return pyObj.y
-}
-
 func loadPythonFile() {
     strdef filePathName, pyCommand
     
