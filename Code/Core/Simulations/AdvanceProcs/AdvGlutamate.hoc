@@ -1,5 +1,0 @@
-// Updates Gluout/Gluin values on the cell.
-proc advance() {
-    fadvance()
-    GluIteration(PX, PY, R_FRAP, TimeBegin, Tau1, MaxGlu, PX2, Gluin, Tau2, PZ)
-}
