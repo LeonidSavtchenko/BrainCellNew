@@ -1,0 +1,201 @@
+
+// Get the number of dendrites in the imported geometry
+// $o1 - The dendrite names (List of String-s, each name can be for either standalone section object or section array)
+// Returns the number of dendrites
+// !! maybe use findSecArrayOrObjectIterator
+func getNumberOfDendrites() { local totalNumDend, idx, numDend localobj dendriteSectionNames
+    strdef findSecRegex
+    
+    dendriteSectionNames = $o1
+    
+    totalNumDend = 0
+    
+    for idx = 0, dendriteSectionNames.count() - 1 {
+        sprint(findSecRegex, "%s[.*", dendriteSectionNames.o(idx).s)
+        
+        numDend = 0
+        // forsec findSecRegex {                // - These two don't require that match must start at the beginning of the string
+        // forall ifsec findSecRegex {          // /
+        forall if (issection(findSecRegex)) {   // - This does
+            numDend += 1
+        }
+        
+        if (numDend == 0) {
+            // The dendrite was defined as an object rather than array, so the regex didn't hit it
+            numDend = 1
+        }
+        
+        totalNumDend += numDend
+    }
+    
+    return totalNumDend
+}
+
+// Delete all sections
+// (The names remain declared and cannot be used for anything else than creating new sections and section arrays)
+proc deleteAllSections() {
+    forall {
+        delete_section()
+    }
+}
+
+// Delete extra dendrite sections when user loads old-style Astro HOC file
+// Input: OriginalDendrite (taken from the top level)
+proc deleteExtraDendrites() { local idx
+    idx = 0
+    // This code works fine just because old-style Astro HOC files don't create anything except "dendrite" and "soma",
+    // but in general case such a cycle will incorrectly loop through, for example, "adendrite" or "dendriteb" as well
+    forsec "dendrite" {
+        if (idx >= OriginalDendrite) {
+            delete_section()
+        }
+        idx += 1
+    }
+}
+
+// The iterator to find and do something with the section object or the elements of section array given name
+// $s1 - The name
+// $2 - 0/1 flag indicating that we need to find only the first element in section array
+// $3 - 0/1 flag indicating that we need to call codeContractViolation if nothing found 
+iterator findSecArrayOrObjectIterator() { local isFirstOnly, isCodeContractViolationIfNothingFound, isFound
+    strdef secArrayOrObjName, findSecRegex
+    
+    secArrayOrObjName = $s1
+    isFirstOnly = $2
+    isCodeContractViolationIfNothingFound = $3
+    
+    sprint(findSecRegex, "%s[.*", secArrayOrObjName)
+    
+    isFound = 0
+    // forsec findSecRegex {                // - These two don't require that match must start at the beginning of the string
+    // forall ifsec findSecRegex {          // /
+    forall if (issection(findSecRegex)) {   // - This does
+        iterator_statement
+        isFound = 1
+        if (isFirstOnly) {
+            break
+        }
+    }
+    
+    if (!isFound) {
+        forall if (issection(secArrayOrObjName)) {
+            iterator_statement
+            isFound = 1
+            break
+        }
+    }
+    
+    if (!isFound && isCodeContractViolationIfNothingFound) {
+        codeContractViolation()
+    }
+}
+
+// Get names of all sections being the topological roots
+// $o1 (optional) - Section names being the scope of search (List of String-s); if omitted, then the scope is the entire cell (i.e. all existing sections)
+// Returns The names (List of String-s); empty means "nevermind"
+obfunc getNamesOfAllTopologicalRoots() { local numArg localobj usedNames, secList, namesOfTopoRoots
+    
+    numArg = numarg()
+    
+    if (numArg == 1) {
+        usedNames = $o1
+    } else if (numArg > 1) {
+        codeContractViolation()
+    }
+    
+    secList = new SectionList()
+    
+    if (numArg == 0) {
+        secList.allroots()
+    } else {
+        // !! Not implemented
+        // Try to create a special container template, copy all analyzed sections to it, and then call secList.allroots() in the context of this template
+        // Alternatively, I can look into the code of secList.allroots (not available in /nrn/lib/hoc) and create a modified version of it which uses just a subset of sections
+        return new List()   // Empty means "nevermind"
+    }
+    
+    namesOfTopoRoots = new List()
+    forsec secList {    // !! this approach is recommended in docs, but should I use my approach here as well?
+        namesOfTopoRoots.append(new String(secname()))
+    }
+    
+    if (namesOfTopoRoots.count() == 0) {
+        codeContractViolation()
+    }
+    
+    return namesOfTopoRoots
+}
+
+// !! need to investigate the difference between my default soma and that one created by NLMorphologyConverter
+// !! test this code on a hoc file with two disconnected cells
+// Create a default soma and connect all root sections to its centre
+// $s1 (out) - The name chosen for the soma
+// Returns: 0/1 flag indicating Accept/Cancel respectively
+func createDefaultSomaAndConnectAllRootSectionsToIt() { local isCancel localobj secList
+    strdef chosenNameForSoma, hocCommand
+    
+    // Choose unique name for the created soma; if the name "soma" is in use, then ask user to enter the name
+    isCancel = chooseUniqueAndValidNameForNewCompartmentForImport("soma", chosenNameForSoma)
+    if (isCancel) {
+        return 1
+    }
+    
+    secList = new SectionList()
+    secList.allroots()
+    
+    sprint(hocCommand, "create %s", chosenNameForSoma)
+    execute(hocCommand)
+    
+    // Topology
+    // !! ideally we should check if all the roots converge in one point
+    forsec secList {    // !! this approach is recommended in docs, but should I use my approach here as well?
+        sprint(hocCommand, "connect %s(0), %s(0.5)", secname(), chosenNameForSoma)
+        execute(hocCommand)
+    }
+    
+    // Morphology
+    // !! maybe set nseg here as well
+    sprint(hocCommand, "%s { diam=%g L=%g }", chosenNameForSoma, ic.getDefaultSomaDiamAndLen(), ic.getDefaultSomaDiamAndLen())
+    execute(hocCommand)
+    
+    $s1 = chosenNameForSoma
+    
+    return 0
+}
+
+// Create a default axon and connect it to the first soma section centre
+// $s1 - The soma name
+// $s2 (out) - The name chosen for the axon
+// Returns: 0/1 flag indicating Accept/Cancel respectively
+func createDefaultAxonAndConnectToFirstSomaSection() { local isCancel
+    strdef usedNameForSoma, chosenNameForAxon, hocCommand
+    
+    usedNameForSoma = $s1
+    
+    // Choose unique name for the created axon; if the name "axon" is in use, then ask user to enter the name
+    isCancel = chooseUniqueAndValidNameForNewCompartmentForImport("axon", chosenNameForAxon)
+    if (isCancel) {
+        return 1
+    }
+    
+    sprint(hocCommand, "create %s[2]", chosenNameForAxon)
+    execute(hocCommand)
+    
+    // Topology
+    sprint(hocCommand, "%s[0] connect %s[1](0), 1", chosenNameForAxon, chosenNameForAxon)
+    execute(hocCommand)
+    sprint(hocCommand, "connect %s[0](0), 0.5", chosenNameForAxon)
+    for findSecArrayOrObjectIterator(usedNameForSoma, 1, 1) {
+        execute(hocCommand)
+    }
+    
+    // Morphology
+    sprint(hocCommand, "%s[0] {nseg=5 diam=1 L=50}", chosenNameForAxon)
+    execute(hocCommand)
+    sprint(hocCommand, "%s[1] {nseg=10 diam=0.7 L=250}", chosenNameForAxon)
+    execute(hocCommand)
+    
+    $s2 = chosenNameForAxon
+    
+    return 0
+}

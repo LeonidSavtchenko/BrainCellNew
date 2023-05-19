@@ -1,0 +1,77 @@
+{load_file("nrngui.hoc")}
+objectvar save_window_, rvp_
+objectvar scene_vector_[4]
+objectvar ocbox_, ocbox_list_, scene_, scene_list_, ocbox_1, ocbox_2, ocbox_3
+{ocbox_list_ = new List()  scene_list_ = new List()}
+{pwman_place(0,0,0)}
+
+//Begin Insert/Remove Mechanisms
+{
+load_file("inserter.hoc", "Inserter")
+}
+{
+EndFoot[0] ocbox_ = new Inserter(0)
+}
+{object_push(ocbox_)}
+{
+}
+{object_pop() doNotify()}
+{
+ocbox_ = ocbox_.v1
+ocbox_.map("Insert/Remove Mechanisms", 121, 302, 348.3, 128.7)
+}
+objref ocbox_
+
+
+{
+EndFoot[1] ocbox_1 = new Inserter(0)
+}
+{object_push(ocbox_1)}
+{
+}
+{object_pop() doNotify()}
+{
+ocbox_1 = ocbox_1.v1
+ocbox_1.map("Insert/Remove Mechanisms", 121, 302, 348.3, 128.7)
+}
+objref ocbox_1
+//End Insert/Remove Mechanisms
+
+objectvar scene_vector_[1]
+{doNotify()}
+
+
+{
+EndFoot[3] ocbox_3 = new Inserter(0)
+}
+{object_push(ocbox_3)}
+{
+}
+{object_pop() doNotify()}
+{
+ocbox_3 = ocbox_3.v1
+ocbox_3.map("Insert/Remove Mechanisms", 121, 302, 348.3, 128.7)
+}
+objref ocbox_3
+//End Insert/Remove Mechanisms
+
+objectvar scene_vector_[1]
+{doNotify()}
+
+
+{
+EndFoot[2] ocbox_2 = new Inserter(0)
+}
+{object_push(ocbox_2)}
+{
+}
+{object_pop() doNotify()}
+{
+ocbox_2 = ocbox_2.v1
+ocbox_2.map("Insert/Remove Mechanisms", 121, 302, 348.3, 128.7)
+}
+objref ocbox_2
+//End Insert/Remove Mechanisms
+
+objectvar scene_vector_[1]
+{doNotify()}

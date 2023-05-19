@@ -1,0 +1,102 @@
+
+objref pyObj
+pyObj = new PythonObject()
+
+{ nrnpython("from neuron import h") }
+
+// !! use "pyObj.ev" everywhere in the project instead of "nrnpython" to avoid top-level output arg
+{ nrnpython("ev = lambda arg : eval(arg)") }
+
+
+proc _callPythonStringFunc() { local status
+    strdef inStr, pyStringFunc, pyCommand
+    
+    inStr = $s1
+    pyStringFunc = $s2
+    
+    sprint(pyCommand, "pyRes = '%s'.%s", inStr, pyStringFunc)
+    status = nrnpython(pyCommand)
+    if (!status) {
+        printMsgAndRaiseError("Exception raised in Python code (caught in _callPythonStringFunc)")
+    }
+}
+
+func _getPythonMathConst() { local status
+    strdef pyMathConstName, pyCommand
+    
+    pyMathConstName = $s1
+    
+    sprint(pyCommand, "pyRes = float('%s')", pyMathConstName)   // !!? or "import math;pyRes = math.%s"
+    status = nrnpython(pyCommand)
+    if (!status) {
+        printMsgAndRaiseError("Exception raised in Python code (caught in _getPythonMathConst)")
+    }
+    
+    return pyObj.pyRes
+}
+
+// Convert string to lower case
+// $s1 - The input string
+// $s2 (output) - The lower case string
+proc stringToLowerCase() {
+    strdef inStr
+    inStr = $s1
+    _callPythonStringFunc(inStr, "lower()")
+    $s2 = pyObj.pyRes
+}
+
+// Truncate all leading and trailing whitespaces in the string
+// $s1 - The input string
+// $s2 (output) - The truncated string
+proc stringTruncate() {
+    strdef inStr
+    inStr = $s1
+    _callPythonStringFunc(inStr, "strip()")
+    $s2 = pyObj.pyRes
+}
+
+// !! not intermodular actually
+// Check if the given string starts with the given prefix
+// $s1 - The tested string
+// $s2 - The prefix
+// Returns 0/1 flag
+func stringStartsWith() {
+    strdef inStr, inPrefix, pyMembCall
+    inStr = $s1
+    inPrefix = $s2
+    sprint(pyMembCall, "startswith('%s')", inPrefix)
+    _callPythonStringFunc(inStr, pyMembCall)
+    return pyObj.pyRes
+}
+
+// !! not intermodular actually
+// Check if the given string ends with the given suffix
+// $s1 - The tested string
+// $s2 - The suffix
+// Returns 0/1 flag
+func stringEndsWith() {
+    strdef inStr, inSuffix, pyMembCall
+    inStr = $s1
+    inSuffix = $s2
+    sprint(pyMembCall, "endswith('%s')", inSuffix)
+    _callPythonStringFunc(inStr, pyMembCall)
+    return pyObj.pyRes
+}
+
+// Check if the given string is a valid identifier in Python (assume that means a valid section name in NEURON)
+// $s1 - The section name
+// Returns 0/1 flag
+func isValidSecName() {
+    strdef secName
+    secName = $s1
+    _callPythonStringFunc(secName, "isidentifier()")
+    return pyObj.pyRes
+}
+
+func getInfinity() {
+    return _getPythonMathConst("inf")
+}
+
+func getNaN() {
+    return _getPythonMathConst("nan")
+}

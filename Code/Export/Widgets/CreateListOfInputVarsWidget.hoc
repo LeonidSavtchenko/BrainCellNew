@@ -1,0 +1,253 @@
+
+begintemplate CreateListOfInputVarsWidget
+
+    public show, onVarAddHandler, onVarCorrectHandler, onDefineVarGridOkHandler, dismissHandler
+    
+    external mwh
+    external enterVarExpression, isVarExprUnique, replaceItemInList, openDeck, closeDeck, unmapIfNotNil, codeContractViolation
+    external isAstrocyteOrNeuron
+    
+    objref mainBox, exprsList
+    objref aoivWidgets[1], dg4ivWidget
+    objref this
+    
+    cloivWidIdx = -1
+    
+    numAoivWidgets = -1
+    
+    firstColWidth = -1
+    secondColWidth = -1
+    slotHeight = -1
+    
+    
+    proc init() { local aoivWidIdx
+        cloivWidIdx = $1
+        
+        numAoivWidgets = 2
+        
+        objref aoivWidgets[numAoivWidgets]
+        for aoivWidIdx = 0, numAoivWidgets - 1 {
+            aoivWidgets[aoivWidIdx] = new AddOneInputVarWidget(aoivWidIdx, this)
+        }
+        
+        dg4ivWidget = new DefineGridForInputVarWidget(this)
+        
+        exprsList = new List()
+        
+        firstColWidth = 315     // The width was chosen to fit "Extracellular Source" -> diam
+        secondColWidth = 105
+        slotHeight = 190
+    }
+    
+    proc show() { localobj hBox, deck
+        strdef text
+        
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            if (cloivWidIdx == 0) {
+                text = "Vars to expose in the settings file:"
+            } else if (cloivWidIdx == 1) {
+                text = "Vars to sweep:"
+            } else {
+                codeContractViolation()
+            }
+            xlabel(text)
+            xpanel()
+            hBox = new HBox()
+            hBox.intercept(1)
+            {
+                // It turns out, the usage of two Deck-s with just 1 card below
+                // gives a nicer UI compared to other options (VBox, HBox or no-box)
+                deck = openDeck()
+                {
+                    exprsList.browser("", "s")
+                    if (exprsList.count() != 0) {
+                        exprsList.select(0)
+                    }
+                }
+                closeDeck(deck, 0, firstColWidth, slotHeight)
+                deck = openDeck()
+                {
+                    xpanel("")
+                    xbutton("Add biophys var", "addBiophysVarHandler()")
+                    if (!isAstrocyteOrNeuron) {
+                        xbutton("Add synapse var", "addSynVarHandler()")
+                    }
+                    xbutton("Add custom var", "addCustomVarHandler()")
+                    xlabel("")
+                    xbutton("Correct var", "correctVarHandler()")
+                    xbutton("Delete var", "deleteVarHandler()")
+                    
+                    if (cloivWidIdx == 1) {
+                        xlabel("")
+                        xbutton("Define var grid", "defineVarGridHandler()")
+                    }
+                    xpanel()
+                }
+                closeDeck(deck, 0, secondColWidth, slotHeight)
+            }
+            hBox.intercept(0)
+            hBox.map()
+            xpanel("")
+            xbutton("OK", "okHandler()")
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Input variables", 110, 150, -1, -1)
+    }
+    
+    func onVarAddHandler() { local numVars localobj newItem
+        newItem = $o1
+        
+        if (!isVarExprUnique(newItem.s, exprsList)) {
+            return 0
+        }
+        
+        exprsList.append(newItem)
+        numVars = exprsList.count()
+        exprsList.select(numVars - 1)
+        
+        return 1
+    }
+    
+    func onVarCorrectHandler() { local varIdx localobj newItem
+        newItem = $o1
+        varIdx = $2
+        
+        if (!isVarExprUnique(newItem.s, exprsList)) {
+            return 0
+        }
+        
+        replaceItemInList(exprsList, newItem, varIdx)
+        exprsList.select(varIdx)
+        
+        return 1
+    }
+    
+    proc onDefineVarGridOkHandler() {
+        mwh.showNotImplementedWarning()
+    }
+    
+    proc dismissHandler() {
+        dismissChilds()
+        unmapIfNotNil(mainBox)
+    }
+    
+    // All next staff is private
+    
+    
+    proc addBiophysVarHandler() {
+        dismissChilds()
+        aoivWidgets[0].show()   // --> onVarAddHandler
+    }
+    
+    proc addSynVarHandler() {
+        dismissChilds()
+        aoivWidgets[1].show()   // --> onVarAddHandler
+    }
+    
+    proc correctBiophysOrSynVar() { local aoivWidIdx, selVarIdx localobj listItem
+        aoivWidIdx = $1
+        listItem = $o2
+        selVarIdx = $3
+        dismissChilds()
+        aoivWidgets[aoivWidIdx].show(listItem, selVarIdx)   // --> onVarCorrectHandler
+    }
+    
+    proc addCustomVarHandler() { local isOK, numVars
+        strdef expr
+        
+        dismissChilds()
+        
+        expr = ""
+        isOK = enterVarExpression(expr, exprsList)
+        if (!isOK) {
+            return
+        }
+        
+        exprsList.append(new ItemOfInputVarsBrowsedList(expr))
+        
+        numVars = exprsList.count()
+        exprsList.select(numVars - 1)
+    }
+    
+    proc correctVarHandler() { local selVarIdx, enumSpDmCe, isOK localobj oldItem, newItem
+        strdef expr
+        
+        dismissChilds()
+        
+        selVarIdx = exprsList.selected()
+        if (selVarIdx == -1) {
+            // The list is empty
+            return
+        }
+        
+        oldItem = exprsList.o(selVarIdx)
+        enumSpDmCe = oldItem.enumSpDmCe
+        if (enumSpDmCe == 0) {
+            correctBiophysOrSynVar(1, oldItem, selVarIdx)
+        } else if (enumSpDmCe == 1) {
+            correctBiophysOrSynVar(0, oldItem, selVarIdx)
+        } else if (enumSpDmCe == 2) {
+            expr = oldItem.customExpr
+            isOK = enterVarExpression(expr, exprsList)
+            if (!isOK) {
+                return
+            }
+            newItem = new ItemOfInputVarsBrowsedList(expr)
+            onVarCorrectHandler(newItem, selVarIdx)
+        } else {
+            codeContractViolation()
+        }
+    }
+    
+    proc deleteVarHandler() { local selVarIdx, numVars
+        dismissChilds()
+        
+        selVarIdx = exprsList.selected()
+        if (selVarIdx == -1) {
+            // The list is empty
+            return
+        }
+        
+        exprsList.remove(selVarIdx)
+        
+        numVars = exprsList.count()
+        if (numVars == 0) {
+            return
+        }
+        selVarIdx -= 1
+        if (selVarIdx == -1) {
+            selVarIdx = 0
+        }
+        exprsList.select(selVarIdx)
+    }
+    
+    proc defineVarGridHandler() { local selVarIdx
+        dismissChilds()
+        
+        selVarIdx = exprsList.selected()
+        if (selVarIdx == -1) {
+            // The list is empty
+            return
+        }
+        
+        dg4ivWidget.show()  // --> onDefineVarGridOkHandler
+    }
+    
+    proc okHandler() {
+        // !!
+        dismissHandler()
+    }
+    
+    proc dismissChilds() { local aoivWidIdx
+        for aoivWidIdx = 0, numAoivWidgets - 1 {
+            aoivWidgets[aoivWidIdx].dismissHandler()
+        }
+        dg4ivWidget.dismissHandler()
+    }
+    
+endtemplate CreateListOfInputVarsWidget

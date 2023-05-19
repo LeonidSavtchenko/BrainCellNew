@@ -1,0 +1,63 @@
+
+proc createAstrocyteGeometryPanel() {
+
+    xpanel("Leaf geometry")
+    xlabel("======================= Leaf Geometry =======================")
+    xlabel("Main parameters of nanoscopic processes (Leaves)")
+    //xlabel("")
+    xlabel("-------------------------------------------------------------------------------------------------------------------------")
+    if (nanoDistrLoaded == 1) {
+        xradiobutton("Diameter distribution from file", "distrSelectedLeaves(1)", 1)
+        xradiobutton("Stochastic uniform distribution of diameters between  Min and Max", "distrSelectedLeaves(0)")
+    } else {
+        xlabel("Stochastic uniform distribution of diameters between  Min and Max")
+    }
+    xvalue("Max diameter of Leaves (um)","MaxDimLeaves", 1, "distrSelectedLeaves()", 0, 1)
+    xvalue("Min diameter of Leaves (um)","MinDimLeaves", 1, "distrSelectedLeaves()", 0, 1)
+    xlabel("-------------------------------------------------------------------------------------------------------------------------")
+    xlabel("Stochastic uniform distribution of lengths between Min and Max")
+    xvalue("Max length of Leaves (um)","MaxLenLeaves", 1, "distrSelectedLeaves()", 0, 1)
+    xvalue("Min length of Leaves (um)","MinLenLeaves", 1, "distrSelectedLeaves()", 0, 1)
+    xlabel("========== Volume modification. Changes of diameters and lengths of segments =======")
+    xlabel("========== Change diameters in % to diameters =======")
+    xvalue("Diameter change","DiameterParameter", 1, "changeVolume(DiameterParameter, LengthChange)", 0, 1)
+    xlabel("========== Changing length by multiplying by parameter =======")
+    xvalue("Length change","LengthChange", 1, "changeVolume(DiameterParameter, LengthChange)", 0, 1)
+    //xlabel("=============================================================")
+    xpanel()
+    
+    xpanel("Stalks Geometry")
+    xlabel("======================= Stalks Geometry =======================")
+    xlabel("Stalks are thin higher-order branches that")
+    xlabel("connect nanoscopic processes (Leaves)")
+    xlabel("-------------------------------------------------------------------------------------------------------------------------")
+    if (nanoDistrLoaded == 1) {
+        xradiobutton("Diameter distribution from file", "distrSelectedStalks(1)", 1)
+        xradiobutton("Stochastic uniform  distribution of diameters between Min and Max", "distrSelectedStalks(0)")
+    } else {
+        xlabel("Stochastic uniform  distribution of diameters between Min and Max")
+    }
+    xvalue("Max diameter of Stalks (um)",  "MaxDimStalk", 1, "distrSelectedStalks()", 0, 1)
+    xvalue("Min diameter of Stalks (um)",  "MinDimStalk", 1, "distrSelectedStalks()", 0, 1)
+    xlabel("-------------------------------------------------------------------------------------------------------------------------")
+    xlabel("Stochastic uniform  distribution of lengths between Min and Max")
+    xvalue("Max length of Stalks (um)","MaxLenStalk", 1, "distrSelectedStalks()", 0, 1)
+    xvalue("Min length of Stalks (um)","MinLenStalk", 1, "distrSelectedStalks()", 0, 1)
+    //xlabel("=============================================================")
+    xpanel()
+    
+    xpanel("Seeding Stalks")
+    xlabel("=============== Seeding Stalks ====================")
+    xlabel("Initial min. distance between stalks is limit value that cannot be reduced using panel.")
+    xlabel("To decrease this value, increase value - MaxNumberStalksPerDendrite")
+    xvalue("Min distribution over branches in um","MinDistance", 1, "addLeaves(MinDistance)", 0, 1)
+    xpanel()
+    
+    xpanel("Specific membrane conductance")
+    xlabel("========== Specific membrane conductance =======")
+    xlabel("This membrane conductivity is scaled to base of leaf cylinders")
+    xvalue("Specific membrane conductance, Gm (S/cm2)","GPassive", 1, "distrSelectedLeaves()", 0, 1)
+    //xlabel("=============================================================")
+    xpanel()
+    
+}

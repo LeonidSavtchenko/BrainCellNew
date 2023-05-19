@@ -1,6 +1,7 @@
 //////////////////// Table of contents ///////////////////////////////////
 /*
     Line 19:            Utils
+<<<<<<< HEAD
     Line 116:           Sections
     Line 135:           Imported section names
     Line 308:           Section references
@@ -11,6 +12,18 @@
     Line 38600:         Compartments
     Line 38884:         Homogen biophysics
     Line 39558:         Synapse compartments
+=======
+    Line 77:            Sections
+    Line 96:            Imported section names
+    Line 269:           Section references
+    Line 501:           Topology
+    Line 3629:          Geometry, nseg, Ra
+    Line 38376:         Distance centre
+    Line 38385:         Synapses
+    Line 38561:         Compartments
+    Line 38845:         Homogen biophysics
+    Line 39519:         Synapse compartments
+>>>>>>> 781d14b808c7c0a319def72f1c9a3d48a3b2b7fa
 */
 //////////////////////////////////////////////////////////////////////////
 
@@ -27,6 +40,7 @@ func isNaN() {
     return !($1 == $1)  // Do not replace with "!="
 }
 
+<<<<<<< HEAD
 // Print the message, print the call stack, raise the error
 // $s1 - The message
 proc printMsgAndRaiseError() {
@@ -43,11 +57,22 @@ proc printNotImplementedMsgAndRaiseError() {
     execerror(msg1, msg2)
 }
 
+=======
+>>>>>>> 781d14b808c7c0a319def72f1c9a3d48a3b2b7fa
 // Report the bug, print the call stack, raise the error
 proc codeContractViolation() {
     execerror("\n\n    Bug in Cell program: Code contract violation", "\n    Please report this problem to the developer along with the call stack shown below\n")
 }
 
+<<<<<<< HEAD
+=======
+// Print the message, print the call stack, raise the error
+// $s1 - The message
+proc printMsgAndRaiseError() {
+    execerror($s1)
+}
+
+>>>>>>> 781d14b808c7c0a319def72f1c9a3d48a3b2b7fa
 // An iterator to simplify looping over all elements of the List a bit.
 // Basically, we replace this:
 //     local idx localobj item
@@ -82,6 +107,7 @@ iterator eachItemInList() { local numArg, firstIdx, idx localobj list
     }
 }
 
+<<<<<<< HEAD
 func makeSureDeclared() { local numArg, isIteratorOrObjref
     strdef name, hocCommand
     
@@ -111,6 +137,8 @@ func makeSureDeclared() { local numArg, isIteratorOrObjref
 }
 
 
+=======
+>>>>>>> 781d14b808c7c0a319def72f1c9a3d48a3b2b7fa
 //////////////////// End of utils ////////////////////////////////////////
 
 //////////////////// Start of sections ///////////////////////////////////

@@ -1,0 +1,132 @@
+
+begintemplate MechManagerCompOpMergeSubWidget
+
+    public show, dismissHandler
+    public mainBox
+    
+    external mmAllComps
+    external mwh, mth, mmmowb, mmcoWidget
+    external inhomAndStochLibrary
+    external joinStrings, codeContractViolation
+    
+    objref mainBox
+    objref mergeCheckBoxStates
+    
+    donorCompIdx = -1
+    
+    
+    proc init() {
+        mergeCheckBoxStates = $o1
+        
+        donorCompIdx = -1
+    }
+    
+    proc show() { local numComps, compIdx, isChecked localobj comp
+        strdef handlerHocCommand, text
+        
+        numComps = mmAllComps.count()
+        if (mergeCheckBoxStates.size() != numComps) {
+            codeContractViolation()
+        }
+        
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            xlabel("The mechs* and comp name will be inherited from:")
+            for compIdx = 0, numComps - 1 {
+                if (mergeCheckBoxStates.x(compIdx)) {
+                    comp = mmAllComps.o(compIdx)
+                    sprint(handlerHocCommand, "donorCompIdx = %d", compIdx)
+                    if (donorCompIdx == -1) {
+                        donorCompIdx = compIdx
+                        isChecked = 1
+                    } else {
+                        isChecked = 0
+                    }
+                    xradiobutton(comp.name, handlerHocCommand, isChecked)
+                }
+            }
+            xbutton("Merge", "mergeHandler()")
+            xpanel()
+            xpanel("")
+            sprint(text, "* There is an exception for \"%s\" and \"*%s\" mechs which are \"sticky\".", mth.extracellularMechName, mth.ionSuffix)
+            xlabel(text)
+            xlabel("  (Once inserted, they cannot be uninserted anymore due to NEURON restriction).")
+            xlabel("  If any source comp have a \"sticky\" mech inserted,")
+            xlabel("  we'll insert it into the destination comp to avoid inconsistency.")
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Primary legator", 260, 310, -1, -1)
+    }
+    
+    // Input: this.donorCompIdx, this.mergeCheckBoxStates
+    proc mergeHandler() { local status, numMechs, isStickyMechBorrowed, numComps, srcCompIdx, mechIdx localobj dstComp, srcComp
+        strdef stickyMechNames, mechName
+        
+        status = mmmowb.ifDirtyThenProposeUserToApplyChanges("Cannot merge because you have some pending changes to sections biophysics. Do you want to apply them?")
+        if (status == 1) {
+            return
+        }
+        
+        dstComp = mmAllComps.o(donorCompIdx)
+        
+        numMechs = mth.getNumMechs(0)
+        
+        isStickyMechBorrowed = 0
+        stickyMechNames = ""
+        
+        numComps = mmAllComps.count()
+        for (srcCompIdx = numComps - 1; srcCompIdx > -1; srcCompIdx -= 1) {
+            if (!mergeCheckBoxStates.x(srcCompIdx) || srcCompIdx == donorCompIdx) {
+                continue
+            }
+            
+            srcComp = mmAllComps.o(srcCompIdx)
+            
+            // Appending sections
+            dstComp.mergeAllSectsFrom(srcComp)
+            
+            // Borrowing all inserted sticky mechs
+            for mechIdx = 0, numMechs - 1 {
+                if (mth.isDistMechSticky(mechIdx) && srcComp.isMechInserted[mechIdx] && !dstComp.isMechInserted[mechIdx]) {
+                    dstComp.isMechInserted[mechIdx] = 1
+                    
+                    isStickyMechBorrowed = 1
+                    mth.getMechName(0, mechIdx, mechName)
+                    joinStrings(stickyMechNames, mechName, ", ")
+                }
+            }
+            
+            // Deleting compartment
+            mmAllComps.remove(srcCompIdx)
+        }
+        
+        inhomAndStochLibrary.onCompMerge(mergeCheckBoxStates, donorCompIdx)
+        
+        // Applying mechanisms
+        // !! we can improve perf here applying changes to the borrowed sections only,
+        //    but this can be done only when we don't borrow any "sticky" mechs
+        dstComp.markAllMechsDirty()
+        dstComp.applyHomogenChangesToDirtyMechs()
+        mmmowb.isDirty = 0
+        
+        mmcoWidget.mergeHandler_layer2()
+        
+        if (isStickyMechBorrowed) {
+            // Showing here to avoid obstruction by just updated bigger window
+            mwh.showWarningBox("The following \"sticky\" mechs were borrowed from the merged compartments:", stickyMechNames)
+        }
+        
+        if (status == 2) {
+            mwh.endIntercepting()
+        }
+    }
+    
+    proc dismissHandler() {
+        mainBox.unmap()
+    }
+    
+endtemplate MechManagerCompOpMergeSubWidget

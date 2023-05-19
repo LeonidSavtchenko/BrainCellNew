@@ -1,0 +1,282 @@
+
+begintemplate CellularCompartmentsWidget
+
+    public show
+    
+    // The arguments passed to importHocFile_layer2
+    isCalledAfterConversion = -1
+    isSomaInsertedDuringConversion = -1
+    isOldStyleAstroHocFile = -1
+    
+    // Other ctor args
+    objref allNames, defaultSomaNameIdxs, defaultDendriteNameIdxs, defaultAxonNameIdxs
+    
+    objref mainBox
+    objref somaSelectionFlags, dendriteSelectionFlags, axonSelectionFlags
+    
+    external isAstrocyteOrNeuron
+    external mwh
+    external importHocFile_layer2, printMsgAndRaiseError
+    
+    
+    // Template initialization
+    // $1 - 0/1 flag indicating whether this proc is called after the file conversion stage
+    // $2 - 0/1 flag indicating whether soma was inserted during the file conversion stage
+    // $3 - 0/1 flag indicating whether the HOC file was designed to be input of Astro 1.0 and so follows the old style
+    // $o4 - Names of all sections created in the imported HOC file (List of String-s)
+    // $o5 - Indexes of the names that will be selected for soma by default (Vector)
+    // $o6 - Indexes of the names that will be selected for dendrites by default (Vector)
+    // $o7 - Indexes of the names that will be selected for axon by default (Vector, empty for astrocyte)
+    proc init() {
+        isCalledAfterConversion = $1
+        isSomaInsertedDuringConversion = $2
+        isOldStyleAstroHocFile = $3
+        allNames = $o4
+        defaultSomaNameIdxs = $o5
+        defaultDendriteNameIdxs = $o6
+        defaultAxonNameIdxs = $o7
+    }
+    
+    // Helper proc for default initialization of the selection flags
+    // $o1 (in/out) - The selection flags (Vector)
+    // $o2 - The default name indexes (Vector)
+    proc setOnesForDefaultNames() { local idx localobj selectionFlags, defaultNameIdxs
+        selectionFlags = $o1
+        defaultNameIdxs = $o2
+        
+        for idx = 0, defaultNameIdxs.size() - 1 {
+            selectionFlags.x[defaultNameIdxs.x[idx]] = 1
+        }
+    }
+    
+    // Create and initialize one panel (soma, dendrite or axon names)
+    // $s1 - The compartment name
+    // $2 - 0/1/2 value indicating soma/dendrites/axon
+    // $o3 - The default state flags for checkboxes (Vector)
+    proc createAndInitOnePanel() { local compartmentType, idx localobj selectionFlags, vBox
+        strdef compartmentName, title, handlerHocCommand
+        
+        compartmentName = $s1
+        compartmentType = $2
+        selectionFlags = $o3
+        
+        vBox = new VBox()
+        vBox.intercept(1)
+        {
+            xpanel("")
+            
+            // The title
+            sprint(title, "%s sections:", compartmentName)
+            xlabel(title)
+            
+            // The menu
+            xmenu("All names")
+            sprint(handlerHocCommand, "checkAllHandler(%d)", compartmentType)
+            xbutton("Check", handlerHocCommand)
+            sprint(handlerHocCommand, "uncheckAllHandler(%d)", compartmentType)
+            xbutton("Uncheck", handlerHocCommand)
+            sprint(handlerHocCommand, "invertAllHandler(%d)", compartmentType)
+            xbutton("Invert", handlerHocCommand)
+            xmenu()
+            
+            xpanel()
+            
+            // All checkboxes
+            xpanel("")
+            for idx = 0, allNames.count() - 1 {
+                // !! nameToNameWithDims(allNames.o(idx).s, nameWithDims)
+                xcheckbox(allNames.o(idx).s, &selectionFlags.x[idx])
+            }
+            xpanel()
+        }
+        vBox.intercept(0)
+        vBox.map()
+    }
+    
+    // Ask user to select names of soma, dendrite and (for neuron only) axon sections used in the imported HOC file
+    proc show() { local numNames, idx, width localobj nil, hBox
+        strdef whatElse, str
+        
+        if (mainBox == nil) {
+            // Create and initialize somaSelectionFlags, dendriteSelectionFlags and (for neuron only) axonSelectionFlags (all Vector-s)
+            numNames = allNames.count()
+            somaSelectionFlags = new Vector(numNames)       // All 0 by default
+            dendriteSelectionFlags = new Vector(numNames)   //
+            if (!isAstrocyteOrNeuron) {
+                axonSelectionFlags = new Vector(numNames)   //
+            }
+            setOnesForDefaultNames(somaSelectionFlags, defaultSomaNameIdxs)
+            setOnesForDefaultNames(dendriteSelectionFlags, defaultDendriteNameIdxs)
+            if (!isAstrocyteOrNeuron) {
+                setOnesForDefaultNames(axonSelectionFlags, defaultAxonNameIdxs)
+            }
+            
+            mainBox = new VBox()
+            mainBox.intercept(1)
+            {
+                // !! do not show soma and/or axon panels if importer creates them itself
+                xpanel("")
+                if (isAstrocyteOrNeuron) {
+                    whatElse = " and dendrites"
+                } else {
+                    whatElse = ", dendrites and axon"
+                }
+                sprint(str, "Please help us identify which names were used in the HOC file to define soma%s", whatElse)
+                xlabel(str)
+                xlabel("so we can simulate the cell correctly.")
+                if (isAstrocyteOrNeuron) {
+                    str = "Uncheck all names on the left panel if the file does not define soma."
+                } else {
+                    str = "Uncheck all names on the left and/or right panel if the file does not define soma and/or axon."
+                }
+                xlabel(str)
+                xpanel()
+                hBox = new HBox()
+                hBox.intercept(1)
+                {
+                    createAndInitOnePanel("Soma", 0, somaSelectionFlags)
+                    createAndInitOnePanel("Dendrite", 1, dendriteSelectionFlags)
+                    if (!isAstrocyteOrNeuron) {
+                        createAndInitOnePanel("Axon", 2, axonSelectionFlags)
+                    }
+                }
+                hBox.intercept(0)
+                hBox.map()
+                xpanel("")
+                xbutton("OK", "okHandler()")
+                xpanel()
+            }
+            mainBox.dismiss_action("dismissHandler()")
+            mainBox.intercept(0)
+        }
+        // !! width change depending on whether we hide soma and/or axon panels
+        width = 430
+        if (!isAstrocyteOrNeuron) {
+            width *= 3 / 2
+        }
+        mainBox.map("Cellular compartments", 350, 50, width, 500)
+    }
+    
+    // Perform an operation on all checkboxes given panel
+    // $1 - 0/1/2 value indicating soma/dendrites/axon panel
+    // $2 - 1/2/3 value indicating the operation check/uncheck/invert
+    // !! maybe make both args 0-based
+    proc operationOnAllCheckBoxes() { local compartmentType, op, idx, value localobj selectionFlags
+        compartmentType = $1
+        op = $2
+        
+        // !! it would be easier to use array of vectors and then arr[compartmentType]
+        if (compartmentType == 0) {
+            selectionFlags = somaSelectionFlags
+        } else if (compartmentType == 1) {
+            selectionFlags = dendriteSelectionFlags
+        } else if (compartmentType == 2) {
+            selectionFlags = axonSelectionFlags
+        } else {
+            codeContractViolation()
+        }
+        for idx = 0, selectionFlags.size() - 1 {
+            value = selectionFlags.x[idx]
+            if (op == 1) {
+                value = 1
+            } else if (op == 2) {
+                value = 0
+            } else if (op == 3) {
+                value = 1 - value
+            } else {
+                codeContractViolation()
+            }
+            selectionFlags.x[idx] = value
+        }
+    }
+    
+    // "Check all" menu item handler
+    // $1 - 0/1 flag indicating soma/dendrites panel
+    proc checkAllHandler() {
+        operationOnAllCheckBoxes($1, 1)
+    }
+    
+    // "Uncheck all" menu item handler
+    // $1 - 0/1 flag indicating soma/dendrites panel
+    proc uncheckAllHandler() {
+        operationOnAllCheckBoxes($1, 2)
+    }
+    
+    // "Invert all" menu item handler
+    // $1 - 0/1 flag indicating soma/dendrites panel
+    proc invertAllHandler() {
+        operationOnAllCheckBoxes($1, 3)
+    }
+    
+    // Handler of "OK" button for the widget
+    proc okHandler() { local allDendsUnchecked, idx localobj usedNamesForSoma, usedNamesForDendrites, usedNamesForAxon
+        strdef line2
+        
+        line2 = "Please select different names."
+        
+        // Validate selections and prevent widget close if incorrect
+        // !! review this and optimize
+        allDendsUnchecked = 1
+        for idx = 0, allNames.count() - 1 {
+            if (somaSelectionFlags.x[idx] && dendriteSelectionFlags.x[idx]) {
+                mwh.showWarningBox("Cannot use the same sections for soma and dendrites.", line2)
+                return
+            }
+            if (!isAstrocyteOrNeuron) {
+                if (dendriteSelectionFlags.x[idx] && axonSelectionFlags.x[idx]) {
+                    mwh.showWarningBox("Cannot use the same sections for dendrites and axon.", line2)
+                    return
+                }
+                if (somaSelectionFlags.x[idx] && axonSelectionFlags.x[idx]) {
+                    mwh.showWarningBox("Cannot use the same sections for soma and axon.", line2)
+                    return
+                }
+            }
+            if (dendriteSelectionFlags.x[idx]) {
+                allDendsUnchecked = 0
+            }
+        }
+        if (allDendsUnchecked) {
+            mwh.showWarningBox("Please select at least one name for dendrites.")
+            return
+        }
+        
+        // Read the names selected by user before closing the widget
+        usedNamesForSoma = new List()
+        usedNamesForDendrites = new List()
+        usedNamesForAxon = new List()
+        for idx = 0, allNames.count() - 1 {
+            if (somaSelectionFlags.x[idx]) {
+                usedNamesForSoma.append(allNames.o(idx))
+            } else if (dendriteSelectionFlags.x[idx]) {
+                usedNamesForDendrites.append(allNames.o(idx))
+            } else if (!isAstrocyteOrNeuron) {      // Don't combine these two lines with && because NEURON evaluates all the operands
+                if (axonSelectionFlags.x[idx]) {    //
+                    usedNamesForAxon.append(allNames.o(idx))
+                }
+            }
+        }
+        
+        if (usedNamesForDendrites.count() == 0) {
+            codeContractViolation()
+        }
+        
+        // Close the widget
+        mainBox.unmap()
+        
+        // Proceed with the import (now user has made the choices)
+        importHocFile_layer2(isCalledAfterConversion, isSomaInsertedDuringConversion, isOldStyleAstroHocFile, usedNamesForSoma, usedNamesForDendrites, usedNamesForAxon)
+    }
+    
+    // Handler of "X" button for the widget
+    proc dismissHandler() {
+        // Close the widget
+        mainBox.unmap()
+        
+        printMsgAndRaiseError("Names weren't selected")
+    }
+
+endtemplate CellularCompartmentsWidget
+
+
+objref cellularCompartmentsWidget

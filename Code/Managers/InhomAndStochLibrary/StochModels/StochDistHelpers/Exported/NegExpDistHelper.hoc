@@ -1,0 +1,88 @@
+
+// !! BUG: not ready for export
+
+// https://www.neuron.yale.edu/neuron/static/new_doc/programming/math/random.html#Random.negexp
+// https://www.mathworks.com/help/stats/exponential-distribution.html
+// https://en.wikipedia.org/wiki/Exponential_distribution
+
+begintemplate NegExpDistHelper
+
+    public addParamsToPanel, calcPdf, calcCdf, getMean, getStdDev, firstDice, exportParams, importParams
+    
+    external math
+    external codeContractViolation
+    
+    objref parentWidget
+    
+    lambda = -1
+    
+    
+    proc init() { local inf
+        parentWidget = $o1
+        
+        lambda = 3.5
+        
+        inf = math.inf
+        variable_domain(&lambda, float_epsilon, inf)
+    }
+    
+    proc addParamsToPanel() {
+        xpvalue("lambda", &lambda, 1, "parentWidget.valueChangedHandler()")
+    }
+    
+    func calcPdf() { local x, y
+        x = $1
+        
+        if (x >= 0) {
+            y = lambda * exp(-lambda * x)
+        } else {
+            y = 0
+        }
+        
+        return y
+    }
+    
+    func calcCdf() { local x, y
+        x = $1
+        
+        if (x >= 0) {
+            y = 1 - exp(-lambda * x)
+        } else {
+            y = 0
+        }
+        
+        return y
+    }
+    
+    func getMean() {
+        return 1 / lambda
+    }
+    
+    func getStdDev() {
+        return 1 / lambda
+    }
+    
+    func firstDice() { local mean localobj rng
+        rng = $o1
+        
+        mean = getMean()
+        return rng.negexp(mean)     // !! cannot achieve mean = 0
+    }
+    
+    proc exportParams() { localobj vecOfVals
+        vecOfVals = $o1
+        
+        vecOfVals.resize(1)
+        vecOfVals.x(0) = lambda
+    }
+    
+    proc importParams() { localobj vecOfVals
+        vecOfVals = $o1
+        
+        if (vecOfVals.size() != 1) {
+            codeContractViolation()
+        }
+        // !! setLambda(vecOfVals.x(0))
+    }
+    
+endtemplate NegExpDistHelper

@@ -1,0 +1,202 @@
+
+begintemplate BoundingHelper
+
+    public prepareForPdfAndCdfBounding, makeSureBoundsOK, calcPdf, calcCdf, generateFirstBoundedValue, generateNextBoundedValue, isUntouched
+    public where, mode, min, max
+    public minBoundVarName, maxBoundVarName
+    public colourizationHelper
+    
+    external mwh
+    
+    // UI
+    where = -1  // 0: "Keep as is", 1: "Bound from below", 2: "Bound from above", 3: "Bound on both sides"
+    mode = -1   // 0: "Crop", 1: "Re-dice"
+    min = -1
+    max = -1
+    strdef minBoundVarName, maxBoundVarName
+    
+    // "init" arg
+    objref colourizationHelper
+    
+    objref distHelper
+    
+    pdfCdfDivider = -1
+    remainingArea = -1
+    cdfSubtrahend = -1
+    
+    
+    proc init() {
+        colourizationHelper = $o1
+        
+        // Defaults
+        where = 0
+        mode = 0
+        max = 1e-3
+        min = -max
+        
+        minBoundVarName = "min_bound"
+        maxBoundVarName = "max_bound"
+    }
+    
+    func prepareForPdfAndCdfBounding() { local isOK
+        distHelper = $o1
+        pdfCdfDivider = getPdfCdfDividerAndRemainingArea(&remainingArea)
+        cdfSubtrahend = getCdfSubtrahend()
+        isOK = makeSureBoundsOK()   // This one uses remainingArea
+        if (!isOK) {
+            return 0
+        }
+        return 1
+    }
+    
+    func makeSureBoundsOK() { local areaThreshold
+        strdef msg, line1, line2, line3
+        if (where == 0) {
+            return 1
+        }
+        if (where == 3 && min >= max) {
+            sprint(msg, "Cannot proceed because \"%s\" >= \"%s\".", minBoundVarName, maxBoundVarName)
+            mwh.showWarningBox(msg)
+            return 0
+        }
+        areaThreshold = 0.1     // !! hardcode
+        if (remainingArea < areaThreshold) {
+            sprint(line1, "The bound(s) cut off more than %d%% of the initial PDF area.", (1 - areaThreshold) * 100)
+            line3 = "Please loose the bound(s)."
+            if (mode == 0) {
+                mwh.showWarningBox(line1, line3)
+                return 1    // Just a warning
+            } else {
+                line2 = "Since \"Re-dice\" mode is chosen, this will lead to significant performance drop (or even hanging)."
+                mwh.showWarningBox(line1, line2, line3)
+                return 0    // Critical
+            }
+        }
+        return 1
+    }
+    
+    func calcPdf() { local x, y
+        x = $1
+        if (isOutOfBounds(x)) {
+            y = 0
+        } else {
+            y = distHelper.calcPdf(x) / pdfCdfDivider
+        }
+        return y
+    }
+    
+    func calcCdf() { local x, y
+        x = $1
+        if (isBelowLeftBound(x)) {
+            y = 0
+        } else if (isAboveRightBound(x)) {
+            y = 1
+        } else {
+            y = (distHelper.calcCdf(x) - cdfSubtrahend) / pdfCdfDivider
+        }
+        return y
+    }
+    
+    func generateFirstBoundedValue() { local value, stdDev localobj stochFuncHelper
+        stochFuncHelper = $o1
+        
+        value = stochFuncHelper.firstDice()
+        stdDev = distHelper.getStdDev()
+        colourizationHelper.resetHistoryAndSetStdDev(stdDev)
+        
+        return colourizeAndBoundValue(stochFuncHelper, value)
+    }
+    
+    func generateNextBoundedValue() { local value localobj stochFuncHelper
+        stochFuncHelper = $o1
+        
+        value = stochFuncHelper.nextDice()
+        
+        return colourizeAndBoundValue(stochFuncHelper, value)
+    }
+    
+    func isUntouched() {
+        return (where == 0 && colourizationHelper.chromaticity == 0)
+    }
+    
+    // All next staff is private
+    
+    
+    func getPdfCdfDividerAndRemainingArea() { local remainingArea
+        if (where == 0) {
+            remainingArea = 1
+        } else if (where == 1) {
+            remainingArea = 1 - distHelper.calcCdf(min)
+        } else if (where == 2) {
+            remainingArea = distHelper.calcCdf(max)
+        } else {
+            remainingArea = distHelper.calcCdf(max) - distHelper.calcCdf(min)
+        }
+        
+        $&1 = remainingArea
+        
+        if (mode == 0) {
+            return 1
+        }
+        
+        return remainingArea
+    }
+    
+    func getCdfSubtrahend() {
+        if (where == 0 || where == 2 || mode == 0) {
+            return 0
+        }
+        
+        return distHelper.calcCdf(min)  // Cut-off area on the left
+    }
+    
+    func isOutOfBounds() { local value
+        value = $1
+        return isBelowLeftBound(value) || isAboveRightBound(value)
+    }
+    
+    func isBelowLeftBound() { local value
+        value = $1
+        return (where == 1 || where == 3) && value < min
+    }
+    
+    func isAboveRightBound() { local value
+        value = $1
+        return (where == 2 || where == 3) && value > max
+    }
+    
+    func colourizeAndBoundValue() { local value localobj stochFuncHelper
+        stochFuncHelper = $o1
+        value = $2
+        
+        value = colourizationHelper.colourizeValue(value)
+        
+        if (mode == 0) {
+            return boundValue(value)
+        } else {
+            while (isOutOfBounds(value)) {
+                value = stochFuncHelper.nextDice()
+                value = colourizationHelper.colourizeValue(value)
+            }
+            return value
+        }
+    }
+    
+    func boundValue() { local value
+        value = $1
+        
+        if (where == 0) {
+            return value
+        }
+        
+        if (isBelowLeftBound(value)) {
+            value = min
+        }
+        if (isAboveRightBound(value)) {
+            value = max
+        }
+        
+        return value
+    }
+    
+endtemplate BoundingHelper

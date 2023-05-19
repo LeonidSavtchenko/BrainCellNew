@@ -7,6 +7,11 @@ isAstrocyteOrNeuron = -1
 // Load some test cell
 { load_file("../Nanogeometry/cellmorphology+nano.hoc") }
 isBaseOrNanoStart = 0
+<<<<<<< HEAD
+=======
+
+{ load_file("../Code/InterModular/AllInterModularUtils.hoc") }
+>>>>>>> 781d14b808c7c0a319def72f1c9a3d48a3b2b7fa
 
 objref stochTestGraph
 { load_file("../Code/Managers/CommonLoads.hoc") }

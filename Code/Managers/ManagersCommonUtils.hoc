@@ -1,0 +1,172 @@
+
+begintemplate ManagersCommonUtils
+
+    public defineDistFuncHandler, defineStochFuncHandler, createApplyReminder, createEditorSubWidgetDigest, copyAllVarsValuesExceptInhom, updateIsMechVarTypeInhom, isMetaVar
+    
+    external mmAllComps, smAllComps
+    external mwh, math, mth, compUtils
+    external stringStartsWith
+    
+    
+    obfunc defineDistFuncHandler() { local enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, isMechOrSynEditor, isDisconnected, xMin, xMax localobj comp, nil, defineDistFuncSubWidget
+        enumDmPpNc = $1
+        compIdx = $2
+        mechIdx = $3
+        varType = $4
+        varIdx = $5
+        arrayIndex = $6
+        
+        isMechOrSynEditor = (enumDmPpNc == 0)
+        comp = compUtils.getComp(isMechOrSynEditor, compIdx)
+        
+        isDisconnected = comp.getDistRange(&xMin, &xMax)
+        if (isDisconnected) {
+            mwh.showWarningBox("Cannot edit inhomogeneity in this compartment", "because at least one its section doesn't have a topological connection with the distance centre.")
+            
+            // !! overkill here: we don't need to prevent opening the widget because user might wanted to do smth unrelated to inhomogeneity
+            return nil
+        }
+        
+        // !! if exists, then need to pass the old helper object here to restore the UI state
+        //    also, we'll need the helper on export
+        defineDistFuncSubWidget = new InhomEditorSubWidget(enumDmPpNc, compIdx, xMin, xMax, mechIdx, varType, varIdx, arrayIndex)
+        defineDistFuncSubWidget.show()
+        
+        return defineDistFuncSubWidget
+    }
+    
+    obfunc defineStochFuncHandler() { local enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex localobj defineStochFuncSubWidget
+        enumDmPpNc = $1
+        compIdx = $2
+        mechIdx = $3
+        varType = $4
+        varIdx = $5
+        arrayIndex = $6
+        
+        // !! if exists, then need to pass the old helper object here to restore the UI state
+        //    also, we'll need the helper on export
+        defineStochFuncSubWidget = new StochEditorSubWidget(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
+        defineStochFuncSubWidget.show()
+        
+        return defineStochFuncSubWidget
+    }
+    
+    proc createApplyReminder() { local isMechOrSynEditor, isOrLeave
+        strdef textTempl, targetName, textEnd, text
+        
+        isMechOrSynEditor = $1
+        isOrLeave = $2
+        
+        textTempl = "No changes will be applied to %s until you click the \"Apply\" button%s"
+        
+        if (isMechOrSynEditor) {
+            targetName = "sections biophysics"
+        } else {
+            targetName = "synapses"
+        }
+        
+        if (isOrLeave) {
+            textEnd = " or leave this window."
+        } else {
+            textEnd = "."
+        }
+        
+        sprint(text, textTempl, targetName, textEnd)
+        
+        xlabel(text)
+    }
+    
+    proc createEditorSubWidgetDigest() { local enumDmPpNc, isMechOrSynEditor
+        strdef compName, mechName, varTypeName, varNameWithIndexAndUnits, compClassName, mechClassName, textTempl, text
+        
+        enumDmPpNc = $1
+        compName = $s2
+        mechName = $s3
+        varTypeName = $s4
+        varNameWithIndexAndUnits = $s5
+        
+        isMechOrSynEditor = (enumDmPpNc == 0)
+        
+        if (isMechOrSynEditor) {
+            compClassName = "Compartment"
+            mechClassName = "Mechanism"
+        } else {
+            compClassName = "Synapse part"
+            mechClassName = "Point process"
+        }
+        
+        textTempl = "%s: %s"
+        
+        sprint(text, textTempl, compClassName, compName)
+        xlabel(text)
+        if (enumDmPpNc != 2) {
+            sprint(text, textTempl, mechClassName, mechName)
+            xlabel(text)
+        } else {
+            varTypeName = "Variable"
+        }
+        sprint(text, textTempl, varTypeName, varNameWithIndexAndUnits)
+        xlabel(text)
+    }
+    
+    proc copyAllVarsValuesExceptInhom() { local varIdx, arraySize, arrayIndex, varValue localobj srcMechStd, dstMechStd
+        strdef varName
+        
+        srcMechStd = $o1
+        dstMechStd = $o2
+        
+        for varIdx = 0, dstMechStd.count() - 1 {
+            arraySize = dstMechStd.name(varName, varIdx)
+            for arrayIndex = 0, arraySize - 1 {
+                varValue = srcMechStd.get(varName, arrayIndex)
+                if (!math.isNaN(varValue)) {
+                    // Rewriting only homogeneous variables
+                    dstMechStd.set(varName, varValue, arrayIndex)
+                }
+            }
+        }
+    }
+    
+    proc updateIsMechVarTypeInhom() { local enumDmPpNc, numMechs, numVarTypes, mechIdx, varTypeIdx, isAnyInhom, numVars, varIdx, arraySize, arrayIndex, value localobj comp, mechStd
+        strdef varName
+        
+        comp = $o1
+        
+        enumDmPpNc = comp.enumDmPpNc
+        numMechs = mth.getNumMechs(enumDmPpNc)
+        numVarTypes = mth.getNumVarTypes(enumDmPpNc)
+        for mechIdx = 0, numMechs - 1 {
+            for varTypeIdx = 0, numVarTypes - 1 {   // 0: "PARAMETER", 1: "ASSIGNED", 2: "STATE"
+                isAnyInhom = 0
+                
+                mechStd = comp.mechStds[mechIdx][varTypeIdx]
+                numVars = mechStd.count()
+                for varIdx = 0, numVars - 1 {
+                    arraySize = mechStd.name(varName, varIdx)
+                    for arrayIndex = 0, arraySize - 1 {
+                        value = mechStd.get(varName, arrayIndex)
+                        if (math.isNaN(value)) {
+                            isAnyInhom = 1
+                            break
+                        }
+                    }
+                    if (isAnyInhom) {
+                        break
+                    }
+                }
+                
+                comp.isMechVarTypeInhom[mechIdx][varTypeIdx] = isAnyInhom
+            }
+        }
+    }
+    
+    func isMetaVar() {
+        strdef varName
+        varName = $s1
+        return stringStartsWith(varName, "@")
+    }
+    
+endtemplate ManagersCommonUtils
+
+objref mcu
+mcu = new ManagersCommonUtils()

@@ -1,0 +1,138 @@
+
+// The search cycle used when we try to guess names for soma/dendrites/axon in the imported HOC file
+// $o1 (in/out) - Names of sections created in the imported HOC file, but converted to lower case (List of String-s); if $4 == 1, then replaced with "" once matched
+// $o2 - The tested name markers sorted by weakness, in lower case (List of String-s)
+// $o3 (in/out) - The indexes of names from $o1 guessed as names for soma/dendrites (Vector); 0, 1 or more elements will be added here
+// $4 - 0/1 flag indicating whether to prevent selection of the matched name next time
+proc searchCycle() { local isStrongMatching, expNameMarkerIdx, isAnyMatch, actNameIdx, isMatch localobj actNamesLower, expNameMarkersLower, defaultActNameIdxs
+    
+    actNamesLower = $o1
+    expNameMarkersLower = $o2
+    defaultActNameIdxs = $o3
+    isStrongMatching = $4
+    
+    for expNameMarkerIdx = 0, expNameMarkersLower.count() - 1 {
+        isAnyMatch = 0
+        for actNameIdx = 0, actNamesLower.count() - 1 {
+            isMatch = containsSubstring(actNamesLower.o(actNameIdx).s, expNameMarkersLower.o(expNameMarkerIdx).s)
+            if (isMatch) {
+                defaultActNameIdxs.append(actNameIdx)
+                if (isStrongMatching) {
+                    actNamesLower.o(actNameIdx).s = ""  // Prevent selection of this name next time
+                }
+                isAnyMatch = 1
+            }
+        }
+        if (isAnyMatch) {
+            break
+        }
+    }
+}
+
+// Try guess names used for soma, dendrites and (for neuron only) axon in the imported HOC file
+// Also, check if user needs to select names from the lists manually (at least to confirm our choice), or the choice is so obvious that we can skip this stage
+// $o1 - Names of all sections created in the imported HOC file (List of String-s)
+// $o2 (in empty/out full) - The best selection for soma (Vector of indexes, empty if no guess)
+// $o3 (in empty/out full) - The best selection for dendrites (Vector of indexes, empty if no guess)
+// $o4 (in empty/out full) - The best selection for axon (Vector of indexes, empty if no guess or we import astrocyte)
+// Returns 0/1 flag indicating whether we need to show "Cellular compartments" widget
+func chooseDefaultSelectedNamesForCompartments() { local numNames, noGuessForSoma, noGuessForDendrite, noGuessForAxon localobj allNames, defaultSomaNameIdxs, defaultDendriteNameIdxs, defaultAxonNameIdxs, allNamesLowerCase, somaStrongNameMarkersLowerCase, dendriteStrongNameMarkersLowerCase, axonStrongNameMarkersLowerCase, somaWeakNameMarkersLowerCase, dendriteWeakNameMarkersLowerCase, axonWeakNameMarkersLowerCase
+    
+    allNames = $o1
+    defaultSomaNameIdxs = $o2
+    defaultDendriteNameIdxs = $o3
+    defaultAxonNameIdxs = $o4
+    
+    numNames = allNames.count()
+    
+    if (numNames == 0) {
+        codeContractViolation()
+    } else if (numNames == 1) {
+        // Some special case
+        defaultDendriteNameIdxs.append(0)   // No soma, no axon, the only name stands for dendrites
+        return 1
+    }
+    
+    allNamesLowerCase = makeDeepCopyForListOfStringsLowerCase(allNames)     // We want to ignore the case while comparing strings
+    
+    // Reasonable names for soma
+    somaStrongNameMarkersLowerCase = new List()
+    somaStrongNameMarkersLowerCase.append(new String("soma"))
+    somaStrongNameMarkersLowerCase.append(new String("somata"))
+    somaStrongNameMarkersLowerCase.append(new String("somas"))
+    
+    searchCycle(allNamesLowerCase, somaStrongNameMarkersLowerCase, defaultSomaNameIdxs, 1)
+    
+    // Reasonable names for dendrites
+    dendriteStrongNameMarkersLowerCase = new List()
+    dendriteStrongNameMarkersLowerCase.append(new String("dendrite"))
+    dendriteStrongNameMarkersLowerCase.append(new String("dendron"))
+    dendriteStrongNameMarkersLowerCase.append(new String("dendrites"))
+    dendriteStrongNameMarkersLowerCase.append(new String("dendrons"))
+    dendriteStrongNameMarkersLowerCase.append(new String("dend"))
+    dendriteStrongNameMarkersLowerCase.append(new String("dends"))
+    
+    searchCycle(allNamesLowerCase, dendriteStrongNameMarkersLowerCase, defaultDendriteNameIdxs, 1)
+    
+    if (!isAstrocyteOrNeuron) {
+        // Reasonable names for axon
+        axonStrongNameMarkersLowerCase = new List()
+        axonStrongNameMarkersLowerCase.append(new String("axon"))
+        axonStrongNameMarkersLowerCase.append(new String("axone"))
+        axonStrongNameMarkersLowerCase.append(new String("axons"))
+        axonStrongNameMarkersLowerCase.append(new String("axones"))
+        
+        searchCycle(allNamesLowerCase, axonStrongNameMarkersLowerCase, defaultAxonNameIdxs, 1)
+    }
+    
+    // No intersection between default*NameIdxs at this point
+    
+    noGuessForSoma = (defaultSomaNameIdxs.size() == 0)
+    noGuessForDendrite = (defaultDendriteNameIdxs.size() == 0)
+    noGuessForAxon = (defaultAxonNameIdxs.size() == 0)
+    
+    if (isAstrocyteOrNeuron) {
+        if (!noGuessForSoma && !noGuessForDendrite && numNames == 2) {
+            // We are pretty confident about the default selections
+            return 0
+        }
+    } else {
+        if (!noGuessForSoma && !noGuessForDendrite && !noGuessForAxon && numNames == 3) {
+            // We are pretty confident about the default selections
+            return 0
+        }
+    }
+    
+    // We will draw user's attention anyway, but at least let's try to prepare some default selections
+    
+    if (noGuessForSoma) {
+        // Other reasonable substrings for soma (sorted by weakness)
+        somaWeakNameMarkersLowerCase = new List()
+        somaWeakNameMarkersLowerCase.append(new String("som"))
+        somaWeakNameMarkersLowerCase.append(new String("s"))
+        
+        searchCycle(allNamesLowerCase, somaWeakNameMarkersLowerCase, defaultSomaNameIdxs, 0)
+    }
+    
+    if (noGuessForDendrite) {
+        // Other reasonable substrings for dendrites (sorted by weakness)
+        dendriteWeakNameMarkersLowerCase = new List()
+        dendriteWeakNameMarkersLowerCase.append(new String("den"))
+        dendriteWeakNameMarkersLowerCase.append(new String("d"))
+        
+        searchCycle(allNamesLowerCase, dendriteWeakNameMarkersLowerCase, defaultDendriteNameIdxs, 0)
+    }
+    
+    if (!isAstrocyteOrNeuron && noGuessForAxon) {
+        // Other reasonable substrings for axon (sorted by weakness)
+        axonWeakNameMarkersLowerCase = new List()
+        axonWeakNameMarkersLowerCase.append(new String("ax"))
+        axonWeakNameMarkersLowerCase.append(new String("a"))
+        
+        searchCycle(allNamesLowerCase, axonWeakNameMarkersLowerCase, defaultAxonNameIdxs, 0)
+    }
+    
+    // Possible intersection between default*NameIdxs at this point
+    
+    return 1
+}

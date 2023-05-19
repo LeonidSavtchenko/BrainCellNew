@@ -1,0 +1,101 @@
+
+// Create or clean up the temporary folder
+// $s1 - The temporary folder relative path and name
+proc createOrCleanUpTempFolder() { local status
+    strdef tempFolderRelPathName, tempFolderPathName, sysCommandTempl, sysCommand
+    
+    tempFolderRelPathName = $s1
+    
+    sprint(tempFolderPathName, "%s%s", getcwd(), tempFolderRelPathName)
+    sysCommandTempl = "if not exist \"%s\" (mkdir \"%s\") else (rmdir /s /q \"%s\" && mkdir \"%s\")"
+    sprint(sysCommand, sysCommandTempl, tempFolderPathName, tempFolderPathName, tempFolderPathName, tempFolderPathName)
+    
+    status = system(sysCommand)
+    if (status) {
+        printImportFailedMsgAndStop("Cannot create or clean up the temporary folder")
+    }
+}
+
+// Unzip the archive with 7-Zip and rename the input SWC file
+// $s1 - Input ZIP file path and name
+// $s2 - Output folder path and name
+// $s3 (Output) - The SWC file path and name
+proc unzipArchiveWith7ZipAndRenameInputFile() { local status
+    strdef inZipFilePathName, outFolderPathName, appPathNameTempl, appPathName, sysCommandTempl, sysCommand, outSwcFileName, outSwcFilePathName
+    
+    inZipFilePathName = $s1
+    outFolderPathName = $s2
+    
+    // Unzip the selected archive with 7-Zip and save to the temporary folder
+    appPathNameTempl = "%sCode/Import/3rdParty/7-Zip/7z.exe"
+    sprint(appPathName, appPathNameTempl, getcwd())
+    sysCommandTempl = "call \"%s\" e \"%s\" -o\"%s\" > NUL 2> NUL"
+    sprint(sysCommand, sysCommandTempl, appPathName, inZipFilePathName, outFolderPathName)
+    status = system(sysCommand)
+    if (status) {
+        printImportFailedMsgAndStop("Cannot unzip the archive with 7-Zip")
+    }
+    
+    // Create a copy of the first "*.CNG.swc" file in just unzipped folder giving it fixed name
+    outSwcFileName = "input_file.swc"
+    copyAndRenameFirstSwcFile(outFolderPathName, outSwcFileName)
+    
+    sprint(outSwcFilePathName, "%s/%s", outFolderPathName, outSwcFileName)
+    $s3 = outSwcFilePathName
+}
+
+// Test the selected file with NLMorphologyConverter
+// $s1 - Input file path and name
+// $s2 - Output report file path and name
+proc createReportFileWithNLMorphologyConverter() { local status
+    strdef inFilePathName, outFilePathName, appPathNameTempl, appPathName, sysCommandTempl, sysCommand
+    
+    inFilePathName = $s1
+    outFilePathName = $s2
+    
+    appPathNameTempl = "%sCode/Import/3rdParty/NLMorphologyConverter/NLMorphologyConverter.exe"
+    sprint(appPathName, appPathNameTempl, getcwd())
+    sysCommandTempl = "call \"%s\" \"%s\" --report \"%s\""
+    sprint(sysCommand, sysCommandTempl, appPathName, inFilePathName, outFilePathName)
+    
+    status = system(sysCommand)
+    if (status) {
+        // Just for sanity. Actually, NLMorphologyConverter does not return error codes, but rather prints a message
+        printImportFailedMsgAndStop("Cannot test the file with NLMorphologyConverter")
+    }
+}
+
+// Convert the selected file to HOC with NLMorphologyConverter and save to the temporary folder;
+// also, insert a default soma if missing
+// $s1 - Input file path and name
+// $2 - Soma size chosen by user (in um) or -1 if we won't insert a soma
+// $s3 (Output) - The HOC file path and name
+proc convertFileToHocWithNLMorphologyConverter() { local somaDiamAndLenOrMinusOne, status
+    strdef inFilePathName, appPathNameTempl, appPathName, outFilePathNameTempl, outFilePathName, extraArgTempl, extraArg, sysCommandTempl, sysCommand
+    
+    inFilePathName = $s1
+    somaDiamAndLenOrMinusOne = $2
+    
+    appPathNameTempl = "%sCode/Import/3rdParty/NLMorphologyConverter/NLMorphologyConverter.exe"
+    sprint(appPathName, appPathNameTempl, getcwd())
+    outFilePathNameTempl = "%sCode/Import/temp_folder/last_converted.hoc"
+    sprint(outFilePathName, outFilePathNameTempl, getcwd())
+    if (somaDiamAndLenOrMinusOne != -1) {
+        extraArgTempl = "--forceCylinderSoma %g %g"
+        // There is a typo in the manual for NLMorphologyConverter.exe: it claims to expect the radius as the first argument,
+        // but actually it expects the diameter
+        sprint(extraArg, extraArgTempl, somaDiamAndLenOrMinusOne, somaDiamAndLenOrMinusOne)
+    } else {
+        extraArg = ""
+    }
+    sysCommandTempl = "call \"%s\" \"%s\" \"%s\" NeuronHOC %s"
+    sprint(sysCommand, sysCommandTempl, appPathName, inFilePathName, outFilePathName, extraArg)
+    
+    status = system(sysCommand)
+    if (status) {
+        // Just for sanity. Actually, NLMorphologyConverter does not return error codes, but rather prints a message and creates a minimal output file
+        printImportFailedMsgAndStop("Cannot convert the file to HOC format with NLMorphologyConverter")
+    }
+    
+    $s3 = outFilePathName
+}

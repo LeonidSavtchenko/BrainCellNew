@@ -1,0 +1,12 @@
+
+{ load_file("SynManagerBaseLoads.hoc") }
+
+{ load_file("SynComps/SynPPComp.hoc") }
+{ load_file("SynComps/SynNCComp.hoc") }
+{ load_file("SpineNeckDiamCache.hoc") }
+{ load_file("SynGroup.hoc") }
+
+{ load_file("Widgets/SynLocationWidget.hoc") }
+{ load_file("Widgets/ListsFilterWidget.hoc") }
+
+{ load_file("Widgets/SynManagerMainWidget.hoc") }

@@ -1,0 +1,113 @@
+
+begintemplate FakeMechanismStandardForNetCon
+
+    public count, name, get, set, in, out
+    
+    external pyObj
+    external mth, mcu, seh
+    external utils4FakeMech4NC
+    external codeContractViolation
+    
+    objref pyValuesDict
+    
+    
+    proc init() {
+        strdef pyCommand
+        sprint(pyCommand, "{'threshold': 10.0, 'delay': 1.0, 'weight': 0.0, '%s': 1.0}", seh.metaVarName)
+        // These default values are consistent with a newly created NetCon
+        pyValuesDict = pyObj.ev(pyCommand)
+        // !! think about encapsulating "release_probability" into a new (non-standard) varType, e.g. varType == 4 named "Meta"
+    }
+    
+    func count() {
+        return utils4FakeMech4NC.getNumVars(pyValuesDict)
+    }
+    
+    func name() { local numArg, varIdx
+        numArg = numarg()
+        
+        if (numArg == 1) {
+            $s1 = "NetCon"
+            return 0
+        } else if (numArg == 2) {
+            varIdx = $2
+            return utils4FakeMech4NC.getVarNameAndArraySize(pyValuesDict, varIdx, $s1)
+        } else {
+            codeContractViolation()
+        }
+    }
+    
+    func get() { local numArg, arrayIndex
+        strdef varName
+        
+        numArg = numarg()
+        if (numArg == 0 || numArg > 2) {
+            codeContractViolation()
+        }
+        
+        varName = $s1
+        
+        if (numArg == 2) {
+            arrayIndex = $2     // Just a placeholder
+            if (arrayIndex != 0) {
+                codeContractViolation()
+            }
+        }
+        
+        return pyValuesDict.__getitem__(varName)
+    }
+    
+    proc set() { local numArg, value, arrayIndex
+        strdef varName
+        
+        numArg = numarg()
+        if (numArg < 2 || numArg > 3) {
+            codeContractViolation()
+        }
+        
+        varName = $s1
+        value = $2
+        
+        if (numArg == 3) {
+            arrayIndex = $3     // Just a placeholder
+            if (arrayIndex != 0) {
+                codeContractViolation()
+            }
+        }
+        
+        pyValuesDict.__setitem__(varName, value)
+    }
+    
+    proc in() { local varIdx, arraySize, arrayIndex, value localobj netCon
+        strdef varName, varNameWithIndex
+        netCon = $o1
+        for varIdx = 0, count() - 1 {
+            arraySize = name(varName, varIdx)
+            if (mcu.isMetaVar(varName)) {
+                continue
+            }
+            for arrayIndex = 0, arraySize - 1 {
+                mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
+                value = utils4FakeMech4NC.getNetConVar(netCon, varNameWithIndex)
+                set(varName, value, arrayIndex)
+            }
+        }
+    }
+    
+    proc out() { local varIdx, arraySize, arrayIndex, value localobj netCon
+        strdef varName, varNameWithIndex
+        netCon = $o1
+        for varIdx = 0, count() - 1 {
+            arraySize = name(varName, varIdx)
+            if (mcu.isMetaVar(varName)) {
+                continue
+            }
+            for arrayIndex = 0, arraySize - 1 {
+                value = get(varName, arrayIndex)
+                mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
+                utils4FakeMech4NC.setNetConVar(netCon, varNameWithIndex, value)
+            }
+        }
+    }
+    
+endtemplate FakeMechanismStandardForNetCon

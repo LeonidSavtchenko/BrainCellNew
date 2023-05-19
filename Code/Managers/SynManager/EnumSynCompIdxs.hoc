@@ -1,0 +1,14 @@
+
+begintemplate EnumSynCompIdxs
+    
+    public srcPp, netCon, trgPp, sngPp
+    
+    srcPp = -1
+    netCon = -1
+    trgPp = -1
+    sngPp = -1
+    
+endtemplate EnumSynCompIdxs
+
+objref enumSynCompIdxs
+enumSynCompIdxs = new EnumSynCompIdxs()

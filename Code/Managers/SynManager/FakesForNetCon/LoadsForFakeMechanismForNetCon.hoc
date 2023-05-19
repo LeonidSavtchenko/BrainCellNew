@@ -1,0 +1,4 @@
+
+{ load_file("UtilsForFakeMechanismForNetCon.hoc") }
+{ load_file("FakeMechanismTypeForNetCon.hoc") }
+{ load_file("FakeMechanismStandardForNetCon.hoc") }

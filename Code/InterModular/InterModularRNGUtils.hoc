@@ -1,0 +1,88 @@
+
+// Here we create all the random number generators used in the program.
+// The idea behind this file is to make sure that all the generators have different seeds.
+// We don't use a single generator for the whole program just to preserve reproducibility of results in module A independently on:
+// * the changes made to code in module B;
+// * the scenarios run with module C in the current session.
+
+begintemplate RNGUtils
+
+    public getFor_diameters, getFor_calcium, getFor_frapCircle, getFor_diamAndLen, getFor_branchSeeder, getFor_spineRadius, getFor_neckLen, getFor_neckDiam, getFor_synLoc, getFor_stochFunc_withUniqueSeed, getFor_stretch_withCustomSeed, getSeedFor_SEFW
+    
+    uniqueSeedForHoc = -1
+    uniqueSeedForMod = -1
+    
+    
+    proc init() { local minSeedForMod, maxNumSeedsPerRankForMod localobj pc
+        uniqueSeedForHoc = 9    // Keep in sync with the obfunc-s below
+        
+        if (!use_mcell_ran4()) {
+            minSeedForMod = 0       // HOC and MOD use different RNGs, so we don't care about seeds overlapping
+        } else {
+            minSeedForMod = 10000   // HOC and MOD can use the same RNG, so we try to prevent seeds overlapping
+        }
+        
+        // How many times user can change synapse structure per 1 session with the guarantee of unique seeds
+        maxNumSeedsPerRankForMod = 1000
+        
+        pc = new ParallelContext()
+        uniqueSeedForMod = minSeedForMod + maxNumSeedsPerRankForMod * pc.id
+    }
+    
+    obfunc getFor_diameters() {
+        return new Random()     // The same as new Random(0)
+    }
+    
+    obfunc getFor_calcium() {
+        return new Random(1)
+    }
+    
+    obfunc getFor_frapCircle() {
+        return new Random(2)
+    }
+    
+    obfunc getFor_diamAndLen() {
+        return new Random(3)
+    }
+    
+    obfunc getFor_branchSeeder() {
+        return new Random(4)
+    }
+    
+    obfunc getFor_spineRadius() {
+        return new Random(5)
+    }
+    
+    obfunc getFor_neckLen() {
+        return new Random(6)
+    }
+    
+    obfunc getFor_neckDiam() {
+        return new Random(7)
+    }
+    
+    obfunc getFor_synLoc() {
+        return new Random(8)    // Must be equal to uniqueSeedForHoc - 1
+    }
+    
+    obfunc getFor_stochFunc_withUniqueSeed() { localobj rng
+        rng = new Random(uniqueSeedForHoc)
+        uniqueSeedForHoc += 1
+        return rng
+    }
+    
+    // $1 - The seed
+    obfunc getFor_stretch_withCustomSeed() {
+        return new Random($1)
+    }
+    
+    func getSeedFor_SEFW() { local seed
+        seed = uniqueSeedForMod
+        uniqueSeedForMod += 1
+        return seed
+    }
+    
+endtemplate RNGUtils
+
+objref rngUtils
+rngUtils = new RNGUtils()

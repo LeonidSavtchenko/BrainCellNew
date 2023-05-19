@@ -1,0 +1,14 @@
+
+{ load_file("MechComp.hoc") }
+
+{ load_file("Widgets/CompOps/MechManagerCompOpMergeSubWidget.hoc") }
+{ load_file("Widgets/CompOps/MechManagerCompOpWidget.hoc") }
+
+{ load_file("Widgets/MechOps/MechOpHelpers/MechOp0Helper.hoc") }
+{ load_file("Widgets/MechOps/MechOpHelpers/MechOp1Helper.hoc") }
+{ load_file("Widgets/MechOps/MechOpHelpers/MechOp2Helper.hoc") }
+{ load_file("Widgets/MechOps/MechOpHelpers/MechOp3Helper.hoc") }
+
+{ load_file("Widgets/MechOps/MechOpWidgetBase.hoc") }
+
+{ load_file("Widgets/MechManagerMainWidget.hoc") }
