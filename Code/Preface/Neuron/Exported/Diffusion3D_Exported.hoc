@@ -1,7 +1,0 @@
-
-// !! this proc is also called for neuron nanogeometry after reseeding
-proc Neuron_Diffusion3D_init() {
-    insert IKa
-    ko_IKa=BasicK
-    gk_IKa=0
-}

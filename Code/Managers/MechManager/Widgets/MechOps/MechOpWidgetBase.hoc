@@ -5,7 +5,8 @@ begintemplate MechOpWidgetBase
     external msmBaseWidget
     external mmAllComps
     external mwh, mth, mcu
-    external eachItemInList, stringEmpty
+    external stringEmpty
+    external eachItemInList
     
     public isDirty, lastMechOpIdx
     public switchToOtherMechOpViewHandler, ifDirtyThenProposeUserToApplyChanges, dismissHandler
@@ -139,7 +140,7 @@ begintemplate MechOpWidgetBase
     // $1 - The mech operation index
     // $2 - 0/1 flag indicating if we construct a comp-centric or mech-centric view
     // $&3 (out) - The current panel index
-    iterator createHeaderEmptyPanelsFooter() { local mechOpIdx, maxNumPanels, isRequireApply, panCandIdx, panActIdx, isSkipPanel, rowIdx, colIdx, isSwitchToCompOrMechCentricView localobj mechOpHelper, sliderBox, hBoxes, hBox, spacerBox, nil
+    iterator createHeaderEmptyPanelsFooter() { local mechOpIdx, maxNumPanels, isRequireApply, colIdx, rowIdx, panCandIdx, panActIdx, isSkipPanel, isSwitchToCompOrMechCentricView localobj mechOpHelper, sliderBox, hBoxes, hBox, spacerBox, nil
         strdef headerLine1, headerLine3, switchToKeyword, buttonText, buttonHocCommand
         
         mechOpIdx = $1
@@ -222,7 +223,6 @@ begintemplate MechOpWidgetBase
                         xlabel("")
                         if (mechOpIdx == 0) {
                             xlabel("No panels here. Check console for error messages dumped while creating compartments.")
-                            // !! once integrated to Cell, printMsgAndStop won't work anymore, and we'll need to use the warning box
                         } else {
                             xlabel("No panels here. Some upstream mechanism operations required.")
                         }
@@ -230,7 +230,7 @@ begintemplate MechOpWidgetBase
                         xpanel()
                     } else {
                         // Just a horizontal spacer
-                        // BUG: when user makes the window width too small, this spacer "pushes" the left-hand panel(s) too much
+                        // !! BUG: when user makes the window width too small, this spacer "pushes" the left-hand panel(s) too much
                         for colIdx = colIdx + 1, numCols - 1 {
                             spacerBox = new VBox()
                             spacerBox.map("", 0, 0, colWidth, rowHeight)

@@ -5,20 +5,20 @@ begintemplate StochEditorSubWidget
     public boundingHelper, sampleSize
     
     external varsEditorSubWidget, synManagerMainWidget
-    external mwh, math, mth, mmmowb, mcu, compUtils, inhomAndStochLibrary, seh
-    external createEmptyPanel, oneZeroToYesNo, eachPointInGrid, codeContractViolation
+    external mwh, math, mth, mmmowb, mcu, sfc, compUtils, inhomAndStochLibrary, seh
+    external createEmptyPanel, oneZeroToYesNo, codeContractViolation
+    external eachPointInGrid
     
     objref mainBox, deck1, deck2, deck3, deck4, deck5, deck6, deck7, deck8, deck9, deck10, graph1, graph2, graph3, graph4, graph5, graph6, graph7, this
     strdef isStochVarLabel
     
-    objref stochFuncHelpers[20]
+    objref stochFuncHelpers[1]
     
     objref colourizationHelper, boundingHelper
     
     stochFuncCatIdx = -1
     stochFuncIdx = -1
     double stochFuncIdxs[6]
-    specialStochFuncCatIdx = -1
     
     shownCurveIdx = -1
     isShowCdfOrPdf4Model = -1
@@ -51,7 +51,7 @@ begintemplate StochEditorSubWidget
     isAltPsdAndAcf = -1
     
     
-    proc init() { local inf, isAlreadyEnabled
+    proc init() { local inf, isStoch, idx localobj stochFuncHelper, innerStochFuncHelper
     
         enumDmPpNc = $1
         compIdx = $2
@@ -83,13 +83,6 @@ begintemplate StochEditorSubWidget
             }
         }
         
-        colourizationHelper = new ColourizationHelper()
-        boundingHelper = new BoundingHelper(colourizationHelper)
-        
-        stochFuncCatIdx = 0
-        stochFuncIdx = 1
-        specialStochFuncCatIdx = 4
-        
         isShowCdfOrPdf4Model = 0
         isShowCdfOrPdf4Sample = 0
         
@@ -99,37 +92,92 @@ begintemplate StochEditorSubWidget
         variable_domain(&sampleSize, 2, inf)    // !! need to disallow fractions somehow
         variable_domain(&numBins, 1, inf)       //
         
-        stochFuncHelpers[0] = new StochFuncGroupAHelper(0, this)
-        stochFuncHelpers[1] = new StochFuncGroupAHelper(1, this)
-        stochFuncHelpers[2] = new StochFuncGroupAHelper(2, this)
-        stochFuncHelpers[3] = new StochFuncGroupAHelper(3, this)
-        stochFuncHelpers[4] = new StochFuncGroupAHelper(4, this)
-        stochFuncHelpers[5] = new StochFuncGroupAHelper(5, this)
-        stochFuncHelpers[6] = new DistFuncGroupsBDHelper(0, this)                           // v !! just stubs
-        stochFuncHelpers[7] = new DistFuncGroupsBDHelper(1, this)
-        stochFuncHelpers[10] = new DistFuncGroupsBDHelper(2, this)
-        stochFuncHelpers[11] = new DistFuncGroupsBDHelper(3, this)
-        stochFuncHelpers[8] = new DistFuncGroupCHelper(stochFuncHelpers[10], this)
-        stochFuncHelpers[9] = new DistFuncGroupCHelper(stochFuncHelpers[11], this)
-        stochFuncHelpers[12] = new DistFuncGroupsEFHelper(0, this)
-        stochFuncHelpers[13] = new DistFuncGroupsEFHelper(1, this, stochFuncHelpers[12])
-        stochFuncHelpers[14] = new DistFuncGroupsEFHelper(2, this, stochFuncHelpers[12])    // ^ !! just stubs
-        stochFuncHelpers[15] = new StochFuncGroupGHelper(0, this)
-        stochFuncHelpers[16] = new StochFuncGroupGHelper(1, this)
-        stochFuncHelpers[17] = new StochFuncGroupGHelper(2, this)
-        stochFuncHelpers[18] = new StochFuncGroupGHelper(3, this)
-        stochFuncHelpers[19] = new StochFuncGroupGHelper(4, this)
+        isStoch = inhomAndStochLibrary.isStochEnabledFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
         
-        isAlreadyEnabled = inhomAndStochLibrary.isStochEnabledFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
-        if (isAlreadyEnabled) {
-            // !! need to restore the old UI state: boundingHelper.*, colourizationHelper.*, stochFuncCatIdx, stochFuncIdx, params in distFunc etc.
+        if (!isStoch) {
+            colourizationHelper = new ColourizationHelper()
+            boundingHelper = new BoundingHelper(colourizationHelper)
+            stochFuncCatIdx = 0
+            stochFuncIdx = 1
+        } else {
+            // Restoring the old UI state (part 1): boundingHelper, colourizationHelper, stochFuncCatIdx, stochFuncIdx
+            inhomAndStochLibrary.getStochModelDataFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, boundingHelper, stochFuncHelper, &stochFuncCatIdx, &stochFuncIdx)
+            colourizationHelper = boundingHelper.colourizationHelper
         }
+        
+        // The ctor-s below will access parentWidget.boundingHelper, so we have to set it earlier
+        
+        // Keep in sync with py: Generators.insertAllUsedStochFuncs
+        
+        objref stochFuncHelpers[sfc.numStochFuncs]
+        
+        // Simple model
+        stochFuncHelpers[0] = new SimpleModelStochFuncHelper(0)
+        stochFuncHelpers[1] = new SimpleModelStochFuncHelper(1)
+        stochFuncHelpers[2] = new SimpleModelStochFuncHelper(2)
+        stochFuncHelpers[3] = new SimpleModelStochFuncHelper(3)
+        stochFuncHelpers[4] = new SimpleModelStochFuncHelper(4)
+        stochFuncHelpers[5] = new SimpleModelStochFuncHelper(5)
+        
+        // Custom expression (one-liner)
+        stochFuncHelpers[6] = new CustomCodeDistFuncHelper(0)                                   // v !! just stubs
+        stochFuncHelpers[7] = new CustomCodeDistFuncHelper(1)
+        
+        // Custom function -> Use already defined/loaded HOC/Python function
+        stochFuncHelpers[10] = new CustomCodeDistFuncHelper(2)
+        stochFuncHelpers[11] = new CustomCodeDistFuncHelper(3)
+        
+        // Custom function -> Load HOC/Python function from file
+        stochFuncHelpers[8] = new CodeFromFileDistFuncHelper(stochFuncHelpers[10])
+        stochFuncHelpers[9] = new CodeFromFileDistFuncHelper(stochFuncHelpers[11])
+        
+        // Table + linear interpolation
+        stochFuncHelpers[12] = new TablePlusLinInterpDistFuncHelper(0)
+        stochFuncHelpers[13] = new TablePlusLinInterpDistFuncHelper(1, stochFuncHelpers[12])
+        stochFuncHelpers[14] = new TablePlusLinInterpDistFuncHelper(2, stochFuncHelpers[12])    // ^ !! just stubs
+        
+        // Special
+        stochFuncHelpers[15] = new SpecialStochFuncHelper(0)
+        stochFuncHelpers[16] = new SpecialStochFuncHelper(1)
+        stochFuncHelpers[17] = new SpecialStochFuncHelper(2)
+        stochFuncHelpers[18] = new SpecialStochFuncHelper(3)
+        stochFuncHelpers[19] = new SpecialStochFuncHelper(4)
+        
+        for idx = 0, sfc.numStochFuncs - 1 {
+            stochFuncHelpers[idx].parentWidget = this
+        }
+        
+        if (isStoch) {
+            // Restoring the old UI state (part 2): stochFuncHelper
+            stochFuncHelper.parentWidget = this
+            if (sfc.doesStochFuncUseStringOrFileDialog(stochFuncCatIdx, stochFuncIdx)) {
+                // Preventing showing up the string or file dialog
+                stochFuncHelper.isSkipOneSelect = 1
+            }
+            stochFuncHelpers[stochFuncIdx] = stochFuncHelper
+            if (stochFuncIdx == sfc.tableFromTextFileStochFuncIdx || stochFuncIdx == sfc.tableFromExcelFileStochFuncIdx) {
+                innerStochFuncHelper = stochFuncHelper.model0HelperOrNil
+                stochFuncHelpers[sfc.tableFromTextEditorStochFuncIdx] = innerStochFuncHelper
+                stochFuncHelpers[sfc.tableFromTextFileStochFuncIdx].model0HelperOrNil = innerStochFuncHelper
+                stochFuncHelpers[sfc.tableFromExcelFileStochFuncIdx].model0HelperOrNil = innerStochFuncHelper
+            }
+        }
+        
+        // Default selections
+        stochFuncIdxs[sfc.simpleModelStochFuncCatIdx] = 1
+        stochFuncIdxs[sfc.custExprStochFuncCatIdx] = 6
+        stochFuncIdxs[sfc.custFuncStochFuncCatIdx] = 8
+        stochFuncIdxs[3] = sfc.tableFromTextEditorStochFuncIdx
+        stochFuncIdxs[sfc.specialStochFuncCatIdx] = 15
+        
+        // Overwrite one value for the case when user opens an old model
+        stochFuncIdxs[stochFuncCatIdx] = stochFuncIdx
         
         // !!
         isAltPsdAndAcf = 1
     }
     
-    proc show() { local isInhom, isStoch localobj hBox1, hBox2, hBox3, hBox4, hBox5, hBox6, hBox7, vBox1, vBox2, vBox3, vBox4
+    proc show() { local isInhom, isStoch, idx localobj hBox1, hBox2, hBox3, hBox4, hBox5, hBox6, hBox7, vBox1, vBox2, vBox3, vBox4
         strdef compName, varTypeName, varNameWithIndex, varNameWithIndexAndUnits, text, yesNo, line2, when
         
         compName = comp.name
@@ -325,26 +373,23 @@ begintemplate StochEditorSubWidget
                 vBox4.intercept(1)
                 {
                     xpanel("")
-                    xradiobutton("Simple model", "stochFuncCatChangedHandler(0)", stochFuncCatIdx == 0)
-                    xradiobutton("Custom expression (one-liner)", "stochFuncCatChangedHandler(1)", stochFuncCatIdx == 1)
-                    xradiobutton("Custom function", "stochFuncCatChangedHandler(2)", stochFuncCatIdx == 2)
+                    xradiobutton("Simple model", "stochFuncCatChangedHandler(0)", stochFuncCatIdx == sfc.simpleModelStochFuncCatIdx)
+                    xradiobutton("Custom expression (one-liner)", "stochFuncCatChangedHandler(1)", stochFuncCatIdx == sfc.custExprStochFuncCatIdx)
+                    xradiobutton("Custom function", "stochFuncCatChangedHandler(2)", stochFuncCatIdx == sfc.custFuncStochFuncCatIdx)
                     xradiobutton("Table + linear interpolation", "stochFuncCatChangedHandler(3)", stochFuncCatIdx == 3)
-                    xradiobutton("Special", "stochFuncCatChangedHandler(4)", stochFuncCatIdx == specialStochFuncCatIdx)
+                    xradiobutton("Special", "stochFuncCatChangedHandler(4)", stochFuncCatIdx == sfc.specialStochFuncCatIdx)
                     xpanel()
                     deck7 = new Deck()
                     deck7.intercept(1)
                     {
                         xpanel("")
-                        if (stochFuncCatIdx != 0) {
-                            codeContractViolation()
-                        }
-                        stochFuncIdxs[stochFuncCatIdx] = stochFuncIdx
-                        xradiobutton("Uniform", "stochFuncChangedHandler(0)", stochFuncIdx == 0)
-                        xradiobutton("Normal", "stochFuncChangedHandler(1)", stochFuncIdx == 1)
-                        xradiobutton("Lognormal", "stochFuncChangedHandler(2)", stochFuncIdx == 2)
-                        xradiobutton("Negexp", "stochFuncChangedHandler(3)", stochFuncIdx == 3)
-                        xradiobutton("Erlang", "stochFuncChangedHandler(4)", stochFuncIdx == 4)
-                        xradiobutton("Weibull", "stochFuncChangedHandler(5)", stochFuncIdx == 5)
+                        idx = stochFuncIdxs[sfc.simpleModelStochFuncCatIdx]
+                        xradiobutton("Uniform", "stochFuncChangedHandler(0)", idx == 0)
+                        xradiobutton("Normal", "stochFuncChangedHandler(1)", idx == 1)
+                        xradiobutton("Lognormal", "stochFuncChangedHandler(2)", idx == 2)
+                        xradiobutton("Negexp", "stochFuncChangedHandler(3)", idx == 3)
+                        xradiobutton("Erlang", "stochFuncChangedHandler(4)", idx == 4)
+                        xradiobutton("Weibull", "stochFuncChangedHandler(5)", idx == 5)
                         xpanel()
                         hBox5 = new HBox()
                         hBox5.intercept(1)
@@ -357,23 +402,23 @@ begintemplate StochEditorSubWidget
                             deck8 = new Deck()
                             deck8.intercept(1)
                             {
-                                stochFuncIdxs[1] = 6
                                 xpanel("")
-                                xradiobutton("Enter HOC expression (one-liner)", "stochFuncChangedHandler(6)", 1)
-                                xradiobutton("Enter Python expression (one-liner)", "stochFuncChangedHandler(7)", 0)
+                                idx = stochFuncIdxs[sfc.custExprStochFuncCatIdx]
+                                xradiobutton("Enter HOC expression (one-liner)", "stochFuncChangedHandler(6)", idx == 6)
+                                xradiobutton("Enter Python expression (one-liner)", "stochFuncChangedHandler(7)", idx == sfc.oneLinerPythonStochFuncIdx)
                                 xpanel()
-                                stochFuncIdxs[2] = 8
                                 xpanel("")
-                                xradiobutton("Load HOC function from file", "stochFuncChangedHandler(8)", 1)
-                                xradiobutton("Load Python function from file", "stochFuncChangedHandler(9)", 0)
-                                xradiobutton("Use already defined/loaded HOC function", "stochFuncChangedHandler(10)", 0)
-                                xradiobutton("Use already defined/loaded Python function", "stochFuncChangedHandler(11)", 0)
+                                idx = stochFuncIdxs[sfc.custFuncStochFuncCatIdx]
+                                xradiobutton("Load HOC function from file", "stochFuncChangedHandler(8)", idx == 8)
+                                xradiobutton("Load Python function from file", "stochFuncChangedHandler(9)", idx == sfc.loadFromFilePythonStochFuncIdx)
+                                xradiobutton("Use already defined/loaded HOC function", "stochFuncChangedHandler(10)", idx == 10)
+                                xradiobutton("Use already defined/loaded Python function", "stochFuncChangedHandler(11)", idx == sfc.alreadyDefinedPythonStochFuncIdx)
                                 xpanel()
-                                stochFuncIdxs[3] = 12
                                 xpanel("")
-                                xradiobutton("Enter table + linear interpolation", "stochFuncChangedHandler(12)", 1)
-                                xradiobutton("Load table from Text file + linear interpolation", "stochFuncChangedHandler(13)", 0)
-                                xradiobutton("Load table from Excel file + linear interpolation", "stochFuncChangedHandler(14)", 0)
+                                idx = stochFuncIdxs[3]
+                                xradiobutton("Enter table + linear interpolation", "stochFuncChangedHandler(12)", idx == sfc.tableFromTextEditorStochFuncIdx)
+                                xradiobutton("Load table from Text file + linear interpolation", "stochFuncChangedHandler(13)", idx == sfc.tableFromTextFileStochFuncIdx)
+                                xradiobutton("Load table from Excel file + linear interpolation", "stochFuncChangedHandler(14)", idx == sfc.tableFromExcelFileStochFuncIdx)
                                 xpanel()
                             }
                             deck8.intercept(0)
@@ -382,13 +427,13 @@ begintemplate StochEditorSubWidget
                         }
                         hBox5.intercept(0)
                         hBox5.map
-                        stochFuncIdxs[specialStochFuncCatIdx] = 15
                         xpanel("")
-                        xradiobutton("1, 0, 0, 0, 0, ... (uniform spectrum, useful for colouring filter TF analysis)", "stochFuncChangedHandler(15)", 1)
-                        xradiobutton("1, 1, 1, 1, 1, ... (spectral spike at 0, cosine with zero frequency)", "stochFuncChangedHandler(16)", 0)
-                        xradiobutton("1, 0, -1, 0, 1, ... (cosine with half-Nyquist frequency)", "stochFuncChangedHandler(17)", 0)
-                        xradiobutton("1, -1, 1, -1, 1, ... (cosine with Nyquist frequency)", "stochFuncChangedHandler(18)", 0)
-                        xradiobutton("y(m) = foo(2 * PI * m * n / SampleSize), where foo is sin or cos, m = 0, 1, ..., SampleSize - 1", "stochFuncChangedHandler(19)", 0)
+                        idx = stochFuncIdxs[sfc.specialStochFuncCatIdx]
+                        xradiobutton("1, 0, 0, 0, 0, ... (uniform spectrum, useful for colouring filter TF analysis)", "stochFuncChangedHandler(15)", idx == 15)
+                        xradiobutton("1, 1, 1, 1, 1, ... (spectral spike at 0, cosine with zero frequency)", "stochFuncChangedHandler(16)", idx == 16)
+                        xradiobutton("1, 0, -1, 0, 1, ... (cosine with half-Nyquist frequency)", "stochFuncChangedHandler(17)", idx == 17)
+                        xradiobutton("1, -1, 1, -1, 1, ... (cosine with Nyquist frequency)", "stochFuncChangedHandler(18)", idx == 18)
+                        xradiobutton("y(m) = foo(2 * PI * m * n / SampleSize), where foo is sin or cos, m = 0, 1, ..., SampleSize - 1", "stochFuncChangedHandler(19)", idx == 19)
                         xpanel()
                     }
                     deck7.intercept(0)
@@ -507,14 +552,16 @@ begintemplate StochEditorSubWidget
     
     proc updateModelCurves() { localobj stochFuncHelper
     
-        if (stochFuncCatIdx > 0 && stochFuncCatIdx < specialStochFuncCatIdx) {
+        isBoundsOK = 1
+        
+        if (sfc.isNotImplStochFuncCat(stochFuncCatIdx)) {
             // !! not implemented, just to avoid downstream errors (the user has been informed)
             return
         }
         
         stochFuncHelper = stochFuncHelpers[stochFuncIdx]
         
-        if (stochFuncCatIdx != specialStochFuncCatIdx) {
+        if (stochFuncCatIdx != sfc.specialStochFuncCatIdx) {
             math.disableGreedyComparison()  // Needed for calcCdf and makeSureBoundsOK
             {
                 isBoundsOK = boundingHelper.prepareForPdfAndCdfBounding(stochFuncHelper.distHelper)
@@ -628,7 +675,7 @@ begintemplate StochEditorSubWidget
         
         if (stochFuncCatIdx == 0) {
             cardIdx = 0
-        } else if (stochFuncCatIdx == specialStochFuncCatIdx) {
+        } else if (stochFuncCatIdx == sfc.specialStochFuncCatIdx) {
             cardIdx = 2
         } else {
             cardIdx = 1
@@ -672,6 +719,9 @@ begintemplate StochEditorSubWidget
         stochFuncHelper = stochFuncHelpers[stochFuncIdx]
         
         shownCurveChangedHandler(shownCurveIdx)
+        
+        // For the case if the next command won't finish (when user just ignores the string or file dialog)
+        isCancel = 1
         
         isCancel = stochFuncHelper.selectedHandler()
         if (isCancel) {
@@ -767,7 +817,7 @@ begintemplate StochEditorSubWidget
     
     proc diceHandlerCore() { local yMin, yMax, y, idx, marginFactor, sampleMin, sampleMax, sampleRange, binWidth, xMin4Graph, xMax4Graph, numBins_, histDivider, x, binIdx, yMargin, yMin4Graph, yMax4Graph, mean, newSize localobj stochFuncHelper, sampleVec, histVec, xModelVec, yModelVec, psdVec, acfVec, vfr, vfi
     
-        if (stochFuncCatIdx > 0 && stochFuncCatIdx < specialStochFuncCatIdx) {
+        if (sfc.isNotImplStochFuncCat(stochFuncCatIdx)) {
             // !! not implemented, just to avoid downstream errors (the user has been informed)
             return
         }
@@ -801,7 +851,7 @@ begintemplate StochEditorSubWidget
         
         // ========== Calculating and showing PDF (from the sample + model)
         
-        if (stochFuncCatIdx != specialStochFuncCatIdx) {
+        if (stochFuncCatIdx != sfc.specialStochFuncCatIdx) {
             marginFactor = 0.1      // !! hardcode
             
             sampleMin = yMin
@@ -885,7 +935,7 @@ begintemplate StochEditorSubWidget
         
         // ========== Calculating and showing CDF (from the sample + model)
         
-        if (stochFuncCatIdx != specialStochFuncCatIdx) {
+        if (stochFuncCatIdx != sfc.specialStochFuncCatIdx) {
             // !! major code dupl. with "Calculating and showing PDF (from the sample)"
             
             // Sample CDF curve
@@ -938,7 +988,7 @@ begintemplate StochEditorSubWidget
         
         // ========== Calculating and showing PSD (from the sample)
         
-        if (stochFuncCatIdx != specialStochFuncCatIdx) {
+        if (stochFuncCatIdx != sfc.specialStochFuncCatIdx) {
             // !! need to inform user that we remove the mean value from the sample just to get rid of the spike in PSD at 0
             //    (actually, not needed for Uniform and Normal if they are not bounded or bounded symmetrically)
             mean = sampleVec.mean()
@@ -1197,13 +1247,17 @@ begintemplate StochEditorSubWidget
             mwh.showWarningBox("Please set the distribution model first.")
             return 0
         }
+        if (sfc.isNotImplStochFuncCat(stochFuncCatIdx)) {
+            mwh.showNotImplementedWarning()
+            return 0
+        }
         return 1
     }
     
     proc flipDeck10ToCurveOrMessage() { local shownCurveIdx, cardIdx
         shownCurveIdx = $1
         cardIdx = $2
-        if (stochFuncCatIdx == specialStochFuncCatIdx && (shownCurveIdx == 0 || shownCurveIdx == 2)) {
+        if (stochFuncCatIdx == sfc.specialStochFuncCatIdx && (shownCurveIdx == 0 || shownCurveIdx == 2)) {
             cardIdx = 7
         }
         deck10.flip_to(cardIdx)

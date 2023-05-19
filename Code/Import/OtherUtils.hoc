@@ -12,7 +12,8 @@ proc printListOfStrings() { local idx localobj list
 // $s1 - File path and name
 // $s2 (output) - The file extension in lower case (without dot)
 proc getFileExtLowerCase() { localobj strFunc
-    strdef filePathName, fileExt, tempStr
+    strdef filePathName, tempStr, fileExt
+    
     filePathName = $s1
     
     strFunc = new StringFunctions()
@@ -34,7 +35,7 @@ proc getFileExtLowerCase() { localobj strFunc
 // Try to load the HOC file with "load_file" and print some clues if failed
 // $s1 - Input HOC file path and name
 // Output: All new top-level declarations from the file
-proc loadHocFile() { local status, wasSomethingImported
+proc loadHocFile() { local wasSomethingImported, status
     strdef inFilePathName
     
     inFilePathName = $s1

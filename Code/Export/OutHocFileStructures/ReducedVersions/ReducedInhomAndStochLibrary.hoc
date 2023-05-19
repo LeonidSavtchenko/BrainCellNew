@@ -1,0 +1,61 @@
+
+begintemplate ReducedInhomAndStochLibrary
+
+    public onInhomCreate, applyAllBiophysInhomModels, onStochApply
+    public activeSpecVars
+    
+    external eachItemInList
+    
+    objref activeSpecVars
+    
+    
+    proc init() {
+        activeSpecVars = new List()
+    }
+    
+    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, segmentationHelper, distFuncHelper, distFuncCatIdx, distFuncIdx
+    proc onInhomCreate() { localobj actSpecVar
+        actSpecVar = createActiveSpecVar($1, $2, $3, $4, $5, $6)
+        actSpecVar.makeInhom($o7, $o8, $9, $10)
+    }
+    
+    proc applyAllBiophysInhomModels() { localobj actSpecVar
+        for eachItemInList(actSpecVar, activeSpecVars) {
+            actSpecVar.applyBiophysInhomogeneity()
+        }
+    }
+    
+    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, boundingHelper, stochFuncHelper, stochFuncCatIdx, stochFuncIdx
+    proc onStochApply() { localobj actSpecVar
+        actSpecVar = findOrCreateActiveSpecVar($1, $2, $3, $4, $5, $6)
+        actSpecVar.makeStoch($o7, $o8, $9, $10)
+    }
+    
+    // All next staff is private
+    
+    
+    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
+    // out: actSpecVar
+    obfunc createActiveSpecVar() { localobj actSpecVar
+        actSpecVar = new ReducedInhomAndStochTarget($1, $2, $3, $4, $5, $6)
+        activeSpecVars.append(actSpecVar)
+        return actSpecVar
+    }
+    
+    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
+    // out: actSpecVar
+    obfunc findOrCreateActiveSpecVar() { local idx localobj actSpecVar
+        // Not many activeSpecVars-s, so hashless comparison works just fine
+        for idx = 0, activeSpecVars.count() - 1 {
+            actSpecVar = activeSpecVars.o(idx)
+            if (actSpecVar.isEqual($1, $2, $3, $4, $5, $6)) {
+                return actSpecVar
+            }
+        }
+        return createActiveSpecVar($1, $2, $3, $4, $5, $6)
+    }
+    
+endtemplate ReducedInhomAndStochLibrary
+
+objref inhomAndStochLibrary
+inhomAndStochLibrary = new ReducedInhomAndStochLibrary()

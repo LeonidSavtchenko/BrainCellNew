@@ -5,7 +5,7 @@ begintemplate AddOneInputVarWidget
     
     external mwh, mth, compUtils
     external synGroup
-    external createEmptyPanel, createMetaVarHint, unmapIfNotNil
+    external createEmptyPanel, createMetaVarHint, findItemInListByStringAndSelect, unmapIfNotNil, codeContractViolation
     external enumSynCompIdxs
     
     objref mainBox, deck
@@ -20,6 +20,13 @@ begintemplate AddOneInputVarWidget
     selVarNameWithIndexIdx = -1
     
     enumHomInhomStoch = -1
+    
+    isAddOrCorrect = -1
+    
+    // Used only if isAddOrCorrect == 0
+    objref oldListItem
+    oldVarIdx = -1
+    isRecallMode = -1
     
     
     proc init() { local aoivWidIdx
@@ -41,8 +48,21 @@ begintemplate AddOneInputVarWidget
         enumHomInhomStoch = 0
     }
     
-    proc show() { localobj hBox
+    proc show() { local numArg, compIdx localobj nil, hBox
         strdef compText, mechText
+        
+        numArg = numarg()
+        if (numArg == 0) {
+            isAddOrCorrect = 1
+            oldListItem = nil
+            oldVarIdx = -1
+        } else if (numArg == 2) {
+            isAddOrCorrect = 0
+            oldListItem = $o1
+            oldVarIdx = $2
+        } else {
+            codeContractViolation()
+        }
         
         populateCompList()
         
@@ -94,7 +114,17 @@ begintemplate AddOneInputVarWidget
         mainBox.dismiss_action("dismissHandler()")
         mainBox.map("One variable", 160, 200, -1, -1)
         
-        compSelectHandler(0)
+        if (isAddOrCorrect) {
+            compIdx = 0
+        } else {
+            compIdx = oldListItem.compIdx
+        }
+        compList.select(compIdx)
+        isRecallMode = !isAddOrCorrect
+        {
+            compSelectHandler(compIdx)
+        }
+        isRecallMode = 0
     }
     
     proc dismissHandler() {
@@ -149,7 +179,6 @@ begintemplate AddOneInputVarWidget
             sprint(command, "%s(hoc_ac_)", command)
             list.browser("", "s")
             list.select_action(command)
-            list.select(0)
         }
         vBox.intercept(0)
         vBox.map()
@@ -167,12 +196,11 @@ begintemplate AddOneInputVarWidget
         
         compListIdx = $1
         
-        mechList.remove_all()
+        mechList.remove_all()   // This calls mechSelectHandler(-1) as a side effect
         
         if (compListIdx == -1) {
             // We are called on compList.remove_all() when user opens this widget again
             selCompIdx = -2
-            mechSelectHandler(-1)
             return
         }
         
@@ -192,6 +220,7 @@ begintemplate AddOneInputVarWidget
         
         comp = compUtils.getComp(isDmOrSynPart, selCompIdx)
         
+        // Populate mechList
         if (isDmOrSynPart) {
             enumDmPpNc = 0
             
@@ -203,41 +232,53 @@ begintemplate AddOneInputVarWidget
                 mth.getMechName(enumDmPpNc, mechIdx, mechName)
                 mechList.append(new ItemOfFilteredBrowsedList(mechIdx, mechName))
             }
-            
-            if (numMechs != 0) {
-                mechListIdx = 0
-                mechList.select(mechListIdx)
-                selMechIdx = mechList.o(mechListIdx).idx
-            } else {
-                mechListIdx = -1
-                selMechIdx = -1
-            }
         } else {
             if (selCompIdx == enumSynCompIdxs.netCon) {
+                enumDmPpNc = 2
                 mechIdx = 0
                 comp.mechStds[mechIdx][0].name(mechName)
                 deck.flip_to(2)
             } else {
+                enumDmPpNc = 1
                 synGroup.getPpNameOrEmpty(comp.enumPpRole, mechName)
                 mechIdx = mth.getMechIdx(1, mechName)
             }
             mechList.append(new ItemOfFilteredBrowsedList(mechIdx, mechName))
-            
-            mechListIdx = 0
-            selMechIdx = mechIdx
+        }
+        
+        // Select an item in mechList
+        if (!isRecallMode) {
+            if (isDmOrSynPart) {
+                if (numMechs != 0) {
+                    mechListIdx = 0
+                    mechList.select(mechListIdx)
+                    selMechIdx = mechList.o(mechListIdx).idx
+                } else {
+                    mechListIdx = -1
+                    selMechIdx = -1
+                }
+            } else {
+                mechListIdx = 0
+                selMechIdx = mechIdx
+            }
+        } else {
+            selMechIdx = oldListItem.mechIdx
+            mth.getMechName(enumDmPpNc, selMechIdx, mechName)
+            mechListIdx = findItemInListByStringAndSelect(mechList, mechName)
         }
         
         mechSelectHandler(mechListIdx)
     }
     
-    proc mechSelectHandler() { local mechListIdx, enumDmPpNc, varTypeIdx, numVarTypes, varTypeListIdx localobj comp
+    proc mechSelectHandler() { local mechListIdx, enumDmPpNc, varType, numVarTypes, varTypeListIdx localobj comp
+        strdef varTypeName
+        
         mechListIdx = $1
         
-        varTypeList.remove_all()
+        varTypeList.remove_all()    // This calls varTypeSelectHandler(-1) as a side effect
         
         if (mechListIdx == -1) {
             selMechIdx = -1
-            varTypeSelectHandler(-1)
             return
         }
         
@@ -246,24 +287,33 @@ begintemplate AddOneInputVarWidget
         comp = compUtils.getComp(isDmOrSynPart, selCompIdx)
         enumDmPpNc = comp.enumDmPpNc
         
-        varTypeIdx = -1     // GLOBAL
+        // Populate varTypeList
+        varType = -1    // GLOBAL
         if (mth.doesMechHaveGlobalVars(enumDmPpNc, selMechIdx)) {
-            addItemToVarTypeList(varTypeIdx)
+            addItemToVarTypeList(varType)
         }
-        varTypeIdx = 1      // PARAMETER
-        if (mth.getNumMechVars(enumDmPpNc, selMechIdx, varTypeIdx) != 0) {
-            addItemToVarTypeList(varTypeIdx)
+        varType = 1     // PARAMETER
+        if (mth.getNumMechVars(enumDmPpNc, selMechIdx, varType) != 0) {
+            addItemToVarTypeList(varType)
         }
         
-        numVarTypes = varTypeList.count()
-        if (numVarTypes != 0) {
-            varTypeListIdx = 0
-            varTypeList.select(varTypeListIdx)
-            selVarType = varTypeList.o(varTypeListIdx).idx
+        // Select an item in varTypeList
+        if (!isRecallMode) {
+            numVarTypes = varTypeList.count()
+            if (numVarTypes != 0) {
+                varTypeListIdx = 0
+                varTypeList.select(varTypeListIdx)
+                selVarType = varTypeList.o(varTypeListIdx).idx
+            } else {
+                varTypeListIdx = -1
+                selVarType = -2
+            }
         } else {
-            varTypeListIdx = -1
-            selVarType = -2
+            selVarType = oldListItem.varType
+            mth.getVarTypeName(selVarType, varTypeName)
+            varTypeListIdx = findItemInListByStringAndSelect(varTypeList, varTypeName)
         }
+        
         varTypeSelectHandler(varTypeListIdx)
     }
     
@@ -272,7 +322,7 @@ begintemplate AddOneInputVarWidget
         
         varTypeListIdx = $1
         
-        varNameWithIndexList.remove_all()
+        varNameWithIndexList.remove_all()   // This calls varNameWithIndexSelectHandler(-1) as a side effect
         
         if (varTypeListIdx == -1) {
             selVarType = -2
@@ -284,6 +334,7 @@ begintemplate AddOneInputVarWidget
         comp = compUtils.getComp(isDmOrSynPart, selCompIdx)
         enumDmPpNc = comp.enumDmPpNc
         
+        // Populate varNameWithIndexList
         numVars = mth.getNumMechVars(enumDmPpNc, selMechIdx, selVarType)
         for varIdx = 0, numVars - 1 {
             arraySize = mth.getVarNameAndArraySize(enumDmPpNc, selMechIdx, selVarType, varIdx, varName)
@@ -293,12 +344,19 @@ begintemplate AddOneInputVarWidget
             }
         }
         
-        if (numVars != 0) {
-            selVarNameWithIndexIdx = 0
-            varNameWithIndexList.select(selVarNameWithIndexIdx)
+        // Select an item in varNameWithIndexList
+        if (!isRecallMode) {
+            if (numVars != 0) {
+                selVarNameWithIndexIdx = 0
+                varNameWithIndexList.select(selVarNameWithIndexIdx)
+            } else {
+                selVarNameWithIndexIdx = -1
+            }
         } else {
-            selVarNameWithIndexIdx = -1
+            varNameWithIndex = oldListItem.varNameWithIndex
+            selVarNameWithIndexIdx = findItemInListByStringAndSelect(varNameWithIndexList, varNameWithIndex)
         }
+        
         varNameWithIndexSelectHandler(selVarNameWithIndexIdx)
     }
     
@@ -306,10 +364,23 @@ begintemplate AddOneInputVarWidget
         selVarNameWithIndexIdx = $1
     }
     
-    proc selectHandler() {
+    proc selectHandler() { local isUnique localobj newItem
         strdef varNameWithIndex
+        
         varNameWithIndex = varNameWithIndexList.o(selVarNameWithIndexIdx).s
-        parentWidget.onOneVarSelectHandler(isDmOrSynPart, selCompIdx, selMechIdx, selVarType, varNameWithIndex)
+        
+        newItem = new ItemOfInputVarsBrowsedList(isDmOrSynPart, selCompIdx, selMechIdx, selVarType, varNameWithIndex)
+        
+        if (isAddOrCorrect) {
+            isUnique = parentWidget.onVarAddHandler(newItem)
+        } else {
+            isUnique = parentWidget.onVarCorrectHandler(newItem, oldVarIdx)
+        }
+        
+        if (!isUnique) {
+            return
+        }
+        
         dismissHandler()
     }
     

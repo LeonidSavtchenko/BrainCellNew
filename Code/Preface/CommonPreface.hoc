@@ -10,14 +10,14 @@ isAllOrSomeDendritesSeeded = -1
 objref seededDendrite_ref, nanoBranchesManager
 
 
-load_file("GetMaxDendriticLength.hoc")
+{ load_file("GetMaxDendriticLength.hoc") }
 
 MaxDendriticLength = getMaxDendriticLength()
 
 isAllOrSomeDendritesSeeded = 1
 seededDendrite_ref = dendrite_ref
 
-load_file("../NanoCore/NanoBranchesManager.hoc")
+{ load_file("../NanoCore/NanoBranchesManager.hoc") }
 
 if (isAstrocyteOrNeuron) {
     nanoBranchesManager = new NanoBranchesManager(MaxNumberStalksPerDendrite)

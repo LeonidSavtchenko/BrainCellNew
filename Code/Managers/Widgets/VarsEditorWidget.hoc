@@ -14,6 +14,7 @@ begintemplate VarsEditorWidget
     objref mechStd, buffer, isMechVarInhom, isMechVarStoch
     
     enumDmPpNc = -1
+    isMechOrSynEditor = -1
     compIdx = -1
     objref comp
     mechIdx = -1
@@ -26,7 +27,7 @@ begintemplate VarsEditorWidget
     objref subWidget
     
     
-    proc init() { local isMechOrSynEditor, numMechVars, varIdx, arraySize, arrayIndex, isInhom, isStoch localobj inhomFlagsVec, stochFlagsVec
+    proc init() { local numMechVars, varIdx, arraySize, arrayIndex, isInhom, isStoch localobj inhomFlagsVec, stochFlagsVec
         strdef varName
         
         enumDmPpNc = $1
@@ -195,7 +196,7 @@ begintemplate VarsEditorWidget
         }
     }
     
-    // All next proc-s are private
+    // All next staff is private
     
     
     proc editHomogenVarHandler() { local varIdx, arrayIndex, value
@@ -213,8 +214,10 @@ begintemplate VarsEditorWidget
         if (!math.isNaN(value)) {
             isMechVarInhom.o(varIdx).x(arrayIndex) = 0
             
-            mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName)
-            seh.ifMetaVarThenUpdateStatus(varName, value)
+            if (!isMechOrSynEditor) {
+                mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName)
+                seh.ifMetaVarThenUpdateStatus(varName, value)
+            }
         }
         
         comp.markMechDirty(mechIdx)

@@ -1,4 +1,6 @@
 
+{ load_file("Exported/InterModularOtherUtils_Exported.hoc") }
+
 // An iterator to help with looping over a linear grid when we need to cancel the standard to NEURON "float_epsilon" comparison
 // applied to all comparison operators by default.
 // Basically, we replace this naive (and buggy in most cases) code:
@@ -24,4 +26,13 @@ iterator eachPointInGrid() { local minValue, maxValue, numPts, step, idx
         iterator_statement
         $&1 += step     // !! "$&1 = minValue + zero_based_idx * step" would be more accurate, but slower
     }
+}
+
+// Keeping this proc on the top level rather than in a template because otherwise
+// Graph.addvar would fail due to missing access to the section
+proc addVarToGraph() { localobj graph
+    strdef varStr
+    graph = $o1
+    varStr = $s2
+    graph.addvar(varStr)
 }

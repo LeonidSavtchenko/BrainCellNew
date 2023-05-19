@@ -142,7 +142,7 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
                 //xvalue("Maximum distance between Gap Junctions, Distance (um)","Distance", 1,"CaGapFlux(jd/(1e+6), Distance)", 0, 1  )
                 xpanel()
             } else {
-                // !! maybe something must be available - ask Lesha
+                // !! maybe something must be available
                 xpanel("Not available")
                 xlabel("Not available in \"Start with Nano geometry\" mode")
                 xpanel()
@@ -267,14 +267,17 @@ proc insertElectrode() {
 }
 
 proc startMechManager() {
-    analyzeSectsCreateCompsShowMechManagerBaseWidget()
+    makeSureMechCompsCreatedOrImportedThenShowMechManagerBaseWidget()
 }
 
 proc startSynManager() {
     createSynCompsAndShowSynManagerBaseWidget()
+    // !!! makeSureSynCompsCreatedOrImportedThenShowSynManagerBaseWidget()
 }
 
 proc startExportManager() {
+    dismissIfNotNil(msmBaseWidget)
+    
     exportManagerMainWidget.dismissHandler()
     exportManagerMainWidget.show()
 }

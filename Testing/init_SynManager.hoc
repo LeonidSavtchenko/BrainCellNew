@@ -1,9 +1,12 @@
 
 { nrnpython("import neuron;neuron.load_mechanisms('..')") }
 
+isAstrocyteOrNeuron = -1
+{ load_file("../Code/InterModular/AllInterModularUtils.hoc") }
+
 // Load some test cell
 { load_file("../Nanogeometry/cellmorphology+nano.hoc") }
-isAstrocyteOrNeuron = 0
+isBaseOrNanoStart = 0
 
 objref stochTestPlotShape
 stochTestPlotShape = new PlotShape()
@@ -21,11 +24,10 @@ stochTestGraph = new Graph()
 { stochTestGraph.size(0, tstop, 0, 30) }
 { graphList[0].append(stochTestGraph) }
 
-{ load_file("../Code/InterModular/AllInterModularUtils.hoc") }
-
 { load_file("../Code/Managers/CommonLoads.hoc") }
 { load_file("../Code/Managers/SynManager/SynManager.hoc") }
 
+// !!! makeSureSynCompsCreatedOrImportedThenShowSynManagerBaseWidget()
 createSynCompsAndShowSynManagerBaseWidget()
 
 { chdir("..") }     // Without this, getcwd() will return different path compared to the start from "init.hoc"

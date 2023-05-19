@@ -1,0 +1,134 @@
+
+py:getIntegerValueFromTopLevel('isAstrocyteOrNeuron')
+
+//////////////////// Start of utils //////////////////////////////////////
+
+py:getUtils()
+
+//////////////////// End of utils ////////////////////////////////////////
+
+//////////////////// Start of sections ///////////////////////////////////
+
+py:getAllCreateStatementsExceptNanogeometry()
+
+py:getIntegerValueFromTopLevel('NumberDendrites')
+py:getIntegerValueFromTopLevel('NumberLeavesPerStalk')
+py:getIntegerValueFromTopLevel('NumberNanoBranches')
+
+begintemplate AstrocyteNanoBranch
+    public LargeGlia, SmallGlia
+    create LargeGlia[1], SmallGlia[1]
+    external NumberLeavesPerStalk
+    proc init() {
+        create LargeGlia[NumberLeavesPerStalk], SmallGlia[NumberLeavesPerStalk]
+    }
+endtemplate AstrocyteNanoBranch
+
+objref astrocyteNanoBranch[NumberNanoBranches]
+for idx = 0, NumberNanoBranches - 1 {
+    astrocyteNanoBranch[idx] = new AstrocyteNanoBranch()
+}
+
+//////////////////// End of sections /////////////////////////////////////
+
+//////////////////// Start of imported section names /////////////////////
+
+// These names are stored here just to be able to import this file back into the main program and then export again
+
+// Soma
+py:getListOfStringsFromTopLevel('usedNamesForSoma')
+
+// Dendrites
+py:getListOfStringsFromTopLevel('usedNamesForDendrites')
+
+//////////////////// End of imported section names ///////////////////////
+
+//////////////////// Start of section references /////////////////////////
+
+// dendrite_ref is not used in this file, but required to import it back into the main program
+objref soma_ref, dendrite_ref
+
+// Soma
+py:createListOfSectionRef('usedNamesForSoma', 'soma_ref')
+
+// Dendrites
+py:createListOfSectionRef('usedNamesForDendrites', 'dendrite_ref')
+
+// Nanogeometry
+
+py:insertAllLinesFromFile('Code\\NanoCore\\Exported\\CreateNanoRefs_Exported.hoc')
+
+createRefsForNanoGeometry()
+
+//////////////////// End of section references ///////////////////////////
+
+//////////////////// Start of topology ///////////////////////////////////
+
+py:initTopology()
+
+//////////////////// End of topology /////////////////////////////////////
+
+//////////////////// Start of geometry, nseg, Ra /////////////////////////
+
+py:initGeometry()
+
+//////////////////// End of geometry, nseg, Ra ///////////////////////////
+
+//////////////////// Start of distance centre ////////////////////////////
+
+// !!! BUG: hardcoded rather than exported
+
+// The distance centre
+soma_ref.o(0).sec distance()
+
+//////////////////// End of distance centre //////////////////////////////
+
+//////////////////// Start of compartments ///////////////////////////////
+
+py:createReducedMechComps()
+
+//////////////////// End of compartments /////////////////////////////////
+
+//////////////////// Start of homogen biophysics /////////////////////////
+
+py:initHomogenBiophysics()
+
+//////////////////// End of homogen biophysics ///////////////////////////
+
+//////////////////// Start of inhom and stoch library ////////////////////
+
+py:createInhomAndStochLibrary()
+
+//////////////////// End of inhom and stoch library //////////////////////
+
+//////////////////// Start of dist funcs /////////////////////////////////
+
+py:insertAllUsedDistFuncs()
+
+//////////////////// End of dist funcs ///////////////////////////////////
+
+//////////////////// Start of stoch funcs ////////////////////////////////
+
+py:insertAllUsedStochFuncs()
+
+//////////////////// End of stoch funcs //////////////////////////////////
+
+//////////////////// Start of inhom biophys models ///////////////////////
+
+py:createInhomBiophysModels()
+
+//////////////////// End of inhom biophys models /////////////////////////
+
+//////////////////// Start of stoch biophys models ///////////////////////
+
+py:createStochBiophysModels()
+
+//////////////////// End of stoch biophys models /////////////////////////
+
+//////////////////// Start of AltRunControl widget ///////////////////////
+
+py:insertAltRunControlWidget()
+
+//////////////////// End of AltRunControl widget /////////////////////////
+
+access soma_ref.o(0).sec

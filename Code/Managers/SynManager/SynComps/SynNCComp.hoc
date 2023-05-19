@@ -2,7 +2,7 @@
 begintemplate SynNCComp
 
     public name, enumDmPpNc, isMechVarTypeInhom, mechStds
-    public isMechVarInhom, prepareVarsEditorHeader, getDistRange, getSecList, markMechDirty, updateStatsCurve, applyInhomogeneity, updateIsMechVarTypeInhom, isAnyVarInhom
+    public isMechVarInhom, prepareVarsEditorHeader, getDistRange, getSecList, markMechDirty, updateStatsCurve, updateVerbatimModelCurve, applyInhomogeneity, updateIsMechVarTypeInhom, isAnyVarInhom
     public isMechVarTypeInhom, mechStds, isMechDirty
     
     external mwh, mth, math, seh
@@ -130,6 +130,11 @@ begintemplate SynNCComp
         $&3 = yMax
     }
     
+    proc updateVerbatimModelCurve() {
+        // It's a code contract that all the syns have homogeneous NetCon-s at the time of new SynNCComp-s construction
+        codeContractViolation()
+    }
+    
     proc applyInhomogeneity() { local varType, arraySize, arrayIndex, isMetaVar, isSefwEnabled, isWeightVar, y localobj distFuncHelper, firstNetCon, mechStd, syn, thisPp
         strdef mechName, varName, varNameWithIndex
         
@@ -169,7 +174,7 @@ begintemplate SynNCComp
             } else {
                 thisPp = syn.sefwPp
                 mechStd.in(thisPp)
-                // BUG: "variable_domain" used in "MechanismStandard.panel()" is ignored in "MechanismStandard.set()" and "MechanismStandard.out()",
+                // !! BUG: "variable_domain" used in "MechanismStandard.panel()" is ignored in "MechanismStandard.set()" and "MechanismStandard.out()",
                 //      so we can use any invalid value here without even a warning
                 mechStd.set(seh.realVarName, y, seh.realArrayIndex)
                 mechStd.out(thisPp)

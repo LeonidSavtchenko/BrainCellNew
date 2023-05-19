@@ -1,16 +1,18 @@
 
-{ load_file("../../Core/Widgets/alt_stdrun.hoc") }
-{ load_file("../../Core/Widgets/AltRunControlWidget.hoc") }
+{ load_file("../../Core/Widgets/Exported/alt_stdrun.hoc") }
+loadIfNotDeclared("AltRunControlWidget", "../../Core/Widgets/Exported/AltRunControlWidget.hoc")
 
 
 isScheduledRescanningOfDistMechs = 0
 isScheduledCachingOfSpineNeckDiams = 0
 
+objref exportManagerMainWidget
+
 begintemplate MechOrSynManagerBaseWidget
 
     public show, showMechManagerHandler, showSynManagerHandler, showAltRunControlHandler, onNanoReseedOrUpdateHandler, dismissHandler
     
-    external mechManagerMainWidget, synManagerMainWidget
+    external mechManagerMainWidget, synManagerMainWidget, exportManagerMainWidget
     external mmAllComps, smAllSyns, synGroup
     external mwh, spineNeckDiamCache
     external inhomAndStochLibrary
@@ -46,6 +48,7 @@ begintemplate MechOrSynManagerBaseWidget
     }
     
     proc showMechManagerHandler() { localobj nil
+        dismissIfNotNil(exportManagerMainWidget)
         dismissIfNotNil(mechManagerMainWidget)
         
         if (mmAllComps.count() == 0) {
@@ -64,6 +67,7 @@ begintemplate MechOrSynManagerBaseWidget
     }
     
     proc showSynManagerHandler() { local isDisconnected, xMin, xMax localobj nil
+        dismissIfNotNil(exportManagerMainWidget)
         dismissIfNotNil(synManagerMainWidget)
         
         if (smAllSyns.count() == 0) {

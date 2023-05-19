@@ -1,0 +1,64 @@
+
+begintemplate DistFuncsCatalogue
+
+    public custExprDistFuncCatIdx, custFuncDistFuncCatIdx, tablePlusLinInterpDistFuncCatIdx, specialDistFuncCatIdx
+    public numDistFuncs, oneLinerPythonDistFuncIdx, loadFromFilePythonDistFuncIdx, alreadyDefinedPythonDistFuncIdx, tableFromTextEditorDistFuncIdx, tableFromTextFileDistFuncIdx, tableFromExcelFileDistFuncIdx, zebra1DistFuncIdx, zebra2DistFuncIdx, verbatimDistFuncIdx
+    public doesDistFuncRequirePython, doesDistFuncUseStringOrFileDialog, isZebraDistFunc
+    
+    custExprDistFuncCatIdx = -1
+    custFuncDistFuncCatIdx = -1
+    tablePlusLinInterpDistFuncCatIdx = -1
+    specialDistFuncCatIdx = -1
+    
+    numDistFuncs = -1
+    
+    oneLinerPythonDistFuncIdx = -1
+    loadFromFilePythonDistFuncIdx = -1
+    alreadyDefinedPythonDistFuncIdx = -1
+    tableFromTextEditorDistFuncIdx = -1
+    tableFromTextFileDistFuncIdx =  -1
+    tableFromExcelFileDistFuncIdx =  -1
+    zebra1DistFuncIdx = -1
+    zebra2DistFuncIdx = -1
+    verbatimDistFuncIdx = -1
+    
+    
+    proc init() {
+        custExprDistFuncCatIdx = 1
+        custFuncDistFuncCatIdx = 2
+        tablePlusLinInterpDistFuncCatIdx = 3
+        specialDistFuncCatIdx = 4
+        
+        numDistFuncs = 17
+        
+        oneLinerPythonDistFuncIdx = 6
+        loadFromFilePythonDistFuncIdx = 8
+        alreadyDefinedPythonDistFuncIdx = 10
+        tableFromTextEditorDistFuncIdx = 11
+        tableFromTextFileDistFuncIdx = 12
+        tableFromExcelFileDistFuncIdx = 13
+        zebra1DistFuncIdx = 14
+        zebra2DistFuncIdx = 15
+        verbatimDistFuncIdx = 16
+    }
+    
+    func doesDistFuncRequirePython() { local distFuncIdx
+        distFuncIdx = $1
+        return (distFuncIdx == oneLinerPythonDistFuncIdx || distFuncIdx == loadFromFilePythonDistFuncIdx || distFuncIdx == alreadyDefinedPythonDistFuncIdx)
+    }
+    
+    func doesDistFuncUseStringOrFileDialog() { local distFuncCatIdx, distFuncIdx
+        distFuncCatIdx = $1
+        distFuncIdx = $2
+        return (distFuncCatIdx == custExprDistFuncCatIdx || distFuncCatIdx == custFuncDistFuncCatIdx || distFuncIdx == tableFromTextFileDistFuncIdx || distFuncIdx == tableFromExcelFileDistFuncIdx)
+    }
+    
+    func isZebraDistFunc() { local distFuncIdx
+        distFuncIdx = $1
+        return (distFuncIdx == zebra1DistFuncIdx || distFuncIdx == zebra2DistFuncIdx)
+    }
+    
+endtemplate DistFuncsCatalogue
+
+objref dfc
+dfc = new DistFuncsCatalogue()

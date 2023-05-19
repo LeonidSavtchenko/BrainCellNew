@@ -4,7 +4,7 @@ begintemplate StochButtonHiderForVarsEditor
     public isHideStochButton
     
     external pyObj
-    external printMsgAndStop
+    external printMsgAndRaiseError
     
     
     proc init() { local status
@@ -12,7 +12,7 @@ begintemplate StochButtonHiderForVarsEditor
         sprint(pyCommand, "import json\nwith open('%s/../../../Settings/hide_stoch_btn_for.json') as jsonFile:\n    sbh4ve_jsonDict = json.load(jsonFile)\ndef sbh4ve_isHideStochButton(mechName, varNameWithIndex):\n    return mechName in sbh4ve_jsonDict and varNameWithIndex in sbh4ve_jsonDict[mechName]", getcwd())
         status = nrnpython(pyCommand)
         if (!status) {
-            printMsgAndStop("\nException raised in Python code (caught in StochButtonHiderForVarsEditor ctor)")
+            printMsgAndRaiseError("Exception raised in Python code (caught in StochButtonHiderForVarsEditor ctor)")
         }
     }
     

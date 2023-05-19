@@ -1,38 +1,36 @@
 
 objref msmBaseWidget, mechManagerMainWidget, synManagerMainWidget, varsEditorSubWidget
-objref mth, mmmowb, mcu, synGroup, spineNeckDiamCache, inhomAndStochLibrary
+objref mth, mmmowb, mcu, synGroup, spineNeckDiamCache
+
+if (makeSureDeclared("inhomAndStochLibrary") && isBaseOrNanoStart) {
+    codeContractViolation()
+}
 
 if (isAstrocyteOrNeuron) {
     objref smAllSyns, enumSynCompIdxs, seh
 }
 
+proc loadIfNotDeclared() {
+    strdef templName, hocFileRelPathName
+    templName = $s1
+    hocFileRelPathName = $s2
+    if (!name_declared(templName)) {
+        load_file(hocFileRelPathName)
+    } else if (isBaseOrNanoStart) {
+        codeContractViolation()
+    }
+}
+
 { load_file("MechTypeHelper.hoc") }
 
-{ load_file("InhomAndStochLibrary/InhomAndStochTarget.hoc") }
-{ load_file("InhomAndStochLibrary/InhomAndStochLibrary.hoc") }
-{ load_file("InhomAndStochLibrary/InhomAndStochApplicator.hoc") }
+{ load_file("InhomAndStochLibrary/InhomAndStochLibraryLoads.hoc") }
 
-{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/PythonUtils/PythonUtilsForDistFuncs.hoc") }
-{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/FileUtilsForDistFuncs.hoc") }
-{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupAHelper.hoc") }
-{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupsBDHelper.hoc") }
-{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupCHelper.hoc") }
-{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupsEFHelper.hoc") }
-{ load_file("Widgets/Inhomogeneity/DistFuncHelpers/DistFuncGroupGHelper.hoc") }
 { load_file("Widgets/Inhomogeneity/InhomEditorSectionUtils.hoc") }
+loadIfNotDeclared("SegmentationHelper", "Widgets/Inhomogeneity/SegmentationHelper.hoc")
 { load_file("Widgets/Inhomogeneity/InhomEditorSubWidget.hoc") }
 
-{ load_file("Widgets/Stochasticity/StochDistHelpers/PythonUtils/PythonUtilsForStochDists.hoc") }
-{ load_file("Widgets/Stochasticity/StochDistHelpers/UniformDistHelper.hoc") }
-{ load_file("Widgets/Stochasticity/StochDistHelpers/NormalDistHelper.hoc") }
-{ load_file("Widgets/Stochasticity/StochDistHelpers/LogNormalDistHelper.hoc") }
-{ load_file("Widgets/Stochasticity/StochDistHelpers/NegExpDistHelper.hoc") }
-{ load_file("Widgets/Stochasticity/StochDistHelpers/ErlangDistHelper.hoc") }
-{ load_file("Widgets/Stochasticity/StochDistHelpers/WeibullDistHelper.hoc") }
-{ load_file("Widgets/Stochasticity/StochFuncHelpers/StochFuncGroupAHelper.hoc") }
-{ load_file("Widgets/Stochasticity/StochFuncHelpers/StochFuncGroupGHelper.hoc") }
-{ load_file("Widgets/Stochasticity/ColourizationHelper.hoc") }
-{ load_file("Widgets/Stochasticity/BoundingHelper.hoc") }
+loadIfNotDeclared("ColourizationHelper", "Widgets/Stochasticity/Exported/ColourizationHelper.hoc")
+loadIfNotDeclared("BoundingHelper", "Widgets/Stochasticity/Exported/BoundingHelper.hoc")
 { load_file("Widgets/Stochasticity/StochEditorSubWidget.hoc") }
 
 { load_file("Widgets/StochButtonHiderForVarsEditor.hoc") }

@@ -17,7 +17,7 @@ proc _callPythonStringFunc() { local status
     sprint(pyCommand, "pyRes = '%s'.%s", inStr, pyStringFunc)
     status = nrnpython(pyCommand)
     if (!status) {
-        printMsgAndStop("\nException raised in Python code (caught in _callPythonStringFunc)")
+        printMsgAndRaiseError("Exception raised in Python code (caught in _callPythonStringFunc)")
     }
 }
 
@@ -29,7 +29,7 @@ func _getPythonMathConst() { local status
     sprint(pyCommand, "pyRes = float('%s')", pyMathConstName)   // !!? or "import math;pyRes = math.%s"
     status = nrnpython(pyCommand)
     if (!status) {
-        printMsgAndStop("\nException raised in Python code (caught in _getPythonMathConst)")
+        printMsgAndRaiseError("Exception raised in Python code (caught in _getPythonMathConst)")
     }
     
     return pyObj.pyRes

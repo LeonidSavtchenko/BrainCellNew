@@ -1,0 +1,23 @@
+
+begintemplate ReducedMechComp
+
+    public name, list_ref, isMechInserted, mechStds
+    
+    strdef name
+    objref list_ref
+    double isMechInserted[1]
+    objref mechStds[1][1]
+    
+    
+    proc init() { local numMechs localobj mechType
+        name = $s1
+        list_ref = $o2
+        
+        mechType = new MechanismType(0) // 0: "Distributed Membrane Mechanisms"
+        numMechs = mechType.count
+        
+        double isMechInserted[numMechs]
+        objref mechStds[numMechs][3]    // 0: "PARAMETER", 1: "ASSIGNED", 2: "STATE"
+    }
+    
+endtemplate ReducedMechComp

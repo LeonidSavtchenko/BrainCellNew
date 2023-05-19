@@ -3,7 +3,7 @@ begintemplate DefineGridForInputVarWidget
 
     public show, dismissHandler
     
-    external math
+    external math, mwh
     external unmapIfNotNil
     
     objref mainBox
@@ -46,7 +46,7 @@ begintemplate DefineGridForInputVarWidget
         }
         mainBox.intercept(0)
         mainBox.dismiss_action("dismissHandler()")
-        mainBox.map("Variable grid", 300, 460, -1, -1)
+        mainBox.map("Variable grid", 470, 360, -1, -1)
     }
     
     proc dismissHandler() {
@@ -57,7 +57,14 @@ begintemplate DefineGridForInputVarWidget
     
     
     proc okHandler() {
-        // !! validation here
+        // The case when lastValue == firstValue is considered valid because
+        // user may just want to run the same simulation a few times
+        
+        if (!isLinOrExpGrid && firstValue * lastValue <= 0 && lastValue != firstValue) {
+            mwh.showWarningBox("Invalid exponential grid: firstValue * lastValue <= 0")
+            return
+        }
+        
         dismissHandler()
         parentWidget.onDefineVarGridOkHandler()
     }

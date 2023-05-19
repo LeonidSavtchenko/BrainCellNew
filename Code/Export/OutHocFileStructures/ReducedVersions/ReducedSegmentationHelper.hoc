@@ -1,0 +1,7 @@
+
+begintemplate ReducedSegmentationHelper
+    public segmentationMode, total_nseg, min_nseg
+    segmentationMode = -1
+    total_nseg = -1
+    min_nseg = -1
+endtemplate ReducedSegmentationHelper

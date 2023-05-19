@@ -4,8 +4,7 @@ begintemplate Synapse
     public srcPp, netCon, trgPp, sngPp, sefwPp, sefwNetCon, sec_ref, connectionPoint, dist
     public getPointProcess, changeLocation, changeStructure
     
-    // !! uncomment here and below once it's exported
-    // external codeContractViolation
+    external codeContractViolation
     
     objref srcPp, netCon, trgPp, sngPp, sefwPp, sefwNetCon, sec_ref
     
@@ -26,7 +25,7 @@ begintemplate Synapse
             sec_ref = $o2
             connectionPoint = $3
         } else {
-            // codeContractViolation()
+            codeContractViolation()
         }
         calcAndCacheDist()
     }
@@ -47,7 +46,7 @@ begintemplate Synapse
                 return sngPp
             }
         } else {
-            // codeContractViolation()
+            codeContractViolation()
         }
     }
     
@@ -93,7 +92,7 @@ begintemplate Synapse
             
             sngPp = nil
         } else {
-            // codeContractViolation()
+            codeContractViolation()
         }
     }
     

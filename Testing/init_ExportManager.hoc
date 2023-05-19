@@ -1,11 +1,12 @@
 
 { nrnpython("import neuron;neuron.load_mechanisms('..')") }
 
+isAstrocyteOrNeuron = -1
+{ load_file("../Code/InterModular/AllInterModularUtils.hoc") }
+
 // Load some test cell
 { load_file("../Nanogeometry/cellmorphology+nano.hoc") }
-isAstrocyteOrNeuron = 0
-
-{ load_file("../Code/InterModular/AllInterModularUtils.hoc") }
+isBaseOrNanoStart = 0
 
 objref stochTestGraph
 { load_file("../Code/Managers/CommonLoads.hoc") }
@@ -18,3 +19,5 @@ objref stochTestGraph
 exportManagerMainWidget.show()
 
 { chdir("..") }     // Without this, getcwd() will return different path compared to the start from "init.hoc"
+
+sourcePythonCodeForExport()

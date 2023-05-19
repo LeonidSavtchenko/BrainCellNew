@@ -34,7 +34,24 @@ KMULTP = 0.0
 BasicK=2.5  // !! Defined the same in Diffusion3D.hoc
 
 
-{ load_file("Exported/Biophys_Exported.hoc") }
+// !! this proc is also called for neuron nanogeometry after reseeding
+proc Neuron_Biophysics_init() {
+    cm = 1
+    // !! warning: g_pas is assigned here and in NanoCore/Neuron/NeuronNanoBranch.hoc -> proc initBiophysics for neuron nanogeometry
+    insert pas e_pas=Vrest g_pas = 1/RmDend Ra=RaAll  //cm=CmDend
+    insert na3 ena=55
+    ar2_na3=0.5
+    gbar_na3=gna
+    insert kdr ek=-90 gkdrbar_kdr=gkdr
+    insert kap ek=-90
+    insert kad ek=-90
+    gkabar_kap=0
+    gkabar_kad=0
+        sh_na3=nash
+        ar_na3=1
+    //insert IKa
+    //ko_IKa=BasicK
+}
 
 
 forall {
@@ -62,5 +79,5 @@ soma_ref.o(0).sec {
             gkabar_kap = KMULTP
             
             e_pas=Vrest g_pas = 1/RmSoma Ra=RaSoma //cm=CmSoma
-        finitialize(v)  // !! Maybe remove because now it's done in NanoBranchesManager.hoc
+        { finitialize(v) }  // !! Maybe remove because now it's done in NanoBranchesManager.hoc
     }

@@ -397,7 +397,11 @@ begintemplate SynManagerMainWidget
         getSelMechNameOrEmptyString(trgChoices, trgMechName)
         getSelMechNameOrEmptyString(sngChoices, sngMechName)
         
-        isSmthChanged = synGroup.applyChangesToStrucIfNeeded(is3Or1PartInSynStruc, srcMechIdx, trgMechIdx, sngMechIdx, srcMechName, trgMechName, sngMechName, isForceNewTrgOrSng)
+        mwh.showPleaseWaitBox("Changing synapse structure.")
+        {
+            isSmthChanged = synGroup.applyChangesToStrucIfNeeded(is3Or1PartInSynStruc, srcMechIdx, trgMechIdx, sngMechIdx, srcMechName, trgMechName, sngMechName, isForceNewTrgOrSng)
+        }
+        mwh.hidePleaseWaitBox()
         
         if (isSmthChanged) {
             updateNumInhomVarsLabel()
@@ -411,7 +415,11 @@ begintemplate SynManagerMainWidget
         srcMechIdx = getSelMechIdxOrMinusOne(srcChoices)
         trgMechIdx = getSelMechIdxOrMinusOne(trgChoices)
         sngMechIdx = getSelMechIdxOrMinusOne(sngChoices)
-        isSmthChanged = synGroup.applyChangesToDirtyHomogenVars(srcMechIdx, trgMechIdx, sngMechIdx)
+        mwh.showPleaseWaitBox("Changing synapse homogen vars.")
+        {
+            isSmthChanged = synGroup.applyChangesToDirtyHomogenVars(srcMechIdx, trgMechIdx, sngMechIdx)
+        }
+        mwh.hidePleaseWaitBox()
         updateNumInhomVarsLabel()
         return isSmthChanged
     }

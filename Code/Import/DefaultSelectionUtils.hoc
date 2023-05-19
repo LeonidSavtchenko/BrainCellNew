@@ -4,7 +4,7 @@
 // $o2 - The tested name markers sorted by weakness, in lower case (List of String-s)
 // $o3 (in/out) - The indexes of names from $o1 guessed as names for soma/dendrites (Vector); 0, 1 or more elements will be added here
 // $4 - 0/1 flag indicating whether to prevent selection of the matched name next time
-proc searchCycle() { local expNameMarkerIdx, actNameIdx, isMatch, isAnyMatch localobj actNamesLower, expNameMarkersLower, defaultActNameIdxs
+proc searchCycle() { local isStrongMatching, expNameMarkerIdx, isAnyMatch, actNameIdx, isMatch localobj actNamesLower, expNameMarkersLower, defaultActNameIdxs
     
     actNamesLower = $o1
     expNameMarkersLower = $o2

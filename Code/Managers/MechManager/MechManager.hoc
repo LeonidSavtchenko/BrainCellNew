@@ -2,7 +2,9 @@
 { load_file("MechManagerLoads.hoc") }
 
 
-proc analyzeSectsAndCreateComps() { localobj endFoot_ref, ecSource_ref, other_ref
+proc analyzeSectsAndCreateComps() { local compIdx localobj endFoot_ref, ecSource_ref, other_ref, comp
+    
+    // !!!! maybe I will have to delete everything from inhomAndStochLibrary (showing YES/NO dialog for confirmation)
     
     mwh.showPleaseWaitBox("Analyzing all comp \\ sect \\ segm \\ mech \\ varType \\ var \\ arrayIndex.")
     {
@@ -40,17 +42,36 @@ proc analyzeSectsAndCreateComps() { localobj endFoot_ref, ecSource_ref, other_re
         if (other_ref.count() != 0) {
             mmAllComps.append(new MechComp("Other", other_ref))
         }
+        
+        for compIdx = 0, mmAllComps.count() - 1 {
+            comp = mmAllComps.o(compIdx)
+            comp.finishAllVerbatimInhomProtos(compIdx)
+        }
     }
     mwh.hidePleaseWaitBox()
     
     isScheduledRescanningOfDistMechs = 0
 }
 
-proc analyzeSectsCreateCompsShowMechManagerBaseWidget() { localobj nil
+isConvertedFromReducedMechCompTemplates = 0
+
+proc makeSureMechCompsCreatedOrImported() { localobj nil, editableComps, reducedComp
     
     if (mmAllComps == nil) {
         analyzeSectsAndCreateComps()
+    } else if (!isBaseOrNanoStart && !isConvertedFromReducedMechCompTemplates) {
+        editableComps = new List()
+        for eachItemInList(reducedComp, mmAllComps) {
+            editableComps.append(new MechComp(reducedComp))
+        }
+        mmAllComps = editableComps
+        isConvertedFromReducedMechCompTemplates = 1
     }
+}
+
+proc makeSureMechCompsCreatedOrImportedThenShowMechManagerBaseWidget() {
+
+    makeSureMechCompsCreatedOrImported()
     
     dismissIfNotNil(msmBaseWidget)
     msmBaseWidget = new MechOrSynManagerBaseWidget(1)

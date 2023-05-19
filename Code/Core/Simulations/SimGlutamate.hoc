@@ -156,12 +156,12 @@ proc showGlutamateUi() {
 // Opens Glutamate simulation window.
 
 proc RunAstroGlu() {
- if ($1 > 0) {
-    load_file(1, "Code/Core/Simulations/PointProcessManager.hoc")
-	OnlySingleGluSimulations = 0
-	} else {
-	print "New trials"
-	}
+    if ($1 > 0) {
+        load_file(1, "Code/Core/Simulations/PointProcessManager.hoc")
+        OnlySingleGluSimulations = 0
+    } else {
+        print "New trials"
+    }
     initParamsGlutamate()
     showGlutamateUi()
 }

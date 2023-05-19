@@ -1,8 +1,12 @@
 
+if (!isBaseOrNanoStart) {
+    { load_file("../Widgets/Inhomogeneity/SegmentationHelper.hoc") }
+}
+
 begintemplate InhomAndStochTarget
 
-    public isEqual, isStochEnabled, updateInhom, updateStoch, setPlayIfPossible, stopPlayingVars, onInit, onStep, restoreInhomogeneity, disableInhomOrStoch
-    public isDmOrSynPart, compIdx, mechIdx, mechName, isInhom, isStoch
+    public makeOrUpdateInhom, makeOrUpdateStoch, isEqual, isStochEnabled, getInhomModelData, getStochModelData, setPlayIfPossible, stopPlayingVars, onInit, onStep, restoreInhomogeneity, disableInhomOrStoch
+    public isDmOrSynPart, compIdx, mechIdx, mechName, varType, isInhom, distFuncCatIdx, distFuncIdx, distFuncHelper, isStoch, stochFuncCatIdx, stochFuncIdx
     
     external smAllSyns
     external mwh, rngUtils, mth, compUtils
@@ -22,40 +26,47 @@ begintemplate InhomAndStochTarget
     strdef varName
     arraySize = -1
     arrayIndex = -1
-    objref distFuncHelper
+    
+    objref segmentationHelper, distFuncHelper
     objref boundingHelper, stochFuncHelper
     
     objref list_ref
     
     isInhom = -1
+    distFuncCatIdx = -1
+    distFuncIdx = -1
     isStoch = -1
     stochFuncCatIdx = -1
     stochFuncIdx = -1
     isPlayable = -1
     objref baseMechStd, tempMechStd
     
+    objref tempImpRedObj
+    
     objref this
     
     
-    proc init() { local numArg localobj nil
+    proc init() { local numArg localobj impRedObj, nil
         numArg = numarg()
         
-        if (numArg != 7 && numArg != 11) {
+        if (numArg == 1) {
+            // Load data from the imported reduced template (part 1)
+            impRedObj = $o1
+            enumDmPpNc = impRedObj.enumDmPpNc
+            compIdx = impRedObj.compIdx
+            mechIdx = impRedObj.mechIdx
+            varType = impRedObj.varType
+            varIdx = impRedObj.varIdx
+            arrayIndex = impRedObj.arrayIndex
+        } else if (numArg == 6) {
+            enumDmPpNc = $1
+            compIdx = $2
+            mechIdx = $3
+            varType = $4
+            varIdx = $5
+            arrayIndex = $6
+        } else {
             codeContractViolation()
-        }
-        
-        enumDmPpNc = $1
-        compIdx = $2
-        mechIdx = $3
-        varType = $4
-        varIdx = $5
-        arrayIndex = $6
-        distFuncHelper = $o7
-        if (numArg == 11) {
-            boundingHelper = $o8
-            stochFuncHelper = $o9
-            stochFuncCatIdx = $10
-            stochFuncIdx = $11
         }
         
         isDmOrSynPart = (enumDmPpNc == 0)
@@ -74,13 +85,50 @@ begintemplate InhomAndStochTarget
             tempMechStd = new MechanismStandard(mechName, varType)
         } else {
             // !! need to test if using this "Fake*" template with "in-set-out" workflow we still achieve better performance
-            //   than "sprint"-ing and executing a HOC-command for direct var assignment
+            //    than "sprint"-ing and executing a HOC-command for direct var assignment
             execute("tempMechStd = new FakeMechanismStandardForNetCon()", this)     // The template is not loaded for astrocytes
         }
         
-        isInhom = (distFuncHelper != nil)
-        isStoch = (boundingHelper != nil)
+        if (impRedObj == nil) {
+            return
+        }
         
+        // Load data from the imported reduced template (part 2)
+        
+        if (impRedObj.segmentationHelper != nil) {
+            tempImpRedObj = impRedObj
+            execute("segmentationHelper = new SegmentationHelper(tempImpRedObj.segmentationHelper)", this)  // If isBaseOrNanoStart, then the template will be sourced at a later time
+            tempImpRedObj = nil
+        }
+        distFuncHelper = impRedObj.distFuncHelper
+        distFuncCatIdx = impRedObj.distFuncCatIdx
+        distFuncIdx = impRedObj.distFuncIdx
+        isInhom = impRedObj.isInhom
+        
+        boundingHelper = impRedObj.boundingHelper
+        stochFuncHelper = impRedObj.stochFuncHelper
+        stochFuncCatIdx = impRedObj.stochFuncCatIdx
+        stochFuncIdx = impRedObj.stochFuncIdx
+        isStoch = impRedObj.isStoch
+        
+        setIsPlayable()
+    }
+    
+    proc makeOrUpdateInhom() {
+        segmentationHelper = $o1
+        distFuncHelper = $o2
+        distFuncCatIdx = $3
+        distFuncIdx = $4
+        isInhom = 1
+        setIsPlayable()
+    }
+    
+    proc makeOrUpdateStoch() {
+        boundingHelper = $o1
+        stochFuncHelper = $o2
+        stochFuncCatIdx = $3
+        stochFuncIdx = $4
+        isStoch = 1
         setIsPlayable()
     }
     
@@ -88,18 +136,24 @@ begintemplate InhomAndStochTarget
         return (enumDmPpNc == $1 && compIdx == $2 && mechIdx == $3 && varType == $4 && varIdx == $5 && arrayIndex == $6)
     }
     
-    proc updateInhom() {
-        distFuncHelper = $o1
-        isInhom = 1
+    proc getInhomModelData() {
+        if (!isInhom) {
+            codeContractViolation()
+        }
+        $o1 = segmentationHelper
+        $o2 = distFuncHelper
+        $&3 = distFuncCatIdx
+        $&4 = distFuncIdx
     }
     
-    proc updateStoch() {
-        boundingHelper = $o1
-        stochFuncHelper = $o2
-        stochFuncCatIdx = $3
-        stochFuncIdx = $4
-        isStoch = 1
-        setIsPlayable()
+    proc getStochModelData() {
+        if (!isStoch) {
+            codeContractViolation()
+        }
+        $o1 = boundingHelper
+        $o2 = stochFuncHelper
+        $&3 = stochFuncCatIdx
+        $&4 = stochFuncIdx
     }
     
     func setPlayIfPossible() { local x, homogenValue localobj sec_ref
@@ -165,7 +219,10 @@ begintemplate InhomAndStochTarget
                 codeContractViolation()
             }
         }
-        if (!isInhom) {
+        
+        if (isInhom) {
+            distFuncHelper.onJustBeforeFirstSection()
+        } else {
             homogenValue = baseMechStd.get(varName, arrayIndex)
         }
         
@@ -173,7 +230,7 @@ begintemplate InhomAndStochTarget
             for eachItemInList(sec_ref, list_ref) {
                 sec_ref.sec {
                     if (isInhom) {
-                        distFuncHelper.onNewSection()   // Needed for "Zebra (sections)" only
+                        distFuncHelper.onJustBeforeNewSection()
                     }
                     for (x, 0) {
                         // The base value
@@ -202,7 +259,7 @@ begintemplate InhomAndStochTarget
             prevSec_ref = nil
             for eachItemInList(syn, smAllSyns) {
                 if (syn.sec_ref != prevSec_ref && isInhom) {
-                    distFuncHelper.onNewSection()   // Needed for "Zebra (sections)" only
+                    distFuncHelper.onJustBeforeNewSection()
                 }
                 
                 if (!syn.sefwPp.isAnyEventsOnThisIter) {
@@ -244,6 +301,10 @@ begintemplate InhomAndStochTarget
                 prevSec_ref = syn.sec_ref
             }
         }
+        
+        if (isInhom) {
+            distFuncHelper.onJustAfterLastSection()
+        }
     }
     
     // Keep in sync with "onStep"
@@ -265,7 +326,10 @@ begintemplate InhomAndStochTarget
         isInhomOrStoch = $1
         if (isInhomOrStoch) {
             isInhom = 0
+            segmentationHelper = nil
             distFuncHelper = nil
+            distFuncCatIdx = -1
+            distFuncIdx = -1
             setIsPlayable()
             return !isStoch
         } else {

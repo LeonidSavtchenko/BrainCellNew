@@ -1,5 +1,5 @@
-load_file("nrngui.hoc")
-load_file("pointgrp.hoc")
+{ load_file("nrngui.hoc") }
+{ load_file("pointgrp.hoc") }
 
 // Show point process group manager with SEClamp params
 objref pointProcessWindow

@@ -40,8 +40,6 @@ obfunc createReferencesToTheseNames() { local idx localobj usedNames, list_ref
 // Other input: isAstrocyteOrNeuron (taken from the top level)
 // Output: soma_ref, dendrite_ref and (for neuron only) axon_ref (all initialized on the top level, List-s of SectionRef-s)
 proc createCompartmentReferences() { local numArg localobj usedNamesForSoma, usedNamesForDendrites, usedNamesForAxon, nil
-    strdef hocCommand
-    
     numArg = numarg()
     
     usedNamesForSoma = $o1

@@ -1,21 +1,20 @@
 
-proc analyzeSectsAndCreateComps() { codeContractViolation() }
+proc makeSureMechCompsCreatedOrImported() { codeContractViolation() }
 proc createSynComps() { codeContractViolation() }
 
 begintemplate InterModularCompUtils
 
-    public makeSureAllCompsCreated, getNumDistMechComps, getComp
+    public makeSureAllCompsCreatedOrImported, getNumDistMechComps, getComp
     
     external mmAllComps, smAllComps
     external isAstrocyteOrNeuron
-    external analyzeSectsAndCreateComps, createSynComps
+    external makeSureMechCompsCreatedOrImported, createSynComps
     
     
     // !! not intermodular actually
-    proc makeSureAllCompsCreated() { localobj nil
-        if (mmAllComps == nil) {
-            analyzeSectsAndCreateComps()
-        }
+    proc makeSureAllCompsCreatedOrImported() { localobj nil
+        makeSureMechCompsCreatedOrImported()
+        // !!! makeSureSynCompsCreatedOrImported()
         if (!isAstrocyteOrNeuron && smAllComps == nil) {
             createSynComps()
         }

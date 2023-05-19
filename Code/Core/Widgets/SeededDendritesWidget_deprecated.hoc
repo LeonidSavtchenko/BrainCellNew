@@ -7,14 +7,10 @@ begintemplate SeededDendritesSelectionWidget
 
     public show
     
-    // List-s of SectionRef
     external dendrite_ref, seededDendrite_ref
-    
-    // proc-s
-    external eachItemInList, checkIfCurrentSecIsDendrite, addThisAndAllChildSecRefsToTheList, removeAllDupSecRefsFromTheList
-    
-    // template-s
     external mwh, nanoBranchesManager
+    external checkIfCurrentSecIsDendrite, addThisAndAllChildSecRefsToTheList, removeAllDupSecRefsFromTheList
+    external eachItemInList
     
     isSelectWholeSubtree = -1
     
