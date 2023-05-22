@@ -1,6 +1,4 @@
 
-// !! BUG: not ready for export
-
 // https://www.neuron.yale.edu/neuron/static/new_doc/programming/math/random.html#Random.erlang
 // https://en.wikipedia.org/wiki/Erlang_distribution
 
@@ -17,17 +15,9 @@ begintemplate ErlangDistHelper
     lambda = -1
     
     
-    proc init() { local inf
+    proc init() {
         parentWidget = $o1
-        
-        k = 2
-        lambda = 3.5
-        
-        inf = math.inf
-        variable_domain(&k, 1, inf)
-        variable_domain(&lambda, float_epsilon, inf)
-        
-        // !! need to prevent fractional values for "k"
+        setParams(2, 3.5)
     }
     
     proc addParamsToPanel() {
@@ -101,11 +91,22 @@ begintemplate ErlangDistHelper
         if (vecOfVals.size() != 2) {
             codeContractViolation()
         }
-        // !! setParams(vecOfVals.x(0), vecOfVals.x(1))
+        setParams(vecOfVals.x(0), vecOfVals.x(1))
     }
     
     // All next staff is private
     
+    
+    proc setParams() { local inf
+        k = $1
+        lambda = $2
+        
+        inf = math.inf
+        variable_domain(&k, 1, inf)
+        variable_domain(&lambda, float_epsilon, inf)
+        
+        // !! need to prevent fractional values for "k"
+    }
     
     func cdfTerm() { local x, n, lambdaX
         x = $1

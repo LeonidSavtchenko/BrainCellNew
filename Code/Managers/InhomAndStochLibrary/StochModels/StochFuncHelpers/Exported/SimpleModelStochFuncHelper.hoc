@@ -1,6 +1,4 @@
 
-// !! BUG: not ready for export
-
 // https://www.neuron.yale.edu/neuron/static/new_doc/programming/math/random.html
 // https://docs.python.org/3/library/random.html#real-valued-distributions
 // https://www.mathworks.com/help/stats/supported-distributions.html
@@ -31,35 +29,14 @@ begintemplate SimpleModelStochFuncHelper
         if (numArg == 0) {
             // Empty by design (we are being created in the exported file, so will be inited in proc importParams shortly downstream)
         } else if (numArg == 1) {
-            modelIdx = $1
-            
-            // !! notes:
-            //    1. we use "execute" below to be able to skip export of unused templates without "*DistHelper is not a template" errors when the exported file is loaded
-            //    2. many of the *DistHelper-s below use quantities which should be calculated and stored internally
-            //       before the loops calling calcPdf and calcCdf to achieve better performance
-            //       e.g. lambda ^ k, sigma * sqrt(2 * PI) etc.
-            if (modelIdx == 0) {
-                execute("distHelper = new UniformDistHelper(this)", this)
-            } else if (modelIdx == 1) {
-                execute("distHelper = new NormalDistHelper(this)", this)
-            } else if (modelIdx == 2) {
-                execute("distHelper = new LogNormalDistHelper(this)", this)
-            } else if (modelIdx == 3) {
-                execute("distHelper = new NegExpDistHelper(this)", this)
-            } else if (modelIdx == 4) {
-                execute("distHelper = new ErlangDistHelper(this)", this)
-            } else if (modelIdx == 5) {
-                execute("distHelper = new WeibullDistHelper(this)", this)
-            } else {
-                codeContractViolation()
-            }
-            
-            rng = rngUtils.getFor_stochFunc_withUniqueSeed()
+            setModelIdx($1)
         } else {
             codeContractViolation()
         }
         
         numPts4Curve = 1000     // !! hardcode
+        
+        rng = rngUtils.getFor_stochFunc_withUniqueSeed()
     }
     
     func selectedHandler() {
@@ -148,7 +125,7 @@ begintemplate SimpleModelStochFuncHelper
         vecOfVals.resize(1)
         vecOfVals.x(0) = modelIdx
         subVecOfVals = new Vector()
-        // !! distHelper.exportParams(subVecOfVals)
+        distHelper.exportParams(subVecOfVals)
         vecOfVals.append(subVecOfVals)
     }
     
@@ -160,9 +137,9 @@ begintemplate SimpleModelStochFuncHelper
             codeContractViolation()
         }
         
-        modelIdx = vecOfVals.x(0)
+        setModelIdx(vecOfVals.x(0))
         subVecOfVals = vecOfVals.c(1)
-        // !! distHelper.importParams(subVecOfVals)
+        distHelper.importParams(subVecOfVals)
     }
     
     proc dismissHandler() { localobj nil
@@ -173,8 +150,33 @@ begintemplate SimpleModelStochFuncHelper
         }
     }
     
-    
     // All next staff is private
+    
+    
+    proc setModelIdx() {
+        modelIdx = $1
+        
+        // !! notes:
+        //    1. we use "execute" below to be able to skip export of unused templates without "*DistHelper is not a template" errors when the exported file is loaded
+        //    2. many of the *DistHelper-s below use quantities which should be calculated and stored internally
+        //       before the loops calling calcPdf and calcCdf to achieve better performance
+        //       e.g. lambda ^ k, sigma * sqrt(2 * PI) etc.
+        if (modelIdx == 0) {
+            execute("distHelper = new UniformDistHelper(this)", this)
+        } else if (modelIdx == 1) {
+            execute("distHelper = new NormalDistHelper(this)", this)
+        } else if (modelIdx == 2) {
+            execute("distHelper = new LogNormalDistHelper(this)", this)
+        } else if (modelIdx == 3) {
+            execute("distHelper = new NegExpDistHelper(this)", this)
+        } else if (modelIdx == 4) {
+            execute("distHelper = new ErlangDistHelper(this)", this)
+        } else if (modelIdx == 5) {
+            execute("distHelper = new WeibullDistHelper(this)", this)
+        } else {
+            codeContractViolation()
+        }
+    }
     
     proc getXminXmaxForGraph() { local mean, sigma, halfRange
         // The bounding is ignored here, and that's by design

@@ -74,9 +74,8 @@ func saveNanoHocFile() { local isSelected
 // Load and validate nanogeometry HOC file
 // Returns: 0/1 flag indicating that the file was loaded successfully
 func loadNanoHocFile() { local isSelected, status
-    strdef filePathName
     
-    isSelected = selectNanoHocFile("r", "Load", filePathName)
+    isSelected = selectNanoHocFile("r", "Load", loadedNanoHocFilePathName)
     if (!isSelected) {
         return 0
     }
@@ -86,7 +85,7 @@ func loadNanoHocFile() { local isSelected, status
     
     mwh.showPleaseWaitBox("Loading nanogeometry file.")
     {
-        status = load_file(1, filePathName)
+        status = load_file(1, loadedNanoHocFilePathName)
     }
     mwh.hidePleaseWaitBox()
     if (!status) {

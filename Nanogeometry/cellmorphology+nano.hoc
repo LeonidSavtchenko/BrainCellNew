@@ -1,29 +1,17 @@
 //////////////////// Table of contents ///////////////////////////////////
 /*
-    Line 19:            Utils
-<<<<<<< HEAD
-    Line 116:           Sections
-    Line 135:           Imported section names
-    Line 308:           Section references
-    Line 540:           Topology
-    Line 3668:          Geometry, nseg, Ra
-    Line 38415:         Distance centre
-    Line 38424:         Synapses
-    Line 38600:         Compartments
-    Line 38884:         Homogen biophysics
-    Line 39558:         Synapse compartments
-=======
-    Line 77:            Sections
-    Line 96:            Imported section names
-    Line 269:           Section references
-    Line 501:           Topology
-    Line 3629:          Geometry, nseg, Ra
-    Line 38376:         Distance centre
-    Line 38385:         Synapses
-    Line 38561:         Compartments
-    Line 38845:         Homogen biophysics
-    Line 39519:         Synapse compartments
->>>>>>> 781d14b808c7c0a319def72f1c9a3d48a3b2b7fa
+    Line 20:            Utils
+    Line 138:           Sections
+    Line 157:           Imported section names
+    Line 330:           Section references
+    Line 562:           Topology
+    Line 3690:          Geometry, nseg, Ra
+    Line 38437:         Distance centre
+    Line 38446:         Compiled mechs
+    Line 38455:         Synapses
+    Line 38631:         Compartments
+    Line 38917:         Homogen biophysics
+    Line 39591:         Synapse compartments
 */
 //////////////////////////////////////////////////////////////////////////
 
@@ -33,14 +21,6 @@ isAstrocyteOrNeuron = 0
 
 objref nil
 
-nan = -1
-{ sscanf("nan", "%f", &nan) }
-
-func isNaN() {
-    return !($1 == $1)  // Do not replace with "!="
-}
-
-<<<<<<< HEAD
 // Print the message, print the call stack, raise the error
 // $s1 - The message
 proc printMsgAndRaiseError() {
@@ -57,22 +37,11 @@ proc printNotImplementedMsgAndRaiseError() {
     execerror(msg1, msg2)
 }
 
-=======
->>>>>>> 781d14b808c7c0a319def72f1c9a3d48a3b2b7fa
 // Report the bug, print the call stack, raise the error
 proc codeContractViolation() {
     execerror("\n\n    Bug in Cell program: Code contract violation", "\n    Please report this problem to the developer along with the call stack shown below\n")
 }
 
-<<<<<<< HEAD
-=======
-// Print the message, print the call stack, raise the error
-// $s1 - The message
-proc printMsgAndRaiseError() {
-    execerror($s1)
-}
-
->>>>>>> 781d14b808c7c0a319def72f1c9a3d48a3b2b7fa
 // An iterator to simplify looping over all elements of the List a bit.
 // Basically, we replace this:
 //     local idx localobj item
@@ -107,38 +76,63 @@ iterator eachItemInList() { local numArg, firstIdx, idx localobj list
     }
 }
 
-<<<<<<< HEAD
-func makeSureDeclared() { local numArg, isIteratorOrObjref
+func makeSureDeclared() { local numArg, isCustomDeclaration, i localobj hocCommandTempls
     strdef name, hocCommand
     
     numArg = numarg()
-    if (numArg == 0 || numArg > 2) {
+    
+    if (numArg == 0) {
         codeContractViolation()
     }
+    
     name = $s1
-    if (numArg == 1) {
-        isIteratorOrObjref = 0
-    } else {
-        isIteratorOrObjref = $2
-    }
-    if (!isIteratorOrObjref) {
-        hocCommand = "objref %s"
-    } else {
-        hocCommand = "iterator %s() { codeContractViolation() }"
-    }
-    if (!name_declared(name)) {
-        sprint(hocCommand, hocCommand, name)
-        // execute(hocCommand)  // This works for objref, but doesn't work for iterator
-        execute1(hocCommand)    // This works for both objref and iterator
-        return 0
-    } else {
+    if (name_declared(name)) {
         return 1
     }
+    
+    isCustomDeclaration = (numArg > 1)
+    
+    hocCommandTempls = new List()
+    if (!isCustomDeclaration) {
+        hocCommandTempls.append(new String("objref %s"))
+    } else {
+        for i = 2, numArg {
+            hocCommandTempls.append(new String($si))
+        }
+    }
+    
+    for i = 0, hocCommandTempls.count() - 1 {
+        sprint(hocCommand, hocCommandTempls.o(i).s, name)
+        // execute(hocCommand)  // This works for objref, but doesn't work for iterator
+        execute1(hocCommand)    // This works for both objref and iterator
+    }
+    
+    return 0
 }
 
+isLoadedFromMainProgram = 1
+{ makeSureDeclared("isBaseOrNanoStart", "isLoadedFromMainProgram = 0") }
 
-=======
->>>>>>> 781d14b808c7c0a319def72f1c9a3d48a3b2b7fa
+begintemplate ReducedBasicMath
+
+    public inf, nan
+    public isNaN
+    
+    inf = -1
+    nan = -1
+    
+    proc init() {
+        sscanf("inf", "%f", &inf)
+        sscanf("nan", "%f", &nan)
+    }
+    
+    func isNaN() {
+        return !($1 == $1)  // Do not replace with "!="
+    }
+    
+endtemplate ReducedBasicMath
+
+
 //////////////////// End of utils ////////////////////////////////////////
 
 //////////////////// Start of sections ///////////////////////////////////
@@ -38449,6 +38443,15 @@ soma_ref.o(0).sec distance()
 
 //////////////////// End of distance centre //////////////////////////////
 
+//////////////////// Start of compiled mechs /////////////////////////////
+
+{ makeSureDeclared("ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType", "proc %s() { codeContractViolation() }") }
+if (isLoadedFromMainProgram) {
+    ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType()
+}
+
+//////////////////// End of compiled mechs ///////////////////////////////
+
 //////////////////// Start of synapses ///////////////////////////////////
 
 enumSynLoc = 0
@@ -38627,11 +38630,13 @@ Neuron_AddSynapses_reseed()
 
 //////////////////// Start of compartments ///////////////////////////////
 
+{ makeSureDeclared("math", "objref %s", "%s = new ReducedBasicMath()") }
+
 begintemplate ReducedMechComp
 
     public initHomogenBiophysics
     public name, list_ref, isMechInserted, mechStds
-    external isNaN
+    external math
     
     strdef name
     objref list_ref
@@ -38679,7 +38684,7 @@ begintemplate ReducedMechComp
                             mechStd.out()
                         } else {
                             diamValue = mechStd.get(diamVarName)
-                            if (!isNaN(diamValue)) {
+                            if (!math.isNaN(diamValue)) {
                                 diam = diamValue
                             }
                         }
@@ -39091,7 +39096,7 @@ proc addHomogenBiophysInfoToDendritesComp() { localobj comp, mechStd
     comp.isMechInserted[25] = 1
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
-    mechStd.set("diam", nan)
+    mechStd.set("diam", math.nan)
     comp.mechStds[0][0] = mechStd
     
     mechStd = new MechanismStandard("capacitance", 1)    // PARAMETER
@@ -39247,7 +39252,7 @@ proc addHomogenBiophysInfoToAxonComp() { localobj comp, mechStd
     comp.isMechInserted[25] = 1
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
-    mechStd.set("diam", nan)
+    mechStd.set("diam", math.nan)
     comp.mechStds[0][0] = mechStd
     
     mechStd = new MechanismStandard("pas", 1)    // PARAMETER
@@ -39341,7 +39346,7 @@ proc addHomogenBiophysInfoToSpineNeckComp() { localobj comp, mechStd
     comp.isMechInserted[25] = 1
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
-    mechStd.set("diam", nan)
+    mechStd.set("diam", math.nan)
     comp.mechStds[0][0] = mechStd
     
     mechStd = new MechanismStandard("pas", 1)    // PARAMETER
@@ -39448,7 +39453,7 @@ proc addHomogenBiophysInfoToSpineHeadComp() { localobj comp, mechStd
     comp.isMechInserted[25] = 1
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
-    mechStd.set("diam", nan)
+    mechStd.set("diam", math.nan)
     comp.mechStds[0][0] = mechStd
     
     mechStd = new MechanismStandard("pas", 1)    // PARAMETER

@@ -1,28 +1,34 @@
 
-func makeSureDeclared() { local numArg, isIteratorOrObjref
+func makeSureDeclared() { local numArg, isCustomDeclaration, i localobj hocCommandTempls
     strdef name, hocCommand
     
     numArg = numarg()
-    if (numArg == 0 || numArg > 2) {
+    
+    if (numArg == 0) {
         codeContractViolation()
     }
+    
     name = $s1
-    if (numArg == 1) {
-        isIteratorOrObjref = 0
-    } else {
-        isIteratorOrObjref = $2
-    }
-    if (!isIteratorOrObjref) {
-        hocCommand = "objref %s"
-    } else {
-        hocCommand = "iterator %s() { codeContractViolation() }"
-    }
-    if (!name_declared(name)) {
-        sprint(hocCommand, hocCommand, name)
-        // execute(hocCommand)  // This works for objref, but doesn't work for iterator
-        execute1(hocCommand)    // This works for both objref and iterator
-        return 0
-    } else {
+    if (name_declared(name)) {
         return 1
     }
+    
+    isCustomDeclaration = (numArg > 1)
+    
+    hocCommandTempls = new List()
+    if (!isCustomDeclaration) {
+        hocCommandTempls.append(new String("objref %s"))
+    } else {
+        for i = 2, numArg {
+            hocCommandTempls.append(new String($si))
+        }
+    }
+    
+    for i = 0, hocCommandTempls.count() - 1 {
+        sprint(hocCommand, hocCommandTempls.o(i).s, name)
+        // execute(hocCommand)  // This works for objref, but doesn't work for iterator
+        execute1(hocCommand)    // This works for both objref and iterator
+    }
+    
+    return 0
 }

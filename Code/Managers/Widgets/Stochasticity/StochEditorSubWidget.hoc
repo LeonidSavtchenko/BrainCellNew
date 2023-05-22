@@ -1158,12 +1158,7 @@ begintemplate StochEditorSubWidget
         if (wasStoch) {
             verb = "updated"
         } else {
-            if (isMechOrSynEditor) {
-                comp.isMechVarTypeStoch[mechIdx][varTypeIdx] = 1    // !! or = (stdDev > 0) ?
-            }
-            
             updateThisAndParentWidgets(1)
-            
             verb = "enabled"
         }
         
@@ -1191,12 +1186,7 @@ begintemplate StochEditorSubWidget
         }
         
         if (wasStoch) {
-            if (isMechOrSynEditor) {
-                comp.isMechVarTypeStoch[mechIdx][varTypeIdx] = 0
-            }
-            
             updateThisAndParentWidgets(0)
-            
             showStochStatusMsg(0, "disabled")
         } else {
             mwh.showMessageBox("Nothing to disable.", "No stochasticity")

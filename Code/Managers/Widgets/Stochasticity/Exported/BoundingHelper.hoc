@@ -101,7 +101,12 @@ begintemplate BoundingHelper
         stochFuncHelper = $o1
         
         value = stochFuncHelper.firstDice()
-        stdDev = distHelper.getStdDev()
+        
+        // Don't replace "stochFuncHelper.distHelper" with "distHelper" below because otherwise we hit "getStdDev : object prefix is NULL" error
+        // when !isBaseOrNanoStart and we try to start the simulation with an imported stoch model
+        // Explanation: "distHelper" is set in "prepareForPdfAndCdfBounding" which is called only from StochEditorSubWidget
+        stdDev = stochFuncHelper.distHelper.getStdDev()
+        
         colourizationHelper.resetHistoryAndSetStdDev(stdDev)
         
         return colourizeAndBoundValue(stochFuncHelper, value)

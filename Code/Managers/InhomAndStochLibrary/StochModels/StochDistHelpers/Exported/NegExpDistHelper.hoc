@@ -1,6 +1,4 @@
 
-// !! BUG: not ready for export
-
 // https://www.neuron.yale.edu/neuron/static/new_doc/programming/math/random.html#Random.negexp
 // https://www.mathworks.com/help/stats/exponential-distribution.html
 // https://en.wikipedia.org/wiki/Exponential_distribution
@@ -17,13 +15,9 @@ begintemplate NegExpDistHelper
     lambda = -1
     
     
-    proc init() { local inf
+    proc init() {
         parentWidget = $o1
-        
-        lambda = 3.5
-        
-        inf = math.inf
-        variable_domain(&lambda, float_epsilon, inf)
+        setLambda(3.5)
     }
     
     proc addParamsToPanel() {
@@ -82,7 +76,17 @@ begintemplate NegExpDistHelper
         if (vecOfVals.size() != 1) {
             codeContractViolation()
         }
-        // !! setLambda(vecOfVals.x(0))
+        setLambda(vecOfVals.x(0))
+    }
+    
+    // All next staff is private
+    
+    
+    proc setLambda() { local inf
+        lambda = $1
+        
+        inf = math.inf
+        variable_domain(&lambda, float_epsilon, inf)
     }
     
 endtemplate NegExpDistHelper

@@ -11,14 +11,14 @@
 //          to achieve this, we'll have to store segmentationHelper in MechComp rather than in InhomAndStochTarget)
 //      * onMovingDistanceCentre (we need to re-apply all inhomogen models)
 
-// !! create a few specialized iterators to simplify the loops in this template (e.g. eachActiveSpecVarInSyn)
+// !! maybe create a few specialized iterators to simplify the loops in this template (e.g. eachActiveSpecVarInSyn or eachActiveStochSpecVarInDistMech)
 
 begintemplate InhomAndStochLibrary
     
     public isInhomEnabledFor, isStochEnabledFor, onInhomApply, onStochApply, getInhomModelDataFor, getStochModelDataFor, onMakingVarHomogen, onStochDisable, onNanoReseedOrUpdate
     public isAnyNonVerbatimInhomVarsForDistMechs, getNumInhomVarsForDistMechs, getNumStochVarsForDistMechs, onMechInsert, onMechUninsert, onCompSplit, onCompMerge
     public getNumInhomVarsForSyns, getNumStochVarsForSyns, isAnyStochVarsForSyns, onSynLocChange, onSynStrucChange
-    public doesThisVarHaveVerbatimInhomModel, doesAnyInhomVarRequirePython, doesAnyStochVarRequirePython
+    public doesDistMechHaveAnyStochVars, doesThisVarHaveVerbatimInhomModel, doesAnyInhomVarRequirePython, doesAnyStochVarRequirePython
     
     public activeSpecVars
     
@@ -416,6 +416,19 @@ begintemplate InhomAndStochLibrary
         // Commit all the changes to the library
         concatenateTwoLists(activeSpecVars, newActSpecVars)
         concatenateTwoLists(inactiveSpecVars, newInactSpecVars)
+    }
+    
+    // in: compIdx, mechIdx
+    func doesDistMechHaveAnyStochVars() { local isFound localobj actSpecVar
+        isFound = 0
+        for eachItemInList(actSpecVar, activeSpecVars) {
+            if (actSpecVar.isDmOrSynPart && actSpecVar.isStoch && actSpecVar.compIdx == $1 && actSpecVar.mechIdx == $2) {
+                // Don't replace with "return 1"
+                isFound = 1
+                break
+            }
+        }
+        return isFound
     }
     
     // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex

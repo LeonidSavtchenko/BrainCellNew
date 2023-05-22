@@ -3,7 +3,7 @@ begintemplate ReducedMechComp
 
     public initHomogenBiophysics
     public name, list_ref, isMechInserted, mechStds
-    external isNaN
+    external math
     
     strdef name
     objref list_ref
@@ -51,7 +51,7 @@ begintemplate ReducedMechComp
                             mechStd.out()
                         } else {
                             diamValue = mechStd.get(diamVarName)
-                            if (!isNaN(diamValue)) {
+                            if (!math.isNaN(diamValue)) {
                                 diam = diamValue
                             }
                         }

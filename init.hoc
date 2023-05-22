@@ -3,6 +3,9 @@
 isBaseOrNanoStart = -1      // 1 - base, 0 - nano
 isAstrocyteOrNeuron = -1    // 1 - astrocyte, 0 - neuron
 
+strdef startDir
+startDir = getcwd()
+
 objref soma_ref
 objref roadmapWidget
 

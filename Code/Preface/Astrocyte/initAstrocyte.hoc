@@ -141,6 +141,8 @@ proc initMainProgram() {
     plotShapeGeometry.unmap()
     Boxleaves.unmap()
     
+    loadDefaultMechsDllDependingOnCellType()
+    
     load_file("Code/Preface/CommonPreface.hoc")
     
     // Astrocyte simulation preface complete

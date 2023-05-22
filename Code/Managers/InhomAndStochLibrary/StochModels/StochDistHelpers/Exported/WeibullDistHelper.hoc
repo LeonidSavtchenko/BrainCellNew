@@ -1,6 +1,4 @@
 
-// !! BUG: not ready for export
-
 // https://www.neuron.yale.edu/neuron/static/new_doc/programming/math/random.html#Random.weibull
 // https://www.mathworks.com/help/stats/weibull-distribution.html
 // https://en.wikipedia.org/wiki/Weibull_distribution
@@ -18,15 +16,9 @@ begintemplate WeibullDistHelper
     lambda = -1
     
     
-    proc init() { local inf
+    proc init() {
         parentWidget = $o1
-        
-        k = 2.5
-        lambda = 3.5
-        
-        inf = math.inf
-        variable_domain(&k, 0.1, inf)
-        variable_domain(&lambda, float_epsilon, inf)
+        setParams(2.5, 3.5)
     }
     
     proc addParamsToPanel() {
@@ -98,7 +90,19 @@ begintemplate WeibullDistHelper
         if (vecOfVals.size() != 2) {
             codeContractViolation()
         }
-        // !! setParams(vecOfVals.x(0), vecOfVals.x(1))
+        setParams(vecOfVals.x(0), vecOfVals.x(1))
+    }
+    
+    // All next staff is private
+    
+    
+    proc setParams() { local inf
+        k = $1
+        lambda = $2
+        
+        inf = math.inf
+        variable_domain(&k, 0.1, inf)
+        variable_domain(&lambda, float_epsilon, inf)
     }
     
 endtemplate WeibullDistHelper

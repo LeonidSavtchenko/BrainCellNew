@@ -4,7 +4,6 @@ begintemplate BasicMath
     public inf, nan
     public min, max, updateMinMax, isNaN, disableGreedyComparison, restoreGreedyComparison
     
-    external getInfinity, getNaN
     external codeContractViolation
     
     inf = -1
@@ -15,8 +14,8 @@ begintemplate BasicMath
     
     
     proc init() {
-        inf = getInfinity()
-        nan = getNaN()
+        sscanf("inf", "%f", &inf)
+        sscanf("nan", "%f", &nan)
         
         isGreedyComparisonEnabled = 1
     }

@@ -1,5 +1,5 @@
 
-import os
+import os, math
 from neuron import h, hoc, nrn
 from OtherUtils import *
 
@@ -23,10 +23,6 @@ class Generators:
         lines.append('objref nil')
         lines.append('')
         
-        newLines = self.insertAllLinesFromReducedVersionFile('ReducedMath.hoc')
-        lines.extend(newLines)
-        lines.append('')
-        
         newLines = self.insertAllLinesFromFile('Code\\InterModular\\Exported\\InterModularErrWarnUtils_Exported.hoc')
         lines.extend(newLines)
         lines.append('')
@@ -39,6 +35,22 @@ class Generators:
         lines.extend(newLines)
         lines.append('')
         
+        lines.append('isLoadedFromMainProgram = 1')
+        lines.append('{ makeSureDeclared("isBaseOrNanoStart", "isLoadedFromMainProgram = 0") }')
+        lines.append('')
+        
+        # The instances of the next reduced templates from "InterModular" folder are created
+        # only in standalone mode; otherwise we just reuse the instances created earlier in the main program
+        
+        newLines = self.insertAllLinesFromReducedVersionFile('InterModular\\ReducedBasicMath.hoc')
+        lines.extend(newLines)
+        lines.append('')
+        
+        if self._exportOptions.isExportAnyStochFuncs():
+            newLines = self.insertAllLinesFromReducedVersionFile('InterModular\\ReducedRNGUtils.hoc')
+            lines.extend(newLines)
+            lines.append('')
+            
         if not self._exportOptions.isPythonRequired():
             return lines
             
@@ -151,6 +163,20 @@ class Generators:
             lines.append('}')
         return lines
         
+    # Keep this before "createReducedMechComps" because the latter allocates arrays based on the loaded mechs
+    def loadCompiledMechs(self):
+        if not (self._exportOptions.isExportDistMechs or self._exportOptions.isExportSyns):
+            return emptyParagraphHint()
+        
+        lines = []
+        
+        lines.append('{ makeSureDeclared("ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType", "proc %s() { codeContractViolation() }") }')
+        lines.append('if (isLoadedFromMainProgram) {')
+        lines.append('    ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType()')
+        lines.append('}')
+        
+        return lines
+        
     # !! BUG: In rare cases, an error "procedure too big" may occur when user loads the exported file.
     #         This error takes place while sourcing one of obfunc-s named "getListOfSecRefsFor*Comp".
     #         The root cause is that the base geometry file imported earlier
@@ -158,11 +184,17 @@ class Generators:
     #         To fix this error, we'll have to init all list_ref-s on the top level rather than in the obfunc-s.
     def createReducedMechComps(self):
     
+        lines = []
+        
+        lines.append('{ makeSureDeclared("math", "objref %s", "%s = new ReducedBasicMath()") }')
+        lines.append('')
+        
         if not self._exportOptions.isExportDistMechs:
             fileName = 'ReducedMechComp1.hoc'   # name, list_ref
         else:
             fileName = 'ReducedMechComp2.hoc'   # name, list_ref, isMechInserted, mechStds
-        lines = self.insertAllLinesFromReducedVersionFile(fileName)
+        newLines = self.insertAllLinesFromReducedVersionFile(fileName)
+        lines.extend(newLines)
         lines.append('')
         
         mmAllComps = self._hocObj.mmAllComps
@@ -253,6 +285,8 @@ class Generators:
                             if (varType == 1 and value == defaultValue) or (varType > 1 and value == 0):
                                 continue
                             # !! BUG: When user turns off the export of inhom models in _exportOptions, we still assign "nan" here
+                            if math.isnan(value):
+                                value = 'math.nan'
                             if arraySize == 1:
                                 newLines.append('    mechStd.set("{}", {})'.format(varName, value))
                             else:
@@ -359,15 +393,20 @@ class Generators:
             
         lines = []
         
-        # !!! just a temp solution: we need to bind these names as templates' external-s even though they won't be used in the exported file;
+        # !!!! BUG: The random sequences won't be the same in the main program and the exported file until
+        #      each seed given by rngUtils.getFor_stochFunc_withUniqueSeed is saved into corresponding stocDistFunc
+        #      and exported/imported as a part of it
+        lines.append('{ makeSureDeclared("rngUtils", "objref %s", "%s = new ReducedRNGUtils()") }')
+        lines.append('')
+        
+        # !!! just a temp solution: we need to bind these names as templates' external-s even though
+        #     they won't be used (because we don't call all the methods in the exported file);
         #     at the same time, when the file is loaded from the main program, the file needs to:
-        #     (1) preserve all already created objects and callables (e.g. "mwh" and "eachPointInGrid")
+        #     (1) preserve all already created "InterModular" objects and callables (e.g. "mwh" and "eachPointInGrid")
         #     (2) stub all required objects and callables allowing them to be defined later in the main program (e.g. "specMath" and "callPythonFunction")
         lines.append('{ makeSureDeclared("mwh") }')
-        lines.append('{ makeSureDeclared("math") }')
-        lines.append('{ makeSureDeclared("rngUtils") }')
         lines.append('{ makeSureDeclared("stochTestGraph") }')
-        lines.append('{ makeSureDeclared("eachPointInGrid", 1) }')
+        lines.append('{ makeSureDeclared("eachPointInGrid", "iterator %s() { codeContractViolation() }") }')
         lines.append('objref specMath')
         lines.append('func callPythonFunction() { codeContractViolation() }')
         lines.append('proc definePythonFunction() { codeContractViolation() }')
@@ -464,6 +503,7 @@ class Generators:
             lines.extend(newLines)
             
             lines.append('{{ inhomAndStochLibrary.onStochApply({}, {}, {}, {}, {}, {}, boundingHelper, stochFuncHelper, {}, {}) }}'.format(int(actSpecVar.enumDmPpNc), int(actSpecVar.compIdx), int(actSpecVar.mechIdx), int(actSpecVar.varType), int(actSpecVar.varIdx), int(actSpecVar.arrayIndex), int(actSpecVar.stochFuncCatIdx), int(actSpecVar.stochFuncIdx)))
+            lines.append('')
             
         return lines
         

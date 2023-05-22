@@ -5,6 +5,7 @@ objref usedNamesForDendrites, nanoBranchesManager, seededDendrites_ref
 
 { load_file("Exported/InterModularErrWarnUtils_Exported.hoc") }
 { load_file("InterModularPythonUtils.hoc") }
+{ load_file("InterModularMechsDllUtils.hoc") }
 { load_file("InterModularBasicMath.hoc") }                      // !! not intermodular yet
 { load_file("InterModularListUtils.hoc") }
 { load_file("Widgets/MessageWarningHelper.hoc") }

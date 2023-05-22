@@ -3,7 +3,7 @@
 // (strictly speaking, not a compartment, but rather a collection of sections having the same set of mechanisms)
 begintemplate MechComp
 
-    public name, enumDmPpNc, list_ref, isMechInserted, isMechVarTypeInhom, isMechVarTypeStoch, mechStds, isCompDirty
+    public name, enumDmPpNc, list_ref, isMechInserted, isMechVarTypeInhom, mechStds, isCompDirty
     public finishAllVerbatimInhomProtos, split, mergeAllSectsFrom, showMechStdPanel, markMechDirty, markAllMechsDirty, applyHomogenChangesToDirtyMechs, getDistRange, getSecList, applySegmentationAndInhomogeneity, updateStatsCurve, updateVerbatimModelCurve, isMechVarInhom, prepareVarsEditorHeader, convertVarTypeToVarTypeIdx, updateIsMechVarTypeInhom
     
     external mmAllComps
@@ -17,7 +17,6 @@ begintemplate MechComp
     objref list_ref                     // List of SectionRef-s
     double isMechInserted[1]            // 0/1 flags
     double isMechVarTypeInhom[1][1]     // 0/1 flags
-    double isMechVarTypeStoch[1][1]     // 0/1 flags    !! maybe get rid of this at all
     // !! would it make sense to create these MechanismStandard-s without 2nd ctor arg and get rid of 2nd dimension in this array?
     objref mechStds[1][1]               // MechanismStandard-s      // !! maybe put "nil" here if the mech does not have any vars of such type
     // !! think about having a 2-D array of special objects like mechStds[1][1], but for stochasticity
@@ -59,7 +58,6 @@ begintemplate MechComp
         
         double isMechInserted[numMechs]         // 0/1 flags
         double isMechVarTypeInhom[numMechs][3]  // 0/1 flags
-        double isMechVarTypeStoch[numMechs][3]  // 0/1 flags
         objref mechStds[numMechs][3]            // 0: "PARAMETER", 1: "ASSIGNED", 2: "STATE"
         double isMechDirty[numMechs]            // 0/1 flags
         
@@ -551,8 +549,6 @@ begintemplate MechComp
                 
                 initIsMechVarTypeInhom(mechIdx, varType)    // This will set isMechVarTypeInhom[mechIdx][varTypeIdx] = 1 if needed
             }
-            
-            // !!! init isMechVarTypeStoch
         }
     }
     

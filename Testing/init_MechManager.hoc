@@ -1,6 +1,4 @@
 
-{ nrnpython("import neuron;neuron.load_mechanisms('..')") }
-
 isAstrocyteOrNeuron = -1
 { load_file("../Code/InterModular/AllInterModularUtils.hoc") }
 

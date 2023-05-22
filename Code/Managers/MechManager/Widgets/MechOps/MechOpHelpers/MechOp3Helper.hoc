@@ -8,7 +8,7 @@ begintemplate MechOp3Helper
     
     external mmAllComps
     external mth, mmmowb, mcu, inhomAndStochLibrary
-    external dismissIfNotNil
+    external dismissIfNotNil, codeContractViolation
     
     objref defineStochFuncSubWidget
     
@@ -28,9 +28,7 @@ begintemplate MechOp3Helper
         // $s2 is not assigned
     }
     
-    func isSkipBlock() { local compIdx, mechIdx, isSkipBasedOnMech, varType, varTypeIdx localobj comp
-        strdef varName
-        
+    func isSkipBlock() { local compIdx, mechIdx, isSkipBasedOnMech, isMechStoch
         compIdx = $1
         mechIdx = $2
         
@@ -39,33 +37,20 @@ begintemplate MechOp3Helper
             return 1
         }
         
-        comp = mmAllComps.o(compIdx)
-        
-        for varType = 1, 3 {    // 1: "PARAMETER", 2: "ASSIGNED", 3: "STATE"
-            varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
-            if (comp.isMechVarTypeStoch[mechIdx][varTypeIdx]) {
-                return 0
-            }
-        }
-        
-        return 1
+        isMechStoch = inhomAndStochLibrary.doesDistMechHaveAnyStochVars(compIdx, mechIdx)
+        return !isMechStoch
     }
     
-    func insertBlock() { local compIdx, mechIdx, numInsertedItems, varType, varTypeIdx, numVars, varIdx, arraySize, arrayIndex, isStoch localobj comp
+    func insertBlock() { local compIdx, mechIdx, numInsertedItems, varType, numVars, varIdx, arraySize, arrayIndex, isStoch
         strdef name, varTypeName, varName, varNameWithIndexAndUnits, text, handlerHocCommand
         
         compIdx = $1
         mechIdx = $2
         name = $s3
         
-        comp = mmAllComps.o(compIdx)
-        
         numInsertedItems = 0
+        
         for varType = 1, 3 {    // 1: "PARAMETER", 2: "ASSIGNED", 3: "STATE"
-            varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
-            if (!comp.isMechVarTypeStoch[mechIdx][varTypeIdx]) {
-                continue
-            }
             mth.getVarTypeName(varType, varTypeName)
             numVars = mth.getNumMechVars(0, mechIdx, varType)
             for varIdx = 0, numVars - 1 {
@@ -81,6 +66,10 @@ begintemplate MechOp3Helper
                     }
                 }
             }
+        }
+        
+        if (numInsertedItems == 0) {
+            codeContractViolation()
         }
         
         return numInsertedItems

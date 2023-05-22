@@ -21,20 +21,6 @@ proc _callPythonStringFunc() { local status
     }
 }
 
-func _getPythonMathConst() { local status
-    strdef pyMathConstName, pyCommand
-    
-    pyMathConstName = $s1
-    
-    sprint(pyCommand, "pyRes = float('%s')", pyMathConstName)   // !!? or "import math;pyRes = math.%s"
-    status = nrnpython(pyCommand)
-    if (!status) {
-        printMsgAndRaiseError("Exception raised in Python code (caught in _getPythonMathConst)")
-    }
-    
-    return pyObj.pyRes
-}
-
 // Convert string to lower case
 // $s1 - The input string
 // $s2 (output) - The lower case string
@@ -91,12 +77,4 @@ func isValidSecName() {
     secName = $s1
     _callPythonStringFunc(secName, "isidentifier()")
     return pyObj.pyRes
-}
-
-func getInfinity() {
-    return _getPythonMathConst("inf")
-}
-
-func getNaN() {
-    return _getPythonMathConst("nan")
 }

@@ -1,6 +1,4 @@
 
-// !! BUG: not ready for export
-
 // https://www.neuron.yale.edu/neuron/static/new_doc/programming/math/random.html#Random.uniform
 // https://www.mathworks.com/help/stats/uniform-distribution-continuous.html
 // https://en.wikipedia.org/wiki/Continuous_uniform_distribution
@@ -19,14 +17,9 @@ begintemplate UniformDistHelper
     mean = -1   // Used only in "play" mode, otherwise 0
     
     
-    proc init() { local inf
+    proc init() {
         parentWidget = $o1
-        
-        range = 1e-3
-        
-        inf = math.inf
-        variable_domain(&range, float_epsilon, inf)
-        
+        setRange(1e-3)
         mean = 0
     }
     
@@ -87,18 +80,27 @@ begintemplate UniformDistHelper
     proc exportParams() { localobj vecOfVals
         vecOfVals = $o1
         
-        vecOfVals.resize(2)
+        vecOfVals.resize(1)
         vecOfVals.x(0) = range
-        vecOfVals.x(1) = mean
     }
     
     proc importParams() { localobj vecOfVals
         vecOfVals = $o1
         
-        if (vecOfVals.size() != 2) {
+        if (vecOfVals.size() != 1) {
             codeContractViolation()
         }
-        // !! setParams(vecOfVals.x(0), vecOfVals.x(1))
+        setRange(vecOfVals.x(0))
+    }
+    
+    // All next staff is private
+    
+    
+    proc setRange() { local inf
+        range = $1
+        
+        inf = math.inf
+        variable_domain(&range, float_epsilon, inf)
     }
     
 endtemplate UniformDistHelper

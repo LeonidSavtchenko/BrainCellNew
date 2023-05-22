@@ -1,0 +1,19 @@
+
+begintemplate ReducedRNGUtils
+
+    public getFor_stochFunc_withUniqueSeed
+    
+    uniqueSeedForHoc = -1
+    
+    
+    proc init() {
+        uniqueSeedForHoc = 9    // Keep in sync with RNGUtils
+    }
+    
+    obfunc getFor_stochFunc_withUniqueSeed() { localobj rng
+        rng = new Random(uniqueSeedForHoc)
+        uniqueSeedForHoc += 1
+        return rng
+    }
+    
+endtemplate ReducedRNGUtils
