@@ -1,12 +1,8 @@
 
-isAstrocyteOrNeuron = -1
-{ load_file("../Code/InterModular/AllInterModularUtils.hoc") }
+// Load some test nanogeometry file
+{ load_file("CommonPrefaceForTests.hoc") }
 
-// Load some test cell
-{ load_file("../Nanogeometry/cellmorphology+nano.hoc") }
-isBaseOrNanoStart = 0
-
-objref stochTestGraph
+objref stochTestGraph   // Fixed var name
 { load_file("../Code/Managers/CommonLoads.hoc") }
 { load_file("../Code/Managers/MechManager/MechManager.hoc") }
 { load_file("../Code/Managers/SynManager/SynManager.hoc") }
@@ -14,7 +10,7 @@ objref stochTestGraph
 { load_file("../Code/Export/ExportCoreLoads.hoc") }
 { load_file("../Code/Export/Widgets/ExportWidgetsLoads.hoc") }
 
-exportManagerMainWidget.show()
+{ exportManagerMainWidget.show() }
 
 { chdir("..") }     // Without this, getcwd() will return different path compared to the start from "init.hoc"
 

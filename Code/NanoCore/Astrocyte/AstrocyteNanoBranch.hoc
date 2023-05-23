@@ -5,8 +5,6 @@ randomDiamAndLen = rngUtils.getFor_diamAndLen()
 
 // Both leaves and stalks:
 // diamStep = -1                                // Already defined in Core/NanoDistrFromFile.hoc
-currentMechanismSetup = 0                       // 0 - Electric mechanisms, 1 - Glutamate mechanisms
-DensityGluTransporters = 1e12                   // 1/um2
 // Leaves only:
 MinDimLeaves = 1                                // um
 MaxDimLeaves = 3                                // um

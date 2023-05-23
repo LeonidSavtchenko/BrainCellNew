@@ -156,6 +156,7 @@ begintemplate InhomAndStochTarget
         $&4 = stochFuncIdx
     }
     
+    // Keep in sync with ReducedInhomAndStochTarget.setPlayIfPossible
     func setPlayIfPossible() { local x, homogenValue localobj sec_ref
         strdef hocCommand
         
@@ -176,6 +177,7 @@ begintemplate InhomAndStochTarget
         return 1
     }
     
+    // Keep in sync with ReducedInhomAndStochTarget.stopPlayingVars
     proc stopPlayingVars() {
         if (!isPlayable) {
             return
@@ -198,6 +200,7 @@ begintemplate InhomAndStochTarget
         distFuncHelper.resetMeanOnStopPlaying()
     }
     
+    // Keep in sync with ReducedInhomAndStochTarget.onInit
     proc onInit() {
         if (isStoch) {
             // One unused value to set up the generator and the colourizer
@@ -207,6 +210,7 @@ begintemplate InhomAndStochTarget
     
     // Keep in sync with "restoreInhomogeneity"
     // !! why don't I call comp.applyInhomogeneity to simplify this proc?
+    // Keep in sync with ReducedInhomAndStochTarget.onStep
     proc onStep() { local homogenValue, x, value, dist, isWeightVar localobj sec_ref, prevSec_ref, nil, syn, synPart
         // !! can I move the code before "for" to "onInit" proc?
         if (isPlayable) {
@@ -346,6 +350,7 @@ begintemplate InhomAndStochTarget
     // All next staff is private
     
     
+    // Keep in sync with ReducedInhomAndStochTarget.setIsPlayable
     proc setIsPlayable() {
         if (!isStoch) {
             isPlayable = 0

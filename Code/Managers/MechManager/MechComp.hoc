@@ -522,7 +522,7 @@ begintemplate MechComp
         return 0
     }
     
-    proc initFromImportedReducedTemplate() { local numMechs, mechIdx, isInserted, varType, varTypeIdx localobj impRedObj, mechStd, nil
+    proc initFromImportedReducedTemplate() { local numMechs, mechIdx, isInserted, varType, varTypeIdx, isNil localobj impRedObj, mechStd, nil
         strdef mechName
         
         impRedObj = $o1
@@ -542,12 +542,15 @@ begintemplate MechComp
                 varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
                 
                 mechStd = impRedObj.mechStds[mechIdx][varTypeIdx]
-                if (mechStd == nil) {
+                isNil = (mechStd == nil)
+                if (isNil) {
                     mechStd = new MechanismStandard(mechName, varType)
                 }
                 mechStds[mechIdx][varTypeIdx] = mechStd
                 
-                initIsMechVarTypeInhom(mechIdx, varType)    // This will set isMechVarTypeInhom[mechIdx][varTypeIdx] = 1 if needed
+                if (!isNil) {
+                    initIsMechVarTypeInhom(mechIdx, varType)    // This will set isMechVarTypeInhom[mechIdx][varTypeIdx] = 1 if needed
+                }
             }
         }
     }

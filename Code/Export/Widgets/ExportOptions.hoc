@@ -31,10 +31,10 @@ begintemplate ExportOptions
         isExportDistMechAssignedAndState = 1
         isExportDistMechInhoms = 1
         isExportDistMechStochs = 1
-        isExportSyns = 1
-        isExportSynAssignedAndState = 1
-        isExportSynInhoms = 1
-        isExportSynStochs = 1
+        isExportSyns = !isAstrocyteOrNeuron
+        isExportSynAssignedAndState = !isAstrocyteOrNeuron
+        isExportSynInhoms = !isAstrocyteOrNeuron
+        isExportSynStochs = !isAstrocyteOrNeuron
         isCreateParamsHoc = 0
         isExposeModelVars = 0
         isCreateRunnerHoc = 0

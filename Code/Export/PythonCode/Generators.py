@@ -171,8 +171,16 @@ class Generators:
         lines = []
         
         lines.append('{ makeSureDeclared("ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType", "proc %s() { codeContractViolation() }") }')
+        lines.append('objref mechType')
         lines.append('if (isLoadedFromMainProgram) {')
         lines.append('    ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType()')
+        lines.append('} else {')
+        if self._exportOptions.isExportDistMechs:
+            newLines = self._createCheckForNumMechs(0, 'Distributed Membrane Mechanisms')
+            lines.extend(newLines)
+        if self._exportOptions.isExportSyns:
+            newLines = self._createCheckForNumMechs(1, 'Point Processes')
+            lines.extend(newLines)
         lines.append('}')
         
         return lines
@@ -320,6 +328,16 @@ class Generators:
             
         lines = []
         
+        if self._exportOptions.isExportAnyStochFuncs():
+            # !!!! BUG: The random sequences won't be the same in the main program and the exported file until
+            #      each seed given by rngUtils.getFor_stochFunc_withUniqueSeed is saved into corresponding stocDistFunc
+            #      and exported/imported as a part of it
+            lines.append('{ makeSureDeclared("rngUtils", "objref %s", "%s = new ReducedRNGUtils()") }')
+        else:
+            lines.append('{ makeSureDeclared("rngUtils") }')
+        lines.append('')
+        
+        # !! try to avoid exporting the RNG staff in ReducedInhomAndStochTarget if not self._exportOptions.isExportAnyStochFuncs()
         newLines = self.insertAllLinesFromReducedVersionFile('ReducedInhomAndStochTarget.hoc')
         lines.extend(newLines)
         lines.append('')
@@ -392,12 +410,6 @@ class Generators:
             return emptyParagraphHint()
             
         lines = []
-        
-        # !!!! BUG: The random sequences won't be the same in the main program and the exported file until
-        #      each seed given by rngUtils.getFor_stochFunc_withUniqueSeed is saved into corresponding stocDistFunc
-        #      and exported/imported as a part of it
-        lines.append('{ makeSureDeclared("rngUtils", "objref %s", "%s = new ReducedRNGUtils()") }')
-        lines.append('')
         
         # !!! just a temp solution: we need to bind these names as templates' external-s even though
         #     they won't be used (because we don't call all the methods in the exported file);
@@ -492,6 +504,7 @@ class Generators:
             lines.append('colourizationHelper.chromaticity = {}'.format(int(colourizationHelper.chromaticity)))
             lines.append('colourizationHelper.colour = {}'.format(int(colourizationHelper.colour)))
             lines.append('colourizationHelper.alpha = {}'.format(colourizationHelper.alpha))
+            lines.append('{ colourizationHelper.consumeSettings() }')
             
             lines.append('boundingHelper = new BoundingHelper(colourizationHelper)')
             lines.append('boundingHelper.where = {}'.format(int(boundingHelper.where)))
@@ -579,6 +592,14 @@ class Generators:
             lines.append('{{ {}.append(new String("{}")) }}'.format(varName, thisStr.s))
         return lines
         
+        
+    def _createCheckForNumMechs(self, isDmOrPp, hint):
+        lines = []
+        lines.append('    mechType = new MechanismType({})     // {}: "{}"'.format(isDmOrPp, isDmOrPp, hint))
+        lines.append('    if (mechType.count() != {}) {{'.format(int(self._hocObj.mth.getNumMechs(isDmOrPp))))
+        lines.append('        printMsgAndRaiseError("Please make sure the correct file \\"nrnmech.dll\\" is present in the same folder with this HOC file.")')
+        lines.append('    }')
+        return lines
         
     def _createAndInitOneDistOrStochFuncHelper(self, distOrStochFuncHelper, varName):
         lines = []

@@ -8,10 +8,10 @@
     Line 3690:          Geometry, nseg, Ra
     Line 38437:         Distance centre
     Line 38446:         Compiled mechs
-    Line 38455:         Synapses
-    Line 38631:         Compartments
-    Line 38917:         Homogen biophysics
-    Line 39591:         Synapse compartments
+    Line 38465:         Synapses
+    Line 38641:         Compartments
+    Line 38927:         Homogen biophysics
+    Line 39601:         Synapse compartments
 */
 //////////////////////////////////////////////////////////////////////////
 
@@ -38446,8 +38446,18 @@ soma_ref.o(0).sec distance()
 //////////////////// Start of compiled mechs /////////////////////////////
 
 { makeSureDeclared("ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType", "proc %s() { codeContractViolation() }") }
+objref mechType
 if (isLoadedFromMainProgram) {
     ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType()
+} else {
+    mechType = new MechanismType(0)     // 0: "Distributed Membrane Mechanisms"
+    if (mechType.count() != 28) {
+        printMsgAndRaiseError("Please make sure the correct file \"nrnmech.dll\" is present in the same folder with this HOC file.")
+    }
+    mechType = new MechanismType(1)     // 1: "Point Processes"
+    if (mechType.count() != 23) {
+        printMsgAndRaiseError("Please make sure the correct file \"nrnmech.dll\" is present in the same folder with this HOC file.")
+    }
 }
 
 //////////////////// End of compiled mechs ///////////////////////////////

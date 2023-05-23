@@ -6,6 +6,7 @@ objref seClamp
 // Sets SEClamp params on the soma.
 // $1 - Amplitude
 // $2 - Duration
+// !! the only call of this proc is commented
 proc stimulGlu() {
     soma_ref.o(0).sec {
         seClamp = new SEClamp(0.5)
@@ -25,6 +26,8 @@ proc stimulGlu() {
 // $8 - Gluin
 // $9 - Time decay
 // $10 - - Z coordinate circle center
+// !! BUG 1: For neurons, this proc fails with error "GluTrans mechanism not inserted in section axon[0]"
+// !! BUG 2: For astrocytes, this proc fails with similar error if user left some sections unspecified during the import (neither marked as soma nor as dendrite)
 proc GluIteration () { local tau1, tau2
     tau1 = $5
     tau2 = $9

@@ -1,10 +1,6 @@
 
-isAstrocyteOrNeuron = -1
-{ load_file("../Code/InterModular/AllInterModularUtils.hoc") }
-
-// Load some test cell
-{ load_file("../Nanogeometry/cellmorphology+nano.hoc") }
-isBaseOrNanoStart = 0
+// Load some test nanogeometry file
+{ load_file("CommonPrefaceForTests.hoc") }
 
 objref stochTestPlotShape
 stochTestPlotShape = new PlotShape()
@@ -14,7 +10,7 @@ stochTestPlotShape = new PlotShape()
 tstop = 15
 
 // Watch some var just to test stochasticity applied with AltRunControlWidget
-objref stochTestGraph
+objref stochTestGraph   // Fixed var name
 stochTestGraph = new Graph()
 // !! "Graph.addvar" doesn't work for NetCon vars, e.g. "smAllSyns.o(123).netCon.weight" (no idea why);
 //    to watch a NetCon var, have to select it manually (click in the corner of the Graph, then "Plot what?")

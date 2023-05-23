@@ -1,18 +1,15 @@
 
-isAstrocyteOrNeuron = -1
-{ load_file("../Code/InterModular/AllInterModularUtils.hoc") }
-
-// Load some test cell
-{ load_file("../Nanogeometry/cellmorphology+nano.hoc") }
-isBaseOrNanoStart = 0
+// Load some test nanogeometry file
+{ load_file("CommonPrefaceForTests.hoc") }
 
 objref cellPlotShape
 cellPlotShape = new PlotShape()
 
 // Watch some var just to test stochasticity applied with AltRunControlWidget
-objref stochTestGraph
+objref stochTestGraph   // Fixed var name
 stochTestGraph = new Graph()
 { stochTestGraph.addvar("dendA2_0101111.cm(0.25)") }
+{ stochTestGraph.size(0, tstop, 0.795, 0.805) }
 { graphList[0].append(stochTestGraph) }
 
 { load_file("../Code/Managers/CommonLoads.hoc") }
