@@ -1,15 +1,17 @@
-TITLE na3
+TITLE nax
 : Na current for axon. No slow inact.
 : M.Migliore Jul. 1997
+: added sh to account for higher threshold M.Migliore, Apr.2002
 
 NEURON {
 	SUFFIX nax
 	USEION na READ ena WRITE ina
-	RANGE  gbar
+	RANGE  gbar, sh
 	GLOBAL minf, hinf, mtau, htau,thinf, qinf
 }
 
 PARAMETER {
+	sh   = 8	(mV)
 	gbar = 0.010   	(mho/cm2)	
 								
 	tha  =  -30	(mV)		: v 1/2 for act	
@@ -60,31 +62,31 @@ BREAKPOINT {
 } 
 
 INITIAL {
-	trates(v)
+	trates(v,sh)
 	m=minf  
 	h=hinf
 }
 
 DERIVATIVE states {   
-        trates(v)      
+        trates(v,sh)      
         m' = (minf-m)/mtau
         h' = (hinf-h)/htau
 }
 
-PROCEDURE trates(vm) {  
+PROCEDURE trates(vm,sh2) {  
         LOCAL  a, b, qt
         qt=q10^((celsius-24)/10)
-	a = trap0(vm,tha,Ra,qa)
-	b = trap0(-vm,-tha,Rb,qa)
+	a = trap0(vm,tha+sh2,Ra,qa)
+	b = trap0(-vm,-tha-sh2,Rb,qa)
 	mtau = 1/(a+b)/qt
         if (mtau<mmin) {mtau=mmin}
 	minf = a/(a+b)
 
-	a = trap0(vm,thi1,Rd,qd)
-	b = trap0(-vm,-thi2,Rg,qg)
+	a = trap0(vm,thi1+sh2,Rd,qd)
+	b = trap0(-vm,-thi2-sh2,Rg,qg)
 	htau =  1/(a+b)/qt
         if (htau<hmin) {htau=hmin}
-	hinf = 1/(1+exp((vm-thinf)/qinf))
+	hinf = 1/(1+exp((vm-thinf-sh2)/qinf))
 }
 
 FUNCTION trap0(v,th,a,q) {

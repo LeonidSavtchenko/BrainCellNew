@@ -1,16 +1,17 @@
 TITLE na3
 : Na current 
-: from Jeff M.
-:  ---------- modified -------M.Migliore may97
+: modified from Jeff Magee. M.Migliore may97
+: added sh to account for higher threshold M.Migliore, Apr.2002
 
 NEURON {
 	SUFFIX na3
 	USEION na READ ena WRITE ina
-	RANGE  gbar, ar2
+	RANGE  gbar, ar, sh
 	GLOBAL minf, hinf, mtau, htau, sinf, taus,qinf, thinf
 }
 
 PARAMETER {
+	sh   = 8	(mV)
 	gbar = 0.010   	(mho/cm2)	
 								
 	tha  =  -30	(mV)		: v 1/2 for act	
@@ -40,7 +41,7 @@ PARAMETER {
         smax=10		(ms)
         vvh=-58		(mV) 
         vvs=2		(mV)
-        ar2=1		(1)		: 1=no inact., 0=max inact.
+        ar=1		(1)		: 1=no inact., 0=max inact.
 	ena		(mV)            : must be explicitly def. in hoc
 	celsius
 	v 		(mV)
@@ -72,7 +73,7 @@ BREAKPOINT {
 } 
 
 INITIAL {
-	trates(v,ar2)
+	trates(v,ar,sh)
 	m=minf  
 	h=hinf
 	s=sinf
@@ -80,40 +81,40 @@ INITIAL {
 
 
 FUNCTION alpv(v(mV)) {
-         alpv = 1/(1+exp((v-vvh)/vvs))
+         alpv = 1/(1+exp((v-vvh-sh)/vvs))
 }
         
 FUNCTION alps(v(mV)) {  
-  alps = exp(1.e-3*zetas*(v-vhalfs)*9.648e4/(8.315*(273.16+celsius)))
+  alps = exp(1.e-3*zetas*(v-vhalfs-sh)*9.648e4/(8.315*(273.16+celsius)))
 }
 
 FUNCTION bets(v(mV)) {
-  bets = exp(1.e-3*zetas*gms*(v-vhalfs)*9.648e4/(8.315*(273.16+celsius)))
+  bets = exp(1.e-3*zetas*gms*(v-vhalfs-sh)*9.648e4/(8.315*(273.16+celsius)))
 }
 
 LOCAL mexp, hexp, sexp
 
 DERIVATIVE states {   
-        trates(v,ar2)      
+        trates(v,ar,sh)      
         m' = (minf-m)/mtau
         h' = (hinf-h)/htau
         s' = (sinf - s)/taus
 }
 
-PROCEDURE trates(vm,a2) {  
+PROCEDURE trates(vm,a2,sh2) {  
         LOCAL  a, b, c, qt
         qt=q10^((celsius-24)/10)
-	a = trap0(vm,tha,Ra,qa)
-	b = trap0(-vm,-tha,Rb,qa)
+	a = trap0(vm,tha+sh2,Ra,qa)
+	b = trap0(-vm,-tha-sh2,Rb,qa)
 	mtau = 1/(a+b)/qt
         if (mtau<mmin) {mtau=mmin}
 	minf = a/(a+b)
 
-	a = trap0(vm,thi1,Rd,qd)
-	b = trap0(-vm,-thi2,Rg,qg)
+	a = trap0(vm,thi1+sh2,Rd,qd)
+	b = trap0(-vm,-thi2-sh2,Rg,qg)
 	htau =  1/(a+b)/qt
         if (htau<hmin) {htau=hmin}
-	hinf = 1/(1+exp((vm-thinf)/qinf))
+	hinf = 1/(1+exp((vm-thinf-sh2)/qinf))
 	c=alpv(vm)
         sinf = c+a2*(1-c)
         taus = bets(vm)/(a0s*(1+alps(vm)))
@@ -129,4 +130,3 @@ FUNCTION trap0(v,th,a,q) {
 }	
 
         
-
