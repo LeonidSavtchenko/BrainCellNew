@@ -1,18 +1,12 @@
 
+{ load_file("Exported/InterModularStringUtils_Exported.hoc") }
+
 // Check if given string is empty
 // $s1 - The string
 // Returns 0/1 flag
 func stringEmpty() { localobj strFuncs
     strFuncs = new StringFunctions()
     return strFuncs.len($s1) == 0
-}
-
-// Check if given two string are equal
-// $s1 - The first string
-// $s2 - The second string
-// Returns 0/1 flag
-func stringsEqual() {
-    return strcmp($s1, $s2) == 0
 }
 
 // Check if given string contains a substring

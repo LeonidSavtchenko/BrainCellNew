@@ -107,7 +107,7 @@ begintemplate NeuronNanoBranch
     }
     
     proc initBiophysics() {
-        // !! warning: g_pas is assigned here and in Preface/Neuron/Biophys.hoc -> proc Neuron_Biophysics_init for neuron nanogeometry
+        // !! warning: g_pas is assigned here and in Prologue/Neuron/Biophys.hoc -> proc Neuron_Biophysics_init for neuron nanogeometry
         spine_neck {
             Ra = 150
             insert pas

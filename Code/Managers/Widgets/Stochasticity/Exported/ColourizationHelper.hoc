@@ -16,7 +16,7 @@
 // https://www.mathworks.com/help/dsp/ref/dsp.colorednoise-system-object.html#bt94_hd-1_sep_bt_0p1b
 begintemplate ColourizationHelper
 
-    public consumeSettings, resetHistoryAndSetStdDev, colourizeValue
+    public consumeSettings, resetHistoryAndSetMeasure, colourizeValue
     public chromaticity, colour, alpha
     
     external codeContractViolation
@@ -32,7 +32,7 @@ begintemplate ColourizationHelper
     objref yHistory, xHistory
     yHistoryHeadIdx = -1
     xHistoryHeadIdx = -1
-    stdDev = -1
+    measure = -1
     
     
     proc init() {
@@ -116,12 +116,12 @@ begintemplate ColourizationHelper
         modulus = n - 1     // Just not to calculate on each iteration
     }
     
-    proc resetHistoryAndSetStdDev() {
+    proc resetHistoryAndSetMeasure() {
         if (alpha == 0) {
             return
         }
         
-        stdDev = $1
+        measure = $1
         
         if (alpha > 0) {
             yHistory.fill(0)
@@ -139,7 +139,7 @@ begintemplate ColourizationHelper
             return x
         }
         
-        x /= stdDev
+        x /= measure
         
         if (alpha > 0) {
             // !! can I use Vector.convlv() or some std Python lib staff?
@@ -155,7 +155,7 @@ begintemplate ColourizationHelper
             y = convolution(xHistory, xHistoryHeadIdx, b)
         }
         
-        return y * stdDev
+        return y * measure
     }
     
     // All next staff is private

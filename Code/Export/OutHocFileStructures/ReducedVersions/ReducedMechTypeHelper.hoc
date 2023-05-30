@@ -1,0 +1,22 @@
+
+begintemplate ReducedMechTypeHelper
+
+    public getVarNameWithIndex
+    
+    // Keep in sync with MechTypeHelper.getVarNameWithIndex
+    proc getVarNameWithIndex() { local arraySize, arrayIndex
+        strdef varName
+        varName = $s1
+        arraySize = $2
+        arrayIndex = $3
+        if (arraySize == 1) {
+            $s4 = varName
+        } else {
+            sprint($s4, "%s[%d]", varName, arrayIndex)
+        }
+    }
+    
+endtemplate ReducedMechTypeHelper
+
+objref mth
+mth = new ReducedMechTypeHelper()

@@ -6,7 +6,7 @@ objref usedNamesForDendrites, nanoBranchesManager, seededDendrites_ref
 { load_file("Exported/InterModularErrWarnUtils_Exported.hoc") }
 { load_file("InterModularPythonUtils.hoc") }
 { load_file("InterModularMechsDllUtils.hoc") }
-{ load_file("InterModularBasicMath.hoc") }                      // !! not intermodular yet
+{ load_file("InterModularBasicMath.hoc") }
 { load_file("InterModularListUtils.hoc") }
 { load_file("Widgets/MessageWarningHelper.hoc") }
 { load_file("InterModularStringUtils.hoc") }
@@ -16,8 +16,8 @@ iterator findSecArrayOrObjectIterator() { codeContractViolation() }
 { load_file("InterModularRNGUtils.hoc") }
 objref smAllComps
 { load_file("InterModularCompUtils.hoc") }
-{ load_file("InterModularWidgetUtils.hoc") }                    // !! not intermodular yet
-{ load_file("InterModularOtherUtils.hoc") }                     // !! not intermodular yet
+{ load_file("InterModularWidgetUtils.hoc") }
+{ load_file("InterModularOtherUtils.hoc") }
 objref mmcoWidget
 { load_file("../Core/PluginsForCompSelectionWidget.hoc") }
 { load_file("Widgets/CompSubsetWidget.hoc") }                   // !! not intermodular yet

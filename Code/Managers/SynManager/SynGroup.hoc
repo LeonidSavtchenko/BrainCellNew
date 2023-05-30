@@ -4,13 +4,13 @@
 // A group of synapses (a counterpart of MechComp template)
 begintemplate SynGroup
 
-    public is3Or1PartInSynStruc, getPpNameOrEmpty, getDistRange, getSecList, applyChangesToLoc, applyChangesToStrucIfNeeded, applyChangesToDirtyHomogenVars, applyInhomogeneityIter, updateStatsCurveIter, updateColormaps, isAnyVarInhom
+    public is3Or1PartInSynStruc, getPpNameOrEmpty, getMechIdxAndOptionalName, getDistRange, getSecList, applyChangesToLoc, applyChangesToStrucIfNeeded, applyChangesToDirtyHomogenVars, applyInhomogeneityIter, updateStatsCurveIter, updateColormaps, isAnyVarInhom
     public witheredSpineNeckDiam
     
     external synManagerMainWidget
     external smAllSyns, smAllComps, nanoProximal_ref, nanoDistal_ref
     external mwh, mth, math, mcu, seh, rngUtils
-    external stringsEqual, codeContractViolation
+    external stringEmpty, stringsEqual, codeContractViolation
     external eachItemInList
     external enumSynCompIdxs, enumSynLoc
     external spineNeckDiamCache, inhomAndStochLibrary
@@ -31,11 +31,13 @@ begintemplate SynGroup
         witheredSpineNeckDiam = 1e-9
     }
     
+    // Keep in sync with ReducedSynGroup.is3Or1PartInSynStruc
     func is3Or1PartInSynStruc() { localobj nil
         // It's a code contract that all the syns have the same structure
         return (smAllSyns.o(0).netCon != nil)
     }
     
+    // Keep in sync with ReducedSynGroup.getPpNameOrEmpty
     proc getPpNameOrEmpty() { local enumPpRole, idx localobj pp, nil, strFunc
         strdef ppNameWithBrackets, ppName
         
@@ -57,6 +59,25 @@ begintemplate SynGroup
         }
         
         $s2 = ppName
+    }
+    
+    // Returns -1 and "" if there is no PP given role
+    func getMechIdxAndOptionalName() { local numArg, enumPpRole
+        strdef mechName
+        numArg = numarg()
+        if (numArg == 0 || numArg > 2) {
+            codeContractViolation()
+        }
+        enumPpRole = $1
+        getPpNameOrEmpty(enumPpRole, mechName)
+        if (numArg == 2) {
+            $s2 = mechName
+        }
+        if (stringEmpty(mechName)) {
+            return -1
+        } else {
+            return mth.getMechIdx(1, mechName)  // 1: "Point Processes"
+        }
     }
     
     func getDistRange() { local distMin, distMax, isDisconnected, dist localobj syn
@@ -123,6 +144,7 @@ begintemplate SynGroup
         isScheduledRescanningOfDistMechs = 1    // !! for higher performance, it would be better to rescan only spine_neck.morphology
     }
     
+    // Keep in sync with ReducedSynGroup.applyChangesToStrucIfNeeded
     func applyChangesToStrucIfNeeded() { local is3Or1PartInSynStruc_new, srcMechIdx, trgMechIdx, sngMechIdx, isForceNewTrgOrSng, is3Or1PartInSynStruc_old, enumTrgOrSngPpRole_old, isSefwEnabled, isSrcMechNameUnchanged, isSefwPresenceUnchanged, isTrgMechNameUnchanged, seed localobj syn, srcPp, trgPp, netCon, sefwPp, sefwNetCon, oldPp, sngPp
         strdef srcMechName, trgMechName, sngMechName, trgOrSngMechName_old, srcMechName_old, trgMechName_old, sngMechName_old
         
@@ -276,6 +298,7 @@ begintemplate SynGroup
     // All next staff is private
     
     
+    // Keep in sync with ReducedSynGroup.createNewSrcPpButTryToInherit
     obfunc createNewSrcPpButTryToInherit() { local mechIdx, isSrcMechNameUnchanged, doesSrcPpRequireSection, synCompIdx localobj syn, mechType, outPp
         strdef mechName
         
@@ -302,6 +325,7 @@ begintemplate SynGroup
         }
     }
     
+    // Keep in sync with ReducedSynGroup.createNewTrgOrSngPpButTryToInherit
     obfunc createNewTrgOrSngPpButTryToInherit() { local mechIdx, isForceNew, synCompIdx, enumPpRole_old, isMechNameUnchanged localobj syn, pp_old
         strdef mechName, mechName_old
         
@@ -322,6 +346,7 @@ begintemplate SynGroup
         }
     }
     
+    // Keep in sync with ReducedSynGroup.createNewNetConButTryToInherit
     obfunc createNewNetConButTryToInherit() { local is3Or1PartInSynStruc_old localobj syn, srcPp, nextPp, netCon, mechStd
         syn = $o1
         srcPp = $o2
@@ -342,6 +367,7 @@ begintemplate SynGroup
     
     objref _tempPp
     
+    // Keep in sync with ReducedSynGroup.createNewPpAttachedToSectionButTryToInherit
     obfunc createNewPpAttachedToSectionButTryToInherit() { local synCompIdx, mechIdx, x, isMechNameUnchanged localobj pp_old, sec_ref, pp_new, nil, mechStd
         strdef mechName, hocCommand
         
@@ -471,11 +497,7 @@ begintemplate SynGroup
         $&4 = spineNeckDiam
     }
     
-    func isSefwPresentInSynStruc() { localobj nil
-        // It's a code contract that all the syns have the same structure
-        return (smAllSyns.o(0).sefwPp != nil)
-    }
-    
+    // Keep in sync with ReducedSynGroup.setDefaultVars
     proc setDefaultVars() { local synCompIdx, mechIdx, numVarTypes, varTypeIdx localobj pp, comp
         synCompIdx = $1
         mechIdx = $2
@@ -489,6 +511,12 @@ begintemplate SynGroup
             // but we'll restore all inhomogeneities shortly downstream calling inhomAndStochLibrary.onSynStrucChange
             comp.mechStds[mechIdx][varTypeIdx].out(pp)
         }
+    }
+    
+    // Keep in sync with ReducedSynGroup.isSefwPresentInSynStruc
+    func isSefwPresentInSynStruc() { localobj nil
+        // It's a code contract that all the syns have the same structure
+        return (smAllSyns.o(0).sefwPp != nil)
     }
     
 endtemplate SynGroup

@@ -2,7 +2,7 @@
 begintemplate SynPPComp
 
     public name, enumDmPpNc, enumPpRole, isMechVarTypeInhom, mechStds
-    public isMechVarInhom, prepareVarsEditorHeader, getDistRange, getSecList, markMechDirty, updateStatsCurve, updateVerbatimModelCurve, applyInhomogeneity, updateIsMechVarTypeInhom, isAnyVarInhom
+    public isMechVarInhom, prepareVarsEditorHeader, getDistRange, getSecList, markMechDirty, updateStatsCurve, updateVerbatimModelCurve, applyInhomogeneity, isAnyVarInhom
     public isMechVarTypeInhom, mechStds, isMechDirty
     
     external mwh, mth, math, mcu
@@ -22,11 +22,21 @@ begintemplate SynPPComp
     objref this
     
     
-    proc init() { local numMechs, mechIdx, varType, varTypeIdx localobj actFirstPp, mechStd
+    proc init() { local numArg, numMechs, mechIdx, varType, varTypeIdx localobj impRedObj, actFirstPp, mechStd, nil
         strdef actPpName, thisPpName
         
-        name = $s1
-        enumPpRole = $2
+        numArg = numarg()
+        if (numArg == 1) {
+            // Load data from the imported reduced template (part 1)
+            impRedObj = $o1
+            name = impRedObj.name
+            enumPpRole = impRedObj.enumPpRole
+        } else if (numArg == 2) {
+            name = $s1
+            enumPpRole = $2
+        } else {
+            codeContractViolation()
+        }
         
         enumDmPpNc = 1
         
@@ -47,6 +57,7 @@ begintemplate SynPPComp
                 
                 if (stringsEqual(thisPpName, actPpName)) {
                     // It's a code contract that all the syns have homogeneous PP-s at the time of new SynPPComp-s construction
+                    // (but this does not apply to "start with nano" mode)
                     mechStd.in(actFirstPp)
                 }
                 
@@ -56,6 +67,22 @@ begintemplate SynPPComp
         }
         
         // !! search for inhomogeneities in the vars
+        
+        if (impRedObj == nil) {
+            return
+        }
+        
+        // Load data from the imported reduced template (part 2)
+        
+        mechIdx = impRedObj.mechIdx
+        for varType = 1, 3 {    // 1: "PARAMETER", 2: "ASSIGNED", 3: "STATE"
+            varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
+            mechStd = impRedObj.mechStds[mechIdx][varTypeIdx]
+            if (mechStd != nil) {
+                mechStds[mechIdx][varTypeIdx] = mechStd     // Replacing it just to have NaN-s for all inhom vars
+                mcu.setOneIfNeededIn_isMechVarTypeInhom(this, mechIdx, varType)
+            }
+        }
     }
     
     // !! code dupl. with MechComp
@@ -154,10 +181,6 @@ begintemplate SynPPComp
             mechStd.set(varName, y, arrayIndex)
             mechStd.out(thisPp)
         }
-    }
-    
-    proc updateIsMechVarTypeInhom() {
-        mcu.updateIsMechVarTypeInhom(this)
     }
     
     func isAnyVarInhom() { local mechIdx

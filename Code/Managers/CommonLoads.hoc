@@ -10,13 +10,26 @@ if (isAstrocyteOrNeuron) {
     objref smAllSyns, enumSynCompIdxs, seh
 }
 
-proc loadIfNotDeclared() {
+proc loadIfNotDeclared() { local numArg, isSkipCodeContractCheck
     strdef templName, hocFileRelPathName
+    
+    numArg = numarg()
+    if (numArg < 2 || numArg > 3) {
+        codeContractViolation()
+    }
+    
     templName = $s1
     hocFileRelPathName = $s2
+    
+    if (numArg == 3) {
+        isSkipCodeContractCheck = $3
+    } else {
+        isSkipCodeContractCheck = 0
+    }
+    
     if (!name_declared(templName)) {
         load_file(hocFileRelPathName)
-    } else if (isBaseOrNanoStart) {
+    } else if (isBaseOrNanoStart && !isSkipCodeContractCheck) {
         codeContractViolation()
     }
 }

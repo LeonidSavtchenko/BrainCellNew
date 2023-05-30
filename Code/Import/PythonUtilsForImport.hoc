@@ -15,7 +15,7 @@ proc copyAndRenameFirstSwcFile() { local status
     
     status = nrnpython(pyCommand)
     if (!status) {
-        printImportFailedMsgAndStop("Cannot create a copy of the first \"*.CNG.swc\" file in just unzipped folder")
+        printImportFailedMsgAndRaiseError("Cannot create a copy of the first \"*.CNG.swc\" file in just unzipped folder")
     }
 }
 
@@ -34,7 +34,6 @@ proc copyHocFile() { local status
     
     status = nrnpython(pyCommand)
     if (!status) {
-        print "Export Failed: Cannot save HOC file to the specified location"
-        stop
+        printMsgAndRaiseError("Export Failed: Cannot save HOC file to the specified location")
     }
 }

@@ -107,7 +107,7 @@ begintemplate StochEditorSubWidget
         
         // The ctor-s below will access parentWidget.boundingHelper, so we have to set it earlier
         
-        // Keep in sync with py: Generators.insertAllUsedStochFuncs
+        // Keep in sync with py:Generators.insertAllUsedStochFuncs
         
         objref stochFuncHelpers[sfc.numStochFuncs]
         
@@ -1152,7 +1152,7 @@ begintemplate StochEditorSubWidget
         wasStoch = inhomAndStochLibrary.onStochApply(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, boundingHelper, stochFuncHelpers[stochFuncIdx], stochFuncCatIdx, stochFuncIdx)
         
         if (!isMechOrSynEditor) {
-            synEditorCommonPreface()
+            synEditorCommonPrologue()
         }
         
         if (wasStoch) {
@@ -1182,7 +1182,7 @@ begintemplate StochEditorSubWidget
                 // !! need to unmap and show the parent widget again to hide the button
             }
         } else {
-            synEditorCommonPreface()
+            synEditorCommonPrologue()
         }
         
         if (wasStoch) {
@@ -1193,7 +1193,7 @@ begintemplate StochEditorSubWidget
         }
     }
     
-    proc synEditorCommonPreface() {
+    proc synEditorCommonPrologue() {
         synManagerMainWidget.applyChangesToSynStrucIfNeeded()
         synManagerMainWidget.applyChangesToDirtyHomogenVarsIfNeeded()
     }
@@ -1205,7 +1205,7 @@ begintemplate StochEditorSubWidget
             varsEditorSubWidget.onApplyOrDisableInStochEditor(varIdx, arrayIndex, isStoch)
         }
         if (!isMechOrSynEditor) {
-            // !! this was called in synEditorCommonPreface upstream, but we updated stoch status later, so have to call it again
+            // !! this was called in synEditorCommonPrologue upstream, but we updated stoch status later, so have to call it again
             synManagerMainWidget.updateNumStochVarsLabel()
         }
     }

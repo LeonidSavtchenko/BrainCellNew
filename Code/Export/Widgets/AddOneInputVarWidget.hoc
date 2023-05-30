@@ -240,8 +240,7 @@ begintemplate AddOneInputVarWidget
                 deck.flip_to(2)
             } else {
                 enumDmPpNc = 1
-                synGroup.getPpNameOrEmpty(comp.enumPpRole, mechName)
-                mechIdx = mth.getMechIdx(1, mechName)
+                mechIdx = synGroup.getMechIdxAndOptionalName(comp.enumPpRole, mechName)
             }
             mechList.append(new ItemOfFilteredBrowsedList(mechIdx, mechName))
         }

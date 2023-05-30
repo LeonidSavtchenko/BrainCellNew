@@ -1,0 +1,8 @@
+
+// Check if given two string are equal
+// $s1 - The first string
+// $s2 - The second string
+// Returns 0/1 flag
+func stringsEqual() {
+    return strcmp($s1, $s2) == 0
+}

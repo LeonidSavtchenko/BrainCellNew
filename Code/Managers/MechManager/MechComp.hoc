@@ -4,7 +4,7 @@
 begintemplate MechComp
 
     public name, enumDmPpNc, list_ref, isMechInserted, isMechVarTypeInhom, mechStds, isCompDirty
-    public finishAllVerbatimInhomProtos, split, mergeAllSectsFrom, showMechStdPanel, markMechDirty, markAllMechsDirty, applyHomogenChangesToDirtyMechs, getDistRange, getSecList, applySegmentationAndInhomogeneity, updateStatsCurve, updateVerbatimModelCurve, isMechVarInhom, prepareVarsEditorHeader, convertVarTypeToVarTypeIdx, updateIsMechVarTypeInhom
+    public finishAllVerbatimInhomProtos, split, mergeAllSectsFrom, showMechStdPanel, markMechDirty, markAllMechsDirty, applyHomogenChangesToDirtyMechs, getDistRange, getSecList, applySegmentationAndInhomogeneity, updateStatsCurve, updateVerbatimModelCurve, isMechVarInhom, prepareVarsEditorHeader, convertVarTypeToVarTypeIdx
     
     external mmAllComps
     external mwh, math, mth, mmmowb, mcu, dfc
@@ -168,7 +168,7 @@ begintemplate MechComp
     }
     
     // !! need to test all isDirty staff carefully
-    // !! keep in sync with ReducedMechComp.initHomogenBiophysics in the exported file
+    // Keep in sync with ReducedMechComp.initHomogenBiophysics in the exported file
     proc applyHomogenChangesToDirtyMechs() { local numMechs, mechIdx, varType, varTypeIdx, x, varIdx, arrayIndex, diamValue localobj mechType, sec_ref, compMechStd, tempMechStd
         strdef mechName, varName, autoAddedIons, msg
         
@@ -376,10 +376,6 @@ begintemplate MechComp
         $&3 = yMax
     }
     
-    proc updateIsMechVarTypeInhom() {
-        mcu.updateIsMechVarTypeInhom(this)
-    }
-    
     // All next staff is private
     
     
@@ -454,7 +450,7 @@ begintemplate MechComp
                         if (!isInhom) {
                             continue
                         }
-                        if (mechIdx == mth.morphologyMechIdx && varType == mth.diamVarType && stringsEqual(varName, mth.diamVarName)) {
+                        if (mth.isDiamDistMechVar(mechIdx, varType, varName)) {
                             continue
                         }
                         
@@ -549,28 +545,7 @@ begintemplate MechComp
                 mechStds[mechIdx][varTypeIdx] = mechStd
                 
                 if (!isNil) {
-                    initIsMechVarTypeInhom(mechIdx, varType)    // This will set isMechVarTypeInhom[mechIdx][varTypeIdx] = 1 if needed
-                }
-            }
-        }
-    }
-    
-    proc initIsMechVarTypeInhom() { local mechIdx, varType, varTypeIdx, numVars, varIdx, arraySize, arrayIndex, value
-        strdef varName
-        
-        mechIdx = $1
-        varType = $2
-        
-        varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
-        
-        numVars = mth.getNumMechVars(0, mechIdx, varType)
-        for varIdx = 0, numVars - 1 {
-            arraySize = mth.getVarNameAndArraySize(0, mechIdx, varType, varIdx, varName)
-            for arrayIndex = 0, arraySize - 1 {
-                value = mechStds[mechIdx][varTypeIdx].get(varName, arrayIndex)
-                if (math.isNaN(value)) {
-                    isMechVarTypeInhom[mechIdx][varTypeIdx] = 1
-                    return
+                    mcu.setOneIfNeededIn_isMechVarTypeInhom(this, mechIdx, varType)
                 }
             }
         }

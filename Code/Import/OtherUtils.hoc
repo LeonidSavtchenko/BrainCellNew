@@ -49,13 +49,14 @@ proc loadHocFile() { local wasSomethingImported, status
     isSomethingImported = 1
     
     if (!status) {
-        print "Import Failed: The loaded HOC file"
-        print "    * Either has some internal error"
-        print "    * Or tries to declare a name reserved by the importer"
+        print "\n\n    Import Failed: The loaded HOC file"
+        print "        * Either has some internal error"
+        print "        * Or tries to declare a name reserved by the importer"
         if (wasSomethingImported) {
-            print "    * Or tries to declare a name already declared by other HOC file imported earlier"
+            print "        * Or tries to declare a name already declared by other HOC file imported earlier"
         }
-        stop
+        print ""
+        execerror("")
     }
 }
 

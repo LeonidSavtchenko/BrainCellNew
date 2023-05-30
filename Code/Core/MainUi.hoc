@@ -81,7 +81,7 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
     
     // LengthXY = 5.5   //
     // LengthZ = 2      // These were not used;
-    // ShiftXY = 200    // also, the first three duplicate those ones from Code\Preface\Astrocyte\initAstrocyte.hoc
+    // ShiftXY = 200    // also, the first three duplicate those ones from Code\Prologue\Astrocyte\initAstrocyte.hoc
     // Distance = 2     //
     
     hBoxMainPanel = new HBox()
@@ -262,7 +262,7 @@ proc showRunControlPanel() {
 }
 
 proc insertElectrode() {
-    load_file(1, "Code/Preface/Neuron/Electrod.hoc")
+    load_file(1, "Code/Prologue/Neuron/Electrod.hoc")
     mwh.showMessageBox("IClamp was inserted into the centre of the first soma section.", "Please be advised that it will be deleted immediately once you close the \"PointProcessGroupManager\" widget.", "IClamp inserted")
 }
 
@@ -271,8 +271,7 @@ proc startMechManager() {
 }
 
 proc startSynManager() {
-    createSynCompsAndShowSynManagerBaseWidget()
-    // !!! makeSureSynCompsCreatedOrImportedThenShowSynManagerBaseWidget()
+    makeSureSynCompsCreatedOrImportedThenShowSynManagerBaseWidget()
 }
 
 proc startExportManager() {

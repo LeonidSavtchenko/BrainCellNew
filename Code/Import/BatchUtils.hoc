@@ -12,7 +12,7 @@ proc createOrCleanUpTempFolder() { local status
     
     status = system(sysCommand)
     if (status) {
-        printImportFailedMsgAndStop("Cannot create or clean up the temporary folder")
+        printImportFailedMsgAndRaiseError("Cannot create or clean up the temporary folder")
     }
 }
 
@@ -33,7 +33,7 @@ proc unzipArchiveWith7ZipAndRenameInputFile() { local status
     sprint(sysCommand, sysCommandTempl, appPathName, inZipFilePathName, outFolderPathName)
     status = system(sysCommand)
     if (status) {
-        printImportFailedMsgAndStop("Cannot unzip the archive with 7-Zip")
+        printImportFailedMsgAndRaiseError("Cannot unzip the archive with 7-Zip")
     }
     
     // Create a copy of the first "*.CNG.swc" file in just unzipped folder giving it fixed name
@@ -61,7 +61,7 @@ proc createReportFileWithNLMorphologyConverter() { local status
     status = system(sysCommand)
     if (status) {
         // Just for sanity. Actually, NLMorphologyConverter does not return error codes, but rather prints a message
-        printImportFailedMsgAndStop("Cannot test the file with NLMorphologyConverter")
+        printImportFailedMsgAndRaiseError("Cannot test the file with NLMorphologyConverter")
     }
 }
 
@@ -94,7 +94,7 @@ proc convertFileToHocWithNLMorphologyConverter() { local somaDiamAndLenOrMinusOn
     status = system(sysCommand)
     if (status) {
         // Just for sanity. Actually, NLMorphologyConverter does not return error codes, but rather prints a message and creates a minimal output file
-        printImportFailedMsgAndStop("Cannot convert the file to HOC format with NLMorphologyConverter")
+        printImportFailedMsgAndRaiseError("Cannot convert the file to HOC format with NLMorphologyConverter")
     }
     
     $s3 = outFilePathName

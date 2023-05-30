@@ -5,7 +5,7 @@
 
 begintemplate SimpleModelStochFuncHelper
 
-    public selectedHandler, valueChangedHandler, showPdf, showCdf, firstDice, nextDice, exportParams, importParams, dismissHandler
+    public selectedHandler, valueChangedHandler, showPdf, showCdf, getMeasure, firstDice, nextDice, exportParams, importParams, dismissHandler
     public mainBox, distHelper, rng
     public parentWidget
     
@@ -106,6 +106,10 @@ begintemplate SimpleModelStochFuncHelper
         
         graph.exec_menu("View = plot")
         graph.flush()
+    }
+    
+    func getMeasure() {
+        return distHelper.getStdDev()
     }
     
     func firstDice() {

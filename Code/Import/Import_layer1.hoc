@@ -79,7 +79,7 @@ proc importHocFile_layer1() { local isCalledAfterConversion, isSomaInsertedDurin
         allNames = getAllSectionNames()
         
         if (allNames.count() == 0) {
-            printImportFailedMsgAndStop("The imported HOC file did not create any section")
+            printImportFailedMsgAndRaiseError("The imported HOC file did not create any section")
         }
         
         if (!isCalledAfterConversion) {

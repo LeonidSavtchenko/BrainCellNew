@@ -2,29 +2,50 @@
 { load_file("SynManagerLoads.hoc") }
 
 
-proc createSynComps() {
-    smAllComps = new List()
-    smAllComps.append(new SynPPComp("Source PP", 0))
-    smAllComps.append(new SynNCComp())
-    smAllComps.append(new SynPPComp("Target PP", 1))
-    smAllComps.append(new SynPPComp("Single PP", 2))
-    enumSynCompIdxs.srcPp = 0
-    enumSynCompIdxs.netCon = 1
-    enumSynCompIdxs.trgPp = 2
-    enumSynCompIdxs.sngPp = 3
+// Keep in sync with hoc:EnumSynCompIdxs.init, py:createReducedSynComps and py:initHomogenSynVars
+proc createOrImportSynComps() { local isCreateOrImport localobj editableComps
+    
+    if (isCreateOrImport) {
+        smAllComps = new List()
+        smAllComps.append(new SynPPComp("Source PP", 0))
+        smAllComps.append(new SynNCComp())
+        smAllComps.append(new SynPPComp("Target PP", 1))
+        smAllComps.append(new SynPPComp("Single PP", 2))
+    } else {
+        if (smAllComps.count() != 4) {
+            codeContractViolation()
+        }
+        editableComps = new List()
+        editableComps.append(new SynPPComp(smAllComps.o(0)))
+        editableComps.append(new SynNCComp(smAllComps.o(1)))
+        editableComps.append(new SynPPComp(smAllComps.o(2)))
+        editableComps.append(new SynPPComp(smAllComps.o(3)))
+        smAllComps = editableComps
+    }
 }
 
-proc createSynCompsAndShowSynManagerBaseWidget() { localobj nil
+isConvertedFromReducedSynCompTemplates = 0
+
+proc makeSureSynCompsCreatedOrImported() { localobj nil
 
     if (isAstrocyteOrNeuron) {
         codeContractViolation()
     }
     
     if (smAllComps == nil) {
-        createSynComps()
+        createOrImportSynComps(1)
+    } else if (!isBaseOrNanoStart && !isConvertedFromReducedSynCompTemplates) {
+        createOrImportSynComps(0)
+        isConvertedFromReducedSynCompTemplates = 1
     }
     
+    // !!!!
     spineNeckDiamCache.cacheAllDiams()
+}
+
+proc makeSureSynCompsCreatedOrImportedThenShowSynManagerBaseWidget() {
+
+    makeSureSynCompsCreatedOrImported()
     
     dismissIfNotNil(msmBaseWidget)
     msmBaseWidget = new MechOrSynManagerBaseWidget(0)

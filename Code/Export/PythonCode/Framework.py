@@ -1,7 +1,7 @@
 
 from neuron import hoc, nrn
+from Generators.Generators import *
 from OtherUtils import *
-from Generators import *
 
 
 _genStartMarker = 'py:'

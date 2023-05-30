@@ -97,17 +97,14 @@ begintemplate BoundingHelper
         return y
     }
     
-    func generateFirstBoundedValue() { local value, stdDev localobj stochFuncHelper
+    func generateFirstBoundedValue() { local value, measure localobj stochFuncHelper
         stochFuncHelper = $o1
         
         value = stochFuncHelper.firstDice()
         
-        // Don't replace "stochFuncHelper.distHelper" with "distHelper" below because otherwise we hit "getStdDev : object prefix is NULL" error
-        // when !isBaseOrNanoStart and we try to start the simulation with an imported stoch model
-        // Explanation: "distHelper" is set in "prepareForPdfAndCdfBounding" which is called only from StochEditorSubWidget
-        stdDev = stochFuncHelper.distHelper.getStdDev()
+        measure = stochFuncHelper.getMeasure()
         
-        colourizationHelper.resetHistoryAndSetStdDev(stdDev)
+        colourizationHelper.resetHistoryAndSetMeasure(measure)
         
         return colourizeAndBoundValue(stochFuncHelper, value)
     }

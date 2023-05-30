@@ -20,7 +20,7 @@ proc loadDiamDistrFile() { local divisions localobj radiiFile, line, neuronLine,
 		// looking for "NEURON" word inside the data file that's located before distribution
         // TO DO Add some action in case if file doesn't contain NEURON word 
         // or has wrong distribution structure
-        while (!radiiFile.eof() && strcmp(neuronLine.s, "NEURON") != 0) {
+        while (!radiiFile.eof() && !stringsEqual(neuronLine.s, "NEURON")) {
             radiiFile.gets(line.s)
             sscanf(line.s, "%[^\n]", neuronLine.s)
         }

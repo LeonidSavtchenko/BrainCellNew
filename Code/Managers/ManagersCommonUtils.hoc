@@ -1,7 +1,7 @@
 
 begintemplate ManagersCommonUtils
 
-    public defineDistFuncHandler, defineStochFuncHandler, createApplyReminder, createEditorSubWidgetDigest, copyAllVarsValuesExceptInhom, updateIsMechVarTypeInhom, isMetaVar
+    public defineDistFuncHandler, defineStochFuncHandler, createApplyReminder, createEditorSubWidgetDigest, copyAllVarsValuesExceptInhom, setOneIfNeededIn_isMechVarTypeInhom, update_isMechVarTypeInhom, isMetaVar
     
     external mmAllComps, smAllComps
     external mwh, math, mth, compUtils
@@ -127,39 +127,45 @@ begintemplate ManagersCommonUtils
         }
     }
     
-    proc updateIsMechVarTypeInhom() { local enumDmPpNc, numMechs, numVarTypes, mechIdx, varTypeIdx, isAnyInhom, numVars, varIdx, arraySize, arrayIndex, value localobj comp, mechStd
+    proc setOneIfNeededIn_isMechVarTypeInhom() { local mechIdx, varType, enumDmPpNc, varTypeIdx, numVars, varIdx, arraySize, arrayIndex, value localobj comp
         strdef varName
         
+        comp = $o1
+        mechIdx = $2
+        varType = $3
+        
+        enumDmPpNc = comp.enumDmPpNc
+        varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
+        
+        numVars = mth.getNumMechVars(enumDmPpNc, mechIdx, varType)
+        for varIdx = 0, numVars - 1 {
+            arraySize = mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName)
+            for arrayIndex = 0, arraySize - 1 {
+                value = comp.mechStds[mechIdx][varTypeIdx].get(varName, arrayIndex)
+                if (math.isNaN(value)) {
+                    comp.isMechVarTypeInhom[mechIdx][varTypeIdx] = 1
+                    return
+                }
+            }
+        }
+    }
+    
+    proc update_isMechVarTypeInhom() { local enumDmPpNc, numMechs, numVarTypes, mechIdx, varType, varTypeIdx localobj comp
         comp = $o1
         
         enumDmPpNc = comp.enumDmPpNc
         numMechs = mth.getNumMechs(enumDmPpNc)
         numVarTypes = mth.getNumVarTypes(enumDmPpNc)
         for mechIdx = 0, numMechs - 1 {
-            for varTypeIdx = 0, numVarTypes - 1 {   // 0: "PARAMETER", 1: "ASSIGNED", 2: "STATE"
-                isAnyInhom = 0
-                
-                mechStd = comp.mechStds[mechIdx][varTypeIdx]
-                numVars = mechStd.count()
-                for varIdx = 0, numVars - 1 {
-                    arraySize = mechStd.name(varName, varIdx)
-                    for arrayIndex = 0, arraySize - 1 {
-                        value = mechStd.get(varName, arrayIndex)
-                        if (math.isNaN(value)) {
-                            isAnyInhom = 1
-                            break
-                        }
-                    }
-                    if (isAnyInhom) {
-                        break
-                    }
-                }
-                
-                comp.isMechVarTypeInhom[mechIdx][varTypeIdx] = isAnyInhom
+            for varType = 1, numVarTypes {      // 1: "PARAMETER", 2: "ASSIGNED", 3: "STATE"
+                varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
+                comp.isMechVarTypeInhom[mechIdx][varTypeIdx] = 0
+                setOneIfNeededIn_isMechVarTypeInhom(comp, mechIdx, varType)
             }
         }
     }
     
+    // Keep in sync with ReducedManagersCommonUtils.isMetaVar
     func isMetaVar() {
         strdef varName
         varName = $s1

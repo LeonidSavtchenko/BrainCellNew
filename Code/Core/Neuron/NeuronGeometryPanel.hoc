@@ -145,7 +145,7 @@ proc switchToOtherNeuronGeometry() { local newChosenSpineGeometry, isCreatePanel
 proc createNeuronGeometryPanel() { local defaultChosenSpineGeometry
 
     // Integer value from 0 to 3 indicating the default checked radiobutton on "Spine Head and Neck Geometry" panel
-    // Keep this value consistent with initialization in Preface/Neuron/initNew.hoc
+    // Keep this value consistent with initialization in Prologue/Neuron/initNew.hoc
     defaultChosenSpineGeometry = 1  // 1 means normal distribution by default
     
     // Neuron geometry distribution switch panel
@@ -179,7 +179,7 @@ proc createNeuronGeometryPanel() { local defaultChosenSpineGeometry
     // Select the default card
     if (defaultChosenSpineGeometry == 1) {
         NormalDistributionOfSpineGeometry_setParams()
-        // execute(geomValueChangedNormalHandler)   // Already done in !!Preface/Neuron/initNew.hoc
+        // execute(geomValueChangedNormalHandler)   // Already done in !!Prologue/Neuron/initNew.hoc
     } else {
         codeContractViolation()
     }

@@ -1,0 +1,192 @@
+/*
+    The software is for a computer design of the astrocyte models.
+The modelling scripts to compute astrocyte physiology were designed from 
+2D cable compartments implemented in NEURON simulation environment.
+Astrocyte models work reliably based on a biophysically detailed multi-compartmental 
+3D structure with ion channels in some or all compartments.
+
+    Last updated 15-May-2018
+    Developed by : DR. Leonid Savtchenko, Prof.Dmitri Rusakov
+    DCEE, Institute of Neurology, University College London, UK
+    Email: leonid.savtchenko@ucl.ac.uk
+*/
+
+objref Boxleaves
+
+proc showAstrocyteLevelOfNanoDetailWidget() {
+    Boxleaves = new VBox()
+    Boxleaves.intercept(1)
+    {
+        MaxNumberStalksPerDendrite = 10
+        xpanel("")
+        xlabel("========== Load astrocyte geometry files ==========")
+        xlabel("Critical parameters of astrocyte geometry.")
+        xlabel("")
+        xlabel("Maximum number of stalks per dendrite")
+        xlabel("This number can be limitless, but if this number is significant")
+        xlabel("then the user needs a cluster of computers for calculations.")
+        xvalue("Max number of stalks", "MaxNumberStalksPerDendrite", 1, "", 0, 1)
+        
+        NumberLeavesPerStalk = 10
+        xlabel("")
+        xlabel("Number of leaves per stalk")
+        xlabel("This number can be limitless, but if this number is significant")
+        xlabel("then the user needs a cluster of computers for calculations.")
+        xvalue("Number of leaves", "NumberLeavesPerStalk", 1, "", 0, 1)
+        xpanel(0)
+    }
+    Boxleaves.intercept(0)
+    Boxleaves.map("Number of stalks and leaves", 50, 300, -1, -1)
+}
+
+showAstrocyteLevelOfNanoDetailWidget()
+
+{ load_file("nrngui.hoc") }
+{ load_file("../../Core/NanoDistrFromFile.hoc") }
+
+// UI
+objref vBoxSelectGeometry, plotShapeGeometry, vBoxSelectGeometryReal
+
+// Shows geometry.
+proc showSelectedGeometry() {
+    removeIfExists(fast_flush_list, plotShapeGeometry)
+    plotShapeGeometry = new PlotShape(0)
+    fast_flush_list.append(plotShapeGeometry)
+    plotShapeGeometry.size(-40,40,-37.0217,37.0217)
+    plotShapeGeometry.variable("v")
+    plotShapeGeometry.view(-40, -37.0217, 80, 74.0433, 850, 300, 433.8, 401.5)
+    plotShapeGeometry.exec_menu("View = plot")
+}
+
+
+
+
+isAstrocyteBaseGeometryImported = 0
+
+// Loads geometry file.
+proc loadGeometryFile() {
+    importHocOrSwcOrZipOrOtherFile("isAstrocyteBaseGeometryImported = 1")
+}
+
+//************************************************************************
+// Geometry of EndFoot
+proc loadGeometryEndFootFile() {
+    importHocOrSwcOrZipOrOtherFile("loadGeometryEndFootFile_afterImport()")
+}
+
+proc loadGeometryEndFootFile_afterImport() {
+
+    isAstrocyteBaseGeometryImported = 1
+    
+    MD=1    // Initial diameter of main branch
+    ML=101  // Initial length of main branch
+    SD =1   // Initial diameter of small branch
+    SL=11   // Initial length of small branch
+    InsertM=1
+    
+    load_file("Code/Prologue/Astrocyte/EndFootNew.hoc")
+    xpanel("EndFoof Geometry",0)
+    xvalue("Main diameter (um)","MD", 1, "setEndFoot(MD, ML, SD, SL)", 0, 1)
+    xvalue("Main Length (um),","ML", 1, "setEndFoot(MD, ML, SD, SL)", 0, 1)
+    xvalue("Small diameter (um)","SD", 1, "setEndFoot(MD, ML, SD, SL)", 0, 1)
+    xvalue("Small length (um)","SL", 1, "setEndFoot(MD, ML, SD, SL)", 0, 1)
+    xbutton("Insert Mechanism","InsertAllMechanism()")
+    xpanel()
+}
+
+//************************************************************************
+// Loads geometry file of reconstructed Astrocyte.
+// The parameter allows to fir the data file to the real geometry
+proc loadGeometryFileReconstract() {
+    importHocOrSwcOrZipOrOtherFile("loadGeometryFileReconstract_afterImport()")
+}
+
+proc loadGeometryFileReconstract_afterImport() {
+
+    isAstrocyteBaseGeometryImported = 1
+    
+    load_file("Code/Prologue/Astrocyte/StretchXY.hoc")
+//*************************************************************************************
+// These data need to check from reconstructed Astrocyte
+    LengthXY = 5.5  // Basic scale of X and Y planes
+    LengthZ = 2     // Basic scale of Z scale
+    ShiftXY = 200   // in um shift in X and Y planes
+// ************************************************************************************
+    vBoxSelectGeometryReal = new VBox()
+    vBoxSelectGeometryReal.intercept(1)
+    {
+        xpanel("Astrocyte parameters of  Real Geometry",0)
+        xlabel(" The initial data in the file init.hoc")
+        xvalue("X - Y scale (pixel/um)","LengthXY", 1, "stretchXY( LengthXY, LengthZ, ShiftXY)", 0, 1)
+        xvalue("Z scale (pixel/um)","LengthZ", 1, "stretchXY( LengthXY, LengthZ, ShiftXY)", 0, 1)
+        xvalue("X-Y shift (um)","ShiftXY", 1, "stretchXY( LengthXY, LengthZ, ShiftXY)", 0, 1)
+        xpanel()
+    }
+    vBoxSelectGeometryReal.intercept(0)
+    vBoxSelectGeometryReal.map("Astrocyte model", 500, 300, -1, -1)
+    
+    //stretchXY( LengthXY, LengthZ, ShiftXY)
+}
+
+
+// Close geometry window and show main program UI.
+proc initMainProgram() {
+
+    if (!isAstrocyteBaseGeometryImported) {
+        mwh.showWarningBox("Please load some geometry file first.")
+        return
+    }
+    
+    vBoxSelectGeometry.unmap()
+    plotShapeGeometry.unmap()
+    Boxleaves.unmap()
+    
+    loadDefaultMechsDllDependingOnCellType()
+    
+    load_file("Code/Prologue/CommonPrologue.hoc")
+    
+    // Astrocyte simulation prologue complete
+    prologueCompleteHandler()
+}
+
+
+
+// Shows geometry selection UI.
+proc showSelectGeometryUi() {
+    vBoxSelectGeometry = new VBox()
+    vBoxSelectGeometry.intercept(1)
+    {
+        xpanel("")
+        xlabel("========== Load astrocyte geometry files ==========")
+        xlabel("Load astrocyte stem tree.")
+        xlabel("(Several examples can be found in 'Geometry' folder.)")
+        xbutton("Select library  stem tree", "loadGeometryFile()")
+        //**************************************************************
+        xlabel("========== Load astrocyte geometry files ==========")
+        xlabel("Load basic astrocyte model with dendrites, soma and endfoot.")
+        xlabel("(Several examples can be found in 'Geometry' folder.)")
+        xbutton("Select stem tree with endfoot", "loadGeometryEndFootFile()")
+        //*************************************************************
+        xlabel("========== Load astrocyte geometry files ==========")
+        xlabel("Load basic (Real reconstructed) astrocyte skeleton with dendrites and soma.")
+        xlabel("(Several examples can be found in 'Geometry' folder.)")
+        xbutton("Select reconstructed stem tree", "loadGeometryFileReconstract()")
+        //*************************************************************
+        xlabel("-----------------------------------------------------------------------------------------")
+        xlabel("Load distribution of diameters for leaves and stalks")
+        xlabel("obtained using Nano programme.")
+        xlabel("(Optional. Uniform distribution will be used instead.)")
+        xbutton("Select diameter distribution for nano geometry", "loadDiamDistrFile()")
+        xlabel("=============================================")
+        xlabel("Astrocyte model with protocols of computation:")
+        xlabel("FRAP, Electrical, Calcium, Glutamate and Potassium  dynamics")
+        xbutton("Start Astro.", "initMainProgram()")
+        xlabel("-----------------------------------------------------------------------------------------")
+        xbutton("Quit", "quit()")
+        xpanel(0)
+    }
+    vBoxSelectGeometry.intercept(0)
+    vBoxSelectGeometry.map("Astrocyte model", 500, 170, -1, -1)
+}
+
+showSelectGeometryUi()

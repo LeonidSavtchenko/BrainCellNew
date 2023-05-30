@@ -1,4 +1,4 @@
 
-{ load_file("EnumSynCompIdxs.hoc") }
-{ load_file("SynEventsHelper.hoc") }
+loadIfNotDeclared("EnumSynCompIdxs", "Exported/EnumSynCompIdxs.hoc", 1)     // !! it would be better to avoid the 3rd arg "1"
+loadIfNotDeclared("SynEventsHelper", "Exported/SynEventsHelper.hoc", 1)     //
 { load_file("FakesForNetCon/LoadsForFakeMechanismForNetCon.hoc") }

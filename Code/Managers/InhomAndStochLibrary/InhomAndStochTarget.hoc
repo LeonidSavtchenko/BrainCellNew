@@ -16,8 +16,8 @@ begintemplate InhomAndStochTarget
     // "init" args
     enumDmPpNc = -1
     isDmOrSynPart = -1
+    enumPpRoleOrMinus1 = -1
     compIdx = -1
-    objref comp
     mechIdx = -1
     strdef mechName
     varType = -1
@@ -46,7 +46,7 @@ begintemplate InhomAndStochTarget
     objref this
     
     
-    proc init() { local numArg localobj impRedObj, nil
+    proc init() { local numArg localobj impRedObj, comp, nil
         numArg = numarg()
         
         if (numArg == 1) {
@@ -74,6 +74,12 @@ begintemplate InhomAndStochTarget
         comp = compUtils.getComp(isDmOrSynPart, compIdx)
         if (isDmOrSynPart) {
             list_ref = comp.list_ref
+        }
+        
+        if (enumDmPpNc == 1) {
+            enumPpRoleOrMinus1 = comp.enumPpRole
+        } else {
+            enumPpRoleOrMinus1 = -1
         }
         
         mth.getMechName(enumDmPpNc, mechIdx, mechName)
@@ -272,7 +278,7 @@ begintemplate InhomAndStochTarget
                 }
                 
                 if (enumDmPpNc == 1) {
-                    synPart = syn.getPointProcess(comp.enumPpRole)
+                    synPart = syn.getPointProcess(enumPpRoleOrMinus1)
                 } else if (enumDmPpNc == 2) {
                     synPart = syn.netCon
                 } else {
@@ -312,7 +318,7 @@ begintemplate InhomAndStochTarget
     }
     
     // Keep in sync with "onStep"
-    proc restoreInhomogeneity() {
+    proc restoreInhomogeneity() { localobj comp
         if (!isInhom) {
             codeContractViolation()
         }

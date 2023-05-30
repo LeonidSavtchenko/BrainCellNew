@@ -2,12 +2,13 @@
 begintemplate ExportOptions
 
     public isExportDistMechs, isExportDistMechAssignedAndState, isExportDistMechInhoms, isExportDistMechStochs, isExportSyns, isExportSynAssignedAndState, isExportSynInhoms, isExportSynStochs, isCreateParamsHoc, isExposeModelVars, isCreateRunnerHoc, isRecordAndSaveModelVars, isMakeSweepForModelVars, isCopyDll, isNewOrExistingDll
-    public isExportAnyDistFuncs, isExportAnyStochFuncs, isExportAnyInhomBiophysModels, isExportSegmentationHelper, isExportAnyStochBiophysModels, isExportAnyInhomSynModels, isExportAnyStochSynModels
+    public isExportAnyDistFuncs, isExportAnyStochFuncs, isExportAnyInhomBiophysModels, isExportSegmentationHelper, isExportAnyStochBiophysModels, isExportAnyInhomSynModels, isExportAnyStochSynModels, isExportInhomAndStochLibrary, isExportSynEventsHelper
     public isExportedInhomVar, isExportedStochVar, isExportedInhomBiophysVar, isExportedStochBiophysVar, isExportedInhomSynVar, isExportedStochSynVar
     public isPythonRequired
     
     external isAstrocyteOrNeuron
     external inhomAndStochLibrary
+    external synGroup, seh
     
     isExportDistMechs = -1
     isExportDistMechAssignedAndState = -1
@@ -65,11 +66,31 @@ begintemplate ExportOptions
     }
     
     func isExportAnyInhomSynModels() {
-        return (!isAstrocyteOrNeuron && isExportSyns && isExportSynInhoms && inhomAndStochLibrary.getNumInhomVarsForSyns() != 0)
+        return (isExportSyns && isExportSynInhoms && inhomAndStochLibrary.getNumInhomVarsForSyns() != 0)
     }
     
     func isExportAnyStochSynModels() {
-        return (!isAstrocyteOrNeuron && isExportSyns && isExportSynStochs && inhomAndStochLibrary.getNumStochVarsForSyns() != 0)
+        return (isExportSyns && isExportSynStochs && inhomAndStochLibrary.getNumStochVarsForSyns() != 0)
+    }
+    
+    func isExportInhomAndStochLibrary() { local cond1, cond2
+        cond1 = (isExportAnyDistFuncs() || isExportAnyStochFuncs() || isExportSynEventsHelper())
+        if (isExportSyns) {
+            cond2 = synGroup.is3Or1PartInSynStruc()
+        } else {
+            // synGroup is nil
+            cond2 = 0
+        }
+        return cond1 || cond2
+    }
+    
+    func isExportSynEventsHelper() {
+        if (isExportSyns) {
+            return seh.isSefwEnabled()
+        } else {
+            // seh is nil
+            return 0
+        }
     }
     
     func isExportedInhomVar() { localobj activeSpecVar
@@ -145,22 +166,28 @@ begintemplate ExportOptions
     func isExportedInhomSynVar() { localobj activeSpecVar
         activeSpecVar = $o1
         // 1: "PARAMETER"
-        return !isAstrocyteOrNeuron && isExportSyns && activeSpecVar.isInhom && !activeSpecVar.isDmOrSynPart && (activeSpecVar.varType == 1 || isExportSynAssignedAndState)
+        return isExportSyns && activeSpecVar.isInhom && !activeSpecVar.isDmOrSynPart && (activeSpecVar.varType == 1 || isExportSynAssignedAndState)
     }
     
     func isExportedStochSynVar() { localobj activeSpecVar
         activeSpecVar = $o1
         // 1: "PARAMETER"
-        return !isAstrocyteOrNeuron && isExportSyns && activeSpecVar.isStoch && !activeSpecVar.isDmOrSynPart && (activeSpecVar.varType == 1 || isExportSynAssignedAndState)
+        return isExportSyns && activeSpecVar.isStoch && !activeSpecVar.isDmOrSynPart && (activeSpecVar.varType == 1 || isExportSynAssignedAndState)
     }
     
-    func isPythonRequired() { local cond1, cond2, cond3, cond4
-        // The exported file will require Python only if we export any inhom/stoch models requiring Python
+    func isPythonRequired() { local cond1, cond2, cond3, cond4, cond5
+        // The exported file will require Python only if we export any inhom/stoch models requiring Python or we export FakeMechanismStandardForNetCon
         cond1 = (isExportDistMechs && isExportDistMechInhoms && inhomAndStochLibrary.doesAnyInhomVarRequirePython(1, isExportDistMechAssignedAndState))
         cond2 = (isExportSyns && isExportSynInhoms && inhomAndStochLibrary.doesAnyInhomVarRequirePython(0, isExportSynAssignedAndState))
         cond3 = (isExportDistMechStochs && inhomAndStochLibrary.doesAnyStochVarRequirePython(1, isExportDistMechAssignedAndState))
         cond4 = (isExportSynStochs && inhomAndStochLibrary.doesAnyStochVarRequirePython(0, isExportSynAssignedAndState))
-        return cond1 || cond2 || cond3 || cond4
+        if (isExportSyns) {
+            cond5 = synGroup.is3Or1PartInSynStruc()
+        } else {
+            // synGroup is nil
+            cond5 = 0
+        }
+        return cond1 || cond2 || cond3 || cond4 || cond5
     }
     
 endtemplate ExportOptions

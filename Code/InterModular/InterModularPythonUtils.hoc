@@ -2,24 +2,10 @@
 objref pyObj
 pyObj = new PythonObject()
 
+{ load_file("Exported/InterModularPythonUtils_Exported.hoc") }
+
 { nrnpython("from neuron import h") }
 
-// !! use "pyObj.ev" everywhere in the project instead of "nrnpython" to avoid top-level output arg
-{ nrnpython("ev = lambda arg : eval(arg)") }
-
-
-proc _callPythonStringFunc() { local status
-    strdef inStr, pyStringFunc, pyCommand
-    
-    inStr = $s1
-    pyStringFunc = $s2
-    
-    sprint(pyCommand, "pyRes = '%s'.%s", inStr, pyStringFunc)
-    status = nrnpython(pyCommand)
-    if (!status) {
-        printMsgAndRaiseError("Exception raised in Python code (caught in _callPythonStringFunc)")
-    }
-}
 
 // Convert string to lower case
 // $s1 - The input string
@@ -39,20 +25,6 @@ proc stringTruncate() {
     inStr = $s1
     _callPythonStringFunc(inStr, "strip()")
     $s2 = pyObj.pyRes
-}
-
-// !! not intermodular actually
-// Check if the given string starts with the given prefix
-// $s1 - The tested string
-// $s2 - The prefix
-// Returns 0/1 flag
-func stringStartsWith() {
-    strdef inStr, inPrefix, pyMembCall
-    inStr = $s1
-    inPrefix = $s2
-    sprint(pyMembCall, "startswith('%s')", inPrefix)
-    _callPythonStringFunc(inStr, pyMembCall)
-    return pyObj.pyRes
 }
 
 // !! not intermodular actually

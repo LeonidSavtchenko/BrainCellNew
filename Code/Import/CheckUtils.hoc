@@ -55,7 +55,7 @@ proc checkIfSomaAndOrAxonAreMissingInThisGeometryFile() { local len, idx, numAxo
     while (1) {
         len = inFile.gets(inLine)
         if (len == -1) {
-            printImportFailedMsgAndStop("Cannot analyze the report file created by NLMorphologyConverter")
+            printImportFailedMsgAndRaiseError("Cannot analyze the report file created by NLMorphologyConverter")
         }
         idx = strFunc.tail(inLine, "Number of Axons:", numAxonsStr)
         if (idx != -1) {

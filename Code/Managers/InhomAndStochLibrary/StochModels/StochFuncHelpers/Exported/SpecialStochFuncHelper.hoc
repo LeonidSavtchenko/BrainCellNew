@@ -4,7 +4,7 @@
 
 begintemplate SpecialStochFuncHelper
 
-    public selectedHandler, showPdf, showCdf, firstDice, nextDice, exportParams, importParams, dismissHandler
+    public selectedHandler, showPdf, showCdf, getMeasure, firstDice, nextDice, exportParams, importParams, dismissHandler
     public parentWidget
     public value
     
@@ -70,6 +70,10 @@ begintemplate SpecialStochFuncHelper
     
     proc showCdf() {
         codeContractViolation()
+    }
+    
+    func getMeasure() {
+        return 1    // !! ideally, we should return the standard deviation if not 0 and 1 otherwise, but always 1 is OK as well
     }
     
     func firstDice() {

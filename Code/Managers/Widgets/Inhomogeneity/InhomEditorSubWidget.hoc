@@ -81,7 +81,7 @@ begintemplate InhomEditorSubWidget
             isCalledFromVarsEditor = 1
         }
         
-        // Keep in sync with py: Generators.insertAllUsedDistFuncs
+        // Keep in sync with py:Generators.insertAllUsedDistFuncs
         
         objref distFuncHelpers[dfc.numDistFuncs]
         
@@ -361,7 +361,14 @@ begintemplate InhomEditorSubWidget
                             if (isMechOrSynEditor) {
                                 what = "segments (check subdivision on colormap for small \"nseg\")"
                             } else {
-                                what = "PPs (check synapse locations on colormap)"
+                                if (enumDmPpNc == 1) {
+                                    what = "PPs"
+                                } else if (enumDmPpNc == 2) {
+                                    what = "NetCon-s"
+                                } else {
+                                    codeContractViolation()
+                                }
+                                sprint(what, "%s (check synapse locations on colormap)", what)
                             }
                             sprint(text, "Zebra by %s", what)
                             idx = distFuncIdxs[dfc.specialDistFuncCatIdx]
@@ -898,7 +905,7 @@ begintemplate InhomEditorSubWidget
         }
         
         comp.mechStds[mechIdx][varTypeIdx].set(varName, varValue, arrayIndex)
-        comp.updateIsMechVarTypeInhom()
+        mcu.update_isMechVarTypeInhom(comp)
         
         if (!isInhom) {
             inhomAndStochLibrary.onMakingVarHomogen(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)

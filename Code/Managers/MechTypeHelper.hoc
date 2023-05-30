@@ -9,7 +9,7 @@ if (isAstrocyteOrNeuron) {
 
 begintemplate MechTypeHelper
 
-    public getMechType, getNumMechs, getMechName, getMechIdx, getNumVarTypes, getNumMechVars, doesMechHaveGlobalVars, doesMechHaveNotGlobalVars, getVarNameAndArraySize, getVarTypeName, getVarNameWithIndex, getVarNameWithIndexAndUnits, isDistMechSticky, checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar, convertVarTypeToVarTypeIdx, doesPointProcessRequireSection, isPointProcessAcceptableNetConSource, isPointProcessAcceptableNetConTarget
+    public getMechType, getNumMechs, getMechName, getMechIdx, getNumVarTypes, getNumMechVars, doesMechHaveGlobalVars, doesMechHaveNotGlobalVars, getVarNameAndArraySize, getVarTypeName, getVarNameWithIndex, getVarNameWithIndexAndUnits, isDistMechSticky, checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar, isDiamDistMechVar, convertVarTypeToVarTypeIdx, doesPointProcessRequireSection, isPointProcessAcceptableNetConSource, isPointProcessAcceptableNetConTarget
     
     public morphologyMechIdx, diamVarType, diamVarName
     public extracellularMechName, ionSuffix
@@ -188,6 +188,7 @@ begintemplate MechTypeHelper
         }
     }
     
+    // Keep in sync with ReducedMechTypeHelper.getVarNameWithIndex
     proc getVarNameWithIndex() { local arraySize, arrayIndex
         strdef varName
         varName = $s1
@@ -263,13 +264,21 @@ begintemplate MechTypeHelper
             codeContractViolation()
         }
         
-        if (mechIdx == morphologyMechIdx && varType == diamVarType && stringsEqual(varName, diamVarName)) {
+        if (isDiamDistMechVar(mechIdx, varType, varName)) {
             sprint(line1, "Cannot apply inhomogeneity or stochasticity to \"%s\" in %s.", diamVarName, morphologyMechName)
             mwh.showNotImplementedWarning(line1)
             return 1
         }
         
         return 0
+    }
+    
+    func isDiamDistMechVar() { local mechIdx, varType
+        strdef varName
+        mechIdx = $1
+        varType = $2
+        varName = $s3
+        return (mechIdx == morphologyMechIdx && varType == diamVarType && stringsEqual(varName, diamVarName))
     }
     
     func convertVarTypeToVarTypeIdx() { local varType

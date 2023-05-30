@@ -3,7 +3,7 @@ begintemplate SynLocationWidget
 
     public show, getSynLocName, dismissHandler
     
-    external synGroup
+    external mth, synGroup
     external createEmptyPanel, unmapIfNotNil, codeContractViolation
     external enumSynLoc
     
@@ -64,7 +64,7 @@ begintemplate SynLocationWidget
             getSynLocName(synLocName, 1)
             sprint(text, "* When a synapse is moved to %s,", synLocName)
             xlabel(text)
-            sprint(text, "  we set Spine Neck diam to %g (%s).", synGroup.witheredSpineNeckDiam, units("diam"))
+            sprint(text, "  we set Spine Neck diam to %g (%s).", synGroup.witheredSpineNeckDiam, units(mth.diamVarName))
             xlabel(text)
             getSynLocName(synLocName, 0)
             sprint(text, "* When the synapse is moved back to %s,", synLocName)

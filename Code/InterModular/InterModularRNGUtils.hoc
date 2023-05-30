@@ -5,6 +5,7 @@
 // * the changes made to code in module B;
 // * the scenarios run with module C in the current session.
 
+// Keep in sync with ReducedRNGUtils
 begintemplate RNGUtils
 
     public getFor_diameters, getFor_calcium, getFor_frapCircle, getFor_diamAndLen, getFor_branchSeeder, getFor_spineRadius, getFor_neckLen, getFor_neckDiam, getFor_synLoc, getFor_stochFunc_withUniqueSeed, getFor_stretch_withCustomSeed, getSeedFor_SEFW
@@ -14,7 +15,7 @@ begintemplate RNGUtils
     
     
     proc init() { local minSeedForMod, maxNumSeedsPerRankForMod localobj pc
-        uniqueSeedForHoc = 9    // Keep in sync with the obfunc-s below and ReducedRNGUtils
+        uniqueSeedForHoc = 9    // Keep in sync with the obfunc-s below
         
         if (!use_mcell_ran4()) {
             minSeedForMod = 0       // HOC and MOD use different RNGs, so we don't care about seeds overlapping

@@ -32,16 +32,16 @@ proc importHocOrSwcOrZipOrOtherFile() { local numArg localobj file
     strdef filePathName, defaultDirPath, fileExtLower
     
     if (unix_mac_pc() != 3) {
-        printImportFailedMsgAndStop("The importer works only on Windows")
+        printImportFailedMsgAndRaiseError("The importer works only on Windows")
     }
     
     if (!nrnpython("")) {
-        printImportFailedMsgAndStop("Python is not available")
+        printImportFailedMsgAndRaiseError("Python is not available")
     }
     
     numArg = numarg()
     if (numArg > 2) {
-        printImportFailedMsgAndStop("0, 1 or 2 input arguments expected")
+        printImportFailedMsgAndRaiseError("0, 1 or 2 input arguments expected")
     }
     
     if (numArg >= 1) {
