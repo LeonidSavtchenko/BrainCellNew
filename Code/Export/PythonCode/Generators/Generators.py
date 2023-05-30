@@ -217,7 +217,6 @@ class Generators:
         if self._exportOptions.isExportSyns or self._exportOptions.isExportInhomAndStochLibrary():
             names.append('smAllComps')
             names.append('smAllSyns')
-        if self._exportOptions.isExportSyns:
             names.append('seh')
         line = 'objref ' + ', '.join(names)
         lines.append(line)
