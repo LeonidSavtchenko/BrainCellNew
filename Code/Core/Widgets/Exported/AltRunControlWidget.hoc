@@ -11,9 +11,6 @@ begintemplate AltRunControlWidget
     
     external inhomAndStochApplicator
     
-    // !! just to test stochasticity
-    external stochTestGraph
-    
     objref mainBox
     
     isEnableStoch = -1
@@ -106,20 +103,15 @@ begintemplate AltRunControlWidget
     // All next staff is private
     
     
-    proc initHandler() { localobj nil
+    proc initHandler() {
         if (!isEnableStoch) {
             stdinit()
         } else {
             alt_stdinit()
         }
-        
-        // !! just to test stochasticity
-        if (stochTestGraph != nil) {
-            stochTestGraph.exec_menu("View = plot")
-        }
     }
     
-    proc initAndRunHandler() { local isWaitingForCallbacks localobj nil
+    proc initAndRunHandler() { local isWaitingForCallbacks
         if (!isEnableStoch) {
             run()
         } else {
@@ -131,14 +123,9 @@ begintemplate AltRunControlWidget
             }
             inhomAndStochApplicator.stopPlayingVars()
         }
-        
-        // !! just to test stochasticity
-        if (stochTestGraph != nil) {
-            stochTestGraph.exec_menu("View = plot")
-        }
     }
     
-    proc continueTilHandler() { local isWaitingForCallbacks localobj nil
+    proc continueTilHandler() { local isWaitingForCallbacks
         if (!isEnableStoch) {
             continuerun(runStopAt)
         } else {
@@ -150,14 +137,9 @@ begintemplate AltRunControlWidget
             }
             inhomAndStochApplicator.stopPlayingVars()
         }
-        
-        // !! just to test stochasticity
-        if (stochTestGraph != nil) {
-            stochTestGraph.exec_menu("View = plot")
-        }
     }
     
-    proc continueForHandler() { local tStopAt, isWaitingForCallbacks localobj nil
+    proc continueForHandler() { local tStopAt, isWaitingForCallbacks
         tStopAt = t + runStopIn
         if (!isEnableStoch) {
             continuerun(tStopAt)
@@ -170,14 +152,9 @@ begintemplate AltRunControlWidget
             }
             inhomAndStochApplicator.stopPlayingVars()
         }
-        
-        // !! just to test stochasticity
-        if (stochTestGraph != nil) {
-            stochTestGraph.exec_menu("View = plot")
-        }
     }
     
-    proc singleStepHandler() { local isWaitingForCallbacks localobj nil
+    proc singleStepHandler() { local isWaitingForCallbacks
         if (!isEnableStoch) {
             steprun()
         } else {
@@ -188,11 +165,6 @@ begintemplate AltRunControlWidget
                 alt_steprun()
             }
             inhomAndStochApplicator.stopPlayingVars()
-        }
-        
-        // !! just to test stochasticity
-        if (stochTestGraph != nil) {
-            stochTestGraph.exec_menu("View = plot")
         }
     }
     

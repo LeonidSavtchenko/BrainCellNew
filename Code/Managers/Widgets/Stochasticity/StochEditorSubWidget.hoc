@@ -1153,6 +1153,9 @@ begintemplate StochEditorSubWidget
         
         if (!isMechOrSynEditor) {
             synEditorCommonPrologue()
+            // The next operation is required because synEditorCommonPrologue immediately moves the newely created stoch var to inactiveSpecVars
+            // if the click on "Apply" triggered the commit of pending changes to the synapse structure
+            inhomAndStochLibrary.restoreToActiveIfWasMadeInactiveOnSynStrucChange(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
         }
         
         if (wasStoch) {

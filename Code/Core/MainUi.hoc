@@ -10,7 +10,6 @@ if (isBaseOrNanoStart) {
     { load_file("Widgets/SeededDendritesWidget_deprecated.hoc") }
 }
 
-objref stochTestGraph   // !! just a stub
 { load_file("../Managers/CommonLoads.hoc") }
 { load_file("../Managers/MechManager/MechManager.hoc") }
 if (!isAstrocyteOrNeuron) {

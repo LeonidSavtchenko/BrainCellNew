@@ -6,7 +6,7 @@ objref cellPlotShape
 cellPlotShape = new PlotShape()
 
 // Watch some var just to test stochasticity applied with AltRunControlWidget
-objref stochTestGraph   // Fixed var name
+objref stochTestGraph
 stochTestGraph = new Graph()
 { stochTestGraph.addvar("dendA2_0101111.cm(0.25)") }
 { stochTestGraph.size(0, tstop, 0.795, 0.805) }

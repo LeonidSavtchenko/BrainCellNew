@@ -4,6 +4,7 @@
 
 // Keep in sync with hoc:EnumSynCompIdxs.init, py:createReducedSynComps and py:initHomogenSynVars
 proc createOrImportSynComps() { local isCreateOrImport localobj editableComps
+    isCreateOrImport = $1
     
     if (isCreateOrImport) {
         smAllComps = new List()

@@ -17,7 +17,7 @@ begintemplate InhomAndStochLibrary
     
     public isInhomEnabledFor, isStochEnabledFor, onInhomApply, onStochApply, getInhomModelDataFor, getStochModelDataFor, onMakingVarHomogen, onStochDisable, onNanoReseedOrUpdate
     public isAnyNonVerbatimInhomVarsForDistMechs, getNumInhomVarsForDistMechs, getNumStochVarsForDistMechs, onMechInsert, onMechUninsert, onCompSplit, onCompMerge
-    public getNumInhomVarsForSyns, getNumStochVarsForSyns, isAnyStochVarsForSyns, onSynLocChange, onSynStrucChange
+    public getNumInhomVarsForSyns, getNumStochVarsForSyns, isAnyStochVarsForSyns, onSynLocChange, onSynStrucChange, restoreToActiveIfWasMadeInactiveOnSynStrucChange
     public doesDistMechHaveAnyStochVars, doesThisVarHaveVerbatimInhomModel, doesAnyInhomVarRequirePython, doesAnyStochVarRequirePython
     
     public activeSpecVars
@@ -418,6 +418,22 @@ begintemplate InhomAndStochLibrary
         concatenateTwoLists(inactiveSpecVars, newInactSpecVars)
     }
     
+    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
+    proc restoreToActiveIfWasMadeInactiveOnSynStrucChange() { local idx localobj inactSpecVar
+        for idx = 0, inactiveSpecVars.count() - 1 {
+            inactSpecVar = inactiveSpecVars.o(idx)
+            if (inactSpecVar.isEqual($1, $2, $3, $4, $5, $6)) {
+                break
+            }
+        }
+        if (idx == inactiveSpecVars.count()) {
+            // Not found
+            return
+        }
+        activeSpecVars.append(inactSpecVar)
+        inactiveSpecVars.remove(idx)
+    }
+    
     // in: compIdx, mechIdx
     func doesDistMechHaveAnyStochVars() { local isFound localobj actSpecVar
         isFound = 0
@@ -482,7 +498,7 @@ begintemplate InhomAndStochLibrary
     
     
     // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
-    // out: actSpecVarOrNil, (opt) idxOrMinusOne
+    // out: actSpecVarOrNil, (opt) idxOrMinus1
     obfunc findActiveSpecVar() { local numArg, idx localobj actSpecVar, nil
         numArg = numarg()
         if (numArg < 6 || numArg > 7) {

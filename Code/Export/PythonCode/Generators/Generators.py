@@ -297,7 +297,6 @@ class Generators:
         #     (1) preserve all already created "InterModular" objects and callables (e.g. "mwh" and "eachPointInGrid")
         #     (2) stub all required objects and callables allowing them to be defined later in the main program (e.g. "specMath" and "callPythonFunction")
         lines.append('{ makeSureDeclared("mwh") }')
-        lines.append('{ makeSureDeclared("stochTestGraph") }')
         lines.append('{ makeSureDeclared("eachPointInGrid", "iterator %s() { codeContractViolation() }") }')
         lines.append('objref specMath')
         lines.append('func callPythonFunction() { codeContractViolation() }')
@@ -454,7 +453,7 @@ class Generators:
         isForceNewTrgOrSng = 1  # !!!!??
         lines.append('{{ synGroup.applyChangesToStrucIfNeeded({}, {}, {}, {}, "{}", "{}", "{}", {}) }}'.format(is3Or1PartInSynStruc, srcMechIdx, trgMechIdx, sngMechIdx, srcMechName, trgMechName, sngMechName, isForceNewTrgOrSng))
         
-        lines.append('// !! synGroup.applyChangesToDirtyHomogenVars(*)')
+        lines.append('{{ synGroup.applyChangesToAllHomogenVars({}, {}, {}) }}'.format(srcMechIdx, trgMechIdx, sngMechIdx))
         
         return lines
         

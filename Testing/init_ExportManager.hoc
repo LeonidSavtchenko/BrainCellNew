@@ -2,7 +2,6 @@
 // Load some test nanogeometry file
 { load_file("CommonPrologueForTests.hoc") }
 
-objref stochTestGraph   // Fixed var name
 { load_file("../Code/Managers/CommonLoads.hoc") }
 { load_file("../Code/Managers/MechManager/MechManager.hoc") }
 { load_file("../Code/Managers/SynManager/SynManager.hoc") }

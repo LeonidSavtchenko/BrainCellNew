@@ -216,6 +216,7 @@ begintemplate SynGroup
         return 1
     }
     
+    // Keep in sync with ReducedSynGroup.applyChangesToAllHomogenVars
     func applyChangesToDirtyHomogenVars() { local srcMechIdx, trgMechIdx, sngMechIdx, isSmthChanged
         srcMechIdx = $1
         trgMechIdx = $2
@@ -398,6 +399,7 @@ begintemplate SynGroup
         return pp_new
     }
     
+    // Keep in sync with ReducedSynGroup.applyHomogenChanges
     func ifMechDirtyThenApplyHomogenChanges() { local compIdx, mechIdx, enumPpRole, isPPorNC, maxVarType, varType, varTypeIdx localobj comp, syn, ppOrNetCon, sefwNetConOrNil, nil, compMechStd, tempMechStdExt
         strdef mechName, varName
         
