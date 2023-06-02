@@ -1,7 +1,17 @@
 
 begintemplate ReducedMechTypeHelper
 
-    public getVarNameWithIndex
+    public getVarNameWithIndex, isWeightNetConVar
+    
+    external stringsEqual
+    
+    strdef weightVarName
+    
+    
+    proc init() {
+        // This NetCon var requires some special logic when the release probability mechanics is enabled
+        weightVarName = "weight"
+    }
     
     // Keep in sync with MechTypeHelper.getVarNameWithIndex
     proc getVarNameWithIndex() { local arraySize, arrayIndex
@@ -14,6 +24,12 @@ begintemplate ReducedMechTypeHelper
         } else {
             sprint($s4, "%s[%d]", varName, arrayIndex)
         }
+    }
+    
+    func isWeightNetConVar() {
+        strdef varName
+        varName = $s1
+        return stringsEqual(varName, weightVarName)
     }
     
 endtemplate ReducedMechTypeHelper

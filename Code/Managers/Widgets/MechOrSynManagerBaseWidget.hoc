@@ -4,7 +4,6 @@ loadIfNotDeclared("AltRunControlWidget", "../../Core/Widgets/Exported/AltRunCont
 
 
 isScheduledRescanningOfDistMechs = 0
-isScheduledCachingOfSpineNeckDiams = 0
 
 objref exportManagerMainWidget
 
@@ -14,10 +13,10 @@ begintemplate MechOrSynManagerBaseWidget
     
     external mechManagerMainWidget, synManagerMainWidget, exportManagerMainWidget
     external mmAllComps, smAllSyns, synGroup
-    external mwh, spineNeckDiamCache
+    external mwh
     external inhomAndStochLibrary
     external dismissIfNotNil
-    external isScheduledRescanningOfDistMechs, isScheduledCachingOfSpineNeckDiams
+    external isScheduledRescanningOfDistMechs
     
     objref mainBox, this
     objref altRunControlWidget
@@ -87,9 +86,6 @@ begintemplate MechOrSynManagerBaseWidget
             return
         }
         
-        if (isScheduledCachingOfSpineNeckDiams) {
-            spineNeckDiamCache.cacheAllDiams()
-        }
         synManagerMainWidget.show(xMin, xMax)
     }
     
@@ -117,7 +113,6 @@ begintemplate MechOrSynManagerBaseWidget
         inhomAndStochLibrary.onNanoReseedOrUpdate()
         dismissManagers()
         isScheduledRescanningOfDistMechs = 1    // !! for higher performance, it would be better to rescan only nanogeometry
-        isScheduledCachingOfSpineNeckDiams = 1
     }
     
     proc dismissHandler() {

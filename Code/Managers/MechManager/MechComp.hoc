@@ -18,8 +18,7 @@ begintemplate MechComp
     double isMechInserted[1]            // 0/1 flags
     double isMechVarTypeInhom[1][1]     // 0/1 flags
     // !! would it make sense to create these MechanismStandard-s without 2nd ctor arg and get rid of 2nd dimension in this array?
-    objref mechStds[1][1]               // MechanismStandard-s      // !! maybe put "nil" here if the mech does not have any vars of such type
-    // !! think about having a 2-D array of special objects like mechStds[1][1], but for stochasticity
+    objref mechStds[1][1]               // MechanismStandard-s
     double isMechDirty[1]               // 0/1 flags indicating that given mechanism in this compartment has any pending operation: either insertion/uninsertion or change of a variable (except GLOBAL-s)
     isCompDirty = -1
     
@@ -62,14 +61,7 @@ begintemplate MechComp
         double isMechDirty[numMechs]            // 0/1 flags
         
         if (impRedObj == nil) {
-            // 1. Analyze the first section to determine what mechanisms are inserted
-            // 2. Use its first segment to read the values assigned to the mechanisms variables
-            analyzeFirstSegmentOfFirstSection(numMechs)
-            
-            // 3. Make sure all other sections have the same mechanisms inserted (otherwise it's code contract violation)
-            // 4. Loop through all segments of all sections to determine what mechanisms variables are inhomogeneous
-            // 5. Create "verbatim" inhom models for them and put these models to the library
-            analyzeOtherSegmentsAndSections(numMechs)
+            analyzeAllSegmentsInAllSections(numMechs)
         } else {
             // Load data from the imported reduced template (part 2)
             initFromImportedReducedTemplate(impRedObj)
@@ -298,7 +290,7 @@ begintemplate MechComp
         arrayIndex = $5
         distFuncHelper = $o6
         
-        if (varType == -1) {    // -1 means GLOBAL
+        if (varType == -1) {    // -1: "GLOBAL"
             codeContractViolation()
         }
         
@@ -378,6 +370,19 @@ begintemplate MechComp
     
     // All next staff is private
     
+    
+    proc analyzeAllSegmentsInAllSections() { local numMechs
+        numMechs = $1
+        
+        // 1. Analyze the first section to determine what mechanisms are inserted
+        // 2. Use its first segment to read the values assigned to the mechanisms variables
+        analyzeFirstSegmentOfFirstSection(numMechs)
+        
+        // 3. Make sure all other sections have the same mechanisms inserted (otherwise it's code contract violation)
+        // 4. Loop through all segments of all sections to determine what mechanisms variables are inhomogeneous
+        // 5. Create "verbatim" inhom models for them and put these models to the library
+        analyzeOtherSegmentsAndSections(numMechs)
+    }
     
     proc analyzeFirstSegmentOfFirstSection() { local numMechs, mechIdx, varType, varTypeIdx localobj firstSec_ref, mechStd
         strdef mechName // , handlerHocCommand
@@ -518,10 +523,12 @@ begintemplate MechComp
         return 0
     }
     
-    proc initFromImportedReducedTemplate() { local numMechs, mechIdx, isInserted, varType, varTypeIdx, isNil localobj impRedObj, mechStd, nil
+    proc initFromImportedReducedTemplate() { local numMechs, mechIdx, isInserted, varType, varTypeIdx, isNil, isAnyMorphologyDiamMechStdNil localobj impRedObj, mechStd, nil
         strdef mechName
         
         impRedObj = $o1
+        
+        isAnyMorphologyDiamMechStdNil = 0
         
         numMechs = mth.getNumMechs(0)
         for mechIdx = 0, numMechs - 1 {
@@ -540,6 +547,12 @@ begintemplate MechComp
                 mechStd = impRedObj.mechStds[mechIdx][varTypeIdx]
                 isNil = (mechStd == nil)
                 if (isNil) {
+                    if (mechIdx == mth.morphologyMechIdx && varType == mth.diamVarType) {
+                        // We are here because user disabled export of biophysics when created the nano HOC file;
+                        // below we'll analyze "morphology" mech in all sections
+                        isAnyMorphologyDiamMechStdNil = 1
+                        continue
+                    }
                     mechStd = new MechanismStandard(mechName, varType)
                 }
                 mechStds[mechIdx][varTypeIdx] = mechStd
@@ -548,6 +561,12 @@ begintemplate MechComp
                     mcu.setOneIfNeededIn_isMechVarTypeInhom(this, mechIdx, varType)
                 }
             }
+        }
+        
+        if (isAnyMorphologyDiamMechStdNil) {
+            // Analyze "morphology" mech only
+            // (it's a code contract that the mech doesn't have any other vars except "diam")
+            analyzeAllSegmentsInAllSections(1)
         }
     }
     

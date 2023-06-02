@@ -113,7 +113,7 @@ smAllSyns = new List()
 
 // This proc will be called each time after neuron nanogeometry reseeding
 // Create and connect all default synapses; the number is the same as the number of spines
-// Inputs (all taken from the top level): !!enumSynLoc, nanoDistal_ref, nanoProximal_ref
+// Inputs (all taken from the top level): enumSynLoc, nanoDistal_ref, nanoProximal_ref
 // !! major code dupl. with SynGroup.getNewSecRefConnectionPointAndSpineNeckDiam
 proc Neuron_AddSynapses_reseed() { local defStart, defInterval, defNumber, defNoise, defDelay, defWeight, numSyns, synIdx, connectionPoint localobj srcPp, trgPp, sec_ref, np_ref, netCon, synapse
     
@@ -130,7 +130,7 @@ proc Neuron_AddSynapses_reseed() { local defStart, defInterval, defNumber, defNo
     numSyns = nanoDistal_ref.count()
     
     if (enumSynLoc == 2) {
-        enumSynLoc == 0     // !!
+        enumSynLoc == 0     // !! 2: "Random" cannot be used for default synapses at the moment
     }
     
     for synIdx = 0, numSyns - 1 {

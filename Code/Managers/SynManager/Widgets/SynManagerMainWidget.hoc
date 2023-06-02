@@ -29,16 +29,24 @@ begintemplate SynManagerMainWidget
     
         is3Or1PartInSynStruc = synGroup.is3Or1PartInSynStruc()  // 1: "Source PP -> NetCon -> Target PP -> Section", 0: "Single PP -> Section"
         
-        // Prepare available choices for Source PP, Target PP and Single PP
         srcChoices = new List()
         trgChoices = new List()
         sngChoices = new List()
-        onListsFilterLevelChangedHandler(1)
         
-        // Prepare default selections for Source PP, Target PP and Single PP
-        defSrcChoiceIdx = chooseDefSelItemIdx(0, srcChoices)
-        defTrgChoiceIdx = chooseDefSelItemIdx(1, trgChoices)
-        defSngChoiceIdx = chooseDefSelItemIdx(2, sngChoices)
+        while (1) {
+            // Prepare available choices for Source PP, Target PP and Single PP
+            onListsFilterLevelChangedHandler(1)
+            
+            // Prepare default selections for Source PP, Target PP and Single PP
+            defSrcChoiceIdx = chooseDefSelItemIdx(0, srcChoices)
+            defTrgChoiceIdx = chooseDefSelItemIdx(1, trgChoices)
+            defSngChoiceIdx = chooseDefSelItemIdx(2, sngChoices)
+            if (defSrcChoiceIdx != -1 && defTrgChoiceIdx != -1 && defSngChoiceIdx != -1) {
+                break
+            }
+            
+            smlfw.loosenFilter()
+        }
         
         listBoxHeight = 100
     }
@@ -272,14 +280,15 @@ begintemplate SynManagerMainWidget
             getSelMechNameOrEmptyString(srcChoices, oldSrcSelMechName)
             getSelMechNameOrEmptyString(trgChoices, oldTrgSelMechName)
             getSelMechNameOrEmptyString(sngChoices, oldSngSelMechName)
-            srcChoices.remove_all()
-            trgChoices.remove_all()
-            sngChoices.remove_all()
         } else {
             oldSrcSelMechName = ""
             oldTrgSelMechName = ""
             oldSngSelMechName = ""
         }
+        
+        srcChoices.remove_all()
+        trgChoices.remove_all()
+        sngChoices.remove_all()
         
         srcChoiceIdx = -1
         trgChoiceIdx = -1
@@ -495,12 +504,14 @@ begintemplate SynManagerMainWidget
         if (stringEmpty(ppName)) {
             return 0
         }
+        
         for idx = 0, list.count() - 1 {
             if (stringsEqual(list.o(idx).s, ppName)) {
                 return idx
             }
         }
-        codeContractViolation()
+        
+        return -1
     }
     
     proc synLocChangeHandler() {
@@ -521,18 +532,21 @@ begintemplate SynManagerMainWidget
     proc selectNewSrc() { local srcChoiceIdx
         srcChoiceIdx = $1
         srcChoices.select(srcChoiceIdx)
+        srcChoices.scroll_pos(srcChoiceIdx)
         srcChoicesSelectHandler(srcChoiceIdx)
     }
     
     proc selectNewTrg() { local trgChoiceIdx
         trgChoiceIdx = $1
         trgChoices.select(trgChoiceIdx)
+        trgChoices.scroll_pos(trgChoiceIdx)
         trgChoicesSelectHandler(trgChoiceIdx)
     }
     
     proc selectNewSng() { local sngChoiceIdx
         sngChoiceIdx = $1
         sngChoices.select(sngChoiceIdx)
+        sngChoices.scroll_pos(sngChoiceIdx)
         sngChoicesSelectHandler(sngChoiceIdx)
     }
     

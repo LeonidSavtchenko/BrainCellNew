@@ -1,10 +1,10 @@
 
 begintemplate ReducedSynGroup
 
-    public applyChangesToStrucIfNeeded, applyChangesToAllHomogenVars
+    public applyChangesToStrucIfNeeded, applyChangesToAllHomogenVars, applyInhomogeneityIter
     
     external smAllSyns, smAllComps
-    external mcu, seh, rngUtils
+    external seh, rngUtils
     external stringsEqual, codeContractViolation
     external eachItemInList
     external enumSynCompIdxs
@@ -94,6 +94,26 @@ begintemplate ReducedSynGroup
         } else {
             applyHomogenChanges(enumSynCompIdxs.sngPp, sngMechIdx, 2)
         }
+    }
+    
+    // Keep in sync with SynGroup.applyInhomogeneityIter
+    iterator applyInhomogeneityIter() { local synIdx localobj distFuncHelper, nil, prevSec_ref, syn
+        distFuncHelper = $o2
+        
+        distFuncHelper.onJustBeforeFirstSection()
+        {
+            prevSec_ref = nil
+            for synIdx = 0, smAllSyns.count() - 1 {
+                syn = smAllSyns.o(synIdx)
+                if (syn.sec_ref != prevSec_ref) {
+                    distFuncHelper.onJustBeforeNewSection()
+                }
+                $o1 = syn
+                iterator_statement
+                prevSec_ref = syn.sec_ref
+            }
+        }
+        distFuncHelper.onJustAfterLastSection()
     }
     
     // All next staff is private
@@ -264,11 +284,9 @@ begintemplate ReducedSynGroup
         return (smAllSyns.o(0).sefwPp != nil)
     }
     
-    objref _tempMechStdExt
-    
     // Keep in sync with SynGroup.ifMechDirtyThenApplyHomogenChanges
     proc applyHomogenChanges() { local compIdx, mechIdx, enumPpRole, isPPorNC, maxVarType, varType, varTypeIdx localobj comp, syn, ppOrNetCon, sefwNetConOrNil, nil, compMechStd
-        strdef mechName, varName
+        strdef varName
         
         compIdx = $1
         mechIdx = $2
@@ -278,10 +296,6 @@ begintemplate ReducedSynGroup
         
         isPPorNC = (compIdx != enumSynCompIdxs.netCon)
         
-        if (isPPorNC) {
-            mechType.select(mechIdx)
-            mechType.selected(mechName)
-        }
         for eachItemInList(syn, smAllSyns) {
             if (isPPorNC) {
                 ppOrNetCon = syn.getPointProcess(enumPpRole)
@@ -300,23 +314,16 @@ begintemplate ReducedSynGroup
                 if (compMechStd == nil) {
                     continue
                 }
-                if (isPPorNC) {
-                    _tempMechStdExt = new MechanismStandard(mechName, varType)
-                } else {
-                    execute("_tempMechStdExt = new FakeMechanismStandardForNetCon()", this)     // The template is not exported if !is3Or1PartInSynStruc_old
-                }
-                _tempMechStdExt.in(ppOrNetCon)
-                mcu.copyAllVarsValuesExceptInhom(compMechStd, _tempMechStdExt)
-                _tempMechStdExt.out(ppOrNetCon)
+                // Here we assign NaN values to inhom vars, but they will be overwritten shortly downstream
+                compMechStd.out(ppOrNetCon)
                 if (sefwNetConOrNil != nil) {
-                    _tempMechStdExt.out(sefwNetConOrNil)
+                    compMechStd.out(sefwNetConOrNil)
                 }
             }
             if (sefwNetConOrNil != nil) {
                 sefwNetConOrNil.delay = 0
             }
         }
-        _tempMechStdExt = nil
     }
     
 endtemplate ReducedSynGroup

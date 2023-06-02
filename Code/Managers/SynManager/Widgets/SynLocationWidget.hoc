@@ -9,6 +9,8 @@ begintemplate SynLocationWidget
     
     objref mainBox, deck
     
+    selEnumSynLoc = -1
+    p_lastApplied = -1
     p = -1
     isReviewAfterApply = -1
     
@@ -17,7 +19,7 @@ begintemplate SynLocationWidget
     
     
     proc init() {
-        p = 0.5
+        p_lastApplied = 0.5
         
         isReviewAfterApply = 0
         
@@ -30,6 +32,9 @@ begintemplate SynLocationWidget
     proc show() { local synLocIdx
         strdef synLocName, handlerHocCommand, text
         
+        selEnumSynLoc = enumSynLoc
+        p = p_lastApplied
+        
         mainBox = new VBox()
         mainBox.intercept(1)
         {
@@ -38,7 +43,7 @@ begintemplate SynLocationWidget
             for synLocIdx = 0, 2 {
                 getSynLocName(synLocName, synLocIdx)
                 sprint(handlerHocCommand, "synLocChangedHandler(%d)", synLocIdx)
-                xradiobutton(synLocName, handlerHocCommand, enumSynLoc == synLocIdx)
+                xradiobutton(synLocName, handlerHocCommand, selEnumSynLoc == synLocIdx)
             }
             xpanel()
             deck = new Deck()
@@ -80,7 +85,7 @@ begintemplate SynLocationWidget
         mainBox.dismiss_action("dismissHandler()")
         mainBox.map("Synapse location", 610, 65, -1, -1)
         
-        synLocChangedHandler(enumSynLoc)
+        synLocChangedHandler(selEnumSynLoc)
     }
     
     proc getSynLocName() { local numArg, synLocIdx
@@ -113,13 +118,17 @@ begintemplate SynLocationWidget
     
     
     proc synLocChangedHandler() { local cardIdx
-        enumSynLoc = $1
-        cardIdx = (enumSynLoc == 2)
+        selEnumSynLoc = $1
+        cardIdx = (selEnumSynLoc == 2)
         deck.flip_to(cardIdx)
     }
     
     proc applyHandler() {
+        enumSynLoc = selEnumSynLoc
         synGroup.applyChangesToLoc(p, isReviewAfterApply)
+        if (selEnumSynLoc == 2) {
+            p_lastApplied = p
+        }
         isReviewAfterApply = 0
         dismissHandler()
     }

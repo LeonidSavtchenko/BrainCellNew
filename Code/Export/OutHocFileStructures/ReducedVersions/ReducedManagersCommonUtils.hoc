@@ -1,36 +1,15 @@
 
 begintemplate ReducedManagersCommonUtils
 
-    public isMetaVar, copyAllVarsValuesExceptInhom
+    public isMetaVar
     
-    external math
     external stringStartsWith
-    
     
     // Keep in sync with ManagersCommonUtils.isMetaVar
     func isMetaVar() {
         strdef varName
         varName = $s1
         return stringStartsWith(varName, "@")
-    }
-    
-    // Keep in sync with ManagersCommonUtils.copyAllVarsValuesExceptInhom
-    proc copyAllVarsValuesExceptInhom() { local varIdx, arraySize, arrayIndex, varValue localobj srcMechStd, dstMechStd
-        strdef varName
-        
-        srcMechStd = $o1
-        dstMechStd = $o2
-        
-        for varIdx = 0, dstMechStd.count() - 1 {
-            arraySize = dstMechStd.name(varName, varIdx)
-            for arrayIndex = 0, arraySize - 1 {
-                varValue = srcMechStd.get(varName, arrayIndex)
-                if (!math.isNaN(varValue)) {
-                    // Rewriting only homogeneous variables
-                    dstMechStd.set(varName, varValue, arrayIndex)
-                }
-            }
-        }
     }
     
 endtemplate ReducedManagersCommonUtils

@@ -140,9 +140,7 @@ py:createStochBiophysModels()
 
 //////////////////// Start of base synapses (deprecated) /////////////////
 
-py:getIntegerValueFromTopLevel('enumSynLoc')
-
-py:insertAllLinesFromFile('Code\\Prologue\\Neuron\\Exported\\AddSynapses_Exported.hoc')
+py:createBaseSynapses_deprecated()
 
 //////////////////// End of base synapses (deprecated) ///////////////////
 

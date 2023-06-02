@@ -3,6 +3,7 @@ begintemplate SynEventsHelper
 
     public ifMetaVarThenUpdateStatus, createNewSynEventsFilterWatcherButTryToInherit, isSefwEnabled
     public metaVarName, realMechName, realVarType, realVarName, realArrayIndex
+    public isMinRPlt1
     
     external smAllComps
     // !! external mth      // !! circular file dependencies problem

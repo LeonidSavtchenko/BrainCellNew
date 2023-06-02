@@ -3,7 +3,7 @@
 
 { load_file("SynComps/SynPPComp.hoc") }
 { load_file("SynComps/SynNCComp.hoc") }
-{ load_file("SpineNeckDiamCache.hoc") }
+loadIfNotDeclared("SpineNeckDiamCache", "Exported/SpineNeckDiamCache.hoc", 1)
 { load_file("SynGroup.hoc") }
 
 { load_file("Widgets/SynLocationWidget.hoc") }

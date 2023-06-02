@@ -231,6 +231,7 @@ begintemplate SynGroup
         return isSmthChanged
     }
     
+    // Keep in sync with ReducedSynGroup.applyInhomogeneityIter
     iterator applyInhomogeneityIter() { local synIdx localobj distFuncHelper, nil, prevSec_ref, syn
         distFuncHelper = $o2
         

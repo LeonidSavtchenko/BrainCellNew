@@ -1,6 +1,6 @@
 
 objref msmBaseWidget, mechManagerMainWidget, synManagerMainWidget, varsEditorSubWidget
-objref mth, mmmowb, mcu, synGroup, spineNeckDiamCache
+objref mth, mmmowb, mcu, synGroup
 
 if (makeSureDeclared("inhomAndStochLibrary") && isBaseOrNanoStart) {
     codeContractViolation()

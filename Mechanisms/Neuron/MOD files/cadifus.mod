@@ -345,9 +345,13 @@ KINETIC state {
     : buffering
     dsq = diam*diam
     FROM i=0 TO Nannuli-1 {
+	
         dsqvol = dsq*vrat[i]
         ~ ca[i] + bufs[i] <-> cabufs[i]  (kfs*dsqvol, (0.001)*KDs*kfs*dsqvol)
         ~ ca[i] + bufm[i] <-> cabufm[i]  (kfm*dsqvol, (0.001)*KDm*kfm*dsqvol)
+			if (ca[i] < cai0/2) {
+			 ca[i] = cai0/2
+		}
     }
     : SERCA pump, channel, and leak
     FROM i=0 TO Nannuli-1 {
@@ -359,6 +363,9 @@ KINETIC state {
         ~ ca[i] << ( dsqvol*alpha*jmax*(1-(ca[i]/caer)) * ( (ip3i/(ip3i+Kip3)) * (ca[i]/(ca[i]+Kact)) * ho[i] )^3 )
         : leak
         ~ ca[i] << (dsqvol*alpha*L[i]*(1 - (ca[i]/caer)))
+			if (ca[i] < cai0/2) {
+			 ca[i] = cai0/2
+		}
     }
 	
     cai = ca[0]

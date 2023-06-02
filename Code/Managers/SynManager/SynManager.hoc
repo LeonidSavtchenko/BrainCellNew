@@ -39,9 +39,6 @@ proc makeSureSynCompsCreatedOrImported() { localobj nil
         createOrImportSynComps(0)
         isConvertedFromReducedSynCompTemplates = 1
     }
-    
-    // !!!!
-    spineNeckDiamCache.cacheAllDiams()
 }
 
 proc makeSureSynCompsCreatedOrImportedThenShowSynManagerBaseWidget() {

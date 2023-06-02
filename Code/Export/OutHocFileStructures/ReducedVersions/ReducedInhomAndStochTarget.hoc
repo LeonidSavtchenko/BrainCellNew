@@ -1,14 +1,14 @@
 
 begintemplate ReducedInhomAndStochTarget
 
-    public makeInhom, makeStoch, isEqual, applyBiophysInhomogeneity, setPlayIfPossible, stopPlayingVars, onInit, onStep
+    public makeInhom, makeStoch, isEqual, applyBiophysInhomogeneity, applySynInhomogeneity, setPlayIfPossible, stopPlayingVars, onInit, onStep
     public enumDmPpNc, isDmOrSynPart, compIdx, mechIdx, varType, varIdx, arrayIndex
     public segmentationHelper, distFuncHelper, boundingHelper, stochFuncHelper
     public isInhom, distFuncCatIdx, distFuncIdx, isStoch, stochFuncCatIdx, stochFuncIdx
     
     external mmAllComps, smAllComps, smAllSyns
-    external rngUtils
-    external stringsEqual, codeContractViolation
+    external mth, rngUtils
+    external codeContractViolation
     external eachItemInList
     
     // "init" args
@@ -20,6 +20,7 @@ begintemplate ReducedInhomAndStochTarget
     varType = -1
     varIdx = -1
     strdef varName
+    arraySize = -1
     arrayIndex = -1
     
     // "make*" args
@@ -51,11 +52,10 @@ begintemplate ReducedInhomAndStochTarget
         
         isDmOrSynPart = (enumDmPpNc == 0)
         
+        comp = getComp()
+        
         if (isDmOrSynPart) {
-            comp = mmAllComps.o(compIdx)
             list_ref = comp.list_ref
-        } else {
-            comp = smAllComps.o(compIdx)
         }
         
         if (enumDmPpNc == 1) {
@@ -80,7 +80,7 @@ begintemplate ReducedInhomAndStochTarget
             execute("tempMechStd = new FakeMechanismStandardForNetCon()", this)     // The template is not loaded for astrocytes
         }
         
-        tempMechStd.name(varName, varIdx)
+        arraySize = tempMechStd.name(varName, varIdx)
     }
     
     proc makeInhom() {
@@ -126,6 +126,16 @@ begintemplate ReducedInhomAndStochTarget
             }
         }
         distFuncHelper.onJustAfterLastSection()
+    }
+    
+    // Keep in sync with InhomAndStochTarget.restoreInhomogeneity
+    proc applySynInhomogeneity() { localobj comp
+        if (isDmOrSynPart || !isInhom) {
+            codeContractViolation()
+        }
+        
+        comp = getComp()
+        comp.applyInhomogeneity(mechName, varType, varName, arraySize, arrayIndex, distFuncHelper)
     }
     
     // Keep in sync with InhomAndStochTarget.setPlayIfPossible
@@ -228,7 +238,7 @@ begintemplate ReducedInhomAndStochTarget
                 }
             }
         } else {
-            isWeightVar = stringsEqual(varName, "weight")
+            isWeightVar = mth.isWeightNetConVar(varName)
             prevSec_ref = nil
             for eachItemInList(syn, smAllSyns) {
                 if (syn.sec_ref != prevSec_ref && isInhom) {
@@ -293,6 +303,14 @@ begintemplate ReducedInhomAndStochTarget
         
         // !! not implemented - see the comment in stopPlayingVars
         isPlayable = 0
+    }
+    
+    obfunc getComp() {
+        if (isDmOrSynPart) {
+            return mmAllComps.o(compIdx)
+        } else {
+            return smAllComps.o(compIdx)
+        }
     }
     
 endtemplate ReducedInhomAndStochTarget

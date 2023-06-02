@@ -48,6 +48,10 @@ proc roadmapChosenHandler() { local isLoaded localobj plotShape
             // (Don't encapsulate initNeuron() into "initNeuron.hoc" because the file browser will use different default folder)
         }
     } else {
+        if (!isAstrocyteOrNeuron && !name_declared("smAllSyns")) {
+            print "\n\n    Warning: The synapses weren't exported to this nanogeometry HOC file, so we'll create default ones.\n"
+            load_file("Code/Prologue/Neuron/AddSynapses.hoc")
+        }
         initVoltageAndRunControlParams()
         prologueCompleteHandler()
     }

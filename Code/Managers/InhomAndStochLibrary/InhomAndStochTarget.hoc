@@ -10,7 +10,7 @@ begintemplate InhomAndStochTarget
     
     external smAllSyns
     external mwh, rngUtils, mth, compUtils
-    external stringsEqual, codeContractViolation
+    external codeContractViolation
     external eachItemInList
     
     // "init" args
@@ -265,7 +265,7 @@ begintemplate InhomAndStochTarget
                 }
             }
         } else {
-            isWeightVar = stringsEqual(varName, "weight")
+            isWeightVar = mth.isWeightNetConVar(varName)
             prevSec_ref = nil
             for eachItemInList(syn, smAllSyns) {
                 if (syn.sec_ref != prevSec_ref && isInhom) {
@@ -317,7 +317,7 @@ begintemplate InhomAndStochTarget
         }
     }
     
-    // Keep in sync with "onStep"
+    // Keep in sync with "onStep" and ReducedInhomAndStochTarget.applySynInhomogeneity
     proc restoreInhomogeneity() { localobj comp
         if (!isInhom) {
             codeContractViolation()

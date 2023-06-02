@@ -179,11 +179,12 @@ class Generators:
         lines.append('')
         
         # Make sure "nrnmech.dll" is loaded and valid
+        # (doing it even though user could disable the export of biophysics and synapses)
+        lines.append('{ makeSureDeclared("ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType", "proc %s() { codeContractViolation() }") }')
+        lines.append('objref mechType')
+        lines.append('if (isLoadedFromMainProgram) {')
+        lines.append('    ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType()')
         if self._exportOptions.isExportDistMechs or self._exportOptions.isExportSyns:
-            lines.append('{ makeSureDeclared("ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType", "proc %s() { codeContractViolation() }") }')
-            lines.append('objref mechType')
-            lines.append('if (isLoadedFromMainProgram) {')
-            lines.append('    ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType()')
             lines.append('} else {')
             if self._exportOptions.isExportDistMechs:
                 newLines = self._createCheckForNumMechs(0, 'Distributed Membrane Mechanisms')
@@ -191,13 +192,13 @@ class Generators:
             if self._exportOptions.isExportSyns:
                 newLines = self._createCheckForNumMechs(1, 'Point Processes')
                 lines.extend(newLines)
-            lines.append('}')
-            lines.append('')
+        lines.append('}')
+        lines.append('')
             
         # Make sure the staff from ReducedVersions\InterModular is either:
         #   preserved ("start with nano" mode)
         #   created ("standalone" mode with real usage)
-        #   declared as nil ("standalone" mode without real usage)
+        #   declared as nil ("standalone" mode without real usage OR we'll use it, but first need to bound as template's external, and only then define)
         
         lines.append('{ makeSureDeclared("math", "objref %s", "%s = new ReducedBasicMath()") }')
         
@@ -206,21 +207,41 @@ class Generators:
             #      each seed given by rngUtils.getFor_stochFunc_withUniqueSeed is saved into corresponding stocDistFunc
             #      and exported/imported as a part of it
             lines.append('{ makeSureDeclared("rngUtils", "objref %s", "%s = new ReducedRNGUtils()") }')
-            lines.append('')
         elif self._exportOptions.isExportSyns or self._exportOptions.isExportInhomAndStochLibrary():
             lines.append('{ makeSureDeclared("rngUtils") }')
-            lines.append('')
             
+        lines.append('')
+        
         # Make sure all the required objref-s are declared as nil
         names = []
+        if self._exportOptions.isExportInhomAndStochLibrary():
+            names.append('mth')
         names.append('mmAllComps')
         if self._exportOptions.isExportSyns or self._exportOptions.isExportInhomAndStochLibrary():
             names.append('smAllComps')
             names.append('smAllSyns')
             names.append('seh')
+        if self._exportOptions.isExportAnyInhomSynModels():
+            names.append('synGroup')
+            names.append('mcu')
+            names.append('utils4FakeMech4NC')
         line = 'objref ' + ', '.join(names)
         lines.append(line)
         
+        if not self._hocObj.isAstrocyteOrNeuron:
+            # We export spineNeckDiamCache just to allow user change the synapse location in SynLocationWidget after loading the exported file back into the main program
+            lines.append('')
+            newLines = self.insertAllLinesFromFile('Code\\Managers\\SynManager\\Exported\\SpineNeckDiamCache.hoc')
+            lines.extend(newLines)
+            lines.append('')
+            lines.append('objref diamsVec')
+            lines.append('diamsVec = spineNeckDiamCache.diamsVec')
+            diamsVec = self._hocObj.spineNeckDiamCache.diamsVec
+            numSpines = diamsVec.size()
+            lines.append('{{ diamsVec.resize({}) }}'.format(numSpines))
+            for idx in range(numSpines):
+                lines.append('diamsVec.x({}) = {}'.format(idx, diamsVec[idx]))
+                
         return lines
         
     def createInhomAndStochLibrary(self):
@@ -291,11 +312,11 @@ class Generators:
             
         lines = []
         
-        # !!! just a temp solution: we need to bind these names as templates' external-s even though
-        #     they won't be used (because we don't call all the methods in the exported file);
-        #     at the same time, when the file is loaded from the main program, the file needs to:
-        #     (1) preserve all already created "InterModular" objects and callables (e.g. "mwh" and "eachPointInGrid")
-        #     (2) stub all required objects and callables allowing them to be defined later in the main program (e.g. "specMath" and "callPythonFunction")
+        # We need to bind these names as templates' external-s even though
+        # they won't be used (because we don't call all the methods in the exported file);
+        # at the same time, when the file is loaded from the main program, the file needs to:
+        # (1) preserve all already created "InterModular" objects and callables (e.g. "mwh" and "eachPointInGrid")
+        # (2) stub all required objects and callables allowing them to be defined later in the main program (e.g. "specMath" and "callPythonFunction")
         lines.append('{ makeSureDeclared("mwh") }')
         lines.append('{ makeSureDeclared("eachPointInGrid", "iterator %s() { codeContractViolation() }") }')
         lines.append('objref specMath')
@@ -359,6 +380,21 @@ class Generators:
     def createStochBiophysModels(self):
         return self._gensForInhomAndStochModels.createStochBiophysModels()
         
+    def createBaseSynapses_deprecated(self):
+        if not self._exportOptions.isExportSyns:
+            return emptyParagraphHint()
+            
+        lines = []
+        
+        newLine = self.getIntegerValueFromTopLevel('enumSynLoc')
+        lines.append(newLine)
+        lines.append('')
+        
+        newLines = self.insertAllLinesFromFile('Code\\Prologue\\Neuron\\Exported\\AddSynapses_Exported.hoc')
+        lines.extend(newLines)
+        
+        return lines
+        
     # Keep in sync with hoc:createSynComps
     def createReducedSynComps(self):
         if not self._exportOptions.isExportSyns:
@@ -367,17 +403,24 @@ class Generators:
         lines = self.insertAllLinesFromFile('Code\\Managers\\SynManager\\Exported\\EnumSynCompIdxs.hoc')
         lines.append('')
         
-        newLines = self.insertAllLinesFromReducedVersionFile('ReducedSynPPComp.hoc')
+        if not self._exportOptions.isExportAnyInhomSynModels():
+            reducedSynPPCompFileName = 'ReducedSynPPComp1.hoc'
+            reducedSynNCCompFileName = 'ReducedSynNCComp1.hoc'
+        else:
+            reducedSynPPCompFileName = 'ReducedSynPPComp2.hoc'
+            reducedSynNCCompFileName = 'ReducedSynNCComp2.hoc'
+            
+        newLines = self.insertAllLinesFromReducedVersionFile(reducedSynPPCompFileName)
+        lines.extend(newLines)
+        lines.append('')
+        
+        # Note: NEURON doesn't allow appending "nil" to a List, so we don't skip exporting this template if !synGroup.is3Or1PartInSynStruc
+        newLines = self.insertAllLinesFromReducedVersionFile(reducedSynNCCompFileName)
         lines.extend(newLines)
         lines.append('')
         
         synGroup = self._hocObj.synGroup
         is3Or1PartInSynStruc = synGroup.is3Or1PartInSynStruc()
-        
-        # Note: NEURON doesn't allow appending "nil" to a List, so we don't skip exporting this template if !is3Or1PartInSynStruc
-        newLines = self.insertAllLinesFromReducedVersionFile('ReducedSynNCComp.hoc')
-        lines.extend(newLines)
-        lines.append('')
         
         if is3Or1PartInSynStruc:
             newLines = self.insertAllLinesFromReducedVersionFile('ReducedMechTypeHelper.hoc')
@@ -455,6 +498,9 @@ class Generators:
         
         lines.append('{{ synGroup.applyChangesToAllHomogenVars({}, {}, {}) }}'.format(srcMechIdx, trgMechIdx, sngMechIdx))
         
+        if self._exportOptions.isExportAnyInhomSynModels():
+            lines.append('{ inhomAndStochLibrary.applyAllSynInhomModels() }')
+            
         return lines
         
     def insertAltRunControlWidget(self):

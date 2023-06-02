@@ -181,14 +181,14 @@ begintemplate MessageWarningHelper
     }
     
     // Show "Please wait" message box with "OK" button
+    // It's safe to call this many times in a row (each new box replaces the previous)
     // Restriction: Cannot be called in the process of construction of a panel
     // $si - All lines of the message
     proc showPleaseWaitBox() { local numArg, i localobj nil
         numArg = numarg()
         
-        if (waitBox != nil) {
-            codeContractViolation()
-        }
+        // Each new "Please wait" box replaces the previous
+        hidePleaseWaitBox()
         
         waitBox = new VBox()
         waitBox.intercept(1)
@@ -207,6 +207,7 @@ begintemplate MessageWarningHelper
     }
     
     // Hide "Please wait" message box
+    // It's safe to call this many times in a row
     proc hidePleaseWaitBox() { localobj nil
         if (waitBox != nil) {
             waitBox.unmap()

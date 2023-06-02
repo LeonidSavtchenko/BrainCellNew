@@ -49,8 +49,12 @@ class GensForHomogenVars:
             lines.append('')
             
         # For each comp, generate the call of corresponding proc
-        newLines = self._finishExportOfHomogenVars(mmAllComps, 'mmAllComps', procNames, 'initHomogenBiophysics')
+        newLines = self._finishExportOfHomogenVars(mmAllComps, 'mmAllComps', procNames)
         lines.extend(newLines)
+        
+        lines.append('for eachItemInList(comp, mmAllComps) {')
+        lines.append('    comp.initHomogenBiophysics()')
+        lines.append('}')
         
         return lines
         
@@ -89,7 +93,7 @@ class GensForHomogenVars:
             lines.append('')
             
         # For each comp, generate the call of corresponding proc
-        newLines = self._finishExportOfHomogenVars(smAllComps, 'smAllComps', procNames, 'initHomogenVars')
+        newLines = self._finishExportOfHomogenVars(smAllComps, 'smAllComps', procNames)
         lines.extend(newLines)
         
         return lines
@@ -101,6 +105,7 @@ class GensForHomogenVars:
         
         mechName = h.ref('')
         mth = self._hocObj.mth
+        mcu = self._hocObj.mcu
         enumDmPpNc = comp.enumDmPpNc
         mth.getMechName(enumDmPpNc, mechIdx, mechName)
         mechName = mechName[0]
@@ -141,16 +146,22 @@ class GensForHomogenVars:
                     #    just after the start of our program (defaultValue = 0) or now (defaultValue = 2.5)
                     if (varType == 1 and value == defaultValue) or (varType > 1 and value == 0):
                         continue
-                    if math.isnan(value):
+                    isValueNaN = math.isnan(value)
+                    if isValueNaN:
                         if isExportInhoms:
                             value = 'math.nan'
                         else:
                             if mth.isDiamDistMechVar(mechIdx, varType, varName):
                                 value = 'math.nan'
                             else:
+                                # If user applied an inhomogeneity to NetCon.@release_probability, but disabled export of syn inhoms,
+                                # then the probability var gets effectively reverted to its default const value "1" and the 5-chain synapses become the 3-chain ones
+                                # (except the case of stochasticity enabled)
                                 continue
                     if arraySize == 1:
                         newLines.append('    mechStd.set("{}", {})'.format(varName, value))
+                        if enumDmPpNc == 2 and mcu.isMetaVar(varName) and (isValueNaN or value < 1):
+                            newLines.append('    seh.isMinRPlt1 = 1')
                     else:
                         newLines.append('    mechStd.set("{}", {}, {})'.format(varName, value, arrayIndex))
                     isAllDefault = False
@@ -166,7 +177,7 @@ class GensForHomogenVars:
         return lines
         
     # For each comp, generate the call of corresponding proc
-    def _finishExportOfHomogenVars(self, allComps, allCompsVarName, procNames, initProcName):
+    def _finishExportOfHomogenVars(self, allComps, allCompsVarName, procNames):
         lines = []
         
         for compIdx in range(len(allComps)):
@@ -175,10 +186,6 @@ class GensForHomogenVars:
             lines.append('{}(comp)'.format(procName))
             lines.append('')
             
-        lines.append('for eachItemInList(comp, {}) {{'.format(allCompsVarName))
-        lines.append('    comp.{}()'.format(initProcName))
-        lines.append('}')
-        
         # !!! BUG: we don't export GLOBAL-s
         
         return lines

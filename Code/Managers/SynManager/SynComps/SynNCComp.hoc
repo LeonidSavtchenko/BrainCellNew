@@ -156,6 +156,7 @@ begintemplate SynNCComp
         codeContractViolation()
     }
     
+    // Keep in sync with ReducedSynNCComp2.applyInhomogeneity
     proc applyInhomogeneity() { local varType, arraySize, arrayIndex, isMetaVar, isSefwEnabled, isWeightVar, y localobj distFuncHelper, firstNetCon, mechStd, syn, thisPp
         strdef mechName, varName, varNameWithIndex
         
@@ -166,7 +167,7 @@ begintemplate SynNCComp
         arrayIndex = $5
         distFuncHelper = $o6
         
-        if (!stringsEqual(mechName, name) || varType != 1) {
+        if (!stringsEqual(mechName, name) || varType != 1) {    // 1: "PARAMETER"
             codeContractViolation()
         }
         
@@ -179,7 +180,7 @@ begintemplate SynNCComp
         
         if (!isMetaVar) {
             mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
-            isWeightVar = stringsEqual(varName, "weight")
+            isWeightVar = mth.isWeightNetConVar(varName)
         } else {
             mechStd = new MechanismStandard(seh.realMechName, seh.realVarType)
         }

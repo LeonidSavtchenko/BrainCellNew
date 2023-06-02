@@ -109,7 +109,6 @@ begintemplate ManagersCommonUtils
         xlabel(text)
     }
     
-    // Keep in sync with ReducedManagersCommonUtils.copyAllVarsValuesExceptInhom
     proc copyAllVarsValuesExceptInhom() { local varIdx, arraySize, arrayIndex, varValue localobj srcMechStd, dstMechStd
         strdef varName
         

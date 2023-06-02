@@ -1,10 +1,10 @@
 
 begintemplate ListsFilterWidget
 
-    public show, dismissHandler
+    public show, loosenFilter, dismissHandler
     public filterLevel
     
-    external createEmptyPanel, unmapIfNotNil
+    external createEmptyPanel, unmapIfNotNil, codeContractViolation
     
     objref mainBox, deck1, deck2
     objref lastParentWidget
@@ -14,6 +14,7 @@ begintemplate ListsFilterWidget
     
     proc init() {
         filterLevel = 3     // 0: "No filtration", 1: "Minimum filtration", 2: "Moderate filtration", 3: "Maximum filtration"
+                            // (it's a code contract that the default value corresponds to "Maximum filtration")
     }
     
     proc show() {
@@ -69,6 +70,13 @@ begintemplate ListsFilterWidget
         mainBox.intercept(0)
         mainBox.dismiss_action("dismissHandler()")
         mainBox.map("Lists filter", 200, 450, -1, -1)
+    }
+    
+    proc loosenFilter() {
+        if (filterLevel == 0) {
+            codeContractViolation()
+        }
+        filterLevel -= 1
     }
     
     proc dismissHandler() {
