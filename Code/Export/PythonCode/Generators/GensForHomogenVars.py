@@ -26,7 +26,8 @@ class GensForHomogenVars:
         procNames = []
         mth = self._hocObj.mth
         enumDmPpNc = 0
-        for comp in mmAllComps:
+        for compIdx in range(len(mmAllComps)):
+            comp = mmAllComps[compIdx]
             procNameId = prepareUniqueNameId(comp.name)
             procName = 'addHomogenBiophysInfoTo{}Comp'.format(procNameId)
             procNames.append(procName)
@@ -42,7 +43,7 @@ class GensForHomogenVars:
                 if not comp.isMechInserted[mechIdx]:
                     continue
                 # Generate code to init "mechStds" array slice for this mech of this comp
-                newLines = self._exportHomogenVarsOfThisMech(comp, mechIdx, self._exportOptions.isExportDistMechAssignedAndState, self._exportOptions.isExportDistMechInhoms)
+                newLines = self._exportHomogenVarsOfThisMech(compIdx, comp, mechIdx, self._exportOptions.isExportDistMechAssignedAndState, self._exportOptions.isExportDistMechInhoms)
                 lines.extend(newLines)
                 
             lines[-1] = '}'
@@ -86,7 +87,7 @@ class GensForHomogenVars:
             lines.append('    comp = $o1')
             lines.append('    ')
             if self._isExportedSynComp(compIdx):
-                newLines = self._exportHomogenVarsOfThisMech(comp, mechIdx, self._exportOptions.isExportSynAssignedAndState, self._exportOptions.isExportSynInhoms)
+                newLines = self._exportHomogenVarsOfThisMech(compIdx, comp, mechIdx, self._exportOptions.isExportSynAssignedAndState, self._exportOptions.isExportSynInhoms)
                 lines.extend(newLines)
                 
             lines[-1] = '}'
@@ -100,12 +101,14 @@ class GensForHomogenVars:
         
         
     # Generate code to init "mechStds" array slice for this mech of this comp
-    def _exportHomogenVarsOfThisMech(self, comp, mechIdx, isExportAssignedAndState, isExportInhoms):
+    def _exportHomogenVarsOfThisMech(self, compIdx, comp, mechIdx, isExportAssignedAndState, isExportInhoms):
         lines = []
         
-        mechName = h.ref('')
         mth = self._hocObj.mth
         mcu = self._hocObj.mcu
+        inhomAndStochLibrary = self._hocObj.inhomAndStochLibrary
+        
+        mechName = h.ref('')
         enumDmPpNc = comp.enumDmPpNc
         mth.getMechName(enumDmPpNc, mechIdx, mechName)
         mechName = mechName[0]
@@ -139,13 +142,19 @@ class GensForHomogenVars:
                 varName = varName[0]
                 for arrayIndex in range(arraySize):
                     value = comp.mechStds[mechIdx][varTypeIdx].get(varName, arrayIndex)
-                    defaultValue = defaultMechStd.get(varName, arrayIndex)
-                    # !! not sure about the 2nd condition in IF below,
-                    #    but it found out for ASSIGNED "ko_IKa" from "IPotassium.mod" that its default value
-                    #    is different depending on the moment when we created a new MechanismStandard:
-                    #    just after the start of our program (defaultValue = 0) or now (defaultValue = 2.5)
-                    if (varType == 1 and value == defaultValue) or (varType > 1 and value == 0):
-                        continue
+                    
+                    # Decide whether to skip "mechStd.set" for this var;
+                    # for stoch vars, we don't skip it even though the value is default
+                    # because we'll need to read it just before adding the noise
+                    if not self._hocObj.inhomAndStochLibrary.isStochEnabledFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex):
+                        defaultValue = defaultMechStd.get(varName, arrayIndex)
+                        # !! not sure about the 2nd condition in IF below,
+                        #    but it found out for ASSIGNED "ko_IKa" from "IPotassium.mod" that its default value
+                        #    is different depending on the moment when we created a new MechanismStandard:
+                        #    just after the start of our program (defaultValue = 0) or now (defaultValue = 2.5)
+                        if (varType == 1 and value == defaultValue) or (varType > 1 and value == 0):
+                            continue
+                            
                     isValueNaN = math.isnan(value)
                     if isValueNaN:
                         if isExportInhoms:

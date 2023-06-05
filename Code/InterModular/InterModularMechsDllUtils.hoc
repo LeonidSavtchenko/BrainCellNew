@@ -4,25 +4,19 @@ strdef loadedNanoHocFilePathName
 
 
 proc loadDefaultMechsDllDependingOnCellType() {
-    strdef basePath, subFolderName, dllPath
-    
-    if (isBaseOrNanoStart) {
-        basePath = "Mechanisms"
-    } else {
-        sprint(basePath, "%sMechanisms", startDir)
-    }
+    strdef subFolderName, dllDirPath
     _getCellName(subFolderName)
-    sprint(dllPath, "%s/%s", basePath, subFolderName)
-    _loadThisMechsDll(dllPath)
+    sprint(dllDirPath, "%sMechanisms/%s", startDir, subFolderName)
+    _loadThisMechsDll(dllDirPath)
 }
 
 // This proc is called from the nanogeometry file when user loads it back into the main program
 proc ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType() { local isMissing
-    strdef pyCommand, dirPath, cellName, line2
+    strdef pyCommand, dllDirPath, cellName, line2
     
     sprint(pyCommand, "'%s'.rsplit('/', 1)[0]", loadedNanoHocFilePathName)
-    dirPath = pyObj.ev(pyCommand)
-    sprint(pyCommand, "(exec('import os'), not os.path.exists('%s' + '/nrnmech.dll'))[1]", dirPath)
+    dllDirPath = pyObj.ev(pyCommand)
+    sprint(pyCommand, "(exec('import os'), not os.path.exists('%s' + '/nrnmech.dll'))[1]", dllDirPath)
     isMissing = pyObj.ev(pyCommand)
     if (isMissing) {
         print "\n\n    Warning: There is no \"nrnmech.dll\" in the same folder with the loaded nanogeometry HOC file."
@@ -31,16 +25,16 @@ proc ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType() { local i
         print line2
         loadDefaultMechsDllDependingOnCellType()
     } else {
-        _loadThisMechsDll(dllPath)
+        _loadThisMechsDll(dllDirPath)
     }
 }
 
 
 proc _loadThisMechsDll() { local status
-    strdef dllPath, pyCommand
-    dllPath = $s1
+    strdef dllDirPath, pyCommand
+    dllDirPath = $s1
     
-    sprint(pyCommand, "import neuron;neuron.load_mechanisms('%s'.replace('/', '\\\\'))", dllPath)
+    sprint(pyCommand, "import neuron;neuron.load_mechanisms('%s'.replace('/', '\\\\'))", dllDirPath)
     status = nrnpython(pyCommand)
     if (!status) {
         printMsgAndRaiseError("Failed to load \"nrnmech.dll\"")

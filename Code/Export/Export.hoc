@@ -25,14 +25,14 @@ proc exportCellToHocFile() {
     {
         line1 = "Here is what we don't export at the moment (the list is incomplete):"
         line2 = "    * GLOBAL vars of biophys mechs%s"
-        line4 = "    * custom PPs/ACs%s"
+        line4 = "    * custom PPs/ACs%s, e.g. gap junctions in Soma and Dendrites%s"
         if (isAstrocyteOrNeuron) {
             sprint(line2, line2, "")
-            sprint(line4, line4, "")
+            sprint(line4, line4, "", "")
         } else {
             sprint(line2, line2, " and synaptic PPs/ACs")
             line3 = "    * \"Random\" synapse location"
-            sprint(line4, line4, " (outside synapses)")
+            sprint(line4, line4, " (outside synapses)", " and Point3DRelease in Extracellular Source")
         }
         line5 = "    * v_init, celsius, dt"
         line6 = "    * the distance centre location"

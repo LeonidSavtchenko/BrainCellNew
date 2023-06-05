@@ -271,7 +271,7 @@ begintemplate SynManagerMainWidget
     //  populate 3 lists based on the filter level (preserving the old selections if possible) and switch the decks respectively
     // If called from "init", then:
     //  populate 3 lists based on the filter level
-    proc onListsFilterLevelChangedHandler() { local isCalledFromInit, srcChoiceIdx, trgChoiceIdx, sngChoiceIdx, mechIdx, isForIntUseOnly, isAccNCSrc, isAccNCTrg, doesReqSec, isSynInName, isAddToSrcList, isAddToTrgList, isAddToSngList localobj newItem
+    proc onListsFilterLevelChangedHandler() { local isCalledFromInit, srcChoiceIdx, trgChoiceIdx, sngChoiceIdx, mechIdx, isForIntUseOnly, isAccNCSrc, isAccNCTrg, doesReqSec, isIntFireInName, isSynInName, isAddToSrcList, isAddToTrgList, isAddToSngList localobj newItem
         strdef oldSrcSelMechName, oldTrgSelMechName, oldSngSelMechName, mechName, mechNameLower
         
         isCalledFromInit = $1
@@ -304,6 +304,7 @@ begintemplate SynManagerMainWidget
             isAccNCSrc = mth.isPointProcessAcceptableNetConSource(mechIdx)
             isAccNCTrg = mth.isPointProcessAcceptableNetConTarget(mechIdx)
             doesReqSec = mth.doesPointProcessRequireSection(mechIdx)
+            isIntFireInName = containsSubstring(mechNameLower, "intfire")
             isSynInName = containsSubstring(mechNameLower, "syn")
             
             if (smlfw.filterLevel < 0 || smlfw.filterLevel > 3) {
@@ -329,7 +330,7 @@ begintemplate SynManagerMainWidget
             }
             if (smlfw.filterLevel >= 3) {
                 // Maximum filtration
-                isAddToSrcList = isAddToSrcList && !doesReqSec
+                isAddToSrcList = isAddToSrcList && !doesReqSec && !isIntFireInName
                 isAddToTrgList = isAddToTrgList && isSynInName
                 isAddToSngList = isAddToSngList && isSynInName
             }
