@@ -6,13 +6,13 @@ isAstrocyteOrNeuron = -1    // 1 - astrocyte, 0 - neuron
 currentMechanismSetup = 0       // 0 - Electric mechanisms, 1 - Glutamate mechanisms
 DensityGluTransporters = 1e12   // 1/um2
 
-strdef startDir
-startDir = getcwd()
-
 objref soma_ref
 objref roadmapWidget
 
 { load_file("Code/InterModular/AllInterModularUtils.hoc") }
+
+objref mechsDllUtils
+mechsDllUtils = new MechsDllUtils(getcwd())
 
 proc prologueCompleteHandler() {
     load_file("Code/Core/MainProgram.hoc")

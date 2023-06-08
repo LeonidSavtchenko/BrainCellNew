@@ -316,8 +316,8 @@ begintemplate AddOneInputVarWidget
         varTypeSelectHandler(varTypeListIdx)
     }
     
-    proc varTypeSelectHandler() { local varTypeListIdx, enumDmPpNc, numVars, varIdx, arraySize, arrayIndex localobj comp
-        strdef varName, varNameWithIndex
+    proc varTypeSelectHandler() { local varTypeListIdx, enumDmPpNc, numVars, numInhomVars, varIdx, arraySize, arrayIndex localobj comp
+        strdef varName
         
         varTypeListIdx = $1
         
@@ -335,13 +335,18 @@ begintemplate AddOneInputVarWidget
         
         // Populate varNameWithIndexList
         numVars = mth.getNumMechVars(enumDmPpNc, selMechIdx, selVarType)
+        numInhomVars = 0
         for varIdx = 0, numVars - 1 {
             arraySize = mth.getVarNameAndArraySize(enumDmPpNc, selMechIdx, selVarType, varIdx, varName)
             for arrayIndex = 0, arraySize - 1 {
-                mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
-                varNameWithIndexList.append(new String(varNameWithIndex))
+                if (enumHomInhomStoch == 0 && !comp.isMechVarInhom(selMechIdx, selVarType, varName, arrayIndex)) {
+                    varNameWithIndexList.append(new ItemOfVarsList(varName, arraySize, arrayIndex))
+                } else {
+                    numInhomVars += 1
+                }
             }
         }
+        numVars -= numInhomVars
         
         // Select an item in varNameWithIndexList
         if (!isRecallMode) {
@@ -363,12 +368,15 @@ begintemplate AddOneInputVarWidget
         selVarNameWithIndexIdx = $1
     }
     
-    proc selectHandler() { local isUnique localobj newItem
-        strdef varNameWithIndex
+    proc selectHandler() { local isUnique localobj itemOfVarsList, newItem
+        if (selVarNameWithIndexIdx == -1) {
+            mwh.showWarningBox("Please select a variable.")
+            return
+        }
         
-        varNameWithIndex = varNameWithIndexList.o(selVarNameWithIndexIdx).s
+        itemOfVarsList = varNameWithIndexList.o(selVarNameWithIndexIdx)
         
-        newItem = new ItemOfInputVarsBrowsedList(isDmOrSynPart, selCompIdx, selMechIdx, selVarType, varNameWithIndex)
+        newItem = new ItemOfInputVarsBrowsedList(isDmOrSynPart, selCompIdx, selMechIdx, selVarType, itemOfVarsList.varName, itemOfVarsList.arraySize, itemOfVarsList.arrayIndex)
         
         if (isAddOrCorrect) {
             isUnique = parentWidget.onVarAddHandler(newItem)

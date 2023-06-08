@@ -1,0 +1,246 @@
+
+begintemplate ExportOptions
+
+    public isExportDistMechs, isExportDistMechAssignedAndState, isExportDistMechInhoms, isExportDistMechStochs, isExportSyns, isExportSynAssignedAndState, isExportSynInhoms, isExportSynStochs, isCreateParamsHoc, isExposeModelVars, isCreateRunnerHoc, isRecordAndSaveModelVars, isMakeSweepForModelVars, isCopyDll, isNewOrExistingDll
+    public exposedVarsList, sweptVarsList, watchedVarsList
+    public isExportAnyDistFuncs, isExportAnyStochFuncs, isExportAnyInhomBiophysModels, isExportSegmentationHelper, isExportAnyStochBiophysModels, isExportAnyInhomSynModels, isExportAnyStochSynModels, isExportInhomAndStochLibrary, isExportReducedRNGUtils, isExportSynEventsHelper
+    public isExportedInhomVar, isExportedStochVar, isExportedInhomBiophysVar, isExportedStochBiophysVar, isExportedInhomSynVar, isExportedStochSynVar
+    public isPythonRequired
+    public isAnyExposedVars, isAnySweptVars, isAnyWatchedVars
+    
+    external isAstrocyteOrNeuron
+    external inhomAndStochLibrary
+    external synGroup, seh
+    
+    isExportDistMechs = -1
+    isExportDistMechAssignedAndState = -1
+    isExportDistMechInhoms = -1
+    isExportDistMechStochs = -1
+    isExportSyns = -1
+    isExportSynAssignedAndState = -1
+    isExportSynInhoms = -1
+    isExportSynStochs = -1
+    isCreateParamsHoc = -1
+    isExposeModelVars = -1
+    isCreateRunnerHoc = -1
+    isRecordAndSaveModelVars = -1
+    isMakeSweepForModelVars = -1
+    isCopyDll = -1
+    isNewOrExistingDll = -1
+    
+    objref exposedVarsList, sweptVarsList, watchedVarsList
+    
+    
+    proc init() {
+        // Default options
+        isExportDistMechs = 1
+        isExportDistMechAssignedAndState = 1
+        isExportDistMechInhoms = 1
+        isExportDistMechStochs = 1
+        isExportSyns = !isAstrocyteOrNeuron
+        isExportSynAssignedAndState = !isAstrocyteOrNeuron
+        isExportSynInhoms = !isAstrocyteOrNeuron
+        isExportSynStochs = !isAstrocyteOrNeuron
+        isCreateParamsHoc = 0
+        isExposeModelVars = 0
+        isCreateRunnerHoc = 0
+        isRecordAndSaveModelVars = 0
+        isMakeSweepForModelVars = 0
+        isCopyDll = 1
+        isNewOrExistingDll = 0
+        
+        exposedVarsList = new List()
+        sweptVarsList = new List()
+        watchedVarsList = new List()
+    }
+    
+    func isExportAnyDistFuncs() {
+        return isExportAnyInhomBiophysModels() || isExportAnyInhomSynModels()
+    }
+    
+    func isExportAnyStochFuncs() {
+        return isExportAnyStochBiophysModels() || isExportAnyStochSynModels()
+    }
+    
+    func isExportAnyInhomBiophysModels() {
+        return (isExportDistMechs && isExportDistMechInhoms && inhomAndStochLibrary.getNumInhomVarsForDistMechs() != 0)
+    }
+    
+    func isExportSegmentationHelper() {
+        return (isExportDistMechs && isExportDistMechInhoms && inhomAndStochLibrary.isAnyNonVerbatimInhomVarsForDistMechs())
+    }
+    
+    func isExportAnyStochBiophysModels() {
+        return (isExportDistMechs && isExportDistMechStochs && inhomAndStochLibrary.getNumStochVarsForDistMechs() != 0)
+    }
+    
+    func isExportAnyInhomSynModels() {
+        return (isExportSyns && isExportSynInhoms && inhomAndStochLibrary.getNumInhomVarsForSyns() != 0)
+    }
+    
+    func isExportAnyStochSynModels() {
+        return (isExportSyns && isExportSynStochs && inhomAndStochLibrary.getNumStochVarsForSyns() != 0)
+    }
+    
+    func isExportInhomAndStochLibrary() { local cond1, cond2
+        cond1 = (isExportAnyDistFuncs() || isExportAnyStochFuncs() || isExportSynEventsHelper())
+        if (isExportSyns) {
+            cond2 = synGroup.is3Or1PartInSynStruc()
+        } else {
+            // synGroup is nil
+            cond2 = 0
+        }
+        return cond1 || cond2
+    }
+    
+    func isExportReducedRNGUtils() {
+        if (isExportAnyStochFuncs()) {
+            return 1
+        }
+        if (isAstrocyteOrNeuron || !isExportSyns) {
+            return 0
+        }
+        if (seh.isMinRPlt1) {
+            return 1
+        }
+        return isReleaseProbabilityInExposedVars()
+    }
+    
+    func isExportSynEventsHelper() {
+        if (isExportSyns) {
+            if (seh.isSefwEnabled()) {
+                return 1
+            }
+            return isReleaseProbabilityInExposedVars()
+        } else {
+            // seh is nil
+            return 0
+        }
+    }
+    
+    func isExportedInhomVar() { localobj activeSpecVar
+        activeSpecVar = $o1
+        if (!activeSpecVar.isInhom) {
+            return 0
+        }
+        if (activeSpecVar.isDmOrSynPart) {
+            if (!isExportDistMechs) {
+                return 0
+            }
+            if (!isExportDistMechInhoms) {
+                return 0
+            }
+            if (activeSpecVar.varType > 1 && !isExportDistMechAssignedAndState) {
+                return 0
+            }
+        } else {
+            if (isAstrocyteOrNeuron || !isExportSyns) {
+                return 0
+            }
+            if (!isExportSynInhoms) {
+                return 0
+            }
+            if (activeSpecVar.varType > 1 && !isExportSynAssignedAndState) {
+                return 0
+            }
+        }
+        return 1
+    }
+        
+    func isExportedStochVar() { localobj activeSpecVar
+        activeSpecVar = $o1
+        if (!activeSpecVar.isStoch) {
+            return 0
+        }
+        if (activeSpecVar.isDmOrSynPart) {
+            if (!isExportDistMechs) {
+                return 0
+            }
+            if (!isExportDistMechStochs) {
+                return 0
+            }
+            if (activeSpecVar.varType > 1 && !isExportDistMechAssignedAndState) {
+                return 0
+            }
+        } else {
+            if (isAstrocyteOrNeuron || !isExportSyns) {
+                return 0
+            }
+            if (!isExportSynStochs) {
+                return 0
+            }
+            if (activeSpecVar.varType > 1 && !isExportSynAssignedAndState) {
+                return 0
+            }
+        }
+        return 1
+    }
+    
+    func isExportedInhomBiophysVar() { localobj activeSpecVar
+        activeSpecVar = $o1
+        // 1: "PARAMETER"
+        return isExportDistMechs && activeSpecVar.isInhom && activeSpecVar.isDmOrSynPart && (activeSpecVar.varType == 1 || isExportDistMechAssignedAndState)
+    }
+    
+    func isExportedStochBiophysVar() { localobj activeSpecVar
+        activeSpecVar = $o1
+        // 1: "PARAMETER"
+        return isExportDistMechs && activeSpecVar.isStoch && activeSpecVar.isDmOrSynPart && (activeSpecVar.varType == 1 || isExportDistMechAssignedAndState)
+    }
+    
+    func isExportedInhomSynVar() { localobj activeSpecVar
+        activeSpecVar = $o1
+        // 1: "PARAMETER"
+        return isExportSyns && activeSpecVar.isInhom && !activeSpecVar.isDmOrSynPart && (activeSpecVar.varType == 1 || isExportSynAssignedAndState)
+    }
+    
+    func isExportedStochSynVar() { localobj activeSpecVar
+        activeSpecVar = $o1
+        // 1: "PARAMETER"
+        return isExportSyns && activeSpecVar.isStoch && !activeSpecVar.isDmOrSynPart && (activeSpecVar.varType == 1 || isExportSynAssignedAndState)
+    }
+    
+    func isPythonRequired() { local cond1, cond2, cond3, cond4, cond5
+        // The exported file will require Python only if we export any inhom/stoch models requiring Python or we export FakeMechanismStandardForNetCon
+        cond1 = (isExportDistMechs && isExportDistMechInhoms && inhomAndStochLibrary.doesAnyInhomVarRequirePython(1, isExportDistMechAssignedAndState))
+        cond2 = (isExportSyns && isExportSynInhoms && inhomAndStochLibrary.doesAnyInhomVarRequirePython(0, isExportSynAssignedAndState))
+        cond3 = (isExportDistMechStochs && inhomAndStochLibrary.doesAnyStochVarRequirePython(1, isExportDistMechAssignedAndState))
+        cond4 = (isExportSynStochs && inhomAndStochLibrary.doesAnyStochVarRequirePython(0, isExportSynAssignedAndState))
+        if (isExportSyns) {
+            cond5 = synGroup.is3Or1PartInSynStruc()
+        } else {
+            // synGroup is nil
+            cond5 = 0
+        }
+        return cond1 || cond2 || cond3 || cond4 || cond5
+    }
+    
+    func isAnyExposedVars() {
+        return (isExposeModelVars && exposedVarsList.count() != 0)
+    }
+    
+    func isAnySweptVars() {
+        return (isMakeSweepForModelVars && sweptVarsList.count() != 0)
+    }
+    
+    func isAnyWatchedVars() {
+        return (isRecordAndSaveModelVars && watchedVarsList.count() != 0)
+    }
+    
+    // All next staff is private
+    
+    
+    func isReleaseProbabilityInExposedVars() { local exposedVarIdx
+        for exposedVarIdx = 0, exposedVarsList.count() - 1 {    // Don't replace with "eachItemInList" because we return
+            if (exposedVarsList.o(exposedVarIdx).isReleaseProbability()) {
+                return 1
+            }
+        }
+        return 0
+    }
+    
+endtemplate ExportOptions
+
+
+objref exportOptions
+exportOptions = new ExportOptions()

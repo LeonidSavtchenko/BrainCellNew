@@ -1,0 +1,118 @@
+
+begintemplate Synapse
+
+    public sec_ref, connectionPoint, dist
+    public srcPp, netCon, trgPp, sngPp, sefwPp, sefwNetCon
+    public getPointProcess, changeLocation, changeStructure
+    
+    external codeContractViolation
+    
+    // Synapse location info
+    objref sec_ref
+    connectionPoint = -1
+    dist = -1
+    
+    // Synapse structure and vars
+    objref srcPp, netCon, trgPp, sngPp, sefwPp, sefwNetCon
+    
+    
+    proc init() { local numArg
+        numArg = numarg()
+        if (numArg == 2) {
+            sec_ref = $o1
+            connectionPoint = $2
+        } else if (numArg == 3) {
+            sngPp = $o1
+            sec_ref = $o2
+            connectionPoint = $3
+        } else if (numArg == 5) {
+            srcPp = $o1
+            netCon = $o2
+            trgPp = $o3
+            sec_ref = $o4
+            connectionPoint = $5
+        } else {
+            codeContractViolation()
+        }
+        calcAndCacheDist()
+    }
+    
+    obfunc getPointProcess() { local enumPpRoleExt localobj nil
+        enumPpRoleExt = $1     // 0: "Source PP", 1: "Target PP", 2: "Single PP", 3: "Target PP or Single PP"
+        
+        if (enumPpRoleExt == 0) {
+            return srcPp
+        } else if (enumPpRoleExt == 1) {
+            return trgPp
+        } else if (enumPpRoleExt == 2) {
+            return sngPp
+        } else if (enumPpRoleExt == 3) {
+            if (netCon != nil) {
+                return trgPp
+            } else {
+                return sngPp
+            }
+        } else {
+            codeContractViolation()
+        }
+    }
+    
+    proc changeLocation() {
+        sec_ref = $o1
+        connectionPoint = $2
+        calcAndCacheDist()
+    }
+    
+    proc changeStructure() { local numArg localobj nil
+        numArg = numarg()
+        if (numArg == 1) {
+            // sngPp -> Section
+            
+            netCon = nil        // Destroying old NetCon-s before all connected PPs
+            sefwNetCon = nil    //
+            
+            sngPp = $o1
+            
+            srcPp = nil
+            trgPp = nil
+            sefwPp = nil
+        } else if (numArg == 3) {
+            // srcPp -> netCon -> trgPp -> Section
+            
+            netCon = $o2        // Destroying old NetCon-s before all connected PPs
+            sefwNetCon = nil    //
+            
+            srcPp = $o1
+            trgPp = $o3
+            
+            sngPp = nil
+            sefwPp = nil
+        } else if (numArg == 5) {
+            // srcPp -> netCon -> sefwPp -> sefwNetCon -> trgPp -> Section
+            
+            netCon = $o2        // Destroying old NetCon-s before all connected PPs
+            sefwNetCon = $o4    //
+            
+            srcPp = $o1
+            sefwPp = $o3
+            trgPp = $o5
+            
+            sngPp = nil
+        } else {
+            codeContractViolation()
+        }
+    }
+    
+    // All next staff is private
+    
+    
+    proc calcAndCacheDist() {
+        sec_ref.sec {
+            dist = distance(connectionPoint)
+        }
+    }
+    
+endtemplate Synapse
+
+objref smAllSyns
+smAllSyns = new List()

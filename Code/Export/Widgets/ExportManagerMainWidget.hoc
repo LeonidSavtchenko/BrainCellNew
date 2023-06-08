@@ -3,7 +3,7 @@ begintemplate ExportManagerMainWidget
 
     public show, dismissHandler
     
-    external mwh, compUtils, inhomAndStochLibrary
+    external compUtils, inhomAndStochLibrary
     external saveNanoHocFile, createEmptyPanel, openDeck, closeDeck, unmapIfNotNil
     external isAstrocyteOrNeuron
     external exportOptions
@@ -236,13 +236,6 @@ begintemplate ExportManagerMainWidget
     }
     
     proc exportHandler() { local isCancel
-        /* !!
-        if (exportOptions.isExportDistMechs || exportOptions.isExportSyns || exportOptions.isCreateParamsHoc || exportOptions.isCreateRunnerHoc || exportOptions.isCopyDll) {
-            mwh.showNotImplementedWarning()
-            return
-        }
-        */
-        
         isCancel = saveNanoHocFile()
         if (isCancel) {
             return

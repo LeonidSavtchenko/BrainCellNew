@@ -95,7 +95,10 @@ begintemplate SynEventsHelper
     }
     
     func isSefwEnabled() {
-        return isMinRPlt1 || inhomAndStochLibrary.isAnyStochVarsForSyns()
+        if (isMinRPlt1) {
+            return 1
+        }
+        return inhomAndStochLibrary.isAnyStochVarsForSyns()     // Do not move to the IF OR for higher performance
     }
     
     // All next staff is private

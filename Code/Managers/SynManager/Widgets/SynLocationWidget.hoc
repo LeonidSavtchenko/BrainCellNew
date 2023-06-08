@@ -5,12 +5,11 @@ begintemplate SynLocationWidget
     
     external mth, synGroup
     external createEmptyPanel, unmapIfNotNil, codeContractViolation
-    external enumSynLoc
+    external smEnumSynLoc, smSynLocP
     
     objref mainBox, deck
     
     selEnumSynLoc = -1
-    p_lastApplied = -1
     p = -1
     isReviewAfterApply = -1
     
@@ -19,8 +18,6 @@ begintemplate SynLocationWidget
     
     
     proc init() {
-        p_lastApplied = 0.5
-        
         isReviewAfterApply = 0
         
         pMin = 0
@@ -32,8 +29,8 @@ begintemplate SynLocationWidget
     proc show() { local synLocIdx
         strdef synLocName, handlerHocCommand, text
         
-        selEnumSynLoc = enumSynLoc
-        p = p_lastApplied
+        selEnumSynLoc = smEnumSynLoc
+        p = smSynLocP
         
         mainBox = new VBox()
         mainBox.intercept(1)
@@ -92,7 +89,7 @@ begintemplate SynLocationWidget
         numArg = numarg()
         
         if (numArg == 1) {
-            synLocIdx = enumSynLoc
+            synLocIdx = smEnumSynLoc
         } else if (numArg == 2) {
             synLocIdx = $2
         } else {
@@ -124,11 +121,11 @@ begintemplate SynLocationWidget
     }
     
     proc applyHandler() {
-        enumSynLoc = selEnumSynLoc
-        synGroup.applyChangesToLoc(p, isReviewAfterApply)
+        smEnumSynLoc = selEnumSynLoc
         if (selEnumSynLoc == 2) {
-            p_lastApplied = p
+            smSynLocP = p
         }
+        synGroup.applyChangesToLoc(isReviewAfterApply)
         isReviewAfterApply = 0
         dismissHandler()
     }

@@ -72,7 +72,7 @@ begintemplate MechOp2Helper
             for varIdx = 0, numVars - 1 {
                 arraySize = mth.getVarNameAndArraySize(0, mechIdx, varType, varIdx, varName)
                 for arrayIndex = 0, arraySize - 1 {
-                    isInhom = comp.isMechVarInhom(mechIdx, varTypeIdx, varName, arrayIndex)
+                    isInhom = comp.isMechVarInhom(mechIdx, varType, varName, arrayIndex)
                     if (isInhom) {
                         mth.getVarNameWithIndexAndUnits(0, mechIdx, varName, arraySize, arrayIndex, varNameWithIndexAndUnits)
                         sprint(text, "%s/%s: %s", name, varTypeName, varNameWithIndexAndUnits)

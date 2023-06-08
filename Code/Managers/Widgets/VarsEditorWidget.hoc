@@ -58,7 +58,7 @@ begintemplate VarsEditorWidget
             inhomFlagsVec = new Vector(arraySize)
             stochFlagsVec = new Vector(arraySize)
             for arrayIndex = 0, arraySize - 1 {
-                isInhom = comp.isMechVarInhom(mechIdx, varTypeIdx, varName, arrayIndex)
+                isInhom = comp.isMechVarInhom(mechIdx, varType, varName, arrayIndex)
                 inhomFlagsVec.x(arrayIndex) = isInhom
                 isStoch = inhomAndStochLibrary.isStochEnabledFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
                 stochFlagsVec.x(arrayIndex) = isStoch

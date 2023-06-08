@@ -3,7 +3,7 @@ begintemplate CreateListOfInputVarsWidget
 
     public show, onVarAddHandler, onVarCorrectHandler, onDefineVarGridOkHandler, dismissHandler
     
-    external mwh
+    external exportOptions
     external enterVarExpression, isVarExprUnique, replaceItemInList, openDeck, closeDeck, unmapIfNotNil, codeContractViolation
     external isAstrocyteOrNeuron
     
@@ -32,9 +32,15 @@ begintemplate CreateListOfInputVarsWidget
         
         dg4ivWidget = new DefineGridForInputVarWidget(this)
         
-        exprsList = new List()
+        if (cloivWidIdx == 0) {
+            exprsList = exportOptions.exposedVarsList
+        } else if (cloivWidIdx == 1) {
+            exprsList = exportOptions.sweptVarsList
+        } else {
+            codeContractViolation()
+        }
         
-        firstColWidth = 315     // The width was chosen to fit "Extracellular Source" -> diam
+        firstColWidth = 325     // The width was chosen to fit "Spine Neck" -> frapiono0_frapion_ion
         secondColWidth = 105
         slotHeight = 190
     }
@@ -47,7 +53,7 @@ begintemplate CreateListOfInputVarsWidget
         {
             xpanel("")
             if (cloivWidIdx == 0) {
-                text = "Vars to expose in the settings file:"
+                text = "Vars to expose in the params file:"
             } else if (cloivWidIdx == 1) {
                 text = "Vars to sweep:"
             } else {
@@ -127,8 +133,11 @@ begintemplate CreateListOfInputVarsWidget
         return 1
     }
     
-    proc onDefineVarGridOkHandler() {
-        mwh.showNotImplementedWarning()
+    proc onDefineVarGridOkHandler() { local varIdx localobj gridInfo
+        gridInfo = $o1
+        varIdx = $2
+        
+        exprsList.o(varIdx).gridInfoOrNil = gridInfo
     }
     
     proc dismissHandler() {
@@ -226,7 +235,7 @@ begintemplate CreateListOfInputVarsWidget
         exprsList.select(selVarIdx)
     }
     
-    proc defineVarGridHandler() { local selVarIdx
+    proc defineVarGridHandler() { local selVarIdx localobj gridInfoOrNil
         dismissChilds()
         
         selVarIdx = exprsList.selected()
@@ -235,7 +244,8 @@ begintemplate CreateListOfInputVarsWidget
             return
         }
         
-        dg4ivWidget.show()  // --> onDefineVarGridOkHandler
+        gridInfoOrNil = exprsList.o(selVarIdx).gridInfoOrNil
+        dg4ivWidget.show(gridInfoOrNil, selVarIdx)      // --> onDefineVarGridOkHandler
     }
     
     proc okHandler() {

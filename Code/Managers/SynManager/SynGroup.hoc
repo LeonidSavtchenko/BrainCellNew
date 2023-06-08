@@ -1,6 +1,12 @@
 
 // !! some code dupl. with MechComp.hoc
 
+
+// Probability for "Random" synapse location:
+// 0: "All on Spine Head", 1: "All on Dendrite (just under Spine Neck)"
+makeSureDeclared("smSynLocP", "smSynLocP = 0.5")
+
+
 // A group of synapses (a counterpart of MechComp template)
 begintemplate SynGroup
 
@@ -12,7 +18,7 @@ begintemplate SynGroup
     external mwh, mth, math, mcu, seh, rngUtils
     external stringEmpty, stringsEqual, codeContractViolation
     external eachItemInList
-    external enumSynCompIdxs, enumSynLoc
+    external enumSynCompIdxs, smEnumSynLoc, smSynLocP
     external spineNeckDiamCache, inhomAndStochLibrary
     external isScheduledRescanningOfDistMechs
     
@@ -117,12 +123,12 @@ begintemplate SynGroup
         return secList
     }
     
-    proc applyChangesToLoc() { local p, isReviewAfterApply, distMin, distMax, synIdx, connectionPoint, spineNeckDiam localobj sec_ref, syn
-        p = $1
-        isReviewAfterApply = $2
+    // Other input: smEnumSynLoc, smSynLocP (taken from the top level)
+    proc applyChangesToLoc() { local isReviewAfterApply, distMin, distMax, synIdx, connectionPoint, spineNeckDiam localobj sec_ref, syn
+        isReviewAfterApply = $1
         
-        if (enumSynLoc == 2) {
-            randomSynLoc.binomial(1, p)     // Bernoulli distribution
+        if (smEnumSynLoc == 2) {
+            randomSynLoc.binomial(1, smSynLocP)     // Bernoulli distribution
         }
         
         distMin = math.inf
@@ -401,8 +407,8 @@ begintemplate SynGroup
     }
     
     // Keep in sync with ReducedSynGroup.applyHomogenChanges
-    func ifMechDirtyThenApplyHomogenChanges() { local compIdx, mechIdx, enumPpRole, isPPorNC, maxVarType, varType, varTypeIdx localobj comp, syn, ppOrNetCon, sefwNetConOrNil, nil, compMechStd, tempMechStdExt
-        strdef mechName, varName
+    func ifMechDirtyThenApplyHomogenChanges() { local compIdx, mechIdx, enumPpRole, isPPorNC, maxVarType, varType, varTypeIdx, release_probability localobj comp, syn, sefwPpOrNil, sefwNetConOrNil, ppOrNetCon, nil, compMechStd, tempMechStdExt
+        strdef mechName
         
         compIdx = $1
         mechIdx = $2
@@ -420,13 +426,15 @@ begintemplate SynGroup
             mth.getMechName(1, mechIdx, mechName)
         }
         for eachItemInList(syn, smAllSyns) {
+            sefwPpOrNil = nil
+            sefwNetConOrNil = nil
             if (isPPorNC) {
                 ppOrNetCon = syn.getPointProcess(enumPpRole)
-                sefwNetConOrNil = nil
                 maxVarType = 3
             } else {
                 ppOrNetCon = syn.netCon
                 if (seh.isSefwEnabled()) {
+                    sefwPpOrNil = syn.sefwPp
                     sefwNetConOrNil = syn.sefwNetCon
                 }
                 maxVarType = 1
@@ -436,9 +444,7 @@ begintemplate SynGroup
                 compMechStd = comp.mechStds[mechIdx][varTypeIdx]
                 if (!comp.isMechVarTypeInhom[mechIdx][varTypeIdx]) {
                     compMechStd.out(ppOrNetCon)
-                    if (sefwNetConOrNil != nil) {
-                        compMechStd.out(sefwNetConOrNil)
-                    }
+                    tempMechStdExt = compMechStd
                 } else {
                     if (isPPorNC) {
                         tempMechStdExt = new MechanismStandard(mechName, varType)
@@ -448,13 +454,17 @@ begintemplate SynGroup
                     tempMechStdExt.in(ppOrNetCon)
                     mcu.copyAllVarsValuesExceptInhom(compMechStd, tempMechStdExt)
                     tempMechStdExt.out(ppOrNetCon)
-                    if (sefwNetConOrNil != nil) {
-                        tempMechStdExt.out(sefwNetConOrNil)
-                    }
                 }
                 // !! inhomAndStochLibrary.onMakingVarHomogen(!!enumDmPpNc, compIdx, mechIdx, varType, !!varIdx, !!arrayIndex)
             }
+            if (sefwPpOrNil != nil) {
+                release_probability = compMechStd.get(seh.metaVarName)
+                if (!math.isNaN(release_probability)) {
+                    sefwPpOrNil.release_probability = release_probability
+                }
+            }
             if (sefwNetConOrNil != nil) {
+                tempMechStdExt.out(sefwNetConOrNil)
                 sefwNetConOrNil.delay = 0
             }
         }
@@ -468,10 +478,10 @@ begintemplate SynGroup
     proc getNewSecRefConnectionPointAndSpineNeckDiam() { local synIdx, synLocIdx, connectionPoint, spineNeckDiam localobj sec_ref, np_ref
         synIdx = $1
         
-        if (enumSynLoc == 2) {
+        if (smEnumSynLoc == 2) {
             synLocIdx = randomSynLoc.repick()
         } else {
-            synLocIdx = enumSynLoc
+            synLocIdx = smEnumSynLoc
         }
         
         if (synLocIdx == 0) {

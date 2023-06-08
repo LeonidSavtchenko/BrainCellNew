@@ -12,6 +12,12 @@ def getTemplateName(hocTemplInst):
     templName = templName[: idx]
     return templName
     
+def getExposedVarName(exposedVarIdx):
+    return f'EXPOSED_VAR_{exposedVarIdx + 1}'
+    
+def getSweptVarName(sweptVarIdx):
+    return f'SWEPT_VAR_{sweptVarIdx + 1}'
+    
 def emptyParagraphHint():
     return '// (Empty paragraph)'
     

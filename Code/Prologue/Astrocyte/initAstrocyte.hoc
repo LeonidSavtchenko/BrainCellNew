@@ -141,7 +141,7 @@ proc initMainProgram() {
     plotShapeGeometry.unmap()
     Boxleaves.unmap()
     
-    loadDefaultMechsDllDependingOnCellType()
+    mechsDllUtils.loadDefaultMechsDllDependingOnCellType()
     
     load_file("Code/Prologue/CommonPrologue.hoc")
     

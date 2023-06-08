@@ -3,43 +3,38 @@ begintemplate DefineGridForInputVarWidget
 
     public show, dismissHandler
     
-    external math, mwh
     external unmapIfNotNil
     
     objref mainBox
     objref parentWidget
     
-    isLinOrExpGrid = -1
-    firstValue = -1
-    lastValue = -1
-    numPts = -1
+    objref gridInfo
+    oldVarIdx = -1
     
     
-    proc init() { local inf
+    proc init() {
         parentWidget = $o1
-        
-        isLinOrExpGrid = 1
-        
-        firstValue = 1.2
-        lastValue = 3.4
-        numPts = 10
-        
-        inf = math.inf
-        variable_domain(&numPts, 2, inf)
     }
     
-    proc show() {
+    proc show() { localobj nil
+        gridInfo = $o1
+        oldVarIdx = $2
+        
+        if (gridInfo == nil) {
+            gridInfo = new SweptInputVarGridInfo()
+        }
+        
         mainBox = new VBox()
         mainBox.intercept(1)
         {
             xpanel("")
             xlabel("Grid type:")
-            xradiobutton("Linear:          next = prev + delta", "isLinOrExpGrid = 1", isLinOrExpGrid == 1)
-            xradiobutton("Exponential: next = prev * delta", "isLinOrExpGrid = 0", isLinOrExpGrid == 0)
+            xradiobutton("Linear:          next = prev + delta", "gridInfo.isLinOrExpGrid = 1", gridInfo.isLinOrExpGrid == 1)
+            xradiobutton("Exponential: next = prev * delta", "gridInfo.isLinOrExpGrid = 0", gridInfo.isLinOrExpGrid == 0)
             xlabel("")
-            xpvalue("First value", &firstValue, 1)
-            xpvalue("Last value", &lastValue, 1)
-            xpvalue("Number of points", &numPts, 1)
+            xpvalue("First value", &gridInfo.firstValue, 1)
+            xpvalue("Last value", &gridInfo.lastValue, 1)
+            xpvalue("Number of points", &gridInfo.numPts, 1)
             xlabel("")
             xbutton("OK", "okHandler()")
             xpanel()
@@ -56,17 +51,14 @@ begintemplate DefineGridForInputVarWidget
     // All next staff is private
     
     
-    proc okHandler() {
-        // The case when lastValue == firstValue is considered valid because
-        // user may just want to run the same simulation a few times
-        
-        if (!isLinOrExpGrid && firstValue * lastValue <= 0 && lastValue != firstValue) {
-            mwh.showWarningBox("Invalid exponential grid: firstValue * lastValue <= 0")
+    proc okHandler() { local isValid
+        isValid = gridInfo.validateAndCacheDelta()
+        if (!isValid) {
             return
         }
         
         dismissHandler()
-        parentWidget.onDefineVarGridOkHandler()
+        parentWidget.onDefineVarGridOkHandler(gridInfo, oldVarIdx)
     }
     
 endtemplate DefineGridForInputVarWidget

@@ -91,7 +91,7 @@ NEURON {
     SUFFIX cadifus
     USEION ca READ cao, cai, ica WRITE cai, ica
     USEION ip3 READ ip3i  WRITE ip3i VALENCE 1 
-    RANGE ica_pmp, cai0, fluo, fluoNew, r_bar_5P
+    RANGE ica_pmp, cai0, fluo, fluoNew
     RANGE alpha : relative abundance of SERCA
 	RANGE Dip3, Ip3init, modelStim, v_bar_beta
     GLOBAL vrat, TBufs, TBufm, BufferAlpha

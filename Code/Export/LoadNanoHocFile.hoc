@@ -1,0 +1,31 @@
+
+// Load and validate nanogeometry HOC file
+// Returns: 0/1 flag indicating that the file was loaded successfully
+func loadNanoHocFile() { local isSelected, status
+    
+    isSelected = selectNanoHocFile("r", "Load", mechsDllUtils.loadedNanoHocFilePathName)
+    if (!isSelected) {
+        return 0
+    }
+    
+    // !! need to add some check that user doesn't try to load a base geometry file in that way
+    // !! if called from MainUi, then need to delete the old cell here (something like proc cleanupBeforeNextImport from Import module, but much more to cleanup)
+    
+    mwh.showPleaseWaitBox("Loading nanogeometry file.")
+    {
+        status = load_file(1, mechsDllUtils.loadedNanoHocFilePathName)
+    }
+    mwh.hidePleaseWaitBox()
+    if (!status) {
+        mwh.showWarningBox("Failed to load the nanogeometry file")
+        return 0
+    }
+    
+    // !! validation: make sure the next vars were created: isAstrocyteOrNeuron, soma_ref, dendrite_ref, axon_ref (for neuron only), nanoProximal_ref, nanoDistal_ref etc.
+    if (!name_declared("dendrite_ref")) {
+        mwh.showWarningBox("Invalid nanogeometry file")
+        return 0
+    }
+    
+    return 1
+}

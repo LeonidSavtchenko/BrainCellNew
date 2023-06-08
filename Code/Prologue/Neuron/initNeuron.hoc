@@ -26,7 +26,7 @@ proc neuronPostImportHandler() {
 
     Boxspines.unmap()
     
-    loadDefaultMechsDllDependingOnCellType()
+    mechsDllUtils.loadDefaultMechsDllDependingOnCellType()
     
     load_file("Code/Prologue/CommonPrologue.hoc")
     load_file("Code/Prologue/Neuron/initNew.hoc")

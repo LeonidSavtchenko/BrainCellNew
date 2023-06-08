@@ -105,7 +105,7 @@ func chooseUniqueNameForCompartmentForMechManager() { local hintIdx, isCancel, i
         }
         
         if (containsSubstring(chosenName, "  ")) {
-            // Keep in sync with py:Generators._prepareUniqueNameId
+            // Keep in sync with py:GeneratorsForMainHocFile._prepareUniqueNameId
             hintIdx = 1
             continue
         }

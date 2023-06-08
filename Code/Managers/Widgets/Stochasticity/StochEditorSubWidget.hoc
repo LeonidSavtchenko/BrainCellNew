@@ -107,7 +107,7 @@ begintemplate StochEditorSubWidget
         
         // The ctor-s below will access parentWidget.boundingHelper, so we have to set it earlier
         
-        // Keep in sync with py:Generators.insertAllUsedStochFuncs
+        // Keep in sync with py:GeneratorsForMainHocFile.insertAllUsedStochFuncs
         
         objref stochFuncHelpers[sfc.numStochFuncs]
         
@@ -183,7 +183,7 @@ begintemplate StochEditorSubWidget
         compName = comp.name
         mth.getVarTypeName(varType, varTypeName)
         mth.getVarNameWithIndexAndUnits(enumDmPpNc, mechIdx, varName, arraySize, arrayIndex, varNameWithIndexAndUnits, varNameWithIndex)
-        isInhom = comp.isMechVarInhom(mechIdx, varTypeIdx, varName, arrayIndex)
+        isInhom = comp.isMechVarInhom(mechIdx, varType, varName, arrayIndex)
         isStoch = inhomAndStochLibrary.isStochEnabledFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
         
         mainBox = new VBox()

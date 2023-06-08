@@ -3,21 +3,23 @@ begintemplate CreateListOfOutputVarsWidget
 
     public show, dismissHandler
     
+    external exportOptions
     external mwh, pyObj
     external addVarToGraph, unmapIfNotNil
     external eachItemInList
     
     objref mainBox
-    objref varsList
+    objref watchedVarsList
     
     isRecordAndSaveWithAPCounts = -1
     isSaveToTxtOrBinFile = -1
     
     
     proc init() {
-        varsList = new List()
         isRecordAndSaveWithAPCounts = 0
         isSaveToTxtOrBinFile = 1
+        
+        watchedVarsList = exportOptions.watchedVarsList
     }
     
     proc show() { localobj graph, var, apcList
@@ -32,7 +34,7 @@ begintemplate CreateListOfOutputVarsWidget
             xlabel("(You can use \"Delete\" to remove the vars added by mistake.)")
             xpanel()
             graph = new Graph()
-            for eachItemInList(var, varsList) {
+            for eachItemInList(var, watchedVarsList) {
                 addVarToGraph(graph, var.s)
             }
             graph.menu_remove("Crosshair")
@@ -88,8 +90,8 @@ begintemplate CreateListOfOutputVarsWidget
     }
     
     proc okHandler() {
-        varsList.remove_all()
-        pyObj.GraphUtils.parseVarsFromTheGraph(varsList)
+        watchedVarsList.remove_all()
+        pyObj.GraphUtils.parseVarsFromTheGraph(watchedVarsList)
         
         dismissHandler()
     }

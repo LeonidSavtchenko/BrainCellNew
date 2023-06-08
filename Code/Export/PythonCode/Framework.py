@@ -1,6 +1,8 @@
 
-from neuron import hoc, nrn
-from Generators.Generators import *
+import os, shutil
+from neuron import h, hoc, nrn
+from GeneratorsForMainHocFile.GeneratorsForMainHocFile import *
+from GeneratorsForAuxHocFiles.GeneratorsForAuxHocFiles import *
 from OtherUtils import *
 
 
@@ -10,16 +12,33 @@ _parStartMarker = '//////////////////// Start of '
 _parEndMarker = '//////////////////// End of '
 _emptyParMarker = emptyParagraphHint()
 
+
 class _GenInfo:
     
     def __init__(self, startIdx, endIdx, pyCall):
         self.startIdx = startIdx
         self.endIdx = endIdx
         self.pyCall = pyCall
-
-def exportCore(outHocFilePathName):
-
+        
+        
+def exportCore(outMainHocFilePathName):
+    
     hocObj = hoc.HocObject()
+    _exportMainHocFile(outMainHocFilePathName, hocObj)
+    
+    outDirPath = os.path.dirname(outMainHocFilePathName)
+    outMainHocFileName = os.path.basename(outMainHocFilePathName)
+    exportOptions = hocObj.exportOptions
+    
+    if exportOptions.isCreateParamsHoc or exportOptions.isCreateRunnerHoc:
+        _exportAuxHocFiles(outDirPath, outMainHocFileName, exportOptions)
+        
+    if exportOptions.isCopyDll:
+        _copyMechsDllFile(outDirPath, hocObj.mechsDllUtils.loadedDllDirPath)
+        
+        
+def _exportMainHocFile(outMainHocFilePathName, hocObj):
+    
     isAstrocyteOrNeuron = hocObj.isAstrocyteOrNeuron
     
     if isAstrocyteOrNeuron:
@@ -30,10 +49,10 @@ def exportCore(outHocFilePathName):
     
     with open(inSkeletonFileRelPathName, 'r') as inFile:
         lines = inFile.readlines()      # Preserving all newline characters here
-    
+        
     lineIdxToGenInfoDict = _findAllGenerators(lines)
     
-    gens = Generators()
+    gens = GeneratorsForMainHocFile()
     
     # Iterating in reverse order to keep the line indexes intact
     lineIdxs = list(lineIdxToGenInfoDict.keys())
@@ -47,15 +66,45 @@ def exportCore(outHocFilePathName):
             _insertLines(lines, lineIdx, genRes)
         else:
             codeContractViolation()
-    
+            
     _removeEmptyParagraphs(lines)
     
     _prependTableOfContents(lines)
     
-    with open(outHocFilePathName, 'w') as outFile:
+    with open(outMainHocFilePathName, 'w') as outFile:
         outFile.writelines(lines)
-
-
+        
+def _exportAuxHocFiles(outDirPath, outMainHocFileName, exportOptions):
+    
+    gens = GeneratorsForAuxHocFiles()
+    
+    if exportOptions.isCreateParamsHoc:
+        lines = gens.getParamsCode()
+        _saveAuxHocFile(lines, outDirPath, 'params.hoc')
+        
+    if exportOptions.isCreateRunnerHoc:
+        lines = gens.getRunnerCode(outMainHocFileName)
+        _saveAuxHocFile(lines, outDirPath, 'runner.hoc')
+        
+def _saveAuxHocFile(lines, outDirPath, outFileName):
+    lines = _addNewLineChars(lines)
+    filePathName = outDirPath + '\\' + outFileName
+    with open(filePathName, 'w') as outFile:
+        outFile.writelines(lines)
+        
+def _copyMechsDllFile(outDirPath, loadedDllDirPath):
+    
+    dllFileName = 'nrnmech.dll'
+    
+    srcDllFilePath = loadedDllDirPath + '\\' + dllFileName
+    dstDllFilePath = outDirPath + '\\' + dllFileName
+    
+    try:
+        shutil.copyfile(srcDllFilePath, dstDllFilePath)
+    except shutil.SameFileError:
+        # Maybe user loaded a nano HOC file exported earlier and now just exports it again
+        pass
+    
 def _findAllGenerators(lines):
     lineIdxToGenInfoDict = {}
     for lineIdx in range(len(lines)):
@@ -74,7 +123,7 @@ def _findAllGenerators(lines):
             codeContractViolation()
         lineIdxToGenInfoDict[lineIdx] = _GenInfo(startIdx, endIdx, line[pyCallIdx : endIdx])
     return lineIdxToGenInfoDict
-
+    
 def _removeEmptyParagraphs(lines):
     lineIdx = len(lines) - 1
     while lineIdx > 0:
@@ -86,7 +135,7 @@ def _removeEmptyParagraphs(lines):
             lineIdx -= 4
         else:
             lineIdx -= 1
-
+            
 def _prependTableOfContents(lines):
     hdrStartIdx = len(_parStartMarker)
     lineIdxToHeaderDict = {}
@@ -113,14 +162,15 @@ def _prependTableOfContents(lines):
     genLines.append('*/')
     genLines.append('//////////////////////////////////////////////////////////////////////////')
     lines[: 0] = _addNewLineChars(genLines)
-
+    
 def _insertSubstring(lines, lineIdx, startIdx, endIdx, genSubstring):
     line = lines[lineIdx]
     line = line[: startIdx] + genSubstring + line[endIdx :]
     lines[lineIdx] = line
-
+    
 def _insertLines(lines, lineIdx, genLines):
     lines[lineIdx : lineIdx + 1] = _addNewLineChars(genLines)
-
+    
 def _addNewLineChars(genLines):
     return [genLine + '\n' for genLine in genLines]
+    

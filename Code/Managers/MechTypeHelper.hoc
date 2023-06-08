@@ -9,7 +9,7 @@ if (isAstrocyteOrNeuron) {
 
 begintemplate MechTypeHelper
 
-    public getMechType, getNumMechs, getMechName, getMechIdx, getNumVarTypes, getNumMechVars, doesMechHaveGlobalVars, doesMechHaveNotGlobalVars, getVarNameAndArraySize, getVarTypeName, getVarNameWithIndex, getVarNameWithIndexAndUnits, isDistMechSticky, checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar, isDiamDistMechVar, isWeightNetConVar, convertVarTypeToVarTypeIdx, doesPointProcessRequireSection, isPointProcessAcceptableNetConSource, isPointProcessAcceptableNetConTarget
+    public getMechType, getNumMechs, getMechName, getMechIdx, getNumVarTypes, getNumMechVars, doesMechHaveGlobalVars, doesMechHaveNotGlobalVars, getVarNameAndArraySize, getVarTypeName, getVarNameWithIndex, getVarUnits, getVarNameWithIndexAndUnits, isDistMechSticky, checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar, isDiamDistMechVar, isWeightNetConVar, convertVarTypeToVarTypeIdx, doesPointProcessRequireSection, isPointProcessAcceptableNetConSource, isPointProcessAcceptableNetConTarget
     
     public morphologyMechIdx, diamVarType, diamVarName
     public extracellularMechName, ionSuffix
@@ -207,21 +207,13 @@ begintemplate MechTypeHelper
     objref _pointProcess
     strdef _unitsStr
     
-    proc getVarNameWithIndexAndUnits() { local numArg, enumDmPpNc, mechIdx, arraySize, arrayIndex localobj nil
+    proc getVarUnits() { local enumDmPpNc, mechIdx localobj nil
         strdef varName, varNameWithIndex, mechName, hocCommand
-        
-        numArg = numarg()
-        if (numArg < 6 || numArg > 7) {
-            codeContractViolation()
-        }
         
         enumDmPpNc = $1
         mechIdx = $2
         varName = $s3
-        arraySize = $4
-        arrayIndex = $5
-        
-        getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
+        varNameWithIndex = $s4
         
         // !! is that needed?
         _unitsStr = ""
@@ -243,9 +235,31 @@ begintemplate MechTypeHelper
         } else {
             codeContractViolation()
         }
-        if (!stringEmpty(_unitsStr)) {
+        
+        $s5 = _unitsStr
+    }
+    
+    proc getVarNameWithIndexAndUnits() { local numArg, enumDmPpNc, mechIdx, arraySize, arrayIndex
+        strdef varName, varNameWithIndex, unitsStr
+        
+        numArg = numarg()
+        if (numArg < 6 || numArg > 7) {
+            codeContractViolation()
+        }
+        
+        enumDmPpNc = $1
+        mechIdx = $2
+        varName = $s3
+        arraySize = $4
+        arrayIndex = $5
+        
+        getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
+        
+        getVarUnits(enumDmPpNc, mechIdx, varName, varNameWithIndex, unitsStr)
+        
+        if (!stringEmpty(unitsStr)) {
             // !! some vars have "1" or "1.0" assigned as units. maybe just omit it here?
-            sprint($s6, "%s (%s)", varNameWithIndex, _unitsStr)
+            sprint($s6, "%s (%s)", varNameWithIndex, unitsStr)
         } else {
             sprint($s6, "%s", varNameWithIndex) // !! would simple assignment work here?
         }

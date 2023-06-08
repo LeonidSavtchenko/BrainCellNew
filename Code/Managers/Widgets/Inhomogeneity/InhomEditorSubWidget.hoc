@@ -81,7 +81,7 @@ begintemplate InhomEditorSubWidget
             isCalledFromVarsEditor = 1
         }
         
-        // Keep in sync with py:Generators.insertAllUsedDistFuncs
+        // Keep in sync with py:GeneratorsForMainHocFile.insertAllUsedDistFuncs
         
         objref distFuncHelpers[dfc.numDistFuncs]
         
@@ -124,7 +124,7 @@ begintemplate InhomEditorSubWidget
         // The difference between these two values takes place for morphology\diam and LargeGlia\g_pas
         // because they are inhomogen by fact even though their models are not stored in inhomAndStochLibrary
         isInhom1 = inhomAndStochLibrary.isInhomEnabledFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
-        isInhom2 = comp.isMechVarInhom(mechIdx, varTypeIdx, varName, arrayIndex)
+        isInhom2 = comp.isMechVarInhom(mechIdx, varType, varName, arrayIndex)
         
         if (!isInhom1) {
             if (isMechOrSynEditor) {
@@ -181,7 +181,7 @@ begintemplate InhomEditorSubWidget
         compName = comp.name
         mth.getVarTypeName(varType, varTypeName)
         mth.getVarNameWithIndexAndUnits(enumDmPpNc, mechIdx, varName, arraySize, arrayIndex, varNameWithIndexAndUnits)
-        isInhom = comp.isMechVarInhom(mechIdx, varTypeIdx, varName, arrayIndex)
+        isInhom = comp.isMechVarInhom(mechIdx, varType, varName, arrayIndex)
         isStoch = inhomAndStochLibrary.isStochEnabledFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
         secList = comp.getSecList()
         

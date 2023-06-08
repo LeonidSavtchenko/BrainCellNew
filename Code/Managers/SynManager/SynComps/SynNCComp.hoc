@@ -61,18 +61,16 @@ begintemplate SynNCComp
     }
     
     // !! code dupl. with MechComp
-    func isMechVarInhom() { local mechIdx, varTypeIdx, arrayIndex
+    func isMechVarInhom() { local mechIdx, varType, arrayIndex, varTypeIdx
         strdef varName
-        
         mechIdx = $1
-        varTypeIdx = $2
+        varType = $2
         varName = $s3
         arrayIndex = $4
-        
-        if (mechIdx != 0 || varTypeIdx != 0) {
+        if (mechIdx != 0 || varType != 1) {
             codeContractViolation()
         }
-        
+        varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
         return math.isNaN(mechStds[mechIdx][varTypeIdx].get(varName, arrayIndex))
     }
     

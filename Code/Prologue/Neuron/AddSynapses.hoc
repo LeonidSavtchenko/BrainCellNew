@@ -1,13 +1,75 @@
 
-// Default synapse location:
+{ load_file("Exported/Synapse.hoc") }
+
+
+// Synapse location:
 // 0: "Spine Head", 1: "Dendrite (just under Spine Neck)", 2: "Random"
-// !! Warning: "Random" cannot be used for default synapses at the moment
-enumSynLoc = 0
+// !!!! Warning: "Random" cannot be used for default/reseeded synapses at the moment
+makeSureDeclared("smEnumSynLoc", "smEnumSynLoc = 0")
 
 
-{ load_file("Exported/AddSynapses_Exported.hoc") }
+// This proc will be called each time after neuron nanogeometry reseeding
+// Create and connect all default synapses; the number is the same as the number of spines
+// Inputs (all taken from the top level): smEnumSynLoc, nanoDistal_ref, nanoProximal_ref
+// !! major code dupl. with SynGroup.getNewSecRefConnectionPointAndSpineNeckDiam
+proc Neuron_AddSynapses_reseed() { local defStart, defInterval, defNumber, defNoise, defDelay, defWeight, numSyns, synIdx, connectionPoint localobj srcPp, trgPp, sec_ref, np_ref, netCon, synapse
+    
+    // Default values for NetStim
+    defStart = 2
+    defInterval = 100
+    defNumber = 1000
+    defNoise = 1
+    
+    // Default values for NetCon
+    defDelay = 0
+    defWeight = 0.0002
+    
+    numSyns = nanoDistal_ref.count()
+    
+    if (smEnumSynLoc == 2) {
+        smEnumSynLoc == 0   // !!!! 2: "Random" cannot be used for default/reseeded synapses at the moment
+    }
+    
+    for synIdx = 0, numSyns - 1 {
+        srcPp = new NetStim()
+        
+        if (smEnumSynLoc == 0) {
+            // Synapse is connected to the centre of spine_head
+            connectionPoint = 0.5
+            nanoDistal_ref.o(synIdx).sec {
+                trgPp = new Exp2Syn(connectionPoint)
+                sec_ref = new SectionRef()
+            }
+        } else if (smEnumSynLoc == 1) {
+            // Synapse is connected to the point on dendrite where spine_neck emerges
+            np_ref = nanoProximal_ref.o(synIdx)
+            np_ref.sec {
+                connectionPoint = parent_connection()
+            }
+            np_ref.parent {
+                trgPp = new Exp2Syn(connectionPoint)
+                sec_ref = new SectionRef()
+            }
+        }
+        
+        srcPp.start = defStart
+        srcPp.interval = defInterval
+        srcPp.number = defNumber
+        srcPp.noise = defNoise
+        
+        netCon = new NetCon(srcPp, trgPp, 0, defDelay, defWeight)
+        
+        synapse = new Synapse(srcPp, netCon, trgPp, sec_ref, connectionPoint)
+        smAllSyns.append(synapse)
+    }
+    
+    // !! synGroup.applyChangesToLoc(0)
+}
 
 // This proc will be called each time after neuron nanogeometry deletion
 proc Neuron_AddSynapses_delete() {
     smAllSyns.remove_all()
 }
+
+
+Neuron_AddSynapses_reseed()
