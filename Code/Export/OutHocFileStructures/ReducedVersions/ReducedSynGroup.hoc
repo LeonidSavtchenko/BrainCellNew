@@ -285,8 +285,7 @@ begintemplate ReducedSynGroup
     }
     
     // Keep in sync with SynGroup.ifMechDirtyThenApplyHomogenChanges
-    proc applyHomogenChanges() { local compIdx, mechIdx, enumPpRole, isPPorNC, maxVarType, varType, varTypeIdx localobj comp, syn, ppOrNetCon, sefwNetConOrNil, nil, compMechStd
-        strdef varName
+    proc applyHomogenChanges() { local compIdx, mechIdx, enumPpRole, isPPorNC, maxVarType, varType, varTypeIdx localobj comp, syn, nil, sefwPpOrNil, sefwNetConOrNil, ppOrNetCon, compMechStd
         
         compIdx = $1
         mechIdx = $2
@@ -297,13 +296,15 @@ begintemplate ReducedSynGroup
         isPPorNC = (compIdx != enumSynCompIdxs.netCon)
         
         for eachItemInList(syn, smAllSyns) {
+            sefwPpOrNil = nil
+            sefwNetConOrNil = nil
             if (isPPorNC) {
                 ppOrNetCon = syn.getPointProcess(enumPpRole)
-                sefwNetConOrNil = nil
                 maxVarType = 3
             } else {
                 ppOrNetCon = syn.netCon
                 if (seh.isSefwEnabled()) {
+                    sefwPpOrNil = syn.sefwPp
                     sefwNetConOrNil = syn.sefwNetCon
                 }
                 maxVarType = 1
@@ -316,11 +317,21 @@ begintemplate ReducedSynGroup
                 }
                 // Here we assign NaN values to inhom vars, but they will be overwritten shortly downstream
                 compMechStd.out(ppOrNetCon)
-                if (sefwNetConOrNil != nil) {
-                    compMechStd.out(sefwNetConOrNil)
+            }
+            if (sefwPpOrNil != nil) {
+                if (compMechStd != nil) {
+                    // The same comment regarding NaN values
+                    sefwPpOrNil.release_probability = compMechStd.get(seh.metaVarName)
+                } else {
+                    // We get here when all NetCon params are default (so its mechStd is nil), but stochasticity is enabled
+                    sefwPpOrNil.release_probability = 1
                 }
             }
             if (sefwNetConOrNil != nil) {
+                if (compMechStd != nil) {
+                    // The same comment regarding NaN values
+                    compMechStd.out(sefwNetConOrNil)
+                }
                 sefwNetConOrNil.delay = 0
             }
         }

@@ -3,7 +3,7 @@ import os, shutil
 from neuron import h, hoc, nrn
 from GeneratorsForMainHocFile.GeneratorsForMainHocFile import *
 from GeneratorsForAuxHocFiles.GeneratorsForAuxHocFiles import *
-from OtherUtils import *
+from Utils.OtherUtils import *
 
 
 _genStartMarker = 'py:'
@@ -97,7 +97,7 @@ def _copyMechsDllFile(outDirPath, loadedDllDirPath):
     dllFileName = 'nrnmech.dll'
     
     srcDllFilePath = loadedDllDirPath + '\\' + dllFileName
-    dstDllFilePath = outDirPath + '\\' + dllFileName
+    dstDllFilePath = outDirPath + '/' + dllFileName     # Will be printed in case of shutil.PermissionError
     
     try:
         shutil.copyfile(srcDllFilePath, dstDllFilePath)

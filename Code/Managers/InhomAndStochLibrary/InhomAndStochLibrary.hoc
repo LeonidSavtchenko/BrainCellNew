@@ -2,7 +2,7 @@
 // !!
 // BUGs:
 //  callers are commented for:
-//      * onMakingVarHomogen (2 of 3 are commented), onMechInsert, onMechUninsert
+//      * onMechInsert, onMechUninsert
 //  implementations are missing or incomplete for:
 //      * onNanoReseedOrUpdate, onCompSplit, onCompMerge (the last two require changes in the stored VerbatimDistFuncHelper-s)
 //  both caller and implementation are missing for:
@@ -113,7 +113,6 @@ begintemplate InhomAndStochLibrary
         actSpecVar.getStochModelData($o7, $o8, &$&9, &$&10)
     }
     
-    // !! uncomment the callers for this method (2 of 3 are commented)
     // !! major code dupl. with onStochDisable
     // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
     proc onMakingVarHomogen() { local idx, isStochDisabledAsWell localobj actSpecVar, nil

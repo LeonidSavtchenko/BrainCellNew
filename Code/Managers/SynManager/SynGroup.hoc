@@ -407,7 +407,7 @@ begintemplate SynGroup
     }
     
     // Keep in sync with ReducedSynGroup.applyHomogenChanges
-    func ifMechDirtyThenApplyHomogenChanges() { local compIdx, mechIdx, enumPpRole, isPPorNC, maxVarType, varType, varTypeIdx, release_probability localobj comp, syn, sefwPpOrNil, sefwNetConOrNil, ppOrNetCon, nil, compMechStd, tempMechStdExt
+    func ifMechDirtyThenApplyHomogenChanges() { local compIdx, mechIdx, enumPpRole, isPPorNC, maxVarType, varType, varTypeIdx, release_probability localobj comp, syn, nil, sefwPpOrNil, sefwNetConOrNil, ppOrNetCon, compMechStd, tempMechStdExt
         strdef mechName
         
         compIdx = $1
@@ -455,7 +455,6 @@ begintemplate SynGroup
                     mcu.copyAllVarsValuesExceptInhom(compMechStd, tempMechStdExt)
                     tempMechStdExt.out(ppOrNetCon)
                 }
-                // !! inhomAndStochLibrary.onMakingVarHomogen(!!enumDmPpNc, compIdx, mechIdx, varType, !!varIdx, !!arrayIndex)
             }
             if (sefwPpOrNil != nil) {
                 release_probability = compMechStd.get(seh.metaVarName)

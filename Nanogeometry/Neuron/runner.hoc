@@ -1,6 +1,0 @@
-
-load_file(1, "1.hoc")
-
-run()
-
-// !! save all recorded Vector-s

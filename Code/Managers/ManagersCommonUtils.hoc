@@ -27,8 +27,6 @@ begintemplate ManagersCommonUtils
             return nil
         }
         
-        // !! if exists, then need to pass the old helper object here to restore the UI state
-        //    also, we'll need the helper on export
         defineDistFuncSubWidget = new InhomEditorSubWidget(enumDmPpNc, compIdx, xMin, xMax, mechIdx, varType, varIdx, arrayIndex)
         defineDistFuncSubWidget.show()
         
@@ -43,8 +41,6 @@ begintemplate ManagersCommonUtils
         varIdx = $5
         arrayIndex = $6
         
-        // !! if exists, then need to pass the old helper object here to restore the UI state
-        //    also, we'll need the helper on export
         defineStochFuncSubWidget = new StochEditorSubWidget(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
         defineStochFuncSubWidget.show()
         

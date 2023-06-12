@@ -214,6 +214,10 @@ begintemplate VarsEditorWidget
         if (!math.isNaN(value)) {
             isMechVarInhom.o(varIdx).x(arrayIndex) = 0
             
+            // !! it would be better to do this later when user clicks "Apply",
+            //    but then it would be difficult to figure out what exactly inhom vars become homogen
+            inhomAndStochLibrary.onMakingVarHomogen(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
+            
             if (!isMechOrSynEditor) {
                 mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName)
                 seh.ifMetaVarThenUpdateStatus(varName, value)

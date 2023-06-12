@@ -187,20 +187,43 @@ begintemplate ReducedInhomAndStochTarget
         if (isStoch) {
             // One unused value to set up the generator and the colourizer
             boundingHelper.generateFirstBoundedValue(stochFuncHelper)
+            
+            if (!isDmOrSynPart) {
+                // Stochastic synaptic vars can hold the values from the previous simulation for a long time before the first synaptic event on this simulation,
+                // and this is why we restore the base values here for reproducibility of the experiments
+                // Notice that stochastic biophys vars change their values on each iteration, so there is no need to restore their base values here
+                makeStepOrRestoreBaseValues(0)
+            }
         }
     }
     
-    // Keep in sync with InhomAndStochTarget.onStep
-    proc onStep() { local homogenValue, x, value, dist, isWeightVar localobj sec_ref, prevSec_ref, nil, syn, synPart
-        if (isPlayable) {
-            return
-        }
-        if (varType == 1 && !isStoch) { // 1: "PARAMETER"
-            if (isInhom) {
+    proc onStep() {
+        makeStepOrRestoreBaseValues(1)
+    }
+    
+    // All next staff is private
+    
+    
+    // Keep in sync with InhomAndStochTarget.makeStepOrRestoreBaseValues and "applyInhomogeneity"
+    proc makeStepOrRestoreBaseValues() { local isStepOrRestore, isStoch_, homogenValue, x, value, dist, isWeightVar localobj sec_ref, prevSec_ref, nil, syn, synPart
+    
+        isStepOrRestore = $1
+        
+        if (isStepOrRestore) {
+            isStoch_ = isStoch
+            
+            if (isPlayable) {
                 return
-            } else {
-                codeContractViolation()
             }
+            if (varType == 1 && !isStoch_) {    // 1: "PARAMETER"
+                if (isInhom) {
+                    return
+                } else {
+                    codeContractViolation()
+                }
+            }
+        } else {
+            isStoch_ = 0
         }
         
         if (isInhom) {
@@ -225,7 +248,7 @@ begintemplate ReducedInhomAndStochTarget
                         }
                         
                         // The additive noise
-                        if (isStoch) {
+                        if (isStoch_) {
                             value += boundingHelper.generateNextBoundedValue(stochFuncHelper)
                         }
                         
@@ -245,7 +268,7 @@ begintemplate ReducedInhomAndStochTarget
                     distFuncHelper.onJustBeforeNewSection()
                 }
                 
-                if (!syn.sefwPp.isAnyEventsOnThisIter) {
+                if (isStepOrRestore && !syn.sefwPp.isAnyEventsOnThisIter) {
                     prevSec_ref = syn.sec_ref
                     continue
                 }
@@ -266,7 +289,7 @@ begintemplate ReducedInhomAndStochTarget
                 }
                 
                 // The additive noise
-                if (isStoch) {
+                if (isStoch_) {
                     value += boundingHelper.generateNextBoundedValue(stochFuncHelper)
                 }
                 
@@ -289,9 +312,6 @@ begintemplate ReducedInhomAndStochTarget
             distFuncHelper.onJustAfterLastSection()
         }
     }
-    
-    // All next staff is private
-    
     
     // Keep in sync with InhomAndStochTarget.setIsPlayable
     proc setIsPlayable() {

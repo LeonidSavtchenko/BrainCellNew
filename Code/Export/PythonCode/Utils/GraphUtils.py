@@ -1,7 +1,7 @@
 
 import os, shutil
 from neuron import h
-from OtherUtils import codeContractViolation
+from Utils.OtherUtils import codeContractViolation
 
 
 class GraphUtils:

@@ -1,10 +1,10 @@
 
 import os
 from neuron import h, hoc, nrn
-from GeneratorsForMainHocFile.GenForMechComps import *
 from GeneratorsForMainHocFile.GensForHomogenVars import *
 from GeneratorsForMainHocFile.GensForInhomAndStochModels import *
-from OtherUtils import *
+from Utils.LoopUtils import *
+from Utils.OtherUtils import *
 
 
 class GeneratorsForMainHocFile:
@@ -13,8 +13,7 @@ class GeneratorsForMainHocFile:
     _defaultRa = 35.4
     
     _hocObj = hoc.HocObject()
-    _genForMechComps = GenForMechComps()
-
+    
     # Other data members that will be added in the ctor (they all depend on hoc:ExportOptions, so we defer the construction):
     #   _exportOptions
     #   _gensForHomogenVars
@@ -402,9 +401,40 @@ class GeneratorsForMainHocFile:
         lines.extend(newLines)
         lines.append('')
         
-        newLines = self._genForMechComps.createReducedMechComps()
-        lines.extend(newLines)
+        mmAllComps = self._hocObj.mmAllComps
         
+        # Create number of obfunc-s to prepare "list_ref" for each comp
+        # !! BUG: In rare cases, an error "procedure too big" may occur when user loads the exported file.
+        #         This error takes place while sourcing one of obfunc-s named "getListOfSecRefsFor*Comp".
+        #         The root cause is that the base geometry file imported earlier
+        #         created so many sections on the top level, that we cannot create now in the scope of just one obfunc.
+        #         To fix this error, we'll have to init all list_ref-s on the top level rather than in the obfunc-s.
+        obfuncNames = []
+        for comp in mmAllComps:
+            obfuncNameId = prepareUniqueNameId(comp.name)
+            obfuncName = 'getListOfSecRefsFor{}Comp'.format(obfuncNameId)
+            obfuncNames.append(obfuncName)
+            lines.append('obfunc {}() {{ local idx1, idx2 localobj list_ref'.format(obfuncName))
+            lines.append('    list_ref = new List()')
+            newLines = []
+            for sec_ref in comp.list_ref:
+                newLines.append('    {} list_ref.append(new SectionRef())'.format(sec_ref.sec))
+            newLines = LoopUtils.tryInsertLoopsToShorten(newLines, True)
+            lines.extend(newLines)
+            lines.append('    return list_ref')
+            lines.append('}')
+            lines.append('')
+            
+        lines.append('objref comp')
+        lines.append('')
+        lines.append('mmAllComps = new List()')
+        lines.append('')
+        
+        for (comp, obfuncName) in zip(mmAllComps, obfuncNames):
+            lines.append('comp = new ReducedMechComp("{}", {}())'.format(comp.name, obfuncName))
+            lines.append('{ mmAllComps.append(comp) }')
+            lines.append('')
+            
         return lines
         
     def initHomogenBiophysics(self):
@@ -424,9 +454,18 @@ class GeneratorsForMainHocFile:
         
         newLines = self.insertAllLinesFromFile('Code\\Prologue\\Neuron\\Exported\\Synapse.hoc')
         lines.extend(newLines)
+        
+        newLines = []
         for syn in self._hocObj.smAllSyns:
-            lines.append('{} smAllSyns.append(new Synapse(new SectionRef(), {}))'.format(syn.sec_ref.sec, syn.connectionPoint))
+            newLines.append('{} smAllSyns.append(new Synapse(new SectionRef(), {}))'.format(syn.sec_ref.sec, syn.connectionPoint))
             
+        smEnumSynLoc = self._hocObj.smEnumSynLoc
+        smSynLocP = self._hocObj.smSynLocP
+        if smEnumSynLoc == 0 or (smEnumSynLoc == 2 and smSynLocP <= 0.25):  # !! some hardcoded heuristic threshold
+            newLines = LoopUtils.tryInsertLoopsToShorten(newLines, False)
+            
+        lines.extend(newLines)
+        
         return lines
         
     # Keep in sync with hoc:createSynComps

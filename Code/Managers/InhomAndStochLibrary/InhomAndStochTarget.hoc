@@ -211,113 +211,21 @@ begintemplate InhomAndStochTarget
         if (isStoch) {
             // One unused value to set up the generator and the colourizer
             boundingHelper.generateFirstBoundedValue(stochFuncHelper)
+            
+            if (!isDmOrSynPart) {
+                // Stochastic synaptic vars can hold the values from the previous simulation for a long time before the first synaptic event on this simulation,
+                // and this is why we restore the base values here for reproducibility of the experiments
+                // Notice that stochastic biophys vars change their values on each iteration, so there is no need to restore their base values here
+                makeStepOrRestoreBaseValues(0)
+            }
         }
     }
     
-    // Keep in sync with "restoreInhomogeneity"
-    // !! why don't I call comp.applyInhomogeneity to simplify this proc?
-    // Keep in sync with ReducedInhomAndStochTarget.onStep
-    proc onStep() { local homogenValue, x, value, dist, isWeightVar localobj sec_ref, prevSec_ref, nil, syn, synPart
-        // !! can I move the code before "for" to "onInit" proc?
-        if (isPlayable) {
-            return
-        }
-        if (varType == 1 && !isStoch) { // 1: "PARAMETER"
-            if (isInhom) {
-                return
-            } else {
-                codeContractViolation()
-            }
-        }
-        
-        if (isInhom) {
-            distFuncHelper.onJustBeforeFirstSection()
-        } else {
-            homogenValue = baseMechStd.get(varName, arrayIndex)
-        }
-        
-        if (isDmOrSynPart) {
-            for eachItemInList(sec_ref, list_ref) {
-                sec_ref.sec {
-                    if (isInhom) {
-                        distFuncHelper.onJustBeforeNewSection()
-                    }
-                    for (x, 0) {
-                        // The base value
-                        if (isInhom) {
-                            dist = distance(x)
-                            value = distFuncHelper.calculateAt(dist)
-                        } else {
-                            value = homogenValue
-                        }
-                        
-                        // The additive noise
-                        if (isStoch) {
-                            value += boundingHelper.generateNextBoundedValue(stochFuncHelper)
-                        }
-                        
-                        // This approach is 20-30% faster than "sprint"-ing a HOC-command
-                        // of type "varName(x) = value" or "varName[arrayIndex](x) = value" and then "execute"-ing it
-                        tempMechStd.in(x)
-                        tempMechStd.set(varName, value, arrayIndex)
-                        tempMechStd.out(x)
-                    }
-                }
-            }
-        } else {
-            isWeightVar = mth.isWeightNetConVar(varName)
-            prevSec_ref = nil
-            for eachItemInList(syn, smAllSyns) {
-                if (syn.sec_ref != prevSec_ref && isInhom) {
-                    distFuncHelper.onJustBeforeNewSection()
-                }
-                
-                if (!syn.sefwPp.isAnyEventsOnThisIter) {
-                    prevSec_ref = syn.sec_ref
-                    continue
-                }
-                
-                if (enumDmPpNc == 1) {
-                    synPart = syn.getPointProcess(enumPpRoleOrMinus1)
-                } else if (enumDmPpNc == 2) {
-                    synPart = syn.netCon
-                } else {
-                    codeContractViolation()
-                }
-                
-                // The base value
-                if (isInhom) {
-                    value = distFuncHelper.calculateAt(syn.dist)
-                } else {
-                    value = homogenValue
-                }
-                
-                // The additive noise
-                if (isStoch) {
-                    value += boundingHelper.generateNextBoundedValue(stochFuncHelper)
-                }
-                
-                // !! if synPart is a NetCon, then see the comment for tempMechStd in ctor
-                tempMechStd.in(synPart)
-                tempMechStd.set(varName, value, arrayIndex)
-                tempMechStd.out(synPart)
-                
-                if (enumDmPpNc == 2 && isWeightVar) {
-                    syn.sefwNetCon.weight = value
-                    // Here we could also have similar logic to sync the value from "syn.netCon.@release_probability" to "syn.sefwPp.release_probability",
-                    // but it's not needed because the button "Define stoch model" is hidden for "@release_probability"
-                }
-                
-                prevSec_ref = syn.sec_ref
-            }
-        }
-        
-        if (isInhom) {
-            distFuncHelper.onJustAfterLastSection()
-        }
+    proc onStep() {
+        makeStepOrRestoreBaseValues(1)
     }
     
-    // Keep in sync with "onStep" and ReducedInhomAndStochTarget.applySynInhomogeneity
+    // Keep in sync with "makeStepOrRestoreBaseValues" and ReducedInhomAndStochTarget.applySynInhomogeneity
     proc restoreInhomogeneity() { localobj comp
         if (!isInhom) {
             codeContractViolation()
@@ -355,6 +263,116 @@ begintemplate InhomAndStochTarget
     
     // All next staff is private
     
+    
+    // Keep in sync with ReducedInhomAndStochTarget.makeStepOrRestoreBaseValues and "restoreInhomogeneity"
+    proc makeStepOrRestoreBaseValues() { local isStepOrRestore, isStoch_, homogenValue, x, value, dist, isWeightVar localobj sec_ref, prevSec_ref, nil, syn, synPart
+    
+        isStepOrRestore = $1
+        
+        if (isStepOrRestore) {
+            isStoch_ = isStoch
+            
+            // !! can I move the code before "for" to "onInit" proc?
+            if (isPlayable) {
+                return
+            }
+            if (varType == 1 && !isStoch_) {    // 1: "PARAMETER"
+                if (isInhom) {
+                    return
+                } else {
+                    codeContractViolation()
+                }
+            }
+        } else {
+            isStoch_ = 0
+        }
+        
+        if (isInhom) {
+            distFuncHelper.onJustBeforeFirstSection()
+        } else {
+            homogenValue = baseMechStd.get(varName, arrayIndex)
+        }
+        
+        if (isDmOrSynPart) {
+            for eachItemInList(sec_ref, list_ref) {
+                sec_ref.sec {
+                    if (isInhom) {
+                        distFuncHelper.onJustBeforeNewSection()
+                    }
+                    for (x, 0) {
+                        // The base value
+                        if (isInhom) {
+                            dist = distance(x)
+                            value = distFuncHelper.calculateAt(dist)
+                        } else {
+                            value = homogenValue
+                        }
+                        
+                        // The additive noise
+                        if (isStoch_) {
+                            value += boundingHelper.generateNextBoundedValue(stochFuncHelper)
+                        }
+                        
+                        // This approach is 20-30% faster than "sprint"-ing a HOC-command
+                        // of type "varName(x) = value" or "varName[arrayIndex](x) = value" and then "execute"-ing it
+                        tempMechStd.in(x)
+                        tempMechStd.set(varName, value, arrayIndex)
+                        tempMechStd.out(x)
+                    }
+                }
+            }
+        } else {
+            isWeightVar = mth.isWeightNetConVar(varName)
+            prevSec_ref = nil
+            for eachItemInList(syn, smAllSyns) {
+                if (syn.sec_ref != prevSec_ref && isInhom) {
+                    distFuncHelper.onJustBeforeNewSection()
+                }
+                
+                if (isStepOrRestore && !syn.sefwPp.isAnyEventsOnThisIter) {
+                    prevSec_ref = syn.sec_ref
+                    continue
+                }
+                
+                if (enumDmPpNc == 1) {
+                    synPart = syn.getPointProcess(enumPpRoleOrMinus1)
+                } else if (enumDmPpNc == 2) {
+                    synPart = syn.netCon
+                } else {
+                    codeContractViolation()
+                }
+                
+                // The base value
+                if (isInhom) {
+                    value = distFuncHelper.calculateAt(syn.dist)
+                } else {
+                    value = homogenValue
+                }
+                
+                // The additive noise
+                if (isStoch_) {
+                    value += boundingHelper.generateNextBoundedValue(stochFuncHelper)
+                }
+                
+                // !! if synPart is a NetCon, then see the comment for tempMechStd in ctor
+                tempMechStd.in(synPart)
+                tempMechStd.set(varName, value, arrayIndex)
+                tempMechStd.out(synPart)
+                
+                if (enumDmPpNc == 2 && isWeightVar) {
+                    syn.sefwNetCon.weight = value
+                    // Here we could also have similar logic to sync the value from "syn.netCon.@release_probability" to "syn.sefwPp.release_probability",
+                    // but it's not needed because the button "Define stoch model" is hidden for "@release_probability"
+                }
+                
+                prevSec_ref = syn.sec_ref
+            }
+        }
+        
+        if (isInhom) {
+            distFuncHelper.onJustAfterLastSection()
+        }
+    }
     
     // Keep in sync with ReducedInhomAndStochTarget.setIsPlayable
     proc setIsPlayable() {

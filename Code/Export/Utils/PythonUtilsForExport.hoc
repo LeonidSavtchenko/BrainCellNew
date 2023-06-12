@@ -2,7 +2,7 @@
 proc sourcePythonCodeForExport() { local status
     strdef pyCommand
     
-    pyCommand = "import sys\nimport os\nsys.path.append(os.getcwd() + '\\Code\\Export\\PythonCode')\nfrom Framework import *\nfrom GraphUtils import GraphUtils"
+    pyCommand = "import sys\nimport os\nsys.path.append(os.getcwd() + '\\Code\\Export\\PythonCode')\nfrom Framework import *\nfrom Utils.GraphUtils import GraphUtils"
     
     status = nrnpython(pyCommand)
     if (!status) {

@@ -121,8 +121,8 @@ begintemplate InhomEditorSubWidget
             }
         }
         
-        // The difference between these two values takes place for morphology\diam and LargeGlia\g_pas
-        // because they are inhomogen by fact even though their models are not stored in inhomAndStochLibrary
+        // The difference between these two values takes place for morphology\diam
+        // because it's inhomogen by fact even though its model is not stored in inhomAndStochLibrary
         isInhom1 = inhomAndStochLibrary.isInhomEnabledFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
         isInhom2 = comp.isMechVarInhom(mechIdx, varType, varName, arrayIndex)
         

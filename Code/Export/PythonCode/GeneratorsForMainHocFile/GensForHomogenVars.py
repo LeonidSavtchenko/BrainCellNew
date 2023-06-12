@@ -1,7 +1,7 @@
 
 import math
 from neuron import h, hoc
-from OtherUtils import *
+from Utils.OtherUtils import *
 
 
 class GensForHomogenVars:

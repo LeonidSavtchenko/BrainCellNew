@@ -62,9 +62,14 @@ begintemplate SynEventsHelper
         } else {
             _mechStd = smAllComps.o(enumSynCompIdxs.netCon).mechStds[metaMechIdx][metaVarTypeIdx]
             
-            // This equals NaN if the var was made inhomogen earlier,
-            // but we'll restore all inhomogeneities shortly downstream calling inhomAndStochLibrary.onSynStrucChange
-            release_probability = _mechStd.get(metaVarName, metaArrayIndex)
+            if (_mechStd != nil) {
+                // This equals NaN if the var was made inhomogen earlier,
+                // but we'll restore all inhomogeneities shortly downstream calling inhomAndStochLibrary.onSynStrucChange
+                release_probability = _mechStd.get(metaVarName, metaArrayIndex)
+            } else {
+                // We are in the exported nano HOC file, and all NetCon params are default (so its mechStd is nil)
+                release_probability = 1
+            }
             
             sefwPp = new SynEventsFilterWatcher()     // Keep the name in sync with proc init
             sefwPp.release_probability = release_probability
@@ -82,9 +87,11 @@ begintemplate SynEventsHelper
                 // We'll use the _mechStd defined above
             }
         }
-        // This inserts NaN-s for inhomogen vars,
-        // but we'll restore all inhomogeneities shortly downstream calling inhomAndStochLibrary.onSynStrucChange
-        _mechStd.out(sefwNetCon)
+        if (_mechStd != nil) {
+            // This inserts NaN-s for inhomogen vars,
+            // but we'll restore all inhomogeneities shortly downstream calling inhomAndStochLibrary.onSynStrucChange
+            _mechStd.out(sefwNetCon)
+        }
         // The second NetCon has no delay
         sefwNetCon.delay = 0
         

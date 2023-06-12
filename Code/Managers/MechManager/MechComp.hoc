@@ -165,8 +165,8 @@ begintemplate MechComp
     
     // !! need to test all isDirty staff carefully
     // Keep in sync with ReducedMechComp.initHomogenBiophysics in the exported file
-    proc applyHomogenChangesToDirtyMechs() { local numMechs, mechIdx, varType, varTypeIdx, x, varIdx, arrayIndex, diamValue localobj mechType, sec_ref, compMechStd, tempMechStd
-        strdef mechName, varName, autoAddedIons, msg
+    proc applyHomogenChangesToDirtyMechs() { local numMechs, mechIdx, varType, varTypeIdx, x, diamValue localobj mechType, sec_ref, compMechStd, tempMechStd
+        strdef mechName, autoAddedIons, msg
         
         mechType = mth.getMechType(0)
         
@@ -198,7 +198,6 @@ begintemplate MechComp
                                     tempMechStd.out(x)
                                 }
                             }
-                            // !! inhomAndStochLibrary.onMakingVarHomogen(0, !!!compIdx, mechIdx, varType, !!varIdx, !!arrayIndex)
                         }
                         
                         if (mechIdx == mth.morphologyMechIdx) {
