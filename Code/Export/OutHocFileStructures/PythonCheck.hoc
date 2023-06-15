@@ -1,0 +1,4 @@
+
+if (!nrnpython("")) {
+    printMsgAndRaiseError("Sorry, this HOC file requires Python for some operations. Please install Python.")
+}

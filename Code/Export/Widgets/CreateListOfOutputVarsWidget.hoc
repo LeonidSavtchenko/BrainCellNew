@@ -4,22 +4,20 @@ begintemplate CreateListOfOutputVarsWidget
     public show, dismissHandler
     
     external exportOptions
-    external mwh, pyObj
+    external mwh, pyObj, math
     external addVarToGraph, unmapIfNotNil
     external eachItemInList
     
     objref mainBox
+    
     objref watchedVarsList
     
-    isRecordAndSaveWithAPCounts = -1
-    isSaveToTxtOrBinFile = -1
     
-    
-    proc init() {
-        isRecordAndSaveWithAPCounts = 0
-        isSaveToTxtOrBinFile = 1
-        
+    proc init() { local inf
         watchedVarsList = exportOptions.watchedVarsList
+        
+        inf = math.inf
+        variable_domain(&exportOptions.numItersPerOneRecord, 1, inf)
     }
     
     proc show() { localobj graph, var, apcList
@@ -52,13 +50,15 @@ begintemplate CreateListOfOutputVarsWidget
             graph.menu_remove("Change Text")
             xpanel("")
             xlabel("")
+            xpvalue("Make one record per iterations", &exportOptions.numItersPerOneRecord, 1, "numItersPerOneRecordChangedHandler()")
+            xlabel("")
             apcList = new List("APCount")
             sprint(text, "Record and save the times with all existing APCount-s (%d detected)", apcList.count())
-            xcheckbox(text, &isRecordAndSaveWithAPCounts, "recordAndSaveWithAPCountsCheckBoxHandler()")
+            xcheckbox(text, &exportOptions.isRecordAndSaveWithAPCounts, "recordAndSaveWithAPCountsCheckBoxHandler()")
             xlabel("")
             xlabel("Save to:")
-            xradiobutton("TXT file", "isSaveToTxtOrBinFile = 1", isSaveToTxtOrBinFile == 1)
-            xradiobutton("BIN file", "isSaveToTxtOrBinFile = 0", isSaveToTxtOrBinFile == 0)
+            xradiobutton("TXT file (optimized for Origin)", "exportOptions.isSaveToTxtOrBinFile = 1", exportOptions.isSaveToTxtOrBinFile == 1)
+            xradiobutton("BIN file (Python pickle)", "exportOptions.isSaveToTxtOrBinFile = 0", exportOptions.isSaveToTxtOrBinFile == 0)
             xlabel("")
             xbutton("OK", "okHandler()")
             xpanel()
@@ -78,9 +78,13 @@ begintemplate CreateListOfOutputVarsWidget
     // All next staff is private
     
     
+    proc numItersPerOneRecordChangedHandler() {
+        exportOptions.numItersPerOneRecord = int(exportOptions.numItersPerOneRecord)
+    }
+    
     proc recordAndSaveWithAPCountsCheckBoxHandler() {
         strdef line1, line2, line3
-        if (!isRecordAndSaveWithAPCounts) {
+        if (!exportOptions.isRecordAndSaveWithAPCounts) {
             return
         }
         line1 = "You can use the next standard widgets to add new or edit existing APCount-s:"

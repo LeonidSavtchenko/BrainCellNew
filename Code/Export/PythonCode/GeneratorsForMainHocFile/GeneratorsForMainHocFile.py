@@ -1,9 +1,8 @@
 
-import os
-from neuron import h, hoc, nrn
-from GeneratorsForMainHocFile.GensForHomogenVars import *
-from GeneratorsForMainHocFile.GensForInhomAndStochModels import *
-from Utils.LoopUtils import *
+from neuron import h, nrn
+from GeneratorsForMainHocFile.GensForHomogenVars import GensForHomogenVars
+from GeneratorsForMainHocFile.GensForInhomAndStochModels import GensForInhomAndStochModels
+from Utils.LoopUtils import LoopUtils
 from Utils.OtherUtils import *
 
 
@@ -12,15 +11,13 @@ class GeneratorsForMainHocFile:
     _defaultNseg = 1
     _defaultRa = 35.4
     
-    _hocObj = hoc.HocObject()
-    
     # Other data members that will be added in the ctor (they all depend on hoc:ExportOptions, so we defer the construction):
     #   _exportOptions
     #   _gensForHomogenVars
     #   _gensForInhomAndStochModels
     
     def __init__(self):
-        self._exportOptions = self._hocObj.exportOptions
+        self._exportOptions = hocObj.exportOptions
         self._gensForHomogenVars = GensForHomogenVars()
         self._gensForInhomAndStochModels = GensForInhomAndStochModels()
         
@@ -32,21 +29,21 @@ class GeneratorsForMainHocFile:
         
         lines.append('{ load_file("params.hoc") }')
         
-        isAnyExposedVars = self._exportOptions.isAnyExposedVars()
-        
-        newLines = []
-        if isAnyExposedVars:
-            exposedVarsList = self._exportOptions.exposedVarsList
-            for exposedVarIdx in range(len(exposedVarsList)):
-                exposedVar = exposedVarsList[exposedVarIdx]
-                if exposedVar.enumSpDmCe == 2:
-                    newLines.append(f'{exposedVar.customExpr} = {getExposedVarName(exposedVarIdx)}')
-                    
-        if len(newLines) == 0:
+        if not self._exportOptions.isAnyExposedVars():
             return lines
             
         lines.append('')
+        
+        newLines = self._initCustomVars(self._exportOptions.exposedVarsList, getExposedVarName)
         lines.extend(newLines)
+        
+        return lines
+        
+    def getCustomSweptVars(self):
+        if not self._exportOptions.isAnySweptVars():
+            return emptyParagraphHint()
+            
+        lines = self._initCustomVars(self._exportOptions.sweptVarsList, getSweptVarName)
         
         return lines
         
@@ -64,13 +61,13 @@ class GeneratorsForMainHocFile:
         # The instances of the next reduced templates from "InterModular" folder are created
         # only in standalone mode; otherwise we just reuse the instances created earlier in the main program
         
-        newLines = self.insertAllLinesFromReducedVersionFile('InterModular\\ReducedBasicMath.hoc')
+        newLines = self._insertAllLinesFromReducedVersionFile('InterModular\\ReducedBasicMath.hoc')
         lines.extend(newLines)
         lines.append('')
         
         if self._exportOptions.isExportReducedRNGUtils():
             lines.append('')
-            newLines = self.insertAllLinesFromReducedVersionFile('InterModular\\ReducedRNGUtils.hoc')
+            newLines = self._insertAllLinesFromReducedVersionFile('InterModular\\ReducedRNGUtils.hoc')
             lines.extend(newLines)
             
         return lines
@@ -81,10 +78,9 @@ class GeneratorsForMainHocFile:
             
         lines = []
         
-        lines.append('if (!nrnpython("")) {')
-        lines.append('    printMsgAndRaiseError("Sorry, this HOC file requires Python for some operations. Please install Python.")')
-        lines.append('}')
+        lines = self.insertAllLinesFromFile('Code\\Export\\OutHocFileStructures\\PythonCheck.hoc')
         lines.append('')
+        
         lines.append('objref pyObj')
         lines.append('pyObj = new PythonObject()')
         
@@ -102,7 +98,7 @@ class GeneratorsForMainHocFile:
         # !! it's not optimal because:
         # (1) there is a lot of nanogeometry sections with known names (no need to use slow "forall")
         # (2) we already had all base geometry names at some point before (in Import module)
-        allNames = self._hocObj.getAllSectionNames()    # !! for nanogeometry it simply returns AstrocyteNanoBranch, but the full name is AstrocyteNanoBranch[1].LargeGlia[2]
+        allNames = hocObj.getAllSectionNames()      # !! for nanogeometry it simply returns AstrocyteNanoBranch, but the full name is AstrocyteNanoBranch[1].LargeGlia[2]
         
         if len(allNames) == 0:
             codeContractViolation()
@@ -258,12 +254,12 @@ class GeneratorsForMainHocFile:
             lines.append('')
             newLine = self.getIntegerValueFromTopLevel('smEnumSynLoc')
             lines.append(newLine)
-            if self._hocObj.smEnumSynLoc == 2:
+            if hocObj.smEnumSynLoc == 2:
                 # We export smSynLocP just to restore the state of SynLocationWidget after loading the exported file back into the main program
                 lines.append('')
                 newLine = self.getDoubleValueFromTopLevel('smSynLocP')
                 lines.append(newLine)
-        if not self._hocObj.isAstrocyteOrNeuron:
+        if not hocObj.isAstrocyteOrNeuron:
             # We export spineNeckDiamCache just to allow user change the synapse location in SynLocationWidget
             lines.append('')
             newLines = self.insertAllLinesFromFile('Code\\Managers\\SynManager\\Exported\\SpineNeckDiamCache.hoc')
@@ -271,7 +267,7 @@ class GeneratorsForMainHocFile:
             lines.append('')
             lines.append('objref diamsVec')
             lines.append('diamsVec = spineNeckDiamCache.diamsVec')
-            diamsVec = self._hocObj.spineNeckDiamCache.diamsVec
+            diamsVec = hocObj.spineNeckDiamCache.diamsVec
             numSpines = diamsVec.size()
             lines.append('{{ diamsVec.resize({}) }}'.format(numSpines))
             for idx in range(numSpines):
@@ -286,11 +282,11 @@ class GeneratorsForMainHocFile:
         lines = []
         
         # !! try to avoid exporting the RNG staff in ReducedInhomAndStochTarget if not self._exportOptions.isExportAnyStochFuncs()
-        newLines = self.insertAllLinesFromReducedVersionFile('ReducedInhomAndStochTarget.hoc')
+        newLines = self._insertAllLinesFromReducedVersionFile('ReducedInhomAndStochTarget.hoc')
         lines.extend(newLines)
         lines.append('')
         
-        newLines = self.insertAllLinesFromReducedVersionFile('ReducedInhomAndStochLibrary.hoc')
+        newLines = self._insertAllLinesFromReducedVersionFile('ReducedInhomAndStochLibrary.hoc')
         lines.extend(newLines)
         lines.append('')
         
@@ -316,13 +312,13 @@ class GeneratorsForMainHocFile:
             if not self._exportOptions.isExportedInhomVar(actSpecVar):
                 continue
             dfhTemplNames.add(getTemplateName(actSpecVar.distFuncHelper))
-            if actSpecVar.distFuncCatIdx == self._hocObj.dfc.tablePlusLinInterpDistFuncCatIdx:
+            if actSpecVar.distFuncCatIdx == hocObj.dfc.tablePlusLinInterpDistFuncCatIdx:
                 isTablePlusLinInterpDistFuncExported = True
             
         if isTablePlusLinInterpDistFuncExported:
             # !! just a temp solution: to get rid of this, we need to split TablePlusLinInterpDistFuncHelper template into two:
             #    table from TextEditor/Vector-s and table from file (only the first one will be exported)
-            lines.append('makeSureDeclared("mwh")')
+            lines.append('{ makeSureDeclared("mwh") }')
             lines.append('')
             lines.append('func selectDistFuncInputFile() { codeContractViolation() }')
             lines.append('')
@@ -332,7 +328,7 @@ class GeneratorsForMainHocFile:
         lines.append('')
         
         if self._exportOptions.isExportSegmentationHelper():
-            newLines = self.insertAllLinesFromReducedVersionFile('ReducedSegmentationHelper.hoc')
+            newLines = self._insertAllLinesFromReducedVersionFile('ReducedSegmentationHelper.hoc')
             lines.extend(newLines)
             lines.append('')
             
@@ -367,7 +363,7 @@ class GeneratorsForMainHocFile:
             if not self._exportOptions.isExportedStochVar(actSpecVar):
                 continue
             stochFuncHelper = actSpecVar.stochFuncHelper
-            if actSpecVar.stochFuncCatIdx == self._hocObj.sfc.simpleModelStochFuncCatIdx:
+            if actSpecVar.stochFuncCatIdx == hocObj.sfc.simpleModelStochFuncCatIdx:
                 sdhTemplNames.add(getTemplateName(stochFuncHelper.distHelper))
             sfhTemplNames.add(getTemplateName(stochFuncHelper))
             
@@ -397,11 +393,11 @@ class GeneratorsForMainHocFile:
             fileName = 'ReducedMechComp1.hoc'   # name, list_ref
         else:
             fileName = 'ReducedMechComp2.hoc'   # name, list_ref, isMechInserted, mechStds
-        newLines = self.insertAllLinesFromReducedVersionFile(fileName)
+        newLines = self._insertAllLinesFromReducedVersionFile(fileName)
         lines.extend(newLines)
         lines.append('')
         
-        mmAllComps = self._hocObj.mmAllComps
+        mmAllComps = hocObj.mmAllComps
         
         # Create number of obfunc-s to prepare "list_ref" for each comp
         # !! BUG: In rare cases, an error "procedure too big" may occur when user loads the exported file.
@@ -456,11 +452,11 @@ class GeneratorsForMainHocFile:
         lines.extend(newLines)
         
         newLines = []
-        for syn in self._hocObj.smAllSyns:
+        for syn in hocObj.smAllSyns:
             newLines.append('{} smAllSyns.append(new Synapse(new SectionRef(), {}))'.format(syn.sec_ref.sec, syn.connectionPoint))
             
-        smEnumSynLoc = self._hocObj.smEnumSynLoc
-        smSynLocP = self._hocObj.smSynLocP
+        smEnumSynLoc = hocObj.smEnumSynLoc
+        smSynLocP = hocObj.smSynLocP
         if smEnumSynLoc == 0 or (smEnumSynLoc == 2 and smSynLocP <= 0.25):  # !! some hardcoded heuristic threshold
             newLines = LoopUtils.tryInsertLoopsToShorten(newLines, False)
             
@@ -483,25 +479,25 @@ class GeneratorsForMainHocFile:
             reducedSynPPCompFileName = 'ReducedSynPPComp2.hoc'
             reducedSynNCCompFileName = 'ReducedSynNCComp2.hoc'
             
-        newLines = self.insertAllLinesFromReducedVersionFile(reducedSynPPCompFileName)
+        newLines = self._insertAllLinesFromReducedVersionFile(reducedSynPPCompFileName)
         lines.extend(newLines)
         lines.append('')
         
         # Note: NEURON doesn't allow appending "nil" to a List, so we don't skip exporting this template if !synGroup.is3Or1PartInSynStruc
-        newLines = self.insertAllLinesFromReducedVersionFile(reducedSynNCCompFileName)
+        newLines = self._insertAllLinesFromReducedVersionFile(reducedSynNCCompFileName)
         lines.extend(newLines)
         lines.append('')
         
-        synGroup = self._hocObj.synGroup
+        synGroup = hocObj.synGroup
         is3Or1PartInSynStruc = synGroup.is3Or1PartInSynStruc()
         
         if is3Or1PartInSynStruc:
-            newLines = self.insertAllLinesFromReducedVersionFile('ReducedMechTypeHelper.hoc')
+            newLines = self._insertAllLinesFromReducedVersionFile('ReducedMechTypeHelper.hoc')
             lines.extend(newLines)
             lines.append('')
         
         if self._exportOptions.isExportSynEventsHelper() or is3Or1PartInSynStruc:
-            newLines = self.insertAllLinesFromReducedVersionFile('ReducedManagersCommonUtils.hoc')
+            newLines = self._insertAllLinesFromReducedVersionFile('ReducedManagersCommonUtils.hoc')
             lines.extend(newLines)
             lines.append('')
             
@@ -518,7 +514,7 @@ class GeneratorsForMainHocFile:
             lines.extend(newLines)
             lines.append('')
             
-        newLines = self.insertAllLinesFromReducedVersionFile('ReducedSynGroup.hoc')
+        newLines = self._insertAllLinesFromReducedVersionFile('ReducedSynGroup.hoc')
         lines.extend(newLines)
         lines.append('')
         
@@ -553,7 +549,7 @@ class GeneratorsForMainHocFile:
             
         lines = []
         
-        synGroup = self._hocObj.synGroup
+        synGroup = hocObj.synGroup
         is3Or1PartInSynStruc = int(synGroup.is3Or1PartInSynStruc())
         srcMechName = h.ref('')
         trgMechName = h.ref('')
@@ -592,14 +588,7 @@ class GeneratorsForMainHocFile:
         return lines
         
     def insertAllLinesFromFile(self, relFilePathName):
-        absFilePathName = os.getcwd() + '\\' + relFilePathName
-        with open(absFilePathName, 'r') as inFile:
-            inText = inFile.read()
-        return inText.strip().splitlines()  # All newline characters are removed here
-        
-    def insertAllLinesFromReducedVersionFile(self, fileName):
-        relFilePathName = 'Code\\Export\\OutHocFileStructures\\ReducedVersions\\' + fileName
-        return self.insertAllLinesFromFile(relFilePathName)
+        return getAllLinesFromFile(relFilePathName)
         
     def getIntegerValueFromTopLevel(self, varName):
         return self._generateAssignment(varName, True)
@@ -617,16 +606,28 @@ class GeneratorsForMainHocFile:
         return lines
         
         
+    def _insertAllLinesFromReducedVersionFile(self, fileName):
+        relFilePathName = 'Code\\Export\\OutHocFileStructures\\ReducedVersions\\' + fileName
+        return self.insertAllLinesFromFile(relFilePathName)
+        
+    def _initCustomVars(self, varsList, getVarName):
+        lines = []
+        for varIdx in range(len(varsList)):
+            var = varsList[varIdx]
+            if var.enumSpDmCe == 2:
+                lines.append(f'{var.customExpr} = {getVarName(varIdx)}')
+        return lines
+        
     def _createCheckForNumMechs(self, isDmOrPp, hint):
         lines = []
         lines.append('    mechType = new MechanismType({})     // {}: "{}"'.format(isDmOrPp, isDmOrPp, hint))
-        lines.append('    if (mechType.count() != {}) {{'.format(int(self._hocObj.mth.getNumMechs(isDmOrPp))))
+        lines.append('    if (mechType.count() != {}) {{'.format(int(hocObj.mth.getNumMechs(isDmOrPp))))
         lines.append('        printMsgAndRaiseError("Please make sure the correct file \\"nrnmech.dll\\" is present in the same folder with this HOC file.")')
         lines.append('    }')
         return lines
         
     def _getHocVar(self, varName):
-        return eval('self._hocObj.' + varName)  # !! maybe can do it via refletion
+        return eval('hocObj.' + varName)    # !! maybe can do it via refletion
         
     def _generateAssignment(self, varName, isIntegerOrDouble):
         value = self._getHocVar(varName)

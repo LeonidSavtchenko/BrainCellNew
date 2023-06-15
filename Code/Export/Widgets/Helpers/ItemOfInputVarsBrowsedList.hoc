@@ -1,4 +1,7 @@
 
+// Keeping on the top level to have access to "v_init" etc.
+_tempValue = -1
+
 begintemplate ItemOfInputVarsBrowsedList
     
     public enumSpDmCe, compIdx, mechIdx, varType, varName, varNameWithIndex, customExpr
@@ -8,6 +11,7 @@ begintemplate ItemOfInputVarsBrowsedList
     
     external mth, mcu, compUtils
     external stringsEqual, codeContractViolation
+    external _tempValue
     
     enumSpDmCe = -1     // 0: "Synapse part", 1: "Distributed mechanism", 2: "Custom expression"
     compIdx = -1
@@ -21,8 +25,6 @@ begintemplate ItemOfInputVarsBrowsedList
     objref gridInfoOrNil
     
     strdef s
-    
-    objref this
     
     
     proc init() { local numArg
@@ -114,12 +116,10 @@ begintemplate ItemOfInputVarsBrowsedList
         }
     }
     
-    _tempValue = -1
-    
     func getGlobalOrCustomValue() {
         strdef hocCommand
         sprint(hocCommand, "_tempValue = %s", $s1)
-        execute(hocCommand, this)
+        execute(hocCommand)     // Do not replace with "execute(*, this)" not to lose access to "v_init" etc.
         return _tempValue
     }
     

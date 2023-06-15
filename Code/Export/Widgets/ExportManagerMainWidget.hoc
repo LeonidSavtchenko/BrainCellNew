@@ -211,7 +211,13 @@ begintemplate ExportManagerMainWidget
     }
     
     proc createParamsHocCheckBoxHandler() {
+        dismissChilds()
         deck3.flip_to(exportOptions.isCreateParamsHoc)
+    }
+    
+    proc createRunnerHocCheckBoxHandler() {
+        dismissChilds()
+        deck4.flip_to(exportOptions.isCreateRunnerHoc)
     }
     
     proc varsSelectorCheckBoxHandler() { local clovWidIdx, isChecked
@@ -223,10 +229,6 @@ begintemplate ExportManagerMainWidget
         }
     }
     
-    proc createRunnerHocCheckBoxHandler() {
-        deck4.flip_to(exportOptions.isCreateRunnerHoc)
-    }
-    
     proc copyDllCheckBoxHandler() {
         deck5.flip_to(exportOptions.isCopyDll)
     }
@@ -236,12 +238,14 @@ begintemplate ExportManagerMainWidget
     }
     
     proc exportHandler() { local isCancel
+        dismissChilds()
+        
         isCancel = saveNanoHocFile()
         if (isCancel) {
             return
         }
         
-        dismissHandler()
+        unmapIfNotNil(mainBox)
     }
     
     proc dismissChilds() { local clovWidIdx

@@ -207,6 +207,7 @@ begintemplate MechTypeHelper
     objref _pointProcess
     strdef _unitsStr
     
+    // See also: InterModularOtherUtils.hoc -> getWatchedVarUnits
     proc getVarUnits() { local enumDmPpNc, mechIdx localobj nil
         strdef varName, varNameWithIndex, mechName, hocCommand
         

@@ -9,11 +9,19 @@ class LoopUtils:
     #    but in general case it's not enough because the imported geometry file may store the sections
     #    in arbitrary n-dimentional structures
     def tryInsertLoopsToShorten(lines, useNestedLoops):
-        lines, isShortened = LoopUtils._insertLoopsToShortenCore(lines, 'idx2', False)
+    
+        if len(lines) == 0:
+            return lines
+            
+        if useNestedLoops:
+            idxVarName = 'idx2'
+        else:
+            idxVarName = 'idx'
+        lines, isShortened, baseIndent = LoopUtils._insertLoopsToShortenCore(lines, idxVarName, False)
         
         if isShortened and useNestedLoops:
-            lines2 = LoopUtils._wrapInnerCycles(lines)
-            lines2, isShortened = LoopUtils._insertLoopsToShortenCore(lines2, 'idx1', True)
+            lines2 = LoopUtils._wrapInnerCycles(lines, baseIndent)
+            lines2, isShortened, _ = LoopUtils._insertLoopsToShortenCore(lines2, 'idx1', True)
             if isShortened:
                 lines = LoopUtils._unwrapInnerCycles(lines2)
                 
@@ -31,6 +39,8 @@ class LoopUtils:
         prevLine = ''
         prevParsedPattern = ''
         
+        baseIndent = getIndent(lines[0])
+        
         # !! it would be better to sort lines here because user could Merge/Split compartments and so shuffle the sections,
         #    but simple "sorted(lines)" won't work until we prepend each index with zeros so that all corresponding indices
         #    have the same length
@@ -38,7 +48,7 @@ class LoopUtils:
             idx2 = LoopUtils._rfindExt(line, ']', isSecondIteration)
             if idx2 == -1:
                 if isInsideBlock:
-                    isShortened = LoopUtils._finishBlock(outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName) or isShortened
+                    isShortened = LoopUtils._finishBlock(outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName, baseIndent) or isShortened
                     isInsideBlock = False
                 outLines.append(line)
                 continue
@@ -58,38 +68,44 @@ class LoopUtils:
                     prevParsedIdx = thisParsedIdx
                 else:
                     # The block is over
-                    isShortened = LoopUtils._finishBlock(outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName) or isShortened
+                    isShortened = LoopUtils._finishBlock(outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName, baseIndent) or isShortened
                     firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern = LoopUtils._startBlock(thisParsedIdx, line, thisParsedPattern)
                     isInsideBlock = True
                     
         if isInsideBlock:
-            isShortened = LoopUtils._finishBlock(outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName) or isShortened
+            isShortened = LoopUtils._finishBlock(outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName, baseIndent) or isShortened
             
-        return outLines, isShortened
+        return outLines, isShortened, baseIndent
         
     def _startBlock(thisParsedIdx, line, thisParsedPattern):
         return thisParsedIdx, thisParsedIdx, line, thisParsedPattern
         
-    def _finishBlock(outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName):
+    def _finishBlock(outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName, baseIndent):
         if prevParsedIdx != firstParsedIdx:
-            outLines.append('    for {} = {}, {} {{'.format(idxVarName, firstParsedIdx, prevParsedIdx))
-            outLines.append('    ' + prevParsedPattern)
-            outLines.append('    }')
+            outLines.append(baseIndent + 'for {} = {}, {} {{'.format(idxVarName, firstParsedIdx, prevParsedIdx))
+            
+            newLines = prevParsedPattern.split('\n')
+            newLines = [stdIndent + newLine for newLine in newLines]
+            outLine = '\n'.join(newLines)
+            outLines.append(outLine)
+            
+            outLines.append(baseIndent + '}')
+            
             return True
         else:
             outLines.append(prevLine)
             return False
             
-    def _wrapInnerCycles(lines):
+    def _wrapInnerCycles(lines, baseIndent):
         outLines = []
         
         isInsideBlock = False
         linesBlock = []
         for line in lines:
-            if ' for ' in line:
+            if line.startswith(baseIndent + 'for '):
                 isInsideBlock = True
                 linesBlock.append(line)
-            elif ' }' in line:
+            elif line.startswith(baseIndent + '}'):
                 linesBlock.append(line)
                 outLines.append('\n'.join(linesBlock))
                 isInsideBlock = False
@@ -109,16 +125,9 @@ class LoopUtils:
         for line in lines:
             if '\n' not in line:
                 outLines.append(line)
-                continue
-            newLines = line.split('\n')
-            firstLine = newLines[0]
-            if firstLine.startswith('    for idx2 = '):
-                indent = ''
             else:
-                indent = '    '
-            outLines.append(firstLine)
-            newLines = [indent + newLine for newLine in newLines[1 :]]
-            outLines.extend(newLines)
+                newLines = line.split('\n')
+                outLines.extend(newLines)
         return outLines
         
     def _rfindExt(line, marker, isSecondIteration):

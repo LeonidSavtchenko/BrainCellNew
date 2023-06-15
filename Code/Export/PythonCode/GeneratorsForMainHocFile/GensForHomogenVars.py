@@ -1,18 +1,17 @@
 
 import math
-from neuron import h, hoc
+from neuron import h
+from Utils.UnitsUtils import UnitsUtils
 from Utils.OtherUtils import *
 
 
 class GensForHomogenVars:
     
-    _hocObj = hoc.HocObject()
-    
-    # Other data members that will be added in the ctor:
+    # Data members that will be added in the ctor:
     #   _exportOptions
     
     def __init__(self):
-        self._exportOptions = self._hocObj.exportOptions
+        self._exportOptions = hocObj.exportOptions
         
     def initHomogenBiophysics(self):
         if not self._exportOptions.isExportDistMechs:
@@ -20,11 +19,11 @@ class GensForHomogenVars:
             
         lines = []
         
-        mmAllComps = self._hocObj.mmAllComps
+        mmAllComps = hocObj.mmAllComps
         
         # Create number of proc-s to prepare and set "isMechInserted" and "mechStds" for each mech comp
         procNames = []
-        mth = self._hocObj.mth
+        mth = hocObj.mth
         enumDmPpNc = 0
         for compIdx in range(len(mmAllComps)):
             comp = mmAllComps[compIdx]
@@ -66,7 +65,7 @@ class GensForHomogenVars:
             
         lines = []
         
-        synGroup = self._hocObj.synGroup
+        synGroup = hocObj.synGroup
         
         mechIdxs = [None] * 4
         mechIdxs[0] = int(synGroup.getMechIdxAndOptionalName(0))    # "Source PP"
@@ -74,7 +73,7 @@ class GensForHomogenVars:
         mechIdxs[2] = int(synGroup.getMechIdxAndOptionalName(1))    # "Target PP"
         mechIdxs[3] = int(synGroup.getMechIdxAndOptionalName(2))    # "Single PP"
         
-        smAllComps = self._hocObj.smAllComps
+        smAllComps = hocObj.smAllComps
         
         # Create number of proc-s to prepare and set "mechStds" for each syn comp
         procNames = []
@@ -104,11 +103,12 @@ class GensForHomogenVars:
     def _exportHomogenVarsOfThisMech(self, compIdx, comp, mechIdx, isExportAssignedAndState, isExportInhoms):
         lines = []
         
-        mth = self._hocObj.mth
-        mcu = self._hocObj.mcu
-        inhomAndStochLibrary = self._hocObj.inhomAndStochLibrary
+        mth = hocObj.mth
+        mcu = hocObj.mcu
+        inhomAndStochLibrary = hocObj.inhomAndStochLibrary
         
         isAnyExposedVars = self._exportOptions.isAnyExposedVars()
+        isAnySweptVars = self._exportOptions.isAnySweptVars()
         
         mechName = h.ref('')
         enumDmPpNc = comp.enumDmPpNc
@@ -143,18 +143,18 @@ class GensForHomogenVars:
                 arraySize = int(mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName))
                 varName = varName[0]
                 for arrayIndex in range(arraySize):
-                    isContinue, isExposedVar, isValueNaN, valueMathNaNOrExposedName = self._getValueMathNaNOrExposedName(enumDmPpNc, compIdx, comp, mechIdx, varType, varTypeIdx, varIdx, varName, arrayIndex, defaultMechStd, isExportInhoms, isAnyExposedVars)
+                    isContinue, isExposedOrSweptVar, isValueNaN, valueMathNaNOrExposedOrSweptName, unitsCommentOrEmpty = self._getOneValueInfo(enumDmPpNc, compIdx, comp, mechIdx, varType, varTypeIdx, varIdx, varName, arraySize, arrayIndex, defaultMechStd, isExportInhoms, isAnyExposedVars, isAnySweptVars)
                     if isContinue:
                         continue
                     if arraySize == 1:
-                        newLines.append('    mechStd.set("{}", {})'.format(varName, valueMathNaNOrExposedName))
+                        newLines.append('    mechStd.set("{}", {}){}'.format(varName, valueMathNaNOrExposedOrSweptName, unitsCommentOrEmpty))
                         if enumDmPpNc == 2 and mcu.isMetaVar(varName):
-                            if isExposedVar:
-                                newLines.append(f'    seh.isMinRPlt1 = ({valueMathNaNOrExposedName} < 1)')
-                            elif isValueNaN or valueMathNaNOrExposedName < 1:
+                            if isExposedOrSweptVar:
+                                newLines.append(f'    seh.isMinRPlt1 = ({valueMathNaNOrExposedOrSweptName} < 1)')
+                            elif isValueNaN or valueMathNaNOrExposedOrSweptName < 1:
                                 newLines.append('    seh.isMinRPlt1 = 1')
                     else:
-                        newLines.append('    mechStd.set("{}", {}, {})'.format(varName, valueMathNaNOrExposedName, arrayIndex))
+                        newLines.append('    mechStd.set("{}", {}, {}){}'.format(varName, valueMathNaNOrExposedOrSweptName, arrayIndex, unitsCommentOrEmpty))
                     isAllDefault = False
                     
             if isAllDefault:
@@ -167,42 +167,66 @@ class GensForHomogenVars:
             
         return lines
         
-    def _getValueMathNaNOrExposedName(self, enumDmPpNc, compIdx, comp, mechIdx, varType, varTypeIdx, varIdx, varName, arrayIndex, defaultMechStd, isExportInhoms, isAnyExposedVars):
+    def _getOneValueInfo(self, enumDmPpNc, compIdx, comp, mechIdx, varType, varTypeIdx, varIdx, varName, arraySize, arrayIndex, defaultMechStd, isExportInhoms, isAnyExposedVars, isAnySweptVars):
     
+        # !!!! need to make sure that user doesn't select the same var as both exposed and swept
+        
         if isAnyExposedVars:
-            exposedVarsList = self._exportOptions.exposedVarsList
-            for exposedVarIdx in range(len(exposedVarsList)):
-                if exposedVarsList[exposedVarIdx].isEqual(enumDmPpNc, compIdx, mechIdx, varType, varName, arrayIndex):
-                    return False, True, None, getExposedVarName(exposedVarIdx)
-                    
+            exposedVarNameOrEmpty = self._getExposedOrSweptVarNameOrEmpty(enumDmPpNc, compIdx, mechIdx, varType, varName, arrayIndex, self._exportOptions.exposedVarsList, getExposedVarName)
+            if exposedVarNameOrEmpty:
+                return False, True, None, exposedVarNameOrEmpty, ''
+                
+        if isAnySweptVars:
+            sweptVarNameOrEmpty = self._getExposedOrSweptVarNameOrEmpty(enumDmPpNc, compIdx, mechIdx, varType, varName, arrayIndex, self._exportOptions.sweptVarsList, getSweptVarName)
+            if sweptVarNameOrEmpty:
+                return False, True, None, sweptVarNameOrEmpty, ''
+                
         value = comp.mechStds[mechIdx][varTypeIdx].get(varName, arrayIndex)
+        
+        mth = hocObj.mth
         
         # Decide whether to skip "mechStd.set" for this var;
         # for stoch vars, we don't skip it even though the value is default
         # because we'll need to read it just before adding the noise
-        if not self._hocObj.inhomAndStochLibrary.isStochEnabledFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex):
+        if not hocObj.inhomAndStochLibrary.isStochEnabledFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex):
             defaultValue = defaultMechStd.get(varName, arrayIndex)
             # !! not sure about the 2nd condition in IF below,
             #    but it found out for ASSIGNED "ko_IKa" from "IPotassium.mod" that its default value
             #    is different depending on the moment when we created a new MechanismStandard:
             #    just after the start of our program (defaultValue = 0) or now (defaultValue = 2.5)
             if (varType == 1 and value == defaultValue) or (varType > 1 and value == 0):
-                return True, None, None, None
+                return True, None, None, None, None
                 
+        unitsCommentOrEmpty = ''
+        
         isValueNaN = math.isnan(value)
         if isValueNaN:
             if isExportInhoms:
                 value = 'math.nan'
             else:
-                if self._hocObj.mth.isDiamDistMechVar(mechIdx, varType, varName):
+                if mth.isDiamDistMechVar(mechIdx, varType, varName):
                     value = 'math.nan'
                 else:
                     # If user applied an inhomogeneity to NetCon.@release_probability, but disabled export of syn inhoms,
                     # then the probability var gets effectively reverted to its default const value "1" and the 5-chain synapses become the 3-chain ones
                     # (except the case of stochasticity enabled)
-                    return True, None, None, None
-                    
-        return False, False, isValueNaN, value
+                    return True, None, None, None, None
+        else:
+            varNameWithIndex = h.ref('')
+            mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
+            varNameWithIndex = varNameWithIndex[0]
+            isDmOrSynPart = (comp.enumDmPpNc == 0)
+            units = UnitsUtils.getUnitsForDmOrSynPart(isDmOrSynPart, compIdx, mechIdx, varName, varNameWithIndex)
+            if units:
+                unitsCommentOrEmpty = '    // ({})'.format(units)
+                
+        return False, False, isValueNaN, value, unitsCommentOrEmpty
+        
+    def _getExposedOrSweptVarNameOrEmpty(self, enumDmPpNc, compIdx, mechIdx, varType, varName, arrayIndex, varsList, getVarName):
+        for varIdx in range(len(varsList)):
+            if varsList[varIdx].isEqual(enumDmPpNc, compIdx, mechIdx, varType, varName, arrayIndex):
+                return getVarName(varIdx)
+        return ''
         
     # For each comp, generate the call of corresponding proc
     def _finishExportOfHomogenVars(self, allComps, allCompsVarName, procNames):
@@ -219,8 +243,8 @@ class GensForHomogenVars:
         return lines
         
     def _isExportedSynComp(self, compIdx):
-        is3Or1PartInSynStruc = self._hocObj.synGroup.is3Or1PartInSynStruc()
-        enumSynCompIdxs = self._hocObj.enumSynCompIdxs
+        is3Or1PartInSynStruc = hocObj.synGroup.is3Or1PartInSynStruc()
+        enumSynCompIdxs = hocObj.enumSynCompIdxs
         if is3Or1PartInSynStruc:
             return compIdx in [enumSynCompIdxs.srcPp, enumSynCompIdxs.netCon, enumSynCompIdxs.trgPp]
         else:

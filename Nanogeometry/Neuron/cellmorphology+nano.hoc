@@ -40789,91 +40789,91 @@ proc addHomogenBiophysInfoToSomaComp() { localobj comp, mechStd
     comp.isMechInserted[26] = 1
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
-    mechStd.set("diam", 20.0)
+    mechStd.set("diam", 20.0)    // (um)
     comp.mechStds[0][0] = mechStd
     
     mechStd = new MechanismStandard("capacitance", 1)    // PARAMETER
-    mechStd.set("cm", 0.8)
+    mechStd.set("cm", 0.8)    // (uF/cm2)
     comp.mechStds[1][0] = mechStd
     
     mechStd = new MechanismStandard("pas", 1)    // PARAMETER
-    mechStd.set("g_pas", 8.968609865470852e-05)
-    mechStd.set("e_pas", -85.0)
+    mechStd.set("g_pas", 8.968609865470852e-05)    // (S/cm2)
+    mechStd.set("e_pas", -85.0)    // (mV)
     comp.mechStds[2][0] = mechStd
     
     mechStd = new MechanismStandard("pas", 2)    // ASSIGNED
-    mechStd.set("i_pas", 0.0018251121076233179)
+    mechStd.set("i_pas", 0.0018251121076233179)    // (mA/cm2)
     comp.mechStds[2][1] = mechStd
     
     mechStd = new MechanismStandard("na_ion", 2)    // ASSIGNED
-    mechStd.set("ina", -6.224801122719795e-05)
-    mechStd.set("dina_dv_", 5.202508251403361e-07)
+    mechStd.set("ina", -6.224801122719795e-05)    // (mA/cm2)
+    mechStd.set("dina_dv_", 5.202508251403361e-07)    // (S/cm2)
     comp.mechStds[5][1] = mechStd
     
     mechStd = new MechanismStandard("k_ion", 2)    // ASSIGNED
-    mechStd.set("ko", 2.5)
-    mechStd.set("ik", 2.5435515844647457e-05)
-    mechStd.set("dik_dv_", 1.50739596489985e-06)
+    mechStd.set("ko", 2.5)    // (mM)
+    mechStd.set("ik", 2.5435515844647457e-05)    // (mA/cm2)
+    mechStd.set("dik_dv_", 1.50739596489985e-06)    // (S/cm2)
     comp.mechStds[6][1] = mechStd
     
     mechStd = new MechanismStandard("ca_ion", 2)    // ASSIGNED
-    mechStd.set("eca", 140.23660113151266)
-    mechStd.set("cai", 5e-05)
-    mechStd.set("cao", 2.0)
+    mechStd.set("eca", 140.23660113151266)    // (mV)
+    mechStd.set("cai", 5e-05)    // (mM)
+    mechStd.set("cao", 2.0)    // (mM)
     comp.mechStds[8][1] = mechStd
     
     mechStd = new MechanismStandard("frapion_ion", 2)    // ASSIGNED
-    mechStd.set("efrapion", 262.1268862610172)
-    mechStd.set("frapioni", 1.0)
-    mechStd.set("frapiono", 1.0)
+    mechStd.set("efrapion", 262.1268862610172)    // (mV)
+    mechStd.set("frapioni", 1.0)    // (mM)
+    mechStd.set("frapiono", 1.0)    // (mM)
     comp.mechStds[10][1] = mechStd
     
     mechStd = new MechanismStandard("FRAP", 3)    // STATE
-    mechStd.set("frapion_FRAP", 5e-05, 0)
-    mechStd.set("frapion_FRAP", 5e-05, 1)
-    mechStd.set("frapion_FRAP", 5e-05, 2)
-    mechStd.set("frapion_FRAP", 5e-05, 3)
+    mechStd.set("frapion_FRAP", 5e-05, 0)    // (mM)
+    mechStd.set("frapion_FRAP", 5e-05, 1)    // (mM)
+    mechStd.set("frapion_FRAP", 5e-05, 2)    // (mM)
+    mechStd.set("frapion_FRAP", 5e-05, 3)    // (mM)
     comp.mechStds[11][2] = mechStd
     
     mechStd = new MechanismStandard("IKa", 1)    // PARAMETER
-    mechStd.set("gk_IKa", 0.0)
+    mechStd.set("gk_IKa", 0.0)    // (S/cm2)
     comp.mechStds[14][0] = mechStd
     
     mechStd = new MechanismStandard("IKa", 2)    // ASSIGNED
-    mechStd.set("ko_IKa", 2.5)
+    mechStd.set("ko_IKa", 2.5)    // (mM)
     comp.mechStds[14][1] = mechStd
     
     mechStd = new MechanismStandard("kir4", 1)    // PARAMETER
-    mechStd.set("gkir_kir4", 0.0)
+    mechStd.set("gkir_kir4", 0.0)    // (mS/cm2)
     comp.mechStds[16][0] = mechStd
     
     mechStd = new MechanismStandard("ip3_ion", 2)    // ASSIGNED
-    mechStd.set("eip3", 280.4732022630253)
-    mechStd.set("ip3i", 1.0)
-    mechStd.set("ip3o", 1.0)
+    mechStd.set("eip3", 280.4732022630253)    // (mV)
+    mechStd.set("ip3i", 1.0)    // (mM)
+    mechStd.set("ip3o", 1.0)    // (mM)
     comp.mechStds[17][1] = mechStd
     
     mechStd = new MechanismStandard("cadifus", 3)    // STATE
-    mechStd.set("ca_cadifus", 5e-05, 0)
-    mechStd.set("ca_cadifus", 5e-05, 1)
-    mechStd.set("ca_cadifus", 5e-05, 2)
-    mechStd.set("ca_cadifus", 5e-05, 3)
-    mechStd.set("bufs_cadifus", 0.4477611940298507, 0)
-    mechStd.set("bufs_cadifus", 0.4477611940298507, 1)
-    mechStd.set("bufs_cadifus", 0.4477611940298507, 2)
-    mechStd.set("bufs_cadifus", 0.4477611940298507, 3)
-    mechStd.set("cabufs_cadifus", 0.0022388059701493046, 0)
-    mechStd.set("cabufs_cadifus", 0.0022388059701493046, 1)
-    mechStd.set("cabufs_cadifus", 0.0022388059701493046, 2)
-    mechStd.set("cabufs_cadifus", 0.0022388059701493046, 3)
-    mechStd.set("bufm_cadifus", 0.06206896551724138, 0)
-    mechStd.set("bufm_cadifus", 0.06206896551724138, 1)
-    mechStd.set("bufm_cadifus", 0.06206896551724138, 2)
-    mechStd.set("bufm_cadifus", 0.06206896551724138, 3)
-    mechStd.set("cabufm_cadifus", 0.012931034482758619, 0)
-    mechStd.set("cabufm_cadifus", 0.012931034482758619, 1)
-    mechStd.set("cabufm_cadifus", 0.012931034482758619, 2)
-    mechStd.set("cabufm_cadifus", 0.012931034482758619, 3)
+    mechStd.set("ca_cadifus", 5e-05, 0)    // (mM)
+    mechStd.set("ca_cadifus", 5e-05, 1)    // (mM)
+    mechStd.set("ca_cadifus", 5e-05, 2)    // (mM)
+    mechStd.set("ca_cadifus", 5e-05, 3)    // (mM)
+    mechStd.set("bufs_cadifus", 0.4477611940298507, 0)    // (mM)
+    mechStd.set("bufs_cadifus", 0.4477611940298507, 1)    // (mM)
+    mechStd.set("bufs_cadifus", 0.4477611940298507, 2)    // (mM)
+    mechStd.set("bufs_cadifus", 0.4477611940298507, 3)    // (mM)
+    mechStd.set("cabufs_cadifus", 0.0022388059701493046, 0)    // (mM)
+    mechStd.set("cabufs_cadifus", 0.0022388059701493046, 1)    // (mM)
+    mechStd.set("cabufs_cadifus", 0.0022388059701493046, 2)    // (mM)
+    mechStd.set("cabufs_cadifus", 0.0022388059701493046, 3)    // (mM)
+    mechStd.set("bufm_cadifus", 0.06206896551724138, 0)    // (mM)
+    mechStd.set("bufm_cadifus", 0.06206896551724138, 1)    // (mM)
+    mechStd.set("bufm_cadifus", 0.06206896551724138, 2)    // (mM)
+    mechStd.set("bufm_cadifus", 0.06206896551724138, 3)    // (mM)
+    mechStd.set("cabufm_cadifus", 0.012931034482758619, 0)    // (mM)
+    mechStd.set("cabufm_cadifus", 0.012931034482758619, 1)    // (mM)
+    mechStd.set("cabufm_cadifus", 0.012931034482758619, 2)    // (mM)
+    mechStd.set("cabufm_cadifus", 0.012931034482758619, 3)    // (mM)
     mechStd.set("hc_cadifus", 0.19999999999999996, 0)
     mechStd.set("hc_cadifus", 0.19999999999999996, 1)
     mechStd.set("hc_cadifus", 0.19999999999999996, 2)
@@ -40885,8 +40885,8 @@ proc addHomogenBiophysInfoToSomaComp() { localobj comp, mechStd
     comp.mechStds[18][2] = mechStd
     
     mechStd = new MechanismStandard("hd", 1)    // PARAMETER
-    mechStd.set("ghdbar_hd", 0.0)
-    mechStd.set("vhalfl_hd", -73.0)
+    mechStd.set("ghdbar_hd", 0.0)    // (mho/cm2)
+    mechStd.set("vhalfl_hd", -73.0)    // (mV)
     comp.mechStds[20][0] = mechStd
     
     mechStd = new MechanismStandard("hd", 3)    // STATE
@@ -40894,7 +40894,7 @@ proc addHomogenBiophysInfoToSomaComp() { localobj comp, mechStd
     comp.mechStds[20][2] = mechStd
     
     mechStd = new MechanismStandard("kap", 1)    // PARAMETER
-    mechStd.set("gkabar_kap", 0.0)
+    mechStd.set("gkabar_kap", 0.0)    // (mho/cm2)
     comp.mechStds[22][0] = mechStd
     
     mechStd = new MechanismStandard("kap", 3)    // STATE
@@ -40903,7 +40903,7 @@ proc addHomogenBiophysInfoToSomaComp() { localobj comp, mechStd
     comp.mechStds[22][2] = mechStd
     
     mechStd = new MechanismStandard("kdr", 1)    // PARAMETER
-    mechStd.set("gkdrbar_kdr", 0.01)
+    mechStd.set("gkdrbar_kdr", 0.01)    // (mho/cm2)
     comp.mechStds[23][0] = mechStd
     
     mechStd = new MechanismStandard("kdr", 2)    // ASSIGNED
@@ -40915,8 +40915,8 @@ proc addHomogenBiophysInfoToSomaComp() { localobj comp, mechStd
     comp.mechStds[23][2] = mechStd
     
     mechStd = new MechanismStandard("na3", 1)    // PARAMETER
-    mechStd.set("sh_na3", 0.0)
-    mechStd.set("gbar_na3", 0.032)
+    mechStd.set("sh_na3", 0.0)    // (mV)
+    mechStd.set("gbar_na3", 0.032)    // (mho/cm2)
     comp.mechStds[26][0] = mechStd
     
     mechStd = new MechanismStandard("na3", 3)    // STATE
@@ -40952,33 +40952,33 @@ proc addHomogenBiophysInfoToDendritesComp() { localobj comp, mechStd
     comp.mechStds[0][0] = mechStd
     
     mechStd = new MechanismStandard("capacitance", 1)    // PARAMETER
-    mechStd.set("cm", 0.8)
+    mechStd.set("cm", 0.8)    // (uF/cm2)
     comp.mechStds[1][0] = mechStd
     
     mechStd = new MechanismStandard("pas", 1)    // PARAMETER
-    mechStd.set("g_pas", 8.968609865470852e-05)
-    mechStd.set("e_pas", -85.0)
+    mechStd.set("g_pas", 8.968609865470852e-05)    // (S/cm2)
+    mechStd.set("e_pas", -85.0)    // (mV)
     comp.mechStds[2][0] = mechStd
     
     mechStd = new MechanismStandard("pas", 2)    // ASSIGNED
-    mechStd.set("i_pas", 0.0018251121076233179)
+    mechStd.set("i_pas", 0.0018251121076233179)    // (mA/cm2)
     comp.mechStds[2][1] = mechStd
     
     mechStd = new MechanismStandard("na_ion", 2)    // ASSIGNED
-    mechStd.set("ina", -6.224801122719795e-05)
-    mechStd.set("dina_dv_", 5.202508251403361e-07)
+    mechStd.set("ina", -6.224801122719795e-05)    // (mA/cm2)
+    mechStd.set("dina_dv_", 5.202508251403361e-07)    // (S/cm2)
     comp.mechStds[5][1] = mechStd
     
     mechStd = new MechanismStandard("k_ion", 2)    // ASSIGNED
-    mechStd.set("ko", 2.5)
-    mechStd.set("ik", 2.5435515844647457e-05)
-    mechStd.set("dik_dv_", 1.50739596489985e-06)
+    mechStd.set("ko", 2.5)    // (mM)
+    mechStd.set("ik", 2.5435515844647457e-05)    // (mA/cm2)
+    mechStd.set("dik_dv_", 1.50739596489985e-06)    // (S/cm2)
     comp.mechStds[6][1] = mechStd
     
     mechStd = new MechanismStandard("ca_ion", 2)    // ASSIGNED
-    mechStd.set("eca", 140.23660113151266)
-    mechStd.set("cai", 5e-05)
-    mechStd.set("cao", 2.0)
+    mechStd.set("eca", 140.23660113151266)    // (mV)
+    mechStd.set("cai", 5e-05)    // (mM)
+    mechStd.set("cao", 2.0)    // (mM)
     comp.mechStds[8][1] = mechStd
     
     mechStd = new MechanismStandard("CAl", 3)    // STATE
@@ -40986,57 +40986,57 @@ proc addHomogenBiophysInfoToDendritesComp() { localobj comp, mechStd
     comp.mechStds[9][2] = mechStd
     
     mechStd = new MechanismStandard("frapion_ion", 2)    // ASSIGNED
-    mechStd.set("efrapion", 262.1268862610172)
-    mechStd.set("frapioni", 1.0)
-    mechStd.set("frapiono", 1.0)
+    mechStd.set("efrapion", 262.1268862610172)    // (mV)
+    mechStd.set("frapioni", 1.0)    // (mM)
+    mechStd.set("frapiono", 1.0)    // (mM)
     comp.mechStds[10][1] = mechStd
     
     mechStd = new MechanismStandard("FRAP", 3)    // STATE
-    mechStd.set("frapion_FRAP", 5e-05, 0)
-    mechStd.set("frapion_FRAP", 5e-05, 1)
-    mechStd.set("frapion_FRAP", 5e-05, 2)
-    mechStd.set("frapion_FRAP", 5e-05, 3)
+    mechStd.set("frapion_FRAP", 5e-05, 0)    // (mM)
+    mechStd.set("frapion_FRAP", 5e-05, 1)    // (mM)
+    mechStd.set("frapion_FRAP", 5e-05, 2)    // (mM)
+    mechStd.set("frapion_FRAP", 5e-05, 3)    // (mM)
     comp.mechStds[11][2] = mechStd
     
     mechStd = new MechanismStandard("IKa", 1)    // PARAMETER
-    mechStd.set("gk_IKa", 0.0)
+    mechStd.set("gk_IKa", 0.0)    // (S/cm2)
     comp.mechStds[14][0] = mechStd
     
     mechStd = new MechanismStandard("IKa", 2)    // ASSIGNED
-    mechStd.set("ko_IKa", 2.5)
+    mechStd.set("ko_IKa", 2.5)    // (mM)
     comp.mechStds[14][1] = mechStd
     
     mechStd = new MechanismStandard("kir4", 1)    // PARAMETER
-    mechStd.set("gkir_kir4", 0.0)
+    mechStd.set("gkir_kir4", 0.0)    // (mS/cm2)
     comp.mechStds[16][0] = mechStd
     
     mechStd = new MechanismStandard("ip3_ion", 2)    // ASSIGNED
-    mechStd.set("eip3", 280.4732022630253)
-    mechStd.set("ip3i", 1.0)
-    mechStd.set("ip3o", 1.0)
+    mechStd.set("eip3", 280.4732022630253)    // (mV)
+    mechStd.set("ip3i", 1.0)    // (mM)
+    mechStd.set("ip3o", 1.0)    // (mM)
     comp.mechStds[17][1] = mechStd
     
     mechStd = new MechanismStandard("cadifus", 3)    // STATE
-    mechStd.set("ca_cadifus", 5e-05, 0)
-    mechStd.set("ca_cadifus", 5e-05, 1)
-    mechStd.set("ca_cadifus", 5e-05, 2)
-    mechStd.set("ca_cadifus", 5e-05, 3)
-    mechStd.set("bufs_cadifus", 0.4477611940298507, 0)
-    mechStd.set("bufs_cadifus", 0.4477611940298507, 1)
-    mechStd.set("bufs_cadifus", 0.4477611940298507, 2)
-    mechStd.set("bufs_cadifus", 0.4477611940298507, 3)
-    mechStd.set("cabufs_cadifus", 0.0022388059701493046, 0)
-    mechStd.set("cabufs_cadifus", 0.0022388059701493046, 1)
-    mechStd.set("cabufs_cadifus", 0.0022388059701493046, 2)
-    mechStd.set("cabufs_cadifus", 0.0022388059701493046, 3)
-    mechStd.set("bufm_cadifus", 0.06206896551724138, 0)
-    mechStd.set("bufm_cadifus", 0.06206896551724138, 1)
-    mechStd.set("bufm_cadifus", 0.06206896551724138, 2)
-    mechStd.set("bufm_cadifus", 0.06206896551724138, 3)
-    mechStd.set("cabufm_cadifus", 0.012931034482758619, 0)
-    mechStd.set("cabufm_cadifus", 0.012931034482758619, 1)
-    mechStd.set("cabufm_cadifus", 0.012931034482758619, 2)
-    mechStd.set("cabufm_cadifus", 0.012931034482758619, 3)
+    mechStd.set("ca_cadifus", 5e-05, 0)    // (mM)
+    mechStd.set("ca_cadifus", 5e-05, 1)    // (mM)
+    mechStd.set("ca_cadifus", 5e-05, 2)    // (mM)
+    mechStd.set("ca_cadifus", 5e-05, 3)    // (mM)
+    mechStd.set("bufs_cadifus", 0.4477611940298507, 0)    // (mM)
+    mechStd.set("bufs_cadifus", 0.4477611940298507, 1)    // (mM)
+    mechStd.set("bufs_cadifus", 0.4477611940298507, 2)    // (mM)
+    mechStd.set("bufs_cadifus", 0.4477611940298507, 3)    // (mM)
+    mechStd.set("cabufs_cadifus", 0.0022388059701493046, 0)    // (mM)
+    mechStd.set("cabufs_cadifus", 0.0022388059701493046, 1)    // (mM)
+    mechStd.set("cabufs_cadifus", 0.0022388059701493046, 2)    // (mM)
+    mechStd.set("cabufs_cadifus", 0.0022388059701493046, 3)    // (mM)
+    mechStd.set("bufm_cadifus", 0.06206896551724138, 0)    // (mM)
+    mechStd.set("bufm_cadifus", 0.06206896551724138, 1)    // (mM)
+    mechStd.set("bufm_cadifus", 0.06206896551724138, 2)    // (mM)
+    mechStd.set("bufm_cadifus", 0.06206896551724138, 3)    // (mM)
+    mechStd.set("cabufm_cadifus", 0.012931034482758619, 0)    // (mM)
+    mechStd.set("cabufm_cadifus", 0.012931034482758619, 1)    // (mM)
+    mechStd.set("cabufm_cadifus", 0.012931034482758619, 2)    // (mM)
+    mechStd.set("cabufm_cadifus", 0.012931034482758619, 3)    // (mM)
     mechStd.set("hc_cadifus", 0.19999999999999996, 0)
     mechStd.set("hc_cadifus", 0.19999999999999996, 1)
     mechStd.set("hc_cadifus", 0.19999999999999996, 2)
@@ -41048,7 +41048,7 @@ proc addHomogenBiophysInfoToDendritesComp() { localobj comp, mechStd
     comp.mechStds[18][2] = mechStd
     
     mechStd = new MechanismStandard("kad", 1)    // PARAMETER
-    mechStd.set("gkabar_kad", 0.0)
+    mechStd.set("gkabar_kad", 0.0)    // (mho/cm2)
     comp.mechStds[21][0] = mechStd
     
     mechStd = new MechanismStandard("kad", 3)    // STATE
@@ -41057,7 +41057,7 @@ proc addHomogenBiophysInfoToDendritesComp() { localobj comp, mechStd
     comp.mechStds[21][2] = mechStd
     
     mechStd = new MechanismStandard("kap", 1)    // PARAMETER
-    mechStd.set("gkabar_kap", 0.0)
+    mechStd.set("gkabar_kap", 0.0)    // (mho/cm2)
     comp.mechStds[22][0] = mechStd
     
     mechStd = new MechanismStandard("kap", 3)    // STATE
@@ -41066,7 +41066,7 @@ proc addHomogenBiophysInfoToDendritesComp() { localobj comp, mechStd
     comp.mechStds[22][2] = mechStd
     
     mechStd = new MechanismStandard("kdr", 1)    // PARAMETER
-    mechStd.set("gkdrbar_kdr", 0.01)
+    mechStd.set("gkdrbar_kdr", 0.01)    // (mho/cm2)
     comp.mechStds[23][0] = mechStd
     
     mechStd = new MechanismStandard("kdr", 2)    // ASSIGNED
@@ -41078,8 +41078,8 @@ proc addHomogenBiophysInfoToDendritesComp() { localobj comp, mechStd
     comp.mechStds[23][2] = mechStd
     
     mechStd = new MechanismStandard("na3", 1)    // PARAMETER
-    mechStd.set("sh_na3", 0.0)
-    mechStd.set("gbar_na3", 0.032)
+    mechStd.set("sh_na3", 0.0)    // (mV)
+    mechStd.set("gbar_na3", 0.032)    // (mho/cm2)
     comp.mechStds[26][0] = mechStd
     
     mechStd = new MechanismStandard("na3", 3)    // STATE
@@ -41108,39 +41108,39 @@ proc addHomogenBiophysInfoToAxonComp() { localobj comp, mechStd
     comp.mechStds[0][0] = mechStd
     
     mechStd = new MechanismStandard("pas", 1)    // PARAMETER
-    mechStd.set("g_pas", 7.142857142857143e-05)
-    mechStd.set("e_pas", -65.0)
+    mechStd.set("g_pas", 7.142857142857143e-05)    // (S/cm2)
+    mechStd.set("e_pas", -65.0)    // (mV)
     comp.mechStds[2][0] = mechStd
     
     mechStd = new MechanismStandard("pas", 2)    // ASSIGNED
-    mechStd.set("i_pas", 2.4999999999999595e-05)
+    mechStd.set("i_pas", 2.4999999999999595e-05)    // (mA/cm2)
     comp.mechStds[2][1] = mechStd
     
     mechStd = new MechanismStandard("na_ion", 2)    // ASSIGNED
-    mechStd.set("ina", -6.224801122719795e-05)
-    mechStd.set("dina_dv_", 5.202508251403361e-07)
+    mechStd.set("ina", -6.224801122719795e-05)    // (mA/cm2)
+    mechStd.set("dina_dv_", 5.202508251403361e-07)    // (S/cm2)
     comp.mechStds[5][1] = mechStd
     
     mechStd = new MechanismStandard("k_ion", 1)    // PARAMETER
-    mechStd.set("ek", -90.0)
+    mechStd.set("ek", -90.0)    // (mV)
     comp.mechStds[6][0] = mechStd
     
     mechStd = new MechanismStandard("k_ion", 2)    // ASSIGNED
-    mechStd.set("ko", 2.5)
-    mechStd.set("ik", 3.821248770995614e-05)
-    mechStd.set("dik_dv_", 1.5073959648930738e-06)
+    mechStd.set("ko", 2.5)    // (mM)
+    mechStd.set("ik", 3.821248770995614e-05)    // (mA/cm2)
+    mechStd.set("dik_dv_", 1.5073959648930738e-06)    // (S/cm2)
     comp.mechStds[6][1] = mechStd
     
     mechStd = new MechanismStandard("IKa", 1)    // PARAMETER
-    mechStd.set("gk_IKa", 0.0)
+    mechStd.set("gk_IKa", 0.0)    // (S/cm2)
     comp.mechStds[14][0] = mechStd
     
     mechStd = new MechanismStandard("IKa", 2)    // ASSIGNED
-    mechStd.set("ko_IKa", 2.5)
+    mechStd.set("ko_IKa", 2.5)    // (mM)
     comp.mechStds[14][1] = mechStd
     
     mechStd = new MechanismStandard("kad", 1)    // PARAMETER
-    mechStd.set("gkabar_kad", 0.0)
+    mechStd.set("gkabar_kad", 0.0)    // (mho/cm2)
     comp.mechStds[21][0] = mechStd
     
     mechStd = new MechanismStandard("kad", 3)    // STATE
@@ -41149,7 +41149,7 @@ proc addHomogenBiophysInfoToAxonComp() { localobj comp, mechStd
     comp.mechStds[21][2] = mechStd
     
     mechStd = new MechanismStandard("kap", 1)    // PARAMETER
-    mechStd.set("gkabar_kap", 0.0)
+    mechStd.set("gkabar_kap", 0.0)    // (mho/cm2)
     comp.mechStds[22][0] = mechStd
     
     mechStd = new MechanismStandard("kap", 3)    // STATE
@@ -41158,7 +41158,7 @@ proc addHomogenBiophysInfoToAxonComp() { localobj comp, mechStd
     comp.mechStds[22][2] = mechStd
     
     mechStd = new MechanismStandard("kdr", 1)    // PARAMETER
-    mechStd.set("gkdrbar_kdr", 0.01)
+    mechStd.set("gkdrbar_kdr", 0.01)    // (mho/cm2)
     comp.mechStds[23][0] = mechStd
     
     mechStd = new MechanismStandard("kdr", 2)    // ASSIGNED
@@ -41170,8 +41170,8 @@ proc addHomogenBiophysInfoToAxonComp() { localobj comp, mechStd
     comp.mechStds[23][2] = mechStd
     
     mechStd = new MechanismStandard("na3", 1)    // PARAMETER
-    mechStd.set("sh_na3", 0.0)
-    mechStd.set("gbar_na3", 0.032)
+    mechStd.set("sh_na3", 0.0)    // (mV)
+    mechStd.set("gbar_na3", 0.032)    // (mho/cm2)
     comp.mechStds[26][0] = mechStd
     
     mechStd = new MechanismStandard("na3", 3)    // STATE
@@ -41202,52 +41202,52 @@ proc addHomogenBiophysInfoToSpineNeckComp() { localobj comp, mechStd
     comp.mechStds[0][0] = mechStd
     
     mechStd = new MechanismStandard("pas", 1)    // PARAMETER
-    mechStd.set("g_pas", 7.142857142857143e-05)
-    mechStd.set("e_pas", -65.0)
+    mechStd.set("g_pas", 7.142857142857143e-05)    // (S/cm2)
+    mechStd.set("e_pas", -65.0)    // (mV)
     comp.mechStds[2][0] = mechStd
     
     mechStd = new MechanismStandard("pas", 2)    // ASSIGNED
-    mechStd.set("i_pas", 2.4999999999999595e-05)
+    mechStd.set("i_pas", 2.4999999999999595e-05)    // (mA/cm2)
     comp.mechStds[2][1] = mechStd
     
     mechStd = new MechanismStandard("na_ion", 2)    // ASSIGNED
-    mechStd.set("ina", -6.224801122719795e-05)
-    mechStd.set("dina_dv_", 5.202508251403361e-07)
+    mechStd.set("ina", -6.224801122719795e-05)    // (mA/cm2)
+    mechStd.set("dina_dv_", 5.202508251403361e-07)    // (S/cm2)
     comp.mechStds[5][1] = mechStd
     
     mechStd = new MechanismStandard("k_ion", 1)    // PARAMETER
-    mechStd.set("ek", -90.0)
+    mechStd.set("ek", -90.0)    // (mV)
     comp.mechStds[6][0] = mechStd
     
     mechStd = new MechanismStandard("k_ion", 2)    // ASSIGNED
-    mechStd.set("ko", 2.5)
-    mechStd.set("ik", 3.821248770995614e-05)
-    mechStd.set("dik_dv_", 1.5073959648930738e-06)
+    mechStd.set("ko", 2.5)    // (mM)
+    mechStd.set("ik", 3.821248770995614e-05)    // (mA/cm2)
+    mechStd.set("dik_dv_", 1.5073959648930738e-06)    // (S/cm2)
     comp.mechStds[6][1] = mechStd
     
     mechStd = new MechanismStandard("frapion_ion", 2)    // ASSIGNED
-    mechStd.set("efrapion", 262.1268862610172)
-    mechStd.set("frapioni", 1.0)
-    mechStd.set("frapiono", 1.0)
+    mechStd.set("efrapion", 262.1268862610172)    // (mV)
+    mechStd.set("frapioni", 1.0)    // (mM)
+    mechStd.set("frapiono", 1.0)    // (mM)
     comp.mechStds[10][1] = mechStd
     
     mechStd = new MechanismStandard("FRAP", 3)    // STATE
-    mechStd.set("frapion_FRAP", 5e-05, 0)
-    mechStd.set("frapion_FRAP", 5e-05, 1)
-    mechStd.set("frapion_FRAP", 5e-05, 2)
-    mechStd.set("frapion_FRAP", 5e-05, 3)
+    mechStd.set("frapion_FRAP", 5e-05, 0)    // (mM)
+    mechStd.set("frapion_FRAP", 5e-05, 1)    // (mM)
+    mechStd.set("frapion_FRAP", 5e-05, 2)    // (mM)
+    mechStd.set("frapion_FRAP", 5e-05, 3)    // (mM)
     comp.mechStds[11][2] = mechStd
     
     mechStd = new MechanismStandard("IKa", 1)    // PARAMETER
-    mechStd.set("gk_IKa", 0.0)
+    mechStd.set("gk_IKa", 0.0)    // (S/cm2)
     comp.mechStds[14][0] = mechStd
     
     mechStd = new MechanismStandard("IKa", 2)    // ASSIGNED
-    mechStd.set("ko_IKa", 2.5)
+    mechStd.set("ko_IKa", 2.5)    // (mM)
     comp.mechStds[14][1] = mechStd
     
     mechStd = new MechanismStandard("kad", 1)    // PARAMETER
-    mechStd.set("gkabar_kad", 0.0)
+    mechStd.set("gkabar_kad", 0.0)    // (mho/cm2)
     comp.mechStds[21][0] = mechStd
     
     mechStd = new MechanismStandard("kad", 3)    // STATE
@@ -41256,7 +41256,7 @@ proc addHomogenBiophysInfoToSpineNeckComp() { localobj comp, mechStd
     comp.mechStds[21][2] = mechStd
     
     mechStd = new MechanismStandard("kap", 1)    // PARAMETER
-    mechStd.set("gkabar_kap", 0.0)
+    mechStd.set("gkabar_kap", 0.0)    // (mho/cm2)
     comp.mechStds[22][0] = mechStd
     
     mechStd = new MechanismStandard("kap", 3)    // STATE
@@ -41265,7 +41265,7 @@ proc addHomogenBiophysInfoToSpineNeckComp() { localobj comp, mechStd
     comp.mechStds[22][2] = mechStd
     
     mechStd = new MechanismStandard("kdr", 1)    // PARAMETER
-    mechStd.set("gkdrbar_kdr", 0.01)
+    mechStd.set("gkdrbar_kdr", 0.01)    // (mho/cm2)
     comp.mechStds[23][0] = mechStd
     
     mechStd = new MechanismStandard("kdr", 2)    // ASSIGNED
@@ -41277,8 +41277,8 @@ proc addHomogenBiophysInfoToSpineNeckComp() { localobj comp, mechStd
     comp.mechStds[23][2] = mechStd
     
     mechStd = new MechanismStandard("na3", 1)    // PARAMETER
-    mechStd.set("sh_na3", 0.0)
-    mechStd.set("gbar_na3", 0.032)
+    mechStd.set("sh_na3", 0.0)    // (mV)
+    mechStd.set("gbar_na3", 0.032)    // (mho/cm2)
     comp.mechStds[26][0] = mechStd
     
     mechStd = new MechanismStandard("na3", 3)    // STATE
@@ -41309,52 +41309,52 @@ proc addHomogenBiophysInfoToSpineHeadComp() { localobj comp, mechStd
     comp.mechStds[0][0] = mechStd
     
     mechStd = new MechanismStandard("pas", 1)    // PARAMETER
-    mechStd.set("g_pas", 7.142857142857143e-05)
-    mechStd.set("e_pas", -65.0)
+    mechStd.set("g_pas", 7.142857142857143e-05)    // (S/cm2)
+    mechStd.set("e_pas", -65.0)    // (mV)
     comp.mechStds[2][0] = mechStd
     
     mechStd = new MechanismStandard("pas", 2)    // ASSIGNED
-    mechStd.set("i_pas", 2.4999999999999595e-05)
+    mechStd.set("i_pas", 2.4999999999999595e-05)    // (mA/cm2)
     comp.mechStds[2][1] = mechStd
     
     mechStd = new MechanismStandard("na_ion", 2)    // ASSIGNED
-    mechStd.set("ina", -6.224801122719795e-05)
-    mechStd.set("dina_dv_", 5.202508251403361e-07)
+    mechStd.set("ina", -6.224801122719795e-05)    // (mA/cm2)
+    mechStd.set("dina_dv_", 5.202508251403361e-07)    // (S/cm2)
     comp.mechStds[5][1] = mechStd
     
     mechStd = new MechanismStandard("k_ion", 1)    // PARAMETER
-    mechStd.set("ek", -90.0)
+    mechStd.set("ek", -90.0)    // (mV)
     comp.mechStds[6][0] = mechStd
     
     mechStd = new MechanismStandard("k_ion", 2)    // ASSIGNED
-    mechStd.set("ko", 2.5)
-    mechStd.set("ik", 3.821248770995614e-05)
-    mechStd.set("dik_dv_", 1.5073959648930738e-06)
+    mechStd.set("ko", 2.5)    // (mM)
+    mechStd.set("ik", 3.821248770995614e-05)    // (mA/cm2)
+    mechStd.set("dik_dv_", 1.5073959648930738e-06)    // (S/cm2)
     comp.mechStds[6][1] = mechStd
     
     mechStd = new MechanismStandard("frapion_ion", 2)    // ASSIGNED
-    mechStd.set("efrapion", 262.1268862610172)
-    mechStd.set("frapioni", 1.0)
-    mechStd.set("frapiono", 1.0)
+    mechStd.set("efrapion", 262.1268862610172)    // (mV)
+    mechStd.set("frapioni", 1.0)    // (mM)
+    mechStd.set("frapiono", 1.0)    // (mM)
     comp.mechStds[10][1] = mechStd
     
     mechStd = new MechanismStandard("FRAP", 3)    // STATE
-    mechStd.set("frapion_FRAP", 5e-05, 0)
-    mechStd.set("frapion_FRAP", 5e-05, 1)
-    mechStd.set("frapion_FRAP", 5e-05, 2)
-    mechStd.set("frapion_FRAP", 5e-05, 3)
+    mechStd.set("frapion_FRAP", 5e-05, 0)    // (mM)
+    mechStd.set("frapion_FRAP", 5e-05, 1)    // (mM)
+    mechStd.set("frapion_FRAP", 5e-05, 2)    // (mM)
+    mechStd.set("frapion_FRAP", 5e-05, 3)    // (mM)
     comp.mechStds[11][2] = mechStd
     
     mechStd = new MechanismStandard("IKa", 1)    // PARAMETER
-    mechStd.set("gk_IKa", 0.0)
+    mechStd.set("gk_IKa", 0.0)    // (S/cm2)
     comp.mechStds[14][0] = mechStd
     
     mechStd = new MechanismStandard("IKa", 2)    // ASSIGNED
-    mechStd.set("ko_IKa", 2.5)
+    mechStd.set("ko_IKa", 2.5)    // (mM)
     comp.mechStds[14][1] = mechStd
     
     mechStd = new MechanismStandard("kad", 1)    // PARAMETER
-    mechStd.set("gkabar_kad", 0.0)
+    mechStd.set("gkabar_kad", 0.0)    // (mho/cm2)
     comp.mechStds[21][0] = mechStd
     
     mechStd = new MechanismStandard("kad", 3)    // STATE
@@ -41363,7 +41363,7 @@ proc addHomogenBiophysInfoToSpineHeadComp() { localobj comp, mechStd
     comp.mechStds[21][2] = mechStd
     
     mechStd = new MechanismStandard("kap", 1)    // PARAMETER
-    mechStd.set("gkabar_kap", 0.0)
+    mechStd.set("gkabar_kap", 0.0)    // (mho/cm2)
     comp.mechStds[22][0] = mechStd
     
     mechStd = new MechanismStandard("kap", 3)    // STATE
@@ -41372,7 +41372,7 @@ proc addHomogenBiophysInfoToSpineHeadComp() { localobj comp, mechStd
     comp.mechStds[22][2] = mechStd
     
     mechStd = new MechanismStandard("kdr", 1)    // PARAMETER
-    mechStd.set("gkdrbar_kdr", 0.01)
+    mechStd.set("gkdrbar_kdr", 0.01)    // (mho/cm2)
     comp.mechStds[23][0] = mechStd
     
     mechStd = new MechanismStandard("kdr", 2)    // ASSIGNED
@@ -41384,8 +41384,8 @@ proc addHomogenBiophysInfoToSpineHeadComp() { localobj comp, mechStd
     comp.mechStds[23][2] = mechStd
     
     mechStd = new MechanismStandard("na3", 1)    // PARAMETER
-    mechStd.set("sh_na3", 0.0)
-    mechStd.set("gbar_na3", 0.032)
+    mechStd.set("sh_na3", 0.0)    // (mV)
+    mechStd.set("gbar_na3", 0.032)    // (mho/cm2)
     comp.mechStds[26][0] = mechStd
     
     mechStd = new MechanismStandard("na3", 3)    // STATE
@@ -41403,15 +41403,15 @@ proc addHomogenBiophysInfoToExtracellularSourceComp() { localobj comp, mechStd
     comp.isMechInserted[14] = 1
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
-    mechStd.set("diam", 10.0)
+    mechStd.set("diam", 10.0)    // (um)
     comp.mechStds[0][0] = mechStd
     
     mechStd = new MechanismStandard("IKa", 1)    // PARAMETER
-    mechStd.set("gk_IKa", 0.0)
+    mechStd.set("gk_IKa", 0.0)    // (S/cm2)
     comp.mechStds[14][0] = mechStd
     
     mechStd = new MechanismStandard("IKa", 2)    // ASSIGNED
-    mechStd.set("ko_IKa", 2.5)
+    mechStd.set("ko_IKa", 2.5)    // (mM)
     comp.mechStds[14][1] = mechStd
 }
 
@@ -41558,9 +41558,9 @@ endtemplate Synapse
 
 objref smAllSyns
 smAllSyns = new List()
-    for idx2 = 0, 1483 {
-    NeuronNanoBranch[idx2].spine_head smAllSyns.append(new Synapse(new SectionRef(), 0.5))
-    }
+for idx = 0, 1483 {
+    NeuronNanoBranch[idx].spine_head smAllSyns.append(new Synapse(new SectionRef(), 0.5))
+}
 
 //////////////////// End of proto synapses ///////////////////////////////
 
@@ -42348,9 +42348,9 @@ proc addHomogenVarsInfoToSourcePPSynComp() { localobj comp, mechStd
     comp = $o1
     
     mechStd = new MechanismStandard("NetStim", 1)    // PARAMETER
-    mechStd.set("interval", 100.0)
+    mechStd.set("interval", 100.0)    // (ms)
     mechStd.set("number", 1000.0)
-    mechStd.set("start", 2.0)
+    mechStd.set("start", 2.0)    // (ms)
     mechStd.set("noise", 1.0)
     comp.mechStds[8][0] = mechStd
 }
@@ -42359,8 +42359,8 @@ proc addHomogenVarsInfoToNetConSynComp() { localobj comp, mechStd
     comp = $o1
     
     mechStd = new FakeMechanismStandardForNetCon()
-    mechStd.set("threshold", 0.0)
-    mechStd.set("delay", 0.0)
+    mechStd.set("threshold", 0.0)    // (mV)
+    mechStd.set("delay", 0.0)    // (ms)
     mechStd.set("weight", 0.0002)
     comp.mechStds[0][0] = mechStd
 }

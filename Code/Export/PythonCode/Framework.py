@@ -1,8 +1,9 @@
 
 import os, shutil
-from neuron import h, hoc, nrn
-from GeneratorsForMainHocFile.GeneratorsForMainHocFile import *
-from GeneratorsForAuxHocFiles.GeneratorsForAuxHocFiles import *
+from neuron import h, nrn
+from GeneratorsForMainHocFile.GeneratorsForMainHocFile import GeneratorsForMainHocFile
+from GeneratorsForAuxHocFiles.GenForParamsHoc import GenForParamsHoc
+from GeneratorsForAuxHocFiles.GensForRunnerHoc import GensForRunnerHoc
 from Utils.OtherUtils import *
 
 
@@ -23,36 +24,45 @@ class _GenInfo:
         
 def exportCore(outMainHocFilePathName):
     
-    hocObj = hoc.HocObject()
-    _exportMainHocFile(outMainHocFilePathName, hocObj)
+    isAstrocyteOrNeuron = hocObj.isAstrocyteOrNeuron
+    if isAstrocyteOrNeuron:
+        inSkeletonFileName = 'MainHocFileSkeletonForAstrocyte.txt'
+    else:
+        inSkeletonFileName = 'MainHocFileSkeletonForNeuron.txt'
+    gens = GeneratorsForMainHocFile()
+    _exportSkeletonBasedHocFile(inSkeletonFileName, gens, outMainHocFilePathName)
     
     outDirPath = os.path.dirname(outMainHocFilePathName)
-    outMainHocFileName = os.path.basename(outMainHocFilePathName)
+    
     exportOptions = hocObj.exportOptions
     
-    if exportOptions.isCreateParamsHoc or exportOptions.isCreateRunnerHoc:
-        _exportAuxHocFiles(outDirPath, outMainHocFileName, exportOptions)
+    if exportOptions.isCreateParamsHoc:
+        gen = GenForParamsHoc()
+        lines = gen.getParamsCode()
+        lines = _addNewLineChars(lines)
+        outHocFilePathName = outDirPath + '\\params.hoc'
+        with open(outHocFilePathName, 'w') as outFile:
+            outFile.writelines(lines)
+            
+    if exportOptions.isCreateRunnerHoc:
+        inSkeletonFileName = 'RunnerHocFileSkeleton.txt'
+        outMainHocFileName = os.path.basename(outMainHocFilePathName)
+        gens = GensForRunnerHoc(outMainHocFileName)
+        outHocFilePathName = outDirPath + '\\runner.hoc'
+        _exportSkeletonBasedHocFile(inSkeletonFileName, gens, outHocFilePathName)
         
     if exportOptions.isCopyDll:
         _copyMechsDllFile(outDirPath, hocObj.mechsDllUtils.loadedDllDirPath)
         
         
-def _exportMainHocFile(outMainHocFilePathName, hocObj):
+def _exportSkeletonBasedHocFile(inSkeletonFileName, gens, outHocFilePathName):
     
-    isAstrocyteOrNeuron = hocObj.isAstrocyteOrNeuron
-    
-    if isAstrocyteOrNeuron:
-        inSkeletonFileName = 'OutHocFileSkeletonForAstrocyte.txt'
-    else:
-        inSkeletonFileName = 'OutHocFileSkeletonForNeuron.txt'
     inSkeletonFileRelPathName = 'Code\\Export\\OutHocFileStructures\\Skeletons\\' + inSkeletonFileName
     
     with open(inSkeletonFileRelPathName, 'r') as inFile:
         lines = inFile.readlines()      # Preserving all newline characters here
         
     lineIdxToGenInfoDict = _findAllGenerators(lines)
-    
-    gens = GeneratorsForMainHocFile()
     
     # Iterating in reverse order to keep the line indexes intact
     lineIdxs = list(lineIdxToGenInfoDict.keys())
@@ -71,25 +81,7 @@ def _exportMainHocFile(outMainHocFilePathName, hocObj):
     
     _prependTableOfContents(lines)
     
-    with open(outMainHocFilePathName, 'w') as outFile:
-        outFile.writelines(lines)
-        
-def _exportAuxHocFiles(outDirPath, outMainHocFileName, exportOptions):
-    
-    gens = GeneratorsForAuxHocFiles()
-    
-    if exportOptions.isCreateParamsHoc:
-        lines = gens.getParamsCode()
-        _saveAuxHocFile(lines, outDirPath, 'params.hoc')
-        
-    if exportOptions.isCreateRunnerHoc:
-        lines = gens.getRunnerCode(outMainHocFileName)
-        _saveAuxHocFile(lines, outDirPath, 'runner.hoc')
-        
-def _saveAuxHocFile(lines, outDirPath, outFileName):
-    lines = _addNewLineChars(lines)
-    filePathName = outDirPath + '\\' + outFileName
-    with open(filePathName, 'w') as outFile:
+    with open(outHocFilePathName, 'w') as outFile:
         outFile.writelines(lines)
         
 def _copyMechsDllFile(outDirPath, loadedDllDirPath):

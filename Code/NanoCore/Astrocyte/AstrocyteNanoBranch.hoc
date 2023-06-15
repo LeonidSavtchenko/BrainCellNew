@@ -18,7 +18,7 @@ MinLenStalk = 0.1                               // um
 MaxLenStalk = 0.3                               // um
 
 
-// Keep this template in sync with its reduced counterpart at Export/OutHocFileStructures/Skeletons/OutHocFileSkeletonForAstrocyte.txt
+// Keep this template in sync with its reduced counterpart at Export/OutHocFileStructures/Skeletons/MainHocFileSkeletonForAstrocyte.txt
 
 begintemplate AstrocyteNanoBranch
     

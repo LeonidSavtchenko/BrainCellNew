@@ -4,7 +4,7 @@
 
 // Probability for "Random" synapse location:
 // 0: "All on Spine Head", 1: "All on Dendrite (just under Spine Neck)"
-makeSureDeclared("smSynLocP", "smSynLocP = 0.5")
+{ makeSureDeclared("smSynLocP", "smSynLocP = 0.5") }
 
 
 // A group of synapses (a counterpart of MechComp template)

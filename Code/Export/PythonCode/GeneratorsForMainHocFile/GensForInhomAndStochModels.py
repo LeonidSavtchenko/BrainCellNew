@@ -1,17 +1,15 @@
 
-from neuron import h, hoc
+from neuron import h
 from Utils.OtherUtils import *
 
 
 class GensForInhomAndStochModels:
     
-    _hocObj = hoc.HocObject()
-    
-    # Other data members that will be added in the ctor (they all depend on hoc:ExportOptions, so we defer the construction):
+    # Data members that will be added in the ctor (they all depend on hoc:ExportOptions, so we defer the construction):
     #   _exportOptions
     
     def __init__(self):
-        self._exportOptions = self._hocObj.exportOptions
+        self._exportOptions = hocObj.exportOptions
         
     def createInhomBiophysModels(self):
         if not self._exportOptions.isExportAnyInhomBiophysModels():

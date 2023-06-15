@@ -1,0 +1,6 @@
+
+// Bio: Dendrites \ hh_wbm \ PARAMETER \ gkbar_hh_wbm (mho/cm2)
+EXPOSED_VAR_1 = 0.009
+
+// Syn: NetCon \ PARAMETER \ @release_probability
+EXPOSED_VAR_2 = 0.5

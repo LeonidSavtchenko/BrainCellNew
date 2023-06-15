@@ -1,4 +1,20 @@
 
+import os
+from neuron import hoc
+
+
+hocObj = hoc.HocObject()
+
+indentSize = 4
+stdIndent = ' ' * indentSize
+
+
+def getAllLinesFromFile(relFilePathName):
+    absFilePathName = os.getcwd() + '\\' + relFilePathName
+    with open(absFilePathName, 'r') as inFile:
+        inText = inFile.read()
+    return inText.strip().splitlines()  # All newline characters are removed here
+    
 def prepareUniqueNameId(name):
     if name == '' or name[0] == ' ' or name[-1] == ' ' or '  ' in name:
         # Keep in sync with hoc:chooseUniqueNameForCompartmentForMechManager
@@ -20,6 +36,12 @@ def getSweptVarName(sweptVarIdx):
     
 def emptyParagraphHint():
     return '// (Empty paragraph)'
+    
+def getIndent(line):
+    for idx, char in enumerate(line):
+        if not char.isspace():
+            return ' ' * idx
+    codeContractViolation()
     
 def codeContractViolation():
     raise Exception('Bug in Exporter: Code contract violation')

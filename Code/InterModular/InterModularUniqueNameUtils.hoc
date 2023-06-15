@@ -1,30 +1,4 @@
 
-// Ask user to enter a string
-// $s1 - The hint
-// $s2 (in/out) - The default proposed string in input, and the entered string in output
-//                (all leading and trailing whitespaces are truncated)
-// Returns: 0/1 flag indicating Accept/Cancel respectively
-func _stringInputDialog() { local isAccepted
-    strdef hint, defaultStr, outStr
-    
-    hint = $s1
-    defaultStr = $s2
-    
-    outStr = defaultStr
-    
-    isAccepted = string_dialog(hint, outStr)
-    if (!isAccepted) {
-        return 1
-    }
-    
-    // Truncate all leading and trailing whitespaces in the string
-    stringTruncate(outStr, outStr)
-    
-    $s2 = outStr
-    
-    return 0
-}
-
 // Choose unique name for the new created compartment; if the first guess name is in use, then ask user to enter the name
 // $s1 - The compartment name ("soma" or "axon") being also the first guess for unique name
 // $s2 (out) - The chosen unique and valid name
@@ -157,7 +131,7 @@ func enterVarExpression() { local isCancel, isOK localobj exprsList
     var = $s1
     exprsList = $o2
     
-    hint = "Please enter a HOC expression to access a variable:"
+    hint = "Please enter a top-level var name, e.g. celsius, v_init, dt etc.:"
     isCancel = _stringInputDialog(hint, var)
     if (isCancel) {
         return 0
@@ -180,4 +154,31 @@ func enterVarExpression() { local isCancel, isOK localobj exprsList
     $s1 = var
     
     return 1
+}
+
+
+// Ask user to enter a string
+// $s1 - The hint
+// $s2 (in/out) - The default proposed string in input, and the entered string in output
+//                (all leading and trailing whitespaces are truncated)
+// Returns: 0/1 flag indicating Accept/Cancel respectively
+func _stringInputDialog() { local isAccepted
+    strdef hint, defaultStr, outStr
+    
+    hint = $s1
+    defaultStr = $s2
+    
+    outStr = defaultStr
+    
+    isAccepted = string_dialog(hint, outStr)
+    if (!isAccepted) {
+        return 1
+    }
+    
+    // Truncate all leading and trailing whitespaces in the string
+    stringTruncate(outStr, outStr)
+    
+    $s2 = outStr
+    
+    return 0
 }

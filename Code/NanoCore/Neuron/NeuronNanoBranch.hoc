@@ -44,7 +44,7 @@ variable_domain(&SpineHeadNSeg, 2, inf)
 proc Neuron_Biophysics_init() { codeContractViolation() }
 proc Neuron_Diffusion3D_init() { codeContractViolation() }
 
-// Keep this template in sync with its reduced counterpart at Export/OutHocFileStructures/Skeletons/OutHocFileSkeletonForNeuron.txt
+// Keep this template in sync with its reduced counterpart at Export/OutHocFileStructures/Skeletons/MainHocFileSkeletonForNeuron.txt
 
 begintemplate NeuronNanoBranch
     

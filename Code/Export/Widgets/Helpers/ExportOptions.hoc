@@ -3,6 +3,7 @@ begintemplate ExportOptions
 
     public isExportDistMechs, isExportDistMechAssignedAndState, isExportDistMechInhoms, isExportDistMechStochs, isExportSyns, isExportSynAssignedAndState, isExportSynInhoms, isExportSynStochs, isCreateParamsHoc, isExposeModelVars, isCreateRunnerHoc, isRecordAndSaveModelVars, isMakeSweepForModelVars, isCopyDll, isNewOrExistingDll
     public exposedVarsList, sweptVarsList, watchedVarsList
+    public numItersPerOneRecord, isRecordAndSaveWithAPCounts, isSaveToTxtOrBinFile
     public isExportAnyDistFuncs, isExportAnyStochFuncs, isExportAnyInhomBiophysModels, isExportSegmentationHelper, isExportAnyStochBiophysModels, isExportAnyInhomSynModels, isExportAnyStochSynModels, isExportInhomAndStochLibrary, isExportReducedRNGUtils, isExportSynEventsHelper
     public isExportedInhomVar, isExportedStochVar, isExportedInhomBiophysVar, isExportedStochBiophysVar, isExportedInhomSynVar, isExportedStochSynVar
     public isPythonRequired
@@ -30,6 +31,10 @@ begintemplate ExportOptions
     
     objref exposedVarsList, sweptVarsList, watchedVarsList
     
+    numItersPerOneRecord = -1
+    isRecordAndSaveWithAPCounts = -1
+    isSaveToTxtOrBinFile = -1
+    
     
     proc init() {
         // Default options
@@ -52,6 +57,10 @@ begintemplate ExportOptions
         exposedVarsList = new List()
         sweptVarsList = new List()
         watchedVarsList = new List()
+        
+        numItersPerOneRecord = 4
+        isRecordAndSaveWithAPCounts = 0
+        isSaveToTxtOrBinFile = 1
     }
     
     func isExportAnyDistFuncs() {
