@@ -1,0 +1,178 @@
+
+// !! BUG: Very slow implementation (just for demo)
+
+// !! numpy-based solution (fft-filter-ifft):
+// https://stackoverflow.com/questions/67085963/generate-colors-of-noise-in-python
+
+// !! check if std Python lib implements FIR and IIR filters or convolution using circular kernel with custom head index
+
+// !! it would be better to show PSD in logarithmic scale
+
+// !! maybe boundingHelper object must contain colourizationHelper object which in turn must contain stochFuncHelper object
+
+// !! maybe implement "DigitalFilter" class apart from "ColourizationHelper" to get rid of some code dupl.
+
+// See "Algorithms" paragraph here:
+// https://www.mathworks.com/help/dsp/ref/dsp.colorednoise-system-object.html#bt94_hd-1_sep_bt_0p1b
+begintemplate ColourizationHelper
+
+    public consumeSettings, resetHistoryAndSetMeasure, colourizeValue
+    public chromaticity, colour, alpha
+    
+    external codeContractViolation
+    
+    // UI
+    chromaticity = -1   // 0: "White noise", 1: "Coloured noise: PSD ~ 1 / f ^ alpha"
+    colour = -1         // 0: "Pink: alpha = 1 (aka flicker noise)", 1: "Brown: alpha = 2 (aka Brownian noise)", 2: "Blue: alpha = -1 (aka azure noise)", 3: "Purple: alpha = -2 (aka violet noise)", 4: "Custom: alpha in [-2, 2]"
+    alpha = -1
+    
+    n = -1
+    modulus = -1
+    objref a, b
+    objref yHistory, xHistory
+    yHistoryHeadIdx = -1
+    xHistoryHeadIdx = -1
+    measure = -1
+    
+    
+    proc init() {
+        // Defaults
+        chromaticity = 0
+        colour = 0
+        alpha = 1.6
+        
+        variable_domain(&alpha, -2, 2)
+    }
+    
+    proc consumeSettings() { local idx, halfAlpha, aPrev
+        if (chromaticity == 0) {
+            alpha = 0
+            return
+        }
+        
+        if (chromaticity != 1) {
+            codeContractViolation()
+        }
+        
+        if (colour == 0) {
+            // Pink aka flicker noise
+            alpha = 1
+        } else if (colour == 1) {
+            // Brown aka Brownian noise
+            alpha = 2
+        } else if (colour == 2) {
+            // Blue aka azure noise
+            alpha = -1
+        } else if (colour == 3) {
+            // Purple aka violet noise
+            alpha = -2
+        } else if (colour == 4) {
+            // Custom
+            if (alpha < -2 || alpha > 2) {
+                codeContractViolation()
+            }
+        } else {
+            codeContractViolation()
+        }
+        
+        if (alpha == 0) {
+            return
+        }
+        
+        halfAlpha = alpha / 2
+        if (alpha > 0) {    // !! Matlab uses optimized filters for alpha = 1 (pink) and alpha = 2 (brown)
+            n = 64 - 1      // !! why 64?
+            a = new Vector(n)   // a0 equals 1 and not stored here; the Vector starts with a1
+            for idx = 0, n - 1 {
+                if (idx == 0) {
+                    aPrev = 1
+                } else {
+                    aPrev = a.x(idx - 1)
+                }
+                a.x(idx) = (idx - halfAlpha) * aPrev / (idx + 1)
+            }
+        } /* !! else if (alpha == -2) {   // Purple
+            n = 2
+            b = new Vector(n)
+            b.x(0) = 1
+            b.x(1) = -1
+        } */ else {
+            n = 256         // !! why?
+            b = new Vector(n)
+            b.x(0) = 1
+            for idx = 1, n - 1 {
+                b.x(idx) = (idx - 1 + halfAlpha) * b.x(idx - 1) / idx
+            }
+        }
+        
+        if (alpha > 0) {
+            yHistory = new Vector(n)
+            yHistoryHeadIdx = 0
+        } else {
+            xHistory = new Vector(n)
+            xHistoryHeadIdx = 0
+        }
+        
+        modulus = n - 1     // Just not to calculate on each iteration
+    }
+    
+    proc resetHistoryAndSetMeasure() {
+        if (alpha == 0) {
+            return
+        }
+        
+        measure = $1
+        
+        if (alpha > 0) {
+            yHistory.fill(0)
+            yHistoryHeadIdx = 0
+        } else {
+            xHistory.fill(0)
+            xHistoryHeadIdx = 0
+        }
+    }
+    
+    func colourizeValue() { local x
+        x = $1
+        
+        if (alpha == 0) {
+            return x
+        }
+        
+        x /= measure
+        
+        if (alpha > 0) {
+            // !! can I use Vector.convlv() or some std Python lib staff?
+            y = x - convolution(yHistory, yHistoryHeadIdx, a)
+            
+            yHistoryHeadIdx = (yHistoryHeadIdx - 1) % modulus
+            yHistory.x(yHistoryHeadIdx) = y
+        } else {
+            xHistoryHeadIdx = (xHistoryHeadIdx - 1) % modulus
+            xHistory.x(xHistoryHeadIdx) = x
+            
+            // !! can I use Vector.convlv() or some std Python lib staff?
+            y = convolution(xHistory, xHistoryHeadIdx, b)
+        }
+        
+        return y * measure
+    }
+    
+    // All next staff is private
+    
+    
+    func convolution() { local historyHeadIdx, y, idx, idx0 localobj historyVec, kernelVec
+        historyVec = $o1
+        historyHeadIdx = $2
+        kernelVec = $o3
+        y = 0
+        // !! this is the bottleneck
+        //    look for some fast implementation of "dot with shift arg" or "mat-vec product with shift arg" (to process many segments simultaneously)
+        for idx = 0, modulus {
+            idx0 = (historyHeadIdx + idx) % modulus
+            y += historyVec.x(idx0) * kernelVec.x(idx)
+        }
+        return y
+    }
+    
+endtemplate ColourizationHelper

@@ -1,0 +1,79 @@
+
+// User choices made with "Roadmap" widget
+isBaseOrNanoStart = -1      // 1 - base, 0 - nano
+isAstrocyteOrNeuron = -1    // 1 - astrocyte, 0 - neuron
+
+currentMechanismSetup = 0       // 0 - Electric mechanisms, 1 - Glutamate mechanisms
+DensityGluTransporters = 1e12   // 1/um2
+
+objref soma_ref
+objref roadmapWidget
+
+{ load_file("Code/InterModular/AllInterModularUtils.hoc") }
+
+objref mechsDllUtils
+mechsDllUtils = new MechsDllUtils(getcwd())
+
+proc prologueCompleteHandler() {
+    load_file("Code/Core/MainProgram.hoc")
+    runMain()
+}
+
+{ load_file("Code/RoadmapWidget.hoc") }
+
+proc showRoadmapWidget() {
+    roadmapWidget = new RoadmapWidget()
+    roadmapWidget.show()
+}
+
+proc roadmapChosenHandler() { local isLoaded localobj plotShape
+
+    if (!isBaseOrNanoStart) {
+        isLoaded = loadNanoHocFile()
+        if (!isLoaded) {
+            showRoadmapWidget()
+            return
+        }
+    }
+    
+    load_file("Code/Core/Utils.hoc")
+    
+    if (isBaseOrNanoStart) {
+        load_file("Code/Import/Import.hoc")
+        if (isAstrocyteOrNeuron) {
+            load_file("Code/Prologue/Astrocyte/initAstrocyte.hoc")      // This will call prologueCompleteHandler() in the end
+        } else {
+            load_file("Code/Prologue/Neuron/initNeuron.hoc")
+            initNeuron()    // This will call prologueCompleteHandler() in the end
+            // (Don't encapsulate initNeuron() into "initNeuron.hoc" because the file browser will use different default folder)
+        }
+    } else {
+        if (!isAstrocyteOrNeuron && !name_declared("smAllSyns")) {
+            print "\n\n    Warning: The synapses weren't exported to this nanogeometry HOC file, so we'll create default ones.\n"
+            load_file("Code/Prologue/Neuron/AddSynapses.hoc")
+        }
+        initVoltageAndRunControlParams()
+        prologueCompleteHandler()
+    }
+}
+
+// Don't rename this proc to "init" because NEURON will call it once user clicks "Init & Run"
+proc theEntryPoint() {
+
+    // !! code dupl. with Import.hoc
+    if (unix_mac_pc() != 3) {
+        printMsgAndRaiseError("The importer works only on Windows")
+    }
+    if (!nrnpython("")) {
+        printMsgAndRaiseError("Python is not available")
+    }
+    
+    load_file("Code/Export/ExportCoreLoads.hoc")
+    
+    // Calling here just to show up all the Python warnings early
+    sourcePythonCodeForExport()
+    
+    showRoadmapWidget()
+}
+
+theEntryPoint()

@@ -1,0 +1,64 @@
+
+begintemplate DefineGridForInputVarWidget
+
+    public show, dismissHandler
+    
+    external unmapIfNotNil
+    
+    objref mainBox
+    objref parentWidget
+    
+    objref gridInfo
+    oldVarIdx = -1
+    
+    
+    proc init() {
+        parentWidget = $o1
+    }
+    
+    proc show() { localobj nil
+        gridInfo = $o1
+        oldVarIdx = $2
+        
+        if (gridInfo == nil) {
+            gridInfo = new SweptInputVarGridInfo()
+        }
+        
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            xlabel("Grid type:")
+            xradiobutton("Linear:          next = prev + delta", "gridInfo.isLinOrExpGrid = 1", gridInfo.isLinOrExpGrid == 1)
+            xradiobutton("Exponential: next = prev * delta", "gridInfo.isLinOrExpGrid = 0", gridInfo.isLinOrExpGrid == 0)
+            xlabel("")
+            xpvalue("First value", &gridInfo.firstValue, 1)
+            xpvalue("Last value", &gridInfo.lastValue, 1)
+            xpvalue("Number of points", &gridInfo.numPts, 1)
+            xlabel("")
+            xbutton("OK", "okHandler()")
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Variable grid", 470, 360, -1, -1)
+    }
+    
+    proc dismissHandler() {
+        unmapIfNotNil(mainBox)
+    }
+    
+    // All next staff is private
+    
+    
+    proc okHandler() { local isValid
+        isValid = gridInfo.validateAndCacheDelta()
+        if (!isValid) {
+            return
+        }
+        
+        dismissHandler()
+        parentWidget.onDefineVarGridOkHandler(gridInfo, oldVarIdx)
+    }
+    
+endtemplate DefineGridForInputVarWidget

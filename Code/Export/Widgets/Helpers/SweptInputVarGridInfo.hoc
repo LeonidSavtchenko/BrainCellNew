@@ -1,0 +1,59 @@
+
+begintemplate SweptInputVarGridInfo
+
+    public isLinOrExpGrid, firstValue, lastValue, numPts
+    public validateAndCacheDelta, getValue
+    
+    external math, mwh
+    
+    isLinOrExpGrid = -1
+    
+    firstValue = -1
+    lastValue = -1
+    numPts = -1
+    
+    delta = -1
+    
+    
+    proc init() { local inf
+        isLinOrExpGrid = 1
+        
+        firstValue = 1.2
+        lastValue = 3.4
+        numPts = 5
+        
+        inf = math.inf
+        variable_domain(&numPts, 2, inf)
+    }
+    
+    func validateAndCacheDelta() { local numInts
+        // The case when lastValue == firstValue is considered valid because
+        // user may just want to run the same simulation a few times
+        if (!isLinOrExpGrid && firstValue * lastValue <= 0 && lastValue != firstValue) {
+            mwh.showWarningBox("Invalid exponential grid: firstValue * lastValue <= 0")
+            return 0
+        }
+        
+        numInts = numPts - 1
+        if (isLinOrExpGrid) {
+            delta = (lastValue - firstValue) / numInts
+        } else {
+            delta = (lastValue / firstValue) ^ (1 / numInts)
+        }
+        
+        return 1
+    }
+    
+    func getValue() { local ptIdx
+        ptIdx = $1
+        if (ptIdx == numPts - 1) {
+            return lastValue    // Just avoiding the round-off error
+        }
+        if (isLinOrExpGrid) {
+            return firstValue + delta * ptIdx
+        } else {
+            return firstValue * delta ^ ptIdx
+        }
+    }
+    
+endtemplate SweptInputVarGridInfo

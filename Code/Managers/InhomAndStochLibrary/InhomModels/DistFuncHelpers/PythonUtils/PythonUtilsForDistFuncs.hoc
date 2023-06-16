@@ -1,0 +1,14 @@
+
+func loadPythonFile() {
+    strdef filePathName, pyCommand
+    
+    filePathName = $s1
+    
+    sprint(pyCommand, "exec(open('%s').read())", filePathName)  // Works fine if user re-loads the same file/function
+    status = nrnpython(pyCommand)
+    if (!status) {
+        printMsgAndRaiseError("Exception raised in Python code (caught in loadPythonFile)")
+    }
+    
+    return status
+}

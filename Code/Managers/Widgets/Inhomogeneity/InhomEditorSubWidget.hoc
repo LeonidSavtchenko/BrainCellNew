@@ -1,0 +1,962 @@
+
+begintemplate InhomEditorSubWidget
+
+    public show, updateCurves, dismissHandler
+    
+    external varsEditorSubWidget, synManagerMainWidget
+    external mwh, math, mth, mmmowb, mcu, dfc, compUtils, inhomAndStochLibrary, synGroup, seh
+    external getDistMechVarRangeOutside, getDistMechVarRangeInside, createEmptyPanel, createElasticSpacer, oneZeroToYesNo, codeContractViolation
+    external eachPointInGrid
+    
+    objref mainBox, deck1OrNil, deck2, deck3, deck4, deck5, deck6, graph1, graph2, shape1, shape2, this
+    strdef isInhomVarLabel
+    
+    objref distFuncHelpers[1]
+    
+    objref segmentationHelper
+    
+    distFuncCatIdx = -1
+    distFuncIdx = -1
+    double distFuncIdxs[5]
+    
+    strdef totalNsegVarName
+    strdef minNsegVarName
+    showCurveOrColormapIdx = -1
+    showAllOrThisCompIdx = -1
+    
+    enumDmPpNc = -1
+    isMechOrSynEditor = -1
+    compIdx = -1
+    objref comp
+    mechIdx = -1
+    strdef mechName
+    varType = -1
+    varTypeIdx = -1
+    strdef varTypeName
+    varIdx = -1
+    strdef varName
+    arraySize = -1
+    arrayIndex = -1
+    strdef varNameWithIndex
+    
+    isCalledFromVarsEditor = -1
+    
+    xMin = -1
+    xMax = -1
+    yMinOut = -1
+    yMaxOut = -1
+    yMinModel = -1
+    
+    isCancel = -1
+    
+    
+    proc init() { local idx, isInhom1, isInhom2 localobj nil, distFuncHelper, innerDistFuncHelper
+    
+        enumDmPpNc = $1
+        compIdx = $2
+        xMin = $3
+        xMax = $4
+        mechIdx = $5
+        varType = $6
+        varIdx = $7
+        arrayIndex = $8
+        
+        isMechOrSynEditor = (enumDmPpNc == 0)
+        
+        comp = compUtils.getComp(isMechOrSynEditor, compIdx)
+        mth.getMechName(enumDmPpNc, mechIdx, mechName)
+        varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
+        arraySize = mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName)
+        mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
+        
+        if (isMechOrSynEditor) {
+            isCalledFromVarsEditor = (mmmowb.lastMechOpIdx == 1)
+            
+            // !! can be made local for proc "show"
+            totalNsegVarName = "total_nseg"
+            minNsegVarName = "min_nseg"
+            
+            getDistMechVarRangeOutside(comp.list_ref, mechName, varType, varName, arrayIndex, &yMinOut, &yMaxOut)
+        } else {
+            isCalledFromVarsEditor = 1
+        }
+        
+        // Keep in sync with py:GeneratorsForMainHocFile.insertAllUsedDistFuncs
+        
+        objref distFuncHelpers[dfc.numDistFuncs]
+        
+        // Simple model
+        distFuncHelpers[0] = new SimpleModelDistFuncHelper(0)
+        distFuncHelpers[1] = new SimpleModelDistFuncHelper(1)
+        distFuncHelpers[2] = new SimpleModelDistFuncHelper(2)
+        distFuncHelpers[3] = new SimpleModelDistFuncHelper(3)
+        distFuncHelpers[4] = new SimpleModelDistFuncHelper(4)
+        
+        // Custom expression (one-liner)
+        distFuncHelpers[5] = new CustomCodeDistFuncHelper(0)
+        distFuncHelpers[6] = new CustomCodeDistFuncHelper(1)
+        
+        // Custom function -> Use already defined/loaded HOC/Python function
+        distFuncHelpers[9] = new CustomCodeDistFuncHelper(2)
+        distFuncHelpers[10] = new CustomCodeDistFuncHelper(3)
+        
+        // Custom function -> Load HOC/Python function from file
+        distFuncHelpers[7] = new CodeFromFileDistFuncHelper(distFuncHelpers[9])
+        distFuncHelpers[8] = new CodeFromFileDistFuncHelper(distFuncHelpers[10])
+        
+        // Table + linear interpolation
+        distFuncHelpers[11] = new TablePlusLinInterpDistFuncHelper(0)
+        distFuncHelpers[12] = new TablePlusLinInterpDistFuncHelper(1, distFuncHelpers[11])
+        distFuncHelpers[13] = new TablePlusLinInterpDistFuncHelper(2, distFuncHelpers[11])
+        
+        // Special
+        distFuncHelpers[14] = new ZebraDistFuncHelper(0)
+        distFuncHelpers[15] = new ZebraDistFuncHelper(1)
+        distFuncHelpers[16] = nil   // A placeholder to be replaced with an instance of VerbatimDistFuncHelper downstream
+        
+        for idx = 0, dfc.numDistFuncs - 1 {
+            distFuncHelper = distFuncHelpers[idx]
+            if (distFuncHelper != nil) {
+                distFuncHelper.parentWidget = this
+            }
+        }
+        
+        // The difference between these two values takes place for morphology\diam
+        // because it's inhomogen by fact even though its model is not stored in inhomAndStochLibrary
+        isInhom1 = inhomAndStochLibrary.isInhomEnabledFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
+        isInhom2 = comp.isMechVarInhom(mechIdx, varType, varName, arrayIndex)
+        
+        if (!isInhom1) {
+            if (isMechOrSynEditor) {
+                createDefaultSegmentationHelper()
+            }
+            
+            distFuncCatIdx = 0
+            distFuncIdx = 1
+        } else {
+            // Restoring the old UI state: segmentationHelper, distFuncHelper, distFuncCatIdx, distFuncIdx
+            inhomAndStochLibrary.getInhomModelDataFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, segmentationHelper, distFuncHelper, &distFuncCatIdx, &distFuncIdx)
+            if (isMechOrSynEditor) {
+                if (segmentationHelper == nil) {
+                    if (distFuncIdx != dfc.verbatimDistFuncIdx) {
+                        codeContractViolation()
+                    }
+                    createDefaultSegmentationHelper()
+                } else {
+                    segmentationHelper.setDistRange(xMax - xMin)
+                }
+            }
+            distFuncHelper.parentWidget = this
+            if (dfc.doesDistFuncUseStringOrFileDialog(distFuncCatIdx, distFuncIdx)) {
+                // Preventing showing up the string or file dialog
+                distFuncHelper.isSkipOneSelect = 1
+            }
+            distFuncHelpers[distFuncIdx] = distFuncHelper
+            if (distFuncIdx == dfc.tableFromTextFileDistFuncIdx || distFuncIdx == dfc.tableFromExcelFileDistFuncIdx) {
+                innerDistFuncHelper = distFuncHelper.model0HelperOrNil
+                distFuncHelpers[dfc.tableFromTextEditorDistFuncIdx] = innerDistFuncHelper
+                distFuncHelpers[dfc.tableFromTextFileDistFuncIdx].model0HelperOrNil = innerDistFuncHelper
+                distFuncHelpers[dfc.tableFromExcelFileDistFuncIdx].model0HelperOrNil = innerDistFuncHelper
+            }
+        }
+        
+        showCurveOrColormapIdx = isInhom2
+        
+        // Default selections
+        distFuncIdxs[0] = 1
+        distFuncIdxs[dfc.custExprDistFuncCatIdx] = 5
+        distFuncIdxs[dfc.custFuncDistFuncCatIdx] = 7
+        distFuncIdxs[dfc.tablePlusLinInterpDistFuncCatIdx] = dfc.tableFromTextEditorDistFuncIdx
+        distFuncIdxs[dfc.specialDistFuncCatIdx] = dfc.zebra1DistFuncIdx
+        
+        // Overwrite one value for the case when user opens an old model
+        distFuncIdxs[distFuncCatIdx] = distFuncIdx
+        
+        showAllOrThisCompIdx = 0
+    }
+    
+    proc show() { local isInhom, isStoch, idx localobj secList, hBox1, hBox2, hBox3, hBox4, hBox5, vBox1, vBox2, vBox3, vBox4, vBox5, nil
+        strdef compName, varNameWithIndexAndUnits, text, yesNo, what, when
+        
+        compName = comp.name
+        mth.getVarTypeName(varType, varTypeName)
+        mth.getVarNameWithIndexAndUnits(enumDmPpNc, mechIdx, varName, arraySize, arrayIndex, varNameWithIndexAndUnits)
+        isInhom = comp.isMechVarInhom(mechIdx, varType, varName, arrayIndex)
+        isStoch = inhomAndStochLibrary.isStochEnabledFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
+        secList = comp.getSecList()
+        
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            mcu.createApplyReminder(isMechOrSynEditor, 0)
+            xpanel()
+            hBox1 = new HBox()
+            hBox1.intercept(1)
+            {
+                xpanel("")
+                mcu.createEditorSubWidgetDigest(enumDmPpNc, compName, mechName, varTypeName, varNameWithIndexAndUnits)
+                updateIsInhomVarLabel(isInhom)
+                xvarlabel(isInhomVarLabel)
+                oneZeroToYesNo(isStoch, yesNo)
+                sprint(text, "Stochastic: %s", yesNo)
+                xlabel(text)
+                xlabel("")
+                if (isMechOrSynEditor) {
+                    what = compName
+                } else {
+                    what = "synapses"
+                }
+                sprint(text, "Distance range for %s:", what)
+                xlabel(text)
+                sprint(text, "%g ... %g (%s)", xMin, xMax, units("L"))
+                xlabel(text)
+                if (isMechOrSynEditor) {
+                    xlabel("")
+                }
+                xpanel()
+                vBox1 = new VBox()
+                vBox1.intercept(1)
+                {
+                    if (segmentationHelper != nil) {
+                        deck1OrNil = new Deck()
+                        deck1OrNil.intercept(1)
+                        {
+                            createEmptyPanel()
+                            vBox2 = new VBox()
+                            vBox2.intercept(1)
+                            {
+                                xpanel("")
+                                xlabel("Segmentation:")
+                                xpanel()
+                                hBox2 = new HBox()
+                                hBox2.intercept(1)
+                                {
+                                    vBox3 = new VBox()
+                                    vBox3.intercept(1)
+                                    {
+                                        xpanel("")
+                                        xradiobutton("Keep as is", "segmentationModeChangedHandler(0)", segmentationHelper.segmentationMode == 0)
+                                        xradiobutton("Uniform segmentation", "segmentationModeChangedHandler(1)", segmentationHelper.segmentationMode == 1)
+                                        xradiobutton("Derivative-based segmentation", "segmentationModeChangedHandler(2)", segmentationHelper.segmentationMode == 2)
+                                        xpanel()
+                                        deck2 = new Deck()
+                                        deck2.intercept(1)
+                                        {
+                                            createEmptyPanel()
+                                            xpanel("")
+                                            xpvalue(totalNsegVarName, &segmentationHelper.total_nseg, 1, "segmentationHelper.recalculateFactors()")
+                                            xpvalue(minNsegVarName, &segmentationHelper.min_nseg, 1)
+                                            xpanel()
+                                        }
+                                        deck2.intercept(0)
+                                        // deck2.flip_to(*)     // Will be done in segmentationModeChangedHandler below
+                                        deck2.map()
+                                    }
+                                    vBox3.intercept(0)
+                                    vBox3.map()
+                                    deck3 = new Deck()
+                                    deck3.intercept(1)
+                                    {
+                                        xpanel("")
+                                        xlabel("All sections will have \"nseg\" unchanged.")
+                                        xpanel()
+                                        xpanel("")
+                                        sprint(text, "We will subdivide each section in %s so that:", compName)
+                                        xlabel(text)
+                                        xlabel("1. The total number of segments between the most proximal and the most distal")
+                                        sprint(text, "    points of the compartment will be approx. equal \"%s\".", totalNsegVarName)
+                                        xlabel(text)
+                                        sprint(text, "2. All segments of all sections in %s will have approx. the same length,", compName)
+                                        xlabel(text)
+                                        sprint(text, "    but each section will have \"nseg\" capped from below at \"%s\".", minNsegVarName)
+                                        xlabel(text)
+                                        xlabel("(Different sections will have different \"nseg\" depending on their \"L\".)")
+                                        xpanel()
+                                        xpanel("")
+                                        sprint(text, "We will subdivide each section in %s so that:", compName)
+                                        xlabel(text)
+                                        xlabel("1. The total number of segments between the most proximal and the most distal")
+                                        sprint(text, "    points of the compartment will be approx. equal \"%s\".", totalNsegVarName)
+                                        xlabel(text)
+                                        sprint(text, "2. For each section in %s, \"nseg\" will be chosen proportional to", compName)
+                                        xlabel(text)
+                                        xlabel("    mean(abs(derivative_of_the_chosen_distance_function_in_this_section)),")
+                                        sprint(text, "    but each section will have \"nseg\" capped from below at \"%s\".", minNsegVarName)
+                                        xlabel(text)
+                                        xlabel("(Different sections will have different \"nseg\" depending on their \"L\" and the derivative.)")
+                                        xpanel()
+                                    }
+                                    deck3.intercept(0)
+                                    // deck3.flip_to(segmentationHelper.segmentationMode)     // Will be done in segmentationModeChangedHandler below
+                                    deck3.map()
+                                }
+                                vBox2.intercept(0)
+                                vBox2.map()
+                            }
+                            deck1OrNil.intercept(0)
+                            // deck1OrNil.flip_to(*)    // Will be done in distFuncCatChangedHandler -> distFuncChangedHandler below
+                            deck1OrNil.map()
+                        }
+                        hBox2.intercept(0)
+                        hBox2.map()
+                    } else {
+                        createElasticSpacer()
+                    }
+                }
+                vBox1.intercept(0)
+                vBox1.map()
+            }
+            hBox1.intercept(0)
+            hBox1.map()
+            xpanel("")
+            xlabel("Distance function:")
+            xpanel()
+            vBox4 = new VBox()
+            vBox4.intercept(1)
+            {
+                hBox3 = new HBox()
+                hBox3.intercept(1)
+                {
+                    vBox5 = new VBox()
+                    vBox5.intercept(1)
+                    {
+                        xpanel("")
+                        xradiobutton("Simple model", "distFuncCatChangedHandler(0)", distFuncCatIdx == 0)
+                        xradiobutton("Custom expression (one-liner)", "distFuncCatChangedHandler(1)", distFuncCatIdx == dfc.custExprDistFuncCatIdx)
+                        xradiobutton("Custom function", "distFuncCatChangedHandler(2)", distFuncCatIdx == dfc.custFuncDistFuncCatIdx)
+                        xradiobutton("Table + linear interpolation", "distFuncCatChangedHandler(3)", distFuncCatIdx == dfc.tablePlusLinInterpDistFuncCatIdx)
+                        xradiobutton("Special", "distFuncCatChangedHandler(4)", distFuncCatIdx == dfc.specialDistFuncCatIdx)
+                        xpanel()
+                        deck4 = new Deck()
+                        deck4.intercept(1)
+                        {
+                            xpanel("")
+                            idx = distFuncIdxs[0]
+                            xradiobutton("Constant: a0", "distFuncChangedHandler(0)", idx == 0)
+                            xradiobutton("Linear: a0 + a1 * x", "distFuncChangedHandler(1)", idx == 1)
+                            xradiobutton("Quadratic: a0 + a1 * x + a2 * x^2", "distFuncChangedHandler(2)", idx == 2)
+                            xradiobutton("Poly-rational: (a0 + a1 * x + a2 * x^2) / (b0 + b1 * x + b2 * x^2)", "distFuncChangedHandler(3)", idx == 3)
+                            xradiobutton("Exponential: a + b * exp(c * x)", "distFuncChangedHandler(4)", idx == 4)
+                            xpanel()
+                            xpanel("")
+                            idx = distFuncIdxs[dfc.custExprDistFuncCatIdx]
+                            xradiobutton("Enter HOC expression (one-liner)", "distFuncChangedHandler(5)", idx == 5)
+                            xradiobutton("Enter Python expression (one-liner)", "distFuncChangedHandler(6)", idx == dfc.oneLinerPythonDistFuncIdx)
+                            xpanel()
+                            xpanel("")
+                            idx = distFuncIdxs[dfc.custFuncDistFuncCatIdx]
+                            xradiobutton("Load HOC function from file", "distFuncChangedHandler(7)", idx == 7)
+                            xradiobutton("Load Python function from file", "distFuncChangedHandler(8)", idx == dfc.loadFromFilePythonDistFuncIdx)
+                            xradiobutton("Use already defined/loaded HOC function", "distFuncChangedHandler(9)", idx == 9)
+                            xradiobutton("Use already defined/loaded Python function", "distFuncChangedHandler(10)", idx == dfc.alreadyDefinedPythonDistFuncIdx)
+                            xpanel()
+                            xpanel("")
+                            idx = distFuncIdxs[dfc.tablePlusLinInterpDistFuncCatIdx]
+                            xradiobutton("Enter table + linear interpolation", "distFuncChangedHandler(11)", idx == dfc.tableFromTextEditorDistFuncIdx)
+                            xradiobutton("Load table from Text file + linear interpolation", "distFuncChangedHandler(12)", idx == dfc.tableFromTextFileDistFuncIdx)
+                            xradiobutton("Load table from Excel file + linear interpolation", "distFuncChangedHandler(13)", idx == dfc.tableFromExcelFileDistFuncIdx)
+                            xpanel()
+                            xpanel("")
+                            if (isMechOrSynEditor) {
+                                what = "segments (check subdivision on colormap for small \"nseg\")"
+                            } else {
+                                if (enumDmPpNc == 1) {
+                                    what = "PPs"
+                                } else if (enumDmPpNc == 2) {
+                                    what = "NetCon-s"
+                                } else {
+                                    codeContractViolation()
+                                }
+                                sprint(what, "%s (check synapse locations on colormap)", what)
+                            }
+                            sprint(text, "Zebra by %s", what)
+                            idx = distFuncIdxs[dfc.specialDistFuncCatIdx]
+                            xradiobutton(text, "distFuncChangedHandler(14)", idx == dfc.zebra1DistFuncIdx)
+                            xradiobutton("Zebra by sections (click \"Apply\" a few times)", "distFuncChangedHandler(15)", idx == dfc.zebra2DistFuncIdx)
+                            if (distFuncHelpers[dfc.verbatimDistFuncIdx] != nil) {
+                                xradiobutton("Verbatim data (cannot be edited, but can be re-applied)", "distFuncChangedHandler(16)", idx == dfc.verbatimDistFuncIdx)
+                            }
+                            xpanel()
+                        }
+                        deck4.intercept(0)
+                        // deck4.flip_to(distFuncCatIdx)    // Will be done in distFuncCatChangedHandler below
+                        deck4.map()
+                        xpanel("")
+                        xbutton("Select", "selectDistFuncHandler()")
+                        xpanel()
+                        hBox4 = new HBox()
+                        hBox4.intercept(1)
+                        {
+                            xpanel("")
+                            xradiobutton("Show model curve", "showCurveOrColormapChangedHandler(0)", showCurveOrColormapIdx == 0)
+                            xradiobutton("Show stats curve (requires \"Apply\")", "showCurveOrColormapChangedHandler(1)", showCurveOrColormapIdx == 1)
+                            xradiobutton("Show colormap (requires \"Apply\")", "showCurveOrColormapChangedHandler(2)", showCurveOrColormapIdx == 2)
+                            xpanel()
+                            deck5 = new Deck()
+                            deck5.intercept(1)
+                            {
+                                createEmptyPanel()
+                                xpanel("")
+                                xradiobutton("Show all compartments", "showAllOrThisCompColormapChangedHandler(0)", showAllOrThisCompIdx == 0)
+                                if (isMechOrSynEditor) {
+                                    what = compName
+                                } else {
+                                    what = "syn locations"
+                                }
+                                sprint(text, "Show %s only", what)
+                                xradiobutton(text, "showAllOrThisCompColormapChangedHandler(1)", showAllOrThisCompIdx == 1)
+                                xpanel()
+                            }
+                            deck5.intercept(0)
+                            // deck5.flip_to(showCurveOrColormapIdx)    // Will be done in showCurveOrColormapChangedHandler below
+                            deck5.map()
+                        }
+                        hBox4.intercept(0)
+                        hBox4.map()
+                    }
+                    vBox5.intercept(0)
+                    vBox5.map()
+                    deck6 = new Deck()
+                    deck6.intercept(1)
+                    {
+                        // Model curve
+                        graph1 = new Graph()
+                        graph1.brush(0)         // Without this, graph1 will be dashed if the widget is unmapped and shown again
+                        
+                        // Stats curve
+                        graph2 = new Graph()
+                        graph2.brush(1, 1, 0)   // Installing a dash brush; looks like the "pattern" arg doesn't work as described in NEURON docs
+                        graph2.brush(0)         // Switching to solid line by default
+                        
+                        // Colormap (all compartments)
+                        if (isMechOrSynEditor) {
+                            shape1 = new PlotShape()
+                        } else {
+                            shape1 = new Shape()
+                        }
+                        
+                        // Colormap (this compartment only)
+                        if (isMechOrSynEditor) {
+                            shape2 = new PlotShape(secList)
+                        } else {
+                            shape2 = new Shape(secList)
+                        }
+                        
+                        xpanel("")
+                        xlabel("Curves are not available for Zebra.")   // Shown for Zebra instead of graph1 and graph2
+                        xlabel("Please switch to the colormap.")        //
+                        xpanel()
+                    }
+                    deck6.intercept(0)
+                    // deck6.flip_to(showAllOrThisCompIdx)  // Will be done in showCurveOrColormapChangedHandler below
+                    deck6.map()
+                }
+                hBox3.intercept(0)
+                hBox3.map()
+            }
+            vBox4.intercept(0)
+            vBox4.map()
+            hBox5 = new HBox()
+            hBox5.intercept(1)
+            {
+                xpanel("")
+                xbutton("Apply", "applyHandler()")
+                xpanel()
+                xpanel("")
+                if (!isStoch && varType == 1) { // PARAMETER
+                    when = "CLICK"
+                } else {                        // PARAMETER, ASSIGNED, STATE
+                    when = "ITERATION"
+                }
+                sprint(text, "Applied on each: %s", when)
+                xlabel(text)
+                xpanel()
+            }
+            hBox5.intercept(0)
+            hBox5.map()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Inhomogeneity editor", 460, 150, -1, -1)
+        
+        // This works fine only after mapping of the mainBox
+        deck6.flip_to(2)
+        initShape(shape1)
+        deck6.flip_to(3)
+        initShape(shape2)
+        
+        updateColormaps()
+        
+        if (segmentationHelper != nil) {
+            segmentationModeChangedHandler(segmentationHelper.segmentationMode)
+        }
+        distFuncCatChangedHandler(distFuncCatIdx, 1)
+        showCurveOrColormapChangedHandler(showCurveOrColormapIdx)
+        if (showCurveOrColormapIdx == 2) {
+            showAllOrThisCompColormapChangedHandler(showAllOrThisCompIdx)
+        }
+    }
+    
+    proc updateCurves() {
+        if (dfc.isZebraDistFunc(distFuncIdx)) {
+            codeContractViolation()
+        }
+        updateModelCurve()
+        updateStatsCurve()
+    }
+    
+    proc dismissHandler() {
+        dismissChild()
+        if (mainBox.ismapped()) {
+            mainBox.unmap()
+        }
+    }
+    
+    // All next staff is private
+    
+    
+    proc createDefaultSegmentationHelper() {
+        // Have to "execute" this because the template is not loaded when !isMechOrSynEditor, so we catch "SegmentationHelper is not a template"
+        execute("segmentationHelper = new SegmentationHelper(xMax - xMin)", this)
+    }
+    
+    func isSegmentationAvailable() {
+        return (isMechOrSynEditor && distFuncIdx != dfc.verbatimDistFuncIdx)
+    }
+    
+    proc updateIsInhomVarLabel() { local isInhom
+        strdef yesNo
+        isInhom = $1
+        oneZeroToYesNo(isInhom, yesNo)
+        sprint(isInhomVarLabel, "Inhomogeneous: %s", yesNo)
+    }
+    
+    proc initShape() { localobj shape
+        shape = $o1
+        shape.exec_menu("Shape Plot")
+        shape.exec_menu("View = plot")
+        if (isMechOrSynEditor) {
+            // !! BUG: Colormap looks uniform when we try to watch an array element, e.g. "ca_cadifus[0]"
+            //         Maybe it's NEURON restriction because user cannot do it even manually
+            //         clicking on colormap corner and then "Plot What?"
+            shape.variable(varNameWithIndex)
+        }
+    }
+    
+    proc segmentationModeChangedHandler() { local segmentationMode, nsegDeckCardIdx
+        segmentationMode = $1
+        
+        if (segmentationMode < 0 || segmentationMode > 2) {
+            codeContractViolation()
+        }
+        
+        if (segmentationMode == 2) {
+            nsegDeckCardIdx = 1
+        } else {
+            nsegDeckCardIdx = segmentationMode
+        }
+        deck2.flip_to(nsegDeckCardIdx)
+        deck3.flip_to(segmentationMode)
+        
+        segmentationHelper.segmentationMode = segmentationMode
+        
+        if (segmentationMode == 2) {
+            mwh.showNotImplementedWarning()
+        }
+    }
+    
+    proc distFuncCatChangedHandler() { local numArg, isCalledFromShow
+    
+        numArg = numarg()
+        if (numArg == 1) {
+            isCalledFromShow = 0
+        } else if (numArg == 2) {
+            isCalledFromShow = $2
+        } else {
+            codeContractViolation()
+        }
+        
+        distFuncCatIdx = $1
+        
+        deck4.flip_to(distFuncCatIdx)
+        
+        distFuncChangedHandler(distFuncIdxs[distFuncCatIdx], isCalledFromShow)
+    }
+    
+    proc distFuncChangedHandler() { local numArg, isCalledFromShow, cardIdx localobj distFuncHelper, nil
+        
+        // !! BUG: We can get here even though the last called "selectedHandler" still didn't exit.
+        //         This happens when "selectedHandler" calls "string_dialog", but user
+        //         just ignores the string dialog and clicks other radiobutton.
+        //         Don't know how to close it like we do with other sub-widgets.
+        //         The good news is that it disappears (no idea why) if user continues clicking on radiobuttons
+        //         popping up other widgets (that don't call "string_dialog").
+        
+        numArg = numarg()
+        if (numArg == 1) {
+            isCalledFromShow = 0
+        } else if (numArg == 2) {
+            isCalledFromShow = $2
+        } else {
+            codeContractViolation()
+        }
+        
+        if (!isCalledFromShow) {
+            dismissChild()  // This uses distFuncIdx
+        }
+        
+        distFuncIdx = $1
+        distFuncIdxs[distFuncCatIdx] = distFuncIdx
+        
+        distFuncHelper = distFuncHelpers[distFuncIdx]
+        
+        if (deck1OrNil != nil) {
+            cardIdx = isSegmentationAvailable()
+            deck1OrNil.flip_to(cardIdx)
+        }
+        
+        // For the case if the next command won't finish (when user just ignores the string or file dialog)
+        isCancel = 1
+        
+        isCancel = distFuncHelper.selectedHandler()
+        if (isCancel) {
+            graph1.erase()
+            graph2.erase_all()
+            return
+        }
+        
+        if (!dfc.isZebraDistFunc(distFuncIdx)) {
+            updateCurves()
+        }
+        
+        showCurveOrColormapChangedHandler(showCurveOrColormapIdx)
+    }
+    
+    proc showCurveOrColormapChangedHandler() { local cardIdx
+        showCurveOrColormapIdx = $1
+        
+        if (showCurveOrColormapIdx < 0 || showCurveOrColormapIdx > 2) {
+            codeContractViolation()
+        }
+        
+        if (showCurveOrColormapIdx == 2) {
+            cardIdx = 1
+        } else {
+            cardIdx = 0
+        }
+        deck5.flip_to(cardIdx)  // Show all compartments / Show this compartment only
+        
+        if (showCurveOrColormapIdx == 2 && showAllOrThisCompIdx == 1) {
+            cardIdx = 3
+        } else {
+            cardIdx = showCurveOrColormapIdx
+        }
+        if (dfc.isZebraDistFunc(distFuncIdx) && (showCurveOrColormapIdx == 0 || showCurveOrColormapIdx == 1)) {
+            cardIdx = 4
+        }
+        deck6.flip_to(cardIdx)  // Graph-s / PlotShape-s
+        
+        if (showCurveOrColormapIdx == 2) {
+            if (isMechOrSynEditor) {
+                if (arraySize > 1) {
+                    mwh.showWarningBox("The colormap is shown incorrectly because \"Plot What?\" is an array element (NEURON restriction).")
+                }
+            } else {
+                mwh.showNotImplementedWarning()
+            }
+        }
+    }
+    
+    proc showAllOrThisCompColormapChangedHandler() { local cardIdx
+        showAllOrThisCompIdx = $1
+        
+        if (showAllOrThisCompIdx == 0) {
+            cardIdx = 2
+        } else if (showAllOrThisCompIdx == 1) {
+            cardIdx = 3
+        } else {
+            codeContractViolation()
+        }
+        
+        deck6.flip_to(cardIdx)  // Show all compartments / Show this compartment only
+    }
+    
+    proc updateModelCurve() {
+        graph1.erase()
+        updateModelCurveCore(graph1)
+    }
+    
+    proc updateStatsCurve() { local numArg, yMin, yMax
+        strdef what, text
+        
+        numArg = numarg()
+        if (numArg != 0 && numArg != 2) {
+            codeContractViolation()
+        }
+        
+        graph2.erase_all()
+        graph2.color(2)     // Red
+        yMin = math.inf
+        yMax = -math.inf
+        // !! for synapses, skip this call if the edited inhom var doesn't correspond to the actual synapses
+        //    (when they were created with different PPs or without NetCon-s)
+        comp.updateStatsCurve(graph2, &yMin, &yMax, mechName, varType, varName, arraySize, arrayIndex)
+        
+        graph2.brush(1)     // Dash
+        // !! for higher performance, just copy the data from graph1 (the same as in StochEditorSubWidget.hoc - create a common util)
+        updateModelCurveCore(graph2, yMin, yMax)
+        
+        if (isMechOrSynEditor) {
+            what = "sec/seg"
+        } else {
+            what = "syns"
+        }
+        sprint(text, "Real %s", what)
+        
+        graph2.color(2)     // Red
+        graph2.label(text)
+        graph2.color(3)     // Blue
+        graph2.label("Dist func")
+        
+        if (numArg == 2) {
+            $&1 = yMin
+            $&2 = yMax
+        }
+    }
+    
+    proc updateModelCurveCore() { local numArg, isStatsCurveRangeProvided, yMinStats, yMaxStats, minNseg4Curve, nseg4Curve, xyMargin4Graph, xRange, yMin, yMax, x, y, xMargin4Graph, xMin4Graph, xMax4Graph, yRange, yMargin4Graph, yMin4Graph, yMax4Graph localobj graph, distFuncHelper, sec_ref
+    
+        numArg = numarg()
+        if (numArg == 1) {
+            isStatsCurveRangeProvided = 0
+        } else if (numArg == 3) {
+            yMinStats = $2
+            yMaxStats = $3
+            isStatsCurveRangeProvided = 1
+        } else {
+            codeContractViolation()
+        }
+        
+        graph = $o1
+
+        graph.color(3)     // Blue
+        
+        xyMargin4Graph = 0.1    // !! hardcode
+        
+        xRange = xMax - xMin
+        
+        yMin = math.inf
+        yMax = -math.inf
+        
+        distFuncHelper = distFuncHelpers[distFuncIdx]
+        
+        if (distFuncIdx != dfc.verbatimDistFuncIdx) {
+            minNseg4Curve = 1000    // !! hardcode
+            
+            if (isMechOrSynEditor) {
+                nseg4Curve = math.max(segmentationHelper.total_nseg, minNseg4Curve)
+            } else {
+                nseg4Curve = minNseg4Curve
+            }
+            
+            graph.beginline()
+            
+            for eachPointInGrid(&x, xMin, xMax, nseg4Curve + 1) {
+                y = distFuncHelper.calculateAt(x)
+                graph.line(x, y)
+                math.updateMinMax(&yMin, &yMax, y)
+            }
+        } else if (!checkIfVerbatimInhomModelWasDestroyed()) {
+            // !! for synapses, skip this call if the edited inhom var doesn't correspond to the actual synapses
+            //    (when they were created with different PPs or without NetCon-s)
+            comp.updateVerbatimModelCurve(graph, &yMin, &yMax, distFuncHelper)
+        }
+        
+        yMinModel = yMin
+        
+        if (isStatsCurveRangeProvided) {
+            yMin = math.min(yMin, yMinStats)
+            yMax = math.max(yMax, yMaxStats)
+        }
+        
+        // This makes the axes box too small compared to the curve (no idea why)
+        // graph.exec_menu("View = plot")
+        
+        xMargin4Graph = xyMargin4Graph * xRange
+        xMin4Graph = xMin - xMargin4Graph
+        xMax4Graph = xMax + xMargin4Graph
+        yRange = yMax - yMin
+        yMargin4Graph = xyMargin4Graph * yRange
+        yMin4Graph = yMin - yMargin4Graph
+        yMax4Graph = yMax + yMargin4Graph
+        graph.size(xMin4Graph, xMax4Graph, yMin4Graph, yMax4Graph)
+        
+        // Looks unnecessary because we are not in the process of simulation
+        // But if removed, then the default exp. model is not shown (no idea why)
+        graph.flush()
+    }
+    
+    proc updateColormaps() { local numArg, yMin2, yMax2, distFuncIdx, absValue, yMin1, yMax1 localobj distFuncHelper
+        if (isMechOrSynEditor) {
+            numArg = numarg()
+            if (numArg == 0) {
+                if (!dfc.isZebraDistFunc(distFuncIdx)) {
+                    getDistMechVarRangeInside(comp.list_ref, mechName, varType, varName, arrayIndex, &yMin2, &yMax2)
+                } else {
+                    distFuncIdx = distFuncIdxs[dfc.specialDistFuncCatIdx]
+                    distFuncHelper = distFuncHelpers[distFuncIdx]
+                    absValue = abs(distFuncHelper.value)
+                    yMin2 = -absValue
+                    yMax2 = absValue
+                }
+            } else if (numArg == 2) {
+                yMin2 = $1
+                yMax2 = $2
+            } else {
+                codeContractViolation()
+            }
+            
+            yMin1 = math.min(yMin2, yMinOut)
+            yMax1 = math.max(yMax2, yMaxOut)
+            
+            // !! BUG: this shifts the colorbar on shape1 from the top-left corner to the center (select "cm" in Axon)
+            shape1.scale(yMin1, yMax1)  // All compartments
+            shape2.scale(yMin2, yMax2)  // This compartment only
+        } else {
+            synGroup.updateColormaps(shape1, shape2)
+        }
+        
+        shape1.flush()
+        shape2.flush()
+    }
+    
+    proc selectDistFuncHandler() {
+        distFuncChangedHandler(distFuncIdx)
+    }
+    
+    proc applyHandler() { local isOK, yMin, yMax, isInhom, varValue localobj segmentationHelperOrNil, distFuncHelper, nil, secList
+    
+        if (isCancel) {
+            mwh.showWarningBox("Please set the distance function first.")
+            return
+        }
+        
+        if (isMechOrSynEditor) {
+            if (mth.checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar(mechIdx, varType, varName)) {
+                return
+            }
+        }
+        
+        if (distFuncIdx == dfc.verbatimDistFuncIdx) {       //
+            if (checkIfVerbatimInhomModelWasDestroyed()) {  // Do not replace with one IF
+                return
+            }
+        }
+        
+        distFuncHelper = distFuncHelpers[distFuncIdx]
+        segmentationHelperOrNil = segmentationHelper
+        if (!isSegmentationAvailable()) {
+            segmentationHelperOrNil = nil
+        }
+        if (isMechOrSynEditor) {
+            comp.applySegmentationAndInhomogeneity(segmentationHelperOrNil, mechName, varType, varName, arrayIndex, distFuncHelper)
+            
+            if (segmentationHelperOrNil != nil) {                       // Do not replace with one IF
+                if (segmentationHelperOrNil.segmentationMode != 0) {    //
+                    // For some reason, this is required after changing nseg; otherwise we get error in proc updateColormaps: Unhandled Exception. This usually means a bad memory
+                    shape1.observe()
+                    secList = comp.getSecList()
+                    shape2.observe(secList)
+                }
+            }
+        } else {
+            isOK = synManagerMainWidget.warnIfUserHasNotSelectedPPs()
+            if (!isOK) {
+                return
+            }
+            
+            // It would be more correct to pass "yMin" (from stats curve, calculated just below) instead of "yMinModel" (from model curve, calculated earlier)
+            seh.ifMetaVarThenUpdateStatus(varName, yMinModel)
+            synManagerMainWidget.applyChangesToSynStrucIfNeeded()
+            
+            comp.applyInhomogeneity(mechName, varType, varName, arraySize, arrayIndex, distFuncHelper)
+        }
+        
+        inhomAndStochLibrary.onInhomApply(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, segmentationHelperOrNil, distFuncHelper, distFuncCatIdx, distFuncIdx)
+        
+        updateStatsCurve(&yMin, &yMax)
+        
+        // !! BUG: we pass yMin and yMax here, but they are not set by updateStatsCurve in some cases for compartments of type SynPPComp and SynNCComp
+        updateColormaps(yMin, yMax)
+        
+        // !! the same comment regarding yMin and yMax (this is why we need 2nd IF)
+        isInhom = (yMin != yMax)
+        if (isInhom) {
+            varValue = math.nan
+        } else {
+            varValue = yMin
+        }
+        if (!isMechOrSynEditor && mcu.isMetaVar(varName)) {
+            if (!seh.isSefwEnabled()) { // Don't combine into one IF because "seh" can be nil
+                isInhom = 0
+                varValue = 1
+            }
+        }
+        
+        comp.mechStds[mechIdx][varTypeIdx].set(varName, varValue, arrayIndex)
+        mcu.update_isMechVarTypeInhom(comp)
+        
+        if (!isInhom) {
+            inhomAndStochLibrary.onMakingVarHomogen(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
+        }
+        
+        updateThisAndParentWidgets(isInhom)
+        
+        showInhomStatusMsg()
+    }
+    
+    func checkIfVerbatimInhomModelWasDestroyed() { local isDestroyed
+        isDestroyed = !inhomAndStochLibrary.doesThisVarHaveVerbatimInhomModel(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
+        if (isDestroyed) {
+            mwh.showWarningBox("You have destroyed this verbatim model, so it cannot be shown or applied anymore.")
+        }
+        return isDestroyed
+    }
+    
+    proc updateThisAndParentWidgets() { local isInhom
+        isInhom = $1
+        
+        updateIsInhomVarLabel(isInhom)
+        
+        if (isCalledFromVarsEditor) {
+            varsEditorSubWidget.onApplyInInhomEditor(varIdx, arrayIndex, isInhom)
+        }
+        
+        if (isMechOrSynEditor) {
+            if (mmmowb.lastMechOpIdx == 2 && !isInhom) {
+                // !! need to unmap and show MechOpWidgetBase again to hide the button
+            }
+        } else {
+            synManagerMainWidget.updateNumInhomVarsLabel()
+        }
+    }
+    
+    proc showInhomStatusMsg() {
+        strdef line1, title, line2, line3
+        sprint(line1, "The inhomogeneity was applied to \"%s\" in %s. Now you can review stats curve or colormap.", varNameWithIndex, comp.name)
+        title = "Inhomogeneity applied"
+        if (varType == 1) { // 1: "PARAMETER"
+            mwh.showMessageBox(line1, title)
+        } else {            // 2: "ASSIGNED", 3: "STATE"
+            sprint(line2, "Since it's a(n) %s variable, make sure to use \"AltRunControl\" widget if you want this to be done on each iteration.", varTypeName)
+            line3 = "(The checkbox \"Enable stochasticity\" must be checked.)"
+            mwh.showMessageBox(line1, "", line2, line3, title)
+        }
+    }
+    
+    proc dismissChild() {
+        distFuncHelpers[distFuncIdx].dismissHandler()
+    }
+    
+endtemplate InhomEditorSubWidget

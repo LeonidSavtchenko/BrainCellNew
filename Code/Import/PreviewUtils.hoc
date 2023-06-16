@@ -1,0 +1,28 @@
+
+// Everything in this file is just copied from Astro and renamed to avoid name collisions
+
+// !! move to InterModular
+
+// UI
+objref plotShapeGeometry_importer
+
+// Removes item from the vector if it's inside.
+// $o1 - Vector to remove from
+// $o2 - Item to remove
+proc removeIfExists_importer() { local itemIndex
+    itemIndex = $o1.index($o2)
+    if (itemIndex != -1){
+        $o1.remove(itemIndex)
+    }
+}
+
+// Shows geometry.
+proc showImportedGeometry_importer() {
+    removeIfExists_importer(fast_flush_list, plotShapeGeometry_importer)
+    plotShapeGeometry_importer = new PlotShape(0)
+    fast_flush_list.append(plotShapeGeometry_importer)
+    plotShapeGeometry_importer.size(-40,40,-37.0217,37.0217)
+    plotShapeGeometry_importer.variable("v")
+    plotShapeGeometry_importer.view(-40, -37.0217, 80, 74.0433, 850, 300, 433.8, 401.5)
+    plotShapeGeometry_importer.exec_menu("View = plot")
+}

@@ -1,0 +1,107 @@
+
+{ load_file("MechManagerLoads.hoc") }
+
+
+proc analyzeSectsAndCreateComps() { local compIdx localobj endFoot_ref, ecSource_ref, other_ref, comp
+    
+    // !!!! maybe I will have to delete everything from inhomAndStochLibrary (showing YES/NO dialog for confirmation)
+    
+    mwh.showPleaseWaitBox("Analyzing all comp \\ sect \\ segm \\ mech \\ varType \\ var \\ arrayIndex.")
+    {
+        mmAllComps = new List()
+        mmAllComps.append(new MechComp("Soma", soma_ref))
+        mmAllComps.append(new MechComp("Dendrites", dendrite_ref))
+        
+        if (isAstrocyteOrNeuron) {
+            // !! endFoot_ref = createListOfSectionRef("EndFoot[.*")    // !! why this doesn't work?
+            endFoot_ref = new List()
+            forsec "EndFoot" {
+                endFoot_ref.append(new SectionRef())
+            }
+            if (endFoot_ref.count() != 0) {
+                mmAllComps.append(new MechComp("End Foot", endFoot_ref))
+            }
+            
+            mmAllComps.append(new MechComp("Small Glia", nanoProximal_ref))
+            mmAllComps.append(new MechComp("Large Glia", nanoDistal_ref))
+        } else {
+            mmAllComps.append(new MechComp("Axon", axon_ref))
+            
+            mmAllComps.append(new MechComp("Spine Neck", nanoProximal_ref))
+            mmAllComps.append(new MechComp("Spine Head", nanoDistal_ref))
+            
+            // !! ecSource_ref = createListOfSectionRef("ExtracellularSource")  // !! why this doesn't work?
+            ecSource_ref = new List()
+            forsec "ExtracellularSource" {
+                ecSource_ref.append(new SectionRef())
+            }
+            mmAllComps.append(new MechComp("Extracellular Source", ecSource_ref))
+        }
+        
+        other_ref = _findAllRemainingSects()
+        if (other_ref.count() != 0) {
+            mmAllComps.append(new MechComp("Other", other_ref))
+        }
+        
+        for compIdx = 0, mmAllComps.count() - 1 {
+            comp = mmAllComps.o(compIdx)
+            comp.finishAllVerbatimInhomProtos(compIdx)
+        }
+    }
+    mwh.hidePleaseWaitBox()
+    
+    isScheduledRescanningOfDistMechs = 0
+}
+
+isConvertedFromReducedMechCompTemplates = 0
+
+proc makeSureMechCompsCreatedOrImported() { localobj nil, editableComps, reducedComp
+    
+    if (mmAllComps == nil) {
+        analyzeSectsAndCreateComps()
+    } else if (!isBaseOrNanoStart && !isConvertedFromReducedMechCompTemplates) {
+        editableComps = new List()
+        for eachItemInList(reducedComp, mmAllComps) {
+            editableComps.append(new MechComp(reducedComp))
+        }
+        mmAllComps = editableComps
+        isConvertedFromReducedMechCompTemplates = 1
+    }
+}
+
+proc makeSureMechCompsCreatedOrImportedThenShowMechManagerBaseWidget() {
+
+    makeSureMechCompsCreatedOrImported()
+    
+    dismissIfNotNil(msmBaseWidget)
+    msmBaseWidget = new MechOrSynManagerBaseWidget(1)
+    msmBaseWidget.show()
+    msmBaseWidget.showMechManagerHandler()
+    msmBaseWidget.showAltRunControlHandler()
+}
+
+
+objref _compSecNamesSet // !! don't keep it on the top level
+
+// !! rewrite this obfunc or just IF predicate in Python
+// !! test how it affects the performance of proc analyzeSectsAndCreateComps
+obfunc _findAllRemainingSects() { local compIdx localobj sec_ref, other_ref
+
+    _compSecNamesSet = pyObj.set()
+    
+    for compIdx = 0, mmAllComps.count() - 1 {
+        for eachItemInList(sec_ref, mmAllComps.o(compIdx).list_ref) {
+            sec_ref.sec _compSecNamesSet.add(secname())
+        }
+    }
+    
+    other_ref = new List()
+    forall {
+        if (pyObj.ev("str(h.cas()) in h._compSecNamesSet")) {
+            continue
+        }
+        other_ref.append(new SectionRef())
+    }
+    
+    return other_ref
+}

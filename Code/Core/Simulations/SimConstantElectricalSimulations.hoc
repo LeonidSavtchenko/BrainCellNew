@@ -1,0 +1,96 @@
+// UI
+objref vBoxConstantStimulations
+// Stimulators
+objref electricalStim, current, synapticInput, NetInput
+
+// Electrical stimulation
+// This set of parameters define the single synaptic input.
+// The user can add here as much as possible.
+// $1 - Current delay
+// $2 - Current duration
+// $3 - Current amplitude
+// $4 - Rise time
+// $5 - Decay time
+// $6 - Reversal potential
+// $7 - Synaptic amplitude
+// $8 - Number of stimulus
+// $9 - Interval between stimulus
+proc stimulateConstant()  { // Procedure of different stimulations
+    soma_ref.o(0).sec {
+        electricalStim = new NetStim()
+        electricalStim.interval  = $9    //ms
+        electricalStim.start = 0      // ms
+        electricalStim.number = $8
+        electricalStim.noise = 0      // 0 or 1 - noise
+
+        // Electrode stimulation into the soma
+        current = new IClamp(0.5)
+        current.del = $1  // ms 
+        current.dur = $2  // ms
+        current.amp = $3	// nA
+
+        // Synaptic stimualtion into the soma
+        synapticInput = new Exp2Syn(0.5)
+        synapticInput.tau1 = $4   //0.5 //  rise time, ms
+        synapticInput.tau2 = $5   //5   //   decay time, ms
+        synapticInput.e = $6      //0      // reversal potential, mV 
+    }
+
+    NetInput = new NetCon(electricalStim, synapticInput, 0, 0, $7)
+}
+
+// Sets soma params and starts the simulation.
+proc runConstant() {
+    stimulateConstant(CIDel, CIDur, CIAmpl, SynTau1, SynTau2, SynE, SynAmp, NumberStimulus, IntervalBetweenStimul)
+    run()
+
+    // Remove point processes after simulation
+    objref electricalStim, current, synapticInput, NetInput
+}
+
+// Inits UI and simulation parameters.
+proc initParamsConstantStimulation() {
+    CIDel = 0
+    CIDur = 100000              // ms
+    CIAmpl = 0                  // nA
+    SynTau1 = 5                 // ms
+    SynTau2 = 10                // ms
+    SynE = 0                    // mV
+    SynAmp = 0.0                // nA
+    NumberStimulus = 0
+    IntervalBetweenStimul = 1   // ms
+    tstop = 10
+}
+
+// Shows Constant Electrical Simulation window.
+proc showConstantUi() {
+    vBoxConstantStimulations = new VBox()
+    vBoxConstantStimulations.intercept(1)
+    {
+        xpanel("")
+        xlabel("Constan depolarization current into soma")
+        xvalue("Offset of current clamp (ms)","CIDel", 1," ", 0, 1  )
+        xvalue("Duration of current clamp (ms)","CIDur", 1,"", 0, 1  )
+        xvalue("Amplitude of current clamp (nA)","CIAmpl", 1,"", 0, 1  )
+        xlabel("---------------------------------------------------------------------------------------------------------")
+        xlabel("Alpha current stimulation into soma")
+        xvalue("Alpha current rize time (ms)","SynTau1", 1,"", 0, 1  )
+        xvalue("Alpha current decay  time (ms)","SynTau2", 1,"", 0, 1  )
+        xvalue("Alpha current reverse potential (mV)","SynE", 1,"", 0, 1  )
+        xvalue("Alpha conductande (nS)","SynAmp", 1,"", 0, 1  )
+        xvalue("Number stimuli of Alpha currents","NumberStimulus", 1,"", 0, 1  ) 
+        xvalue("Interval between stimuli (ms)","IntervalBetweenStimul", 1,"", 0, 1  ) 
+        xlabel("---------------------------------------------------------------------------------------------------------")
+        xvalue("Simulation time (ms)","tstop", 1,"", 0, 1  ) 
+        xbutton("Run simulation", "runConstant()")
+        xpanel(0)
+    }
+    vBoxConstantStimulations.intercept(0)
+    vBoxConstantStimulations.map("Constant Electrical Stimulation into Soma")
+}
+
+// Opens Constant Electrical Simulation window.
+proc ConstantStimulations() {
+    initParamsConstantStimulation()
+    showConstantUi()
+}

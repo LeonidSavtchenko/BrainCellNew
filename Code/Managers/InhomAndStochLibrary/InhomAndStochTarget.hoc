@@ -1,0 +1,389 @@
+
+if (!isBaseOrNanoStart) {
+    { load_file("../Widgets/Inhomogeneity/SegmentationHelper.hoc") }
+}
+
+begintemplate InhomAndStochTarget
+
+    public makeOrUpdateInhom, makeOrUpdateStoch, isEqual, isStochEnabled, getInhomModelData, getStochModelData, setPlayIfPossible, stopPlayingVars, onInit, onStep, restoreInhomogeneity, disableInhomOrStoch
+    public isDmOrSynPart, compIdx, mechIdx, mechName, varType, isInhom, distFuncCatIdx, distFuncIdx, distFuncHelper, isStoch, stochFuncCatIdx, stochFuncIdx
+    
+    external smAllSyns
+    external mwh, rngUtils, mth, compUtils
+    external codeContractViolation
+    external eachItemInList
+    
+    // "init" args
+    enumDmPpNc = -1
+    isDmOrSynPart = -1
+    enumPpRoleOrMinus1 = -1
+    compIdx = -1
+    mechIdx = -1
+    strdef mechName
+    varType = -1
+    varTypeIdx = -1
+    varIdx = -1
+    strdef varName
+    arraySize = -1
+    arrayIndex = -1
+    
+    objref segmentationHelper, distFuncHelper
+    objref boundingHelper, stochFuncHelper
+    
+    objref list_ref
+    
+    isInhom = -1
+    distFuncCatIdx = -1
+    distFuncIdx = -1
+    isStoch = -1
+    stochFuncCatIdx = -1
+    stochFuncIdx = -1
+    isPlayable = -1
+    objref baseMechStd, tempMechStd
+    
+    objref tempImpRedObj
+    
+    objref this
+    
+    
+    proc init() { local numArg localobj impRedObj, comp, nil
+        numArg = numarg()
+        
+        if (numArg == 1) {
+            // Load data from the imported reduced template (part 1)
+            impRedObj = $o1
+            enumDmPpNc = impRedObj.enumDmPpNc
+            compIdx = impRedObj.compIdx
+            mechIdx = impRedObj.mechIdx
+            varType = impRedObj.varType
+            varIdx = impRedObj.varIdx
+            arrayIndex = impRedObj.arrayIndex
+        } else if (numArg == 6) {
+            enumDmPpNc = $1
+            compIdx = $2
+            mechIdx = $3
+            varType = $4
+            varIdx = $5
+            arrayIndex = $6
+        } else {
+            codeContractViolation()
+        }
+        
+        isDmOrSynPart = (enumDmPpNc == 0)
+        
+        comp = compUtils.getComp(isDmOrSynPart, compIdx)
+        if (isDmOrSynPart) {
+            list_ref = comp.list_ref
+        }
+        
+        if (enumDmPpNc == 1) {
+            enumPpRoleOrMinus1 = comp.enumPpRole
+        } else {
+            enumPpRoleOrMinus1 = -1
+        }
+        
+        mth.getMechName(enumDmPpNc, mechIdx, mechName)
+        arraySize = mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName)
+        
+        varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
+        baseMechStd = comp.mechStds[mechIdx][varTypeIdx]
+        if (enumDmPpNc != 2) {
+            tempMechStd = new MechanismStandard(mechName, varType)
+        } else {
+            // !! need to test if using this "Fake*" template with "in-set-out" workflow we still achieve better performance
+            //    than "sprint"-ing and executing a HOC-command for direct var assignment
+            execute("tempMechStd = new FakeMechanismStandardForNetCon()", this)     // The template is not loaded for astrocytes
+        }
+        
+        if (impRedObj == nil) {
+            return
+        }
+        
+        // Load data from the imported reduced template (part 2)
+        
+        if (impRedObj.segmentationHelper != nil) {
+            tempImpRedObj = impRedObj
+            execute("segmentationHelper = new SegmentationHelper(tempImpRedObj.segmentationHelper)", this)  // If isBaseOrNanoStart, then the template will be sourced at a later time
+            tempImpRedObj = nil
+        }
+        distFuncHelper = impRedObj.distFuncHelper
+        distFuncCatIdx = impRedObj.distFuncCatIdx
+        distFuncIdx = impRedObj.distFuncIdx
+        isInhom = impRedObj.isInhom
+        
+        boundingHelper = impRedObj.boundingHelper
+        stochFuncHelper = impRedObj.stochFuncHelper
+        stochFuncCatIdx = impRedObj.stochFuncCatIdx
+        stochFuncIdx = impRedObj.stochFuncIdx
+        isStoch = impRedObj.isStoch
+        
+        setIsPlayable()
+    }
+    
+    proc makeOrUpdateInhom() {
+        segmentationHelper = $o1
+        distFuncHelper = $o2
+        distFuncCatIdx = $3
+        distFuncIdx = $4
+        isInhom = 1
+        setIsPlayable()
+    }
+    
+    proc makeOrUpdateStoch() {
+        boundingHelper = $o1
+        stochFuncHelper = $o2
+        stochFuncCatIdx = $3
+        stochFuncIdx = $4
+        isStoch = 1
+        setIsPlayable()
+    }
+    
+    func isEqual() {
+        return (enumDmPpNc == $1 && compIdx == $2 && mechIdx == $3 && varType == $4 && varIdx == $5 && arrayIndex == $6)
+    }
+    
+    proc getInhomModelData() {
+        if (!isInhom) {
+            codeContractViolation()
+        }
+        $o1 = segmentationHelper
+        $o2 = distFuncHelper
+        $&3 = distFuncCatIdx
+        $&4 = distFuncIdx
+    }
+    
+    proc getStochModelData() {
+        if (!isStoch) {
+            codeContractViolation()
+        }
+        $o1 = boundingHelper
+        $o2 = stochFuncHelper
+        $&3 = stochFuncCatIdx
+        $&4 = stochFuncIdx
+    }
+    
+    // Keep in sync with ReducedInhomAndStochTarget.setPlayIfPossible
+    func setPlayIfPossible() { local x, homogenValue localobj sec_ref
+        strdef hocCommand
+        
+        if (!isPlayable) {
+            return 0
+        }
+        
+        for eachItemInList(sec_ref, list_ref) {
+            sec_ref.sec for (x, 0) {
+                sprint(hocCommand, "stochFuncHelper.rng.play(&%s(%.15e))", varName, x)
+                execute(hocCommand, this)
+            }
+        }
+        
+        homogenValue = baseMechStd.get(varName, arrayIndex)
+        distFuncHelper.setMeanOnStartPlaying(homogenValue)
+        
+        return 1
+    }
+    
+    // Keep in sync with ReducedInhomAndStochTarget.stopPlayingVars
+    proc stopPlayingVars() {
+        if (!isPlayable) {
+            return
+        }
+        
+        // NEURON docs say: "To disconnect the Random object from its list of variables, either the variables or the Random object must be destroyed."
+        // But actually it doesn't seem like there's any way to destroy the "played" Random object without dire consequences.
+        
+        // !! BUG: Hanging here, and the same effect if we just assign "nil" to stochFuncHelper.rng
+        //         No hanging if we don't call stochFuncHelper.rng.play upstream
+        //         It looks like we have only two options to disable the "play" effect:
+        //         1. "create" all sections in list_ref from scratch (replacing the old sections) - and only after this we can destroy the old RNG
+        //         2. Adjust RNG to produce constant and copy the generator to some storage just to keep alive while we replace stochFuncHelper.rng
+        //            (If we play the same var with multiple RNG-s, only the last one has visible effect)
+        //            But after this, we won't be able to make the var inhomogeneous
+        //         Alternatively, we could use Vector.play() and Vector.play_remove() instead of Random.play(),
+        //         but this requires some troublesome orchestration and looks like not giving an advantage compared to the non-played mode in our case
+        stochFuncHelper.rng = rngUtils.getFor_stochFunc_withUniqueSeed()
+        
+        distFuncHelper.resetMeanOnStopPlaying()
+    }
+    
+    // Keep in sync with ReducedInhomAndStochTarget.onInit
+    proc onInit() {
+        if (isStoch) {
+            // One unused value to set up the generator and the colourizer
+            boundingHelper.generateFirstBoundedValue(stochFuncHelper)
+            
+            if (!isDmOrSynPart) {
+                // Stochastic synaptic vars can hold the values from the previous simulation for a long time before the first synaptic event on this simulation,
+                // and this is why we restore the base values here for reproducibility of the experiments
+                // Notice that stochastic biophys vars change their values on each iteration, so there is no need to restore their base values here
+                makeStepOrRestoreBaseValues(0)
+            }
+        }
+    }
+    
+    proc onStep() {
+        makeStepOrRestoreBaseValues(1)
+    }
+    
+    // Keep in sync with "makeStepOrRestoreBaseValues" and ReducedInhomAndStochTarget.applySynInhomogeneity
+    proc restoreInhomogeneity() { localobj comp
+        if (!isInhom) {
+            codeContractViolation()
+        }
+        
+        comp = compUtils.getComp(isDmOrSynPart, compIdx)
+        if (isDmOrSynPart) {
+            // !!
+            mwh.showNotImplementedWarning()
+        } else {
+            comp.applyInhomogeneity(mechName, varType, varName, arraySize, arrayIndex, distFuncHelper)
+        }
+    }
+    
+    func disableInhomOrStoch() { local isInhomOrStoch localobj nil
+        isInhomOrStoch = $1
+        if (isInhomOrStoch) {
+            isInhom = 0
+            segmentationHelper = nil
+            distFuncHelper = nil
+            distFuncCatIdx = -1
+            distFuncIdx = -1
+            setIsPlayable()
+            return !isStoch
+        } else {
+            isStoch = 0
+            boundingHelper = nil
+            stochFuncHelper = nil
+            stochFuncCatIdx = -1
+            stochFuncIdx = -1
+            setIsPlayable()
+            return !isInhom
+        }
+    }
+    
+    // All next staff is private
+    
+    
+    // Keep in sync with ReducedInhomAndStochTarget.makeStepOrRestoreBaseValues and "restoreInhomogeneity"
+    proc makeStepOrRestoreBaseValues() { local isStepOrRestore, isStoch_, homogenValue, x, value, dist, isWeightVar localobj sec_ref, prevSec_ref, nil, syn, synPart
+    
+        isStepOrRestore = $1
+        
+        if (isStepOrRestore) {
+            isStoch_ = isStoch
+            
+            // !! can I move the code before "for" to "onInit" proc?
+            if (isPlayable) {
+                return
+            }
+            if (varType == 1 && !isStoch_) {    // 1: "PARAMETER"
+                if (isInhom) {
+                    return
+                } else {
+                    codeContractViolation()
+                }
+            }
+        } else {
+            isStoch_ = 0
+        }
+        
+        if (isInhom) {
+            distFuncHelper.onJustBeforeFirstSection()
+        } else {
+            homogenValue = baseMechStd.get(varName, arrayIndex)
+        }
+        
+        if (isDmOrSynPart) {
+            for eachItemInList(sec_ref, list_ref) {
+                sec_ref.sec {
+                    if (isInhom) {
+                        distFuncHelper.onJustBeforeNewSection()
+                    }
+                    for (x, 0) {
+                        // The base value
+                        if (isInhom) {
+                            dist = distance(x)
+                            value = distFuncHelper.calculateAt(dist)
+                        } else {
+                            value = homogenValue
+                        }
+                        
+                        // The additive noise
+                        if (isStoch_) {
+                            value += boundingHelper.generateNextBoundedValue(stochFuncHelper)
+                        }
+                        
+                        // This approach is 20-30% faster than "sprint"-ing a HOC-command
+                        // of type "varName(x) = value" or "varName[arrayIndex](x) = value" and then "execute"-ing it
+                        tempMechStd.in(x)
+                        tempMechStd.set(varName, value, arrayIndex)
+                        tempMechStd.out(x)
+                    }
+                }
+            }
+        } else {
+            isWeightVar = mth.isWeightNetConVar(varName)
+            prevSec_ref = nil
+            for eachItemInList(syn, smAllSyns) {
+                if (syn.sec_ref != prevSec_ref && isInhom) {
+                    distFuncHelper.onJustBeforeNewSection()
+                }
+                
+                if (isStepOrRestore && !syn.sefwPp.isAnyEventsOnThisIter) {
+                    prevSec_ref = syn.sec_ref
+                    continue
+                }
+                
+                if (enumDmPpNc == 1) {
+                    synPart = syn.getPointProcess(enumPpRoleOrMinus1)
+                } else if (enumDmPpNc == 2) {
+                    synPart = syn.netCon
+                } else {
+                    codeContractViolation()
+                }
+                
+                // The base value
+                if (isInhom) {
+                    value = distFuncHelper.calculateAt(syn.dist)
+                } else {
+                    value = homogenValue
+                }
+                
+                // The additive noise
+                if (isStoch_) {
+                    value += boundingHelper.generateNextBoundedValue(stochFuncHelper)
+                }
+                
+                // !! if synPart is a NetCon, then see the comment for tempMechStd in ctor
+                tempMechStd.in(synPart)
+                tempMechStd.set(varName, value, arrayIndex)
+                tempMechStd.out(synPart)
+                
+                if (enumDmPpNc == 2 && isWeightVar) {
+                    syn.sefwNetCon.weight = value
+                    // Here we could also have similar logic to sync the value from "syn.netCon.@release_probability" to "syn.sefwPp.release_probability",
+                    // but it's not needed because the button "Define stoch model" is hidden for "@release_probability"
+                }
+                
+                prevSec_ref = syn.sec_ref
+            }
+        }
+        
+        if (isInhom) {
+            distFuncHelper.onJustAfterLastSection()
+        }
+    }
+    
+    // Keep in sync with ReducedInhomAndStochTarget.setIsPlayable
+    proc setIsPlayable() {
+        if (!isStoch) {
+            isPlayable = 0
+            return          // Just a shortcut because boundingHelper used below is nil
+        }
+        isPlayable = (!isInhom && stochFuncCatIdx == 0 && (stochFuncIdx == 0 || stochFuncIdx == 1) && boundingHelper.isUntouched())
+        
+        // !! not implemented - see the comment in stopPlayingVars
+        isPlayable = 0
+    }
+    
+endtemplate InhomAndStochTarget

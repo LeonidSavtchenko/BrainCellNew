@@ -1,0 +1,28 @@
+
+// Sets initial params.
+proc initParamsMain() {
+    GapResistance = 100000          // Megaohm
+    potential = -85                 // mV
+    res_gap(GapResistance, potential)
+    
+    jd = 0
+    SwitchOffGapJunction=1
+    
+    // This parameter defines how fast calcium relaxes between neighboring astrocytes.
+    // The larger value means a slower connection between astrocytes.
+    
+    //***************************************************************************************
+     insertGapJunc()
+     CaGapFlux(jd, SwitchOffGapJunction)
+    //***************************************************************************************
+    // !! InsertElectricMechanisms(1)   // !! it must be called here rather than just below
+    if (isAstrocyteOrNeuron) {
+        nanoBranchesManager.reseedBranches(nanoDistrLoaded, nanoDistrLoaded)    // !!
+    }
+    
+    InsertElectricMechanisms(1) // !! I had to move this lower because it uses refs to nanogeometry. but biophysics is affected by this move!!
+    
+    OnlySingleGluSimulations = 1 // parameter for Glu and Potassium single  voltage clamp mechanism
+    
+    initVoltageAndRunControlParams()
+}

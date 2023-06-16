@@ -1,0 +1,21 @@
+
+// Select nanogeometry HOC file (save or load)
+// $s1 - "w" or "r"
+// $s2 - "Save" or "Load"
+// $s3 (output) - The selected file path and name (only if selected)
+// Returns: 0/1 flag indicating that the file was selected
+func selectNanoHocFile() { localobj file
+    strdef hint, defaultDirPath
+    
+    file = new File()
+    sprint(hint, "%s brain cell with nanogeometry", $s2)
+    sprint(defaultDirPath, "%sNanogeometry/", getcwd())
+    file.chooser($s1, hint, "*.hoc", $s2, "Cancel", defaultDirPath)
+    if (!file.chooser()) {
+        // File wasn't selected
+        return 0
+    }
+    
+    $s3 = file.getname
+    return 1
+}

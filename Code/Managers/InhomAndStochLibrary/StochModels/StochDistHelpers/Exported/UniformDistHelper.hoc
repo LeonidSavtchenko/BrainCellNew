@@ -1,0 +1,106 @@
+
+// https://www.neuron.yale.edu/neuron/static/new_doc/programming/math/random.html#Random.uniform
+// https://www.mathworks.com/help/stats/uniform-distribution-continuous.html
+// https://en.wikipedia.org/wiki/Continuous_uniform_distribution
+
+begintemplate UniformDistHelper
+
+    public addParamsToPanel, calcPdf, calcCdf, getMean, getStdDev, setMeanOnStartPlaying, resetMeanOnStopPlaying, firstDice, exportParams, importParams
+    
+    external math
+    external codeContractViolation
+    
+    objref parentWidget
+    
+    range = -1
+    
+    mean = -1   // Used only in "play" mode, otherwise 0
+    
+    
+    proc init() {
+        parentWidget = $o1
+        setRange(1e-3)
+        mean = 0
+    }
+    
+    proc addParamsToPanel() {
+        xpvalue("range", &range, 1, "parentWidget.valueChangedHandler()")
+    }
+    
+    func calcPdf() { local x, y
+        x = $1
+        
+        if (abs(x) <= range / 2) {
+            y = 1 / range
+        } else {
+            y = 0
+        }
+        
+        return y
+    }
+    
+    func calcCdf() { local x, halfRange, y
+        x = $1
+        
+        halfRange = range / 2
+        if (x < -halfRange) {
+            y = 0
+        } else if (x > halfRange) {
+            y = 1
+        } else {
+            y = 0.5 + x / range
+        }
+        
+        return y
+    }
+    
+    func getMean() {
+        return 0
+    }
+    
+    func getStdDev() {
+        return range / sqrt(12)
+    }
+    
+    proc setMeanOnStartPlaying() {
+        mean = $1
+    }
+    
+    proc resetMeanOnStopPlaying() {
+        mean = 0
+    }
+    
+    func firstDice() { local halfRange localobj rng
+        rng = $o1
+        
+        halfRange = range / 2
+        return rng.uniform(mean - halfRange, mean + halfRange)
+    }
+    
+    proc exportParams() { localobj vecOfVals
+        vecOfVals = $o1
+        
+        vecOfVals.resize(1)
+        vecOfVals.x(0) = range
+    }
+    
+    proc importParams() { localobj vecOfVals
+        vecOfVals = $o1
+        
+        if (vecOfVals.size() != 1) {
+            codeContractViolation()
+        }
+        setRange(vecOfVals.x(0))
+    }
+    
+    // All next staff is private
+    
+    
+    proc setRange() { local inf
+        range = $1
+        
+        inf = math.inf
+        variable_domain(&range, float_epsilon, inf)
+    }
+    
+endtemplate UniformDistHelper

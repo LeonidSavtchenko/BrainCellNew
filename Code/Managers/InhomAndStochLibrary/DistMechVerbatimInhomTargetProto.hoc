@@ -1,0 +1,30 @@
+
+begintemplate DistMechVerbatimInhomTargetProto
+
+    public mechIdx, varType, varIdx, arrayIndex
+    public finish
+    
+    external inhomAndStochLibrary
+    external dfc
+    
+    mechIdx = -1
+    varType = -1
+    varIdx = -1
+    arrayIndex = -1
+    objref distFuncHelper
+    
+    
+    proc init() {
+        mechIdx = $1
+        varType = $2
+        varIdx = $3
+        arrayIndex = $4
+        distFuncHelper = $o5
+    }
+    
+    proc finish() { local compIdx localobj nil
+        compIdx = $1
+        inhomAndStochLibrary.onInhomApply(0, compIdx, mechIdx, varType, varIdx, arrayIndex, nil, distFuncHelper, dfc.specialDistFuncCatIdx, dfc.verbatimDistFuncIdx)
+    }
+    
+endtemplate DistMechVerbatimInhomTargetProto

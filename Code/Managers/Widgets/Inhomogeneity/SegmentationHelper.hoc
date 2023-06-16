@@ -1,0 +1,97 @@
+
+begintemplate SegmentationHelper
+
+    public setDistRange, recalculateFactors, subdivideSection
+    public segmentationMode, total_nseg, min_nseg
+    
+    external math
+    external codeContractViolation
+    
+    // init-ed
+    distRange = -1
+    
+    // UI
+    segmentationMode = -1
+    total_nseg = -1
+    min_nseg = -1
+    
+    // Calculated factors
+    factorMode1 = -1
+    factorMode2 = -1
+    
+    
+    proc init() { local argType, inf localobj impRedObj
+
+        argType = argtype(1)
+        if (argType == 0) {
+            // Defaults
+            segmentationMode = 1    // !! set the default to 2 once implemented
+            total_nseg = 30
+            min_nseg = 5
+            
+            setDistRange($1)
+        } else if (argType == 1) {
+            impRedObj = $o1
+            segmentationMode = impRedObj.segmentationMode
+            total_nseg = impRedObj.total_nseg
+            min_nseg = impRedObj.min_nseg
+            
+            distRange = -1  // Will be set later from InhomEditorSubWidget
+        } else {
+            codeContractViolation()
+        }
+        
+        inf = math.inf
+        
+        // variable_domain(&total_nseg, 1, math.inf)    // Error here: Cannot find the symbol associated with the pointer when called from Python. Use a string instead of pointer argument
+        variable_domain(&total_nseg, 1, inf)
+        // variable_domain(&min_nseg, 1, total_nseg)    // Unfortunately, this won't change the upper limit for min_nseg once total_nseg changes
+        variable_domain(&min_nseg, 1, inf)
+    }
+    
+    proc setDistRange() {
+        distRange = $1
+        if (distRange == 0) {
+            codeContractViolation()
+        }
+        recalculateFactors()
+    }
+    
+    proc recalculateFactors() {
+        factorMode1 = total_nseg / distRange
+        factorMode2 = calculateFactorMode2()
+    }
+    
+    proc subdivideSection() { local new_nseg, meanAbsDer
+        if (segmentationMode == 0) {
+            return
+        } else if (segmentationMode == 1) {
+            new_nseg = int(factorMode1 * L)            // !! this rounds towards 0; maybe it would be better to round towards the nearest integer
+        } else if (segmentationMode == 2) {
+            meanAbsDer = calculateMeanAbsDer()
+            new_nseg = int(factorMode2 * L * meanAbsDer)    // !! the same comment
+        } else {
+            codeContractViolation()
+        }
+        
+        if (new_nseg < min_nseg) {
+            new_nseg = min_nseg
+        }
+        
+        nseg = new_nseg
+    }
+    
+    // All next staff is private
+    
+    
+    func calculateFactorMode2() {
+        // !! Not implemented
+        return factorMode1
+    }
+    
+    func calculateMeanAbsDer() {
+        // !! Not implemented
+        return 1
+    }
+    
+endtemplate SegmentationHelper

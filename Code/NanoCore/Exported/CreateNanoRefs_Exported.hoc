@@ -1,0 +1,55 @@
+
+// !! would it make sense put this code into NanoBranchesManager.hoc?
+
+// Two List-s of SectionRef containing references to all the sections of nano geometry
+objref nanoProximal_ref, nanoDistal_ref
+
+// This one won't be used anywhere outside this file
+objref _secRef
+
+
+// Create List of SectionRef-s containing references to all the sections given name
+// $s1 - The name
+// Returns: The List of SectionRef-s
+obfunc createListOfSectionRef() { localobj list_ref
+    strdef findSecRegexEnd, findSecRegex, hocCommand
+    findSecRegexEnd = $s1
+    
+    list_ref = new List()
+    
+    sprint(findSecRegex, ".*]\.%s", findSecRegexEnd)   // !!
+    
+    // forsec findSecRegex {                // - These two don't require that match must start at the beginning of the string
+    // forall ifsec findSecRegex {          // /
+    // !! test how it works after encapsulation sections into templates
+    forall if (issection(findSecRegex)) {   // - This does
+        sprint(hocCommand, "%s _secRef = new SectionRef()", secname())
+        execute(hocCommand)
+        list_ref.append(_secRef)
+    }
+    
+    return list_ref
+}
+
+// Create two List-s of SectionRef containing references to all the sections of nano geometry
+// Input: isAstrocyteOrNeuron (taken from the top level)
+// Output: nanoProximal_ref, nanoDistal_ref and SizeTotal (initialized on the top level)
+proc createRefsForNanoGeometry() { localobj nil
+    nanoProximal_ref = new List()
+    nanoDistal_ref = new List()
+    if (isAstrocyteOrNeuron) {
+        nanoProximal_ref = createListOfSectionRef("SmallGlia[.*")
+        nanoDistal_ref = createListOfSectionRef("LargeGlia[.*")
+    } else {
+        nanoProximal_ref = createListOfSectionRef("spine_neck")
+        nanoDistal_ref = createListOfSectionRef("spine_head")
+    }
+    
+    SizeTotal = nanoProximal_ref.count()
+    if (nanoDistal_ref.count() != SizeTotal) {
+        codeContractViolation()
+    }
+    
+    // Some cleanup on top level
+    _secRef = nil
+}

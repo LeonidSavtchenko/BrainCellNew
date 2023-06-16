@@ -1,0 +1,210 @@
+
+begintemplate SynNCComp
+
+    public name, enumDmPpNc, isMechVarTypeInhom, mechStds
+    public isMechVarInhom, prepareVarsEditorHeader, getDistRange, getSecList, markMechDirty, updateStatsCurve, updateVerbatimModelCurve, applyInhomogeneity, isAnyVarInhom
+    public isMechVarTypeInhom, mechStds, isMechDirty
+    
+    external mwh, mth, math, seh
+    external smAllSyns, synGroup
+    external mcu, utils4FakeMech4NC
+    external stringsEqual, codeContractViolation
+    external eachItemInList
+    
+    strdef name
+    enumDmPpNc = -1
+    
+    double isMechVarTypeInhom[1][1]     // 0/1 flag
+    objref mechStds[1][1]
+    double isMechDirty[1]               // 0/1 flag
+    
+    objref this
+    
+    
+    proc init() { local numArg localobj impRedObj, mechStd, nil
+        numArg = numarg()
+        if (numArg == 1) {
+            // Load data from the imported reduced template (part 1)
+            impRedObj = $o1
+        } else if (numArg != 0) {
+            codeContractViolation()
+        }
+        
+        name = "NetCon"
+        enumDmPpNc = 2
+        
+        double isMechVarTypeInhom[1][1]
+        objref mechStds[1][1]
+        double isMechDirty[1]
+        
+        mechStd = new FakeMechanismStandardForNetCon()
+        if (synGroup.is3Or1PartInSynStruc()) {
+            // It's a code contract that all the syns have homogeneous NetCon-s at the time of new SynNCComp-s construction
+            // (but this does not apply to "start with nano" mode)
+            mechStd.in(smAllSyns.o(0).netCon)
+        }
+        mechStds[0][0] = mechStd
+        
+        // !! search for inhomogeneities in the vars
+        
+        if (impRedObj == nil) {
+            return
+        }
+        
+        // Load data from the imported reduced template (part 2)
+        
+        mechStd = impRedObj.mechStds[0][0]
+        if (mechStd != nil) {
+            mechStds[0][0] = mechStd    // Replacing it just to have NaN-s for all inhom vars
+            mcu.setOneIfNeededIn_isMechVarTypeInhom(this, 0, 1)
+        }
+    }
+    
+    // !! code dupl. with MechComp
+    func isMechVarInhom() { local mechIdx, varType, arrayIndex, varTypeIdx
+        strdef varName
+        mechIdx = $1
+        varType = $2
+        varName = $s3
+        arrayIndex = $4
+        if (mechIdx != 0 || varType != 1) {
+            codeContractViolation()
+        }
+        varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
+        return math.isNaN(mechStds[mechIdx][varTypeIdx].get(varName, arrayIndex))
+    }
+    
+    proc prepareVarsEditorHeader() { local mechIdx, varType
+        mechIdx = $1    // Just placeholders
+        varType = $2    //
+        
+        if (mechIdx != 0 || varType != 1) {
+            codeContractViolation()
+        }
+        
+        sprint($s3, "All %s variables:", name)
+    }
+    
+    proc getDistRange() {
+        synGroup.getDistRange(&$&1, &$&2)
+    }
+    
+    obfunc getSecList() {
+        return synGroup.getSecList()
+    }
+    
+    proc markMechDirty() { local mechIdx
+        mechIdx = $1    // Just a placeholder
+        
+        if (mechIdx != 0) {
+            codeContractViolation()
+        }
+        
+        isMechDirty[mechIdx] = 1
+    }
+    
+    proc updateStatsCurve() { local yMin, yMax, varType, arraySize, arrayIndex, isMetaVar, y localobj graph, firstSyn, nil, mechStd, syn
+        strdef mechName, varName, varNameWithIndex
+        
+        graph = $o1
+        yMin = $&2
+        yMax = $&3
+        mechName = $s4  // Just placeholders
+        varType = $5    //
+        varName = $s6
+        arraySize = $7
+        arrayIndex = $8
+        
+        isMetaVar = mcu.isMetaVar(varName)
+        
+        firstSyn = smAllSyns.o(0)
+        if (!isMetaVar) {
+            if (firstSyn.netCon == nil) {
+                // The actual synapses don't have NetCon-s
+                return
+            }
+        } else {
+            if (firstSyn.sefwPp == nil) {
+                // The actual synapses don't have the release probability event filter PPs
+                return
+            }
+        }
+        
+        if (!isMetaVar) {
+            mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
+        } else {
+            mechStd = new MechanismStandard(seh.realMechName, seh.realVarType)
+        }
+        
+        for synGroup.updateStatsCurveIter(syn, graph, &y, &yMin, &yMax) {
+            if (!isMetaVar) {
+                y = utils4FakeMech4NC.getNetConVar(syn.netCon, varNameWithIndex)
+            } else {
+                mechStd.in(syn.sefwPp)
+                y = mechStd.get(seh.realVarName, seh.realArrayIndex)
+            }
+        }
+        
+        $&2 = yMin
+        $&3 = yMax
+    }
+    
+    proc updateVerbatimModelCurve() {
+        // It's a code contract that all the syns have homogeneous NetCon-s at the time of new SynNCComp-s construction
+        codeContractViolation()
+    }
+    
+    // Keep in sync with ReducedSynNCComp2.applyInhomogeneity
+    proc applyInhomogeneity() { local varType, arraySize, arrayIndex, isMetaVar, isSefwEnabled, isWeightVar, y localobj distFuncHelper, firstNetCon, mechStd, syn, thisPp
+        strdef mechName, varName, varNameWithIndex
+        
+        mechName = $s1  // Just placeholders
+        varType = $2    //
+        varName = $s3
+        arraySize = $4
+        arrayIndex = $5
+        distFuncHelper = $o6
+        
+        if (!stringsEqual(mechName, name) || varType != 1) {    // 1: "PARAMETER"
+            codeContractViolation()
+        }
+        
+        isMetaVar = mcu.isMetaVar(varName)
+        isSefwEnabled = seh.isSefwEnabled()
+        
+        if (isMetaVar && !isSefwEnabled) {
+            return
+        }
+        
+        if (!isMetaVar) {
+            mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
+            isWeightVar = mth.isWeightNetConVar(varName)
+        } else {
+            mechStd = new MechanismStandard(seh.realMechName, seh.realVarType)
+        }
+        
+        for synGroup.applyInhomogeneityIter(syn, distFuncHelper) {
+            y = distFuncHelper.calculateAt(syn.dist)
+            if (!isMetaVar) {
+                firstNetCon = syn.netCon
+                utils4FakeMech4NC.setNetConVar(firstNetCon, varNameWithIndex, y)
+                if (isSefwEnabled && isWeightVar) {
+                    syn.sefwNetCon.weight = firstNetCon.weight
+                }
+            } else {
+                thisPp = syn.sefwPp
+                mechStd.in(thisPp)
+                // !! BUG: "variable_domain" used in "MechanismStandard.panel()" is ignored in "MechanismStandard.set()" and "MechanismStandard.out()",
+                //      so we can use any invalid value here without even a warning
+                mechStd.set(seh.realVarName, y, seh.realArrayIndex)
+                mechStd.out(thisPp)
+            }
+        }
+    }
+    
+    func isAnyVarInhom() { local mechIdx
+        mechIdx = $1
+        return synGroup.isAnyVarInhom(this, mechIdx)
+    }
+    
+endtemplate SynNCComp

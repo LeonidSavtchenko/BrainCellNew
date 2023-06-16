@@ -1,0 +1,53 @@
+
+{ load_file("SynManagerLoads.hoc") }
+
+
+// Keep in sync with hoc:EnumSynCompIdxs.init, py:createReducedSynComps and py:initHomogenSynVars
+proc createOrImportSynComps() { local isCreateOrImport localobj editableComps
+    isCreateOrImport = $1
+    
+    if (isCreateOrImport) {
+        smAllComps = new List()
+        smAllComps.append(new SynPPComp("Source PP", 0))
+        smAllComps.append(new SynNCComp())
+        smAllComps.append(new SynPPComp("Target PP", 1))
+        smAllComps.append(new SynPPComp("Single PP", 2))
+    } else {
+        if (smAllComps.count() != 4) {
+            codeContractViolation()
+        }
+        editableComps = new List()
+        editableComps.append(new SynPPComp(smAllComps.o(0)))
+        editableComps.append(new SynNCComp(smAllComps.o(1)))
+        editableComps.append(new SynPPComp(smAllComps.o(2)))
+        editableComps.append(new SynPPComp(smAllComps.o(3)))
+        smAllComps = editableComps
+    }
+}
+
+isConvertedFromReducedSynCompTemplates = 0
+
+proc makeSureSynCompsCreatedOrImported() { localobj nil
+
+    if (isAstrocyteOrNeuron) {
+        codeContractViolation()
+    }
+    
+    if (smAllComps == nil) {
+        createOrImportSynComps(1)
+    } else if (!isBaseOrNanoStart && !isConvertedFromReducedSynCompTemplates) {
+        createOrImportSynComps(0)
+        isConvertedFromReducedSynCompTemplates = 1
+    }
+}
+
+proc makeSureSynCompsCreatedOrImportedThenShowSynManagerBaseWidget() {
+
+    makeSureSynCompsCreatedOrImported()
+    
+    dismissIfNotNil(msmBaseWidget)
+    msmBaseWidget = new MechOrSynManagerBaseWidget(0)
+    msmBaseWidget.show()
+    msmBaseWidget.showSynManagerHandler()
+    msmBaseWidget.showAltRunControlHandler()
+}

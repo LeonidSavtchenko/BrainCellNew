@@ -1,0 +1,15 @@
+
+isAstrocyteOrNeuron = -1    // Fixed var name
+{ load_file("../Code/InterModular/AllInterModularUtils.hoc") }
+
+objref mechsDllUtils
+mechsDllUtils = new MechsDllUtils("")
+
+{ sprint(mechsDllUtils.loadedNanoHocFilePathName, "%s../Nanogeometry/Neuron/cellmorphology+nano.hoc", getcwd()) }
+
+isBaseOrNanoStart = 0       // Fixed var name
+{ load_file(mechsDllUtils.loadedNanoHocFilePathName) }
+
+if (!name_declared("dendrite_ref")) {
+    printMsgAndRaiseError("Invalid nanogeometry file")
+}

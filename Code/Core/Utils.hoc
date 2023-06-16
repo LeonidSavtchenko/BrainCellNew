@@ -1,0 +1,38 @@
+
+// Removes item from the vector if it's inside.
+// $o1 - Vector to remove from
+// $o2 - Item to remove
+proc removeIfExists() { local itemIndex
+    itemIndex = $o1.index($o2)
+    if (itemIndex != -1){
+        $o1.remove(itemIndex)
+    }
+}
+
+proc initVoltage() {
+    if (isAstrocyteOrNeuron) {
+        v_init = -85    // mV
+    } else {
+        v_init = -64.65
+    }
+    finitialize(v_init)
+}
+
+proc initVoltageAndRunControlParams() {
+    initVoltage()
+    
+    t = 0
+    if (isAstrocyteOrNeuron) {
+        dt = 1              // ms
+        steps_per_ms = 1
+        tstop = 10000
+    } else {
+        dt = 1
+        steps_per_ms = 10
+        tstop = 100
+        runStopAt = 5
+        runStopIn = 1
+        screen_update_invl = 0.05
+        realtime = 0
+    }
+}

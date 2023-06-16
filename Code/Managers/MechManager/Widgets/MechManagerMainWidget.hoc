@@ -1,0 +1,130 @@
+
+proc analyzeSectsAndCreateComps() { codeContractViolation() }
+
+begintemplate MechManagerMainWidget
+
+    public show, rescanHandler, compOpSelectHandler, mechOpSelectHandler, updateVisibleMechOpChilds, dismissHandler
+    
+    external analyzeSectsAndCreateComps, dismissIfNotNil
+    external mmAllComps
+    external mwh
+    external mmcoWidget         // !! maybe it would be better to encapsulate it into MechManagerMainWidget
+    external mmmowb
+    
+    objref mainBox, this
+    
+    compOpIdx = -1
+    mechOpIdx = -1
+    
+    
+    proc init() {
+        compOpIdx = 0
+        mechOpIdx = 0
+    }
+    
+    proc show() { localobj hBox, compBox, mechBox
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            hBox = new HBox()
+            hBox.intercept(1)
+            {
+                compBox = new Deck()    // Not VBox just to fill the remaining space below in cyan
+                compBox.intercept(1)
+                {
+                    xpanel("")
+                    xlabel("Compartment* operations:")
+                    xradiobutton("Split 1 comp into 2", "compOpChangedHandler(0)", compOpIdx == 0)
+                    xradiobutton("Merge 2+ comps into 1", "compOpChangedHandler(1)", compOpIdx == 1)
+                    xradiobutton("Rename a comp", "compOpChangedHandler(2)", compOpIdx == 2)
+                    xbutton("Select", "compOpSelectHandler()")
+                    xpanel()
+                }
+                compBox.intercept(0)
+                compBox.flip_to(0)
+                compBox.map()
+                mechBox = new Deck()    // Not VBox just to fill the remaining space below in cyan
+                mechBox.intercept(1)
+                {
+                    xpanel("")
+                    xlabel("Mechanism operations:")
+                    xradiobutton("Insert/uninsert mechs", "mechOpChangedHandler(0)", mechOpIdx == 0)
+                    xradiobutton("Define models for mechs' vars", "mechOpChangedHandler(1)", mechOpIdx == 1)
+                    xradiobutton("Review inhomogen vars", "mechOpChangedHandler(2)", mechOpIdx == 2)
+                    xradiobutton("Review stoch vars", "mechOpChangedHandler(3)", mechOpIdx == 3)
+                    xbutton("Select", "mechOpSelectHandler()")
+                    xpanel()
+                }
+                mechBox.intercept(0)
+                mechBox.flip_to(0)
+                mechBox.map()
+            }
+            hBox.intercept(0)
+            hBox.map()
+            xpanel("")
+            xbutton("Rescan**", "rescanHandler()")
+            xpanel()
+            xpanel("")
+            xlabel("* Here \"compartment\" is just a group of sects sharing the same biophys model;")
+            xlabel("** Click \"Rescan\" after changing any mech vars outside this biophys manager,")
+            xlabel("   e.g. after usage of Tools -> Distributed Mechs -> Managers -> Homogen Spec")
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Manager of biophysics", 60, 100, -1, -1)
+    }
+    
+    proc rescanHandler() {
+        analyzeSectsAndCreateComps()
+        updateVisibleMechOpChilds()
+    }
+    
+    proc compOpSelectHandler() {
+        compOpChangedHandler(compOpIdx)
+    }
+    
+    proc mechOpSelectHandler() {
+        mechOpChangedHandler(mechOpIdx)
+    }
+    
+    proc updateVisibleMechOpChilds() {
+        if (mmmowb.mainBox.ismapped()) {
+            mechOpSelectHandler()
+        }
+    }
+    
+    proc dismissHandler() {
+        dismissIfNotNil(mmcoWidget)
+        mmmowb.dismissHandler()
+        mainBox.unmap()
+    }
+    
+    // All next staff is private
+    
+    
+    proc compOpChangedHandler() { localobj nil
+        compOpIdx = $1
+        
+        dismissIfNotNil(mmcoWidget)
+        
+        if (compOpIdx == 1 && mmAllComps.count() == 1) {
+            // !! this message unnecessarily shows up immediately after merging all compartments into 1
+            mwh.showMessageBox("There is only 1 compartment, so nothing to merge.", "Nothing to merge")
+            return
+        }
+        
+        if (mmcoWidget == nil) {
+            mmcoWidget = new MechManagerCompOpWidget(this)
+        } else {
+            // Empty by design, we won't destroy mmcoWidget because it could be the caller of this proc, and so its destruction can lead to Segmentation violation
+        }
+        mmcoWidget.show(compOpIdx)
+    }
+    
+    proc mechOpChangedHandler() {
+        mechOpIdx = $1
+        mmmowb.switchToOtherMechOpViewHandler(mechOpIdx)
+    }
+    
+endtemplate MechManagerMainWidget

@@ -1,0 +1,76 @@
+// UI
+objref vBoxSpatialVoltage, voltagePlot, graphDendrogramm
+// IClamp on soma
+objref currentDendrogramm
+
+// Sets IClamp params on the soma.
+// $1 - Amplitude
+// $2 - Duration
+proc stimulDendro() {
+    soma_ref.o(0).sec {
+        currentDendrogramm = new IClamp(0.5)
+        currentDendrogramm.del = 0  // ms
+        currentDendrogramm.dur = $2 // ms
+        currentDendrogramm.amp = $1 // nA
+    }
+}
+
+// Sets soma params and starts the simulation.
+proc runDendro() {
+    stimulDendro(Amplitude, DurationPlot)
+    run()
+
+    // Remove IClamp after simulation
+    objref currentDendrogramm
+}
+
+// Inits UI and simulation parameters.
+proc initParamsSpatialVoltage() {
+    Amplitude = 1 
+    DurationPlot = 10000
+    tstop = 10
+}
+
+// Shows Spatial Voltage Distribution window.
+proc showSpatialVoltageUi() {
+    vBoxSpatialVoltage = new VBox()
+    vBoxSpatialVoltage.intercept(1)
+    {
+        xpanel("")
+        xlabel("Simulation of Voltage spatial distribution")
+        xvalue("Stimulus amplitude (nA)","Amplitude", 1, "", 0, 1)
+        xvalue("Duration (ms)","DurationPlot", 1, "", 0, 1)
+        xvalue("Computation time (ms)","tstop", 1, "", 0, 1)
+        xbutton("Run", "runDendro()")
+        xpanel()
+
+        removeIfExists(flush_list, graphDendrogramm)
+        graphDendrogramm = new Graph(0)
+        flush_list.append(graphDendrogramm)
+        graphDendrogramm.size(-25, 80, -86, -80)
+        graphDendrogramm.view(-10, -88, 110, 10, 10, 319, 389.7, 318.7)
+        graphDendrogramm.label(0.05, 1, "Voltage, mV", 2, 1, 0, 1, 1)
+        graphDendrogramm.label(0.5, 0.2, "Distance from soma, um", 2, 1, 0, 1, 1)
+        //graphDendrogramm.label(0.9, 0.85, "E", 2, 1, 0, 1, 1)
+        graphDendrogramm.yaxis(3)
+        graphDendrogramm.xaxis(-2, 80, -86, 2, 0, 0, 1)
+        graphDendrogramm.yaxis(-86, -80, -2, 5, 0, 0, 1)
+
+        //for i = 0, NumberDendrites-1 {
+		  for i = 1, NumberDendrites-1 {
+            voltagePlot = new RangeVarPlot("v")
+            soma_ref.o(0).sec voltagePlot.begin(0) 
+            dendrite_ref.o(i).sec voltagePlot.end(1)
+
+            graphDendrogramm.addobject(voltagePlot, 1, 1, 1, 1)
+        }
+    }
+    vBoxSpatialVoltage.intercept(0)	//ends intercept mode
+    vBoxSpatialVoltage.map("Spatial Voltage Distributions") // ends of Geometry of Astrocyte 
+}
+
+// Opens Spatial Voltage Distribution simulation window.
+proc SpatialVoltage() {
+    initParamsSpatialVoltage()
+    showSpatialVoltageUi()
+}

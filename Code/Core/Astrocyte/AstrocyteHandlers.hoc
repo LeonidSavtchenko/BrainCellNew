@@ -1,0 +1,51 @@
+
+// 0 - Uniform distribution selected, 1 - Distribution from file selected
+// Diameter distribution of leaves
+distrStatusLeaves = 0
+// Diameter distribution of stalks
+distrStatusStalks = 0
+
+// change the volume of astocyte
+// 
+DiameterParameter = 0
+LengthChange=1
+proc changeVolume() { local j
+
+    // ParDiam = 1  // This was not used
+    forall {
+        for j = 0, n3d()-1 {
+            // !! the same code in IF and ELSE blocks below
+            if (x3d(j) > 0.01 && y3d(j) > 0.01) {
+                pt3dchange(j, x3d(j)*$2, y3d(j)*$2, z3d(j)*$2, diam+diam*$1/100) // randomStretch.uniform(-1, 1)+z3d(j)
+            } else {
+                pt3dchange(j, x3d(j)*$2, y3d(j)*$2, z3d(j)*$2, diam+diam*$1/100) // randomStretch.uniform(-1, 1)+z3d(j)
+            }
+        }
+    }
+    DiameterParameter = 0
+    LengthChange = 1
+    $1 = 0
+    $2 = 1
+    
+    MaxDendriticLength = getMaxDendriticLength()
+    // !! need to update astrocyte biophysics here because it depends on L
+} 
+// end
+
+// Change distribution of Leaves
+// $1 - Boolean. 0 - uniform distribution. 1 - distribution from file.
+proc distrSelectedLeaves() {
+    if (numarg() >= 1) {
+        distrStatusLeaves = $1
+    }
+    setLeaves(distrStatusLeaves)
+}
+
+// Change distribution of Stalks
+// $1 - Boolean. 0 - uniform distribution. 1 - distribution from file.
+proc distrSelectedStalks() {
+    if (numarg() >= 1) {
+        distrStatusStalks = $1
+    }
+    setStalks(distrStatusStalks)
+}

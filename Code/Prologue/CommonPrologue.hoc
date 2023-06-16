@@ -1,0 +1,28 @@
+
+// This file is sourced just after successful completion of the import
+
+
+MinDistance = 1             // um
+
+// The next ones will be assigned just below
+MaxDendriticLength = -1     // um
+isAllOrSomeDendritesSeeded = -1
+objref seededDendrite_ref, nanoBranchesManager
+
+
+{ load_file("GetMaxDendriticLength.hoc") }
+
+MaxDendriticLength = getMaxDendriticLength()
+
+isAllOrSomeDendritesSeeded = 1
+seededDendrite_ref = dendrite_ref
+
+{ load_file("../NanoCore/NanoBranchesManager.hoc") }
+
+if (isAstrocyteOrNeuron) {
+    nanoBranchesManager = new NanoBranchesManager(MaxNumberStalksPerDendrite)
+} else {
+    nanoBranchesManager = new NanoBranchesManager(MaxNumberSpinesPerDendrite)
+}
+
+soma_ref.o(0).sec distance()

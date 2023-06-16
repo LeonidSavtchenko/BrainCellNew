@@ -1,0 +1,56 @@
+
+// For the current section and all its children subtree, take only those sections which are selectable, and add SectionRef-s to the List
+// $o1 - The List
+// $o2 - The plugin object that implements "isCurrentSectSelectable" predicate func
+proc addThisAndFilteredChildSecRefsToTheList() { localobj list_ref, in_plugin, secList
+    list_ref = $o1
+    in_plugin = $o2
+    
+    secList = new SectionList()
+    secList.subtree()
+    
+    forsec secList {
+        if (in_plugin.isCurrentSectSelectable()) {
+            list_ref.append(new SectionRef())
+        }
+    }
+}
+
+// For all duplicate sections, remove SectionRef-s from the List, so only one copy remains
+// $o1 - The List
+proc removeAllDupSecRefsFromTheList() { localobj list_ref, secList, item
+    list_ref = $o1
+    
+    secList = new SectionList()
+    for eachItemInList(item, list_ref) {
+        item.sec secList.append()
+    }
+    
+    secList.unique()
+    
+    list_ref.remove_all()
+    forsec secList {
+        list_ref.append(new SectionRef())
+    }
+}
+
+// Check if the currently accessed section belongs to a dendrite
+// Input: usedNamesForDendrites (taken from the top level)
+// Returns: 0/1 flag
+func checkIfCurrentSecIsDendrite() { local idx
+    strdef secName
+    
+    getCurrentSecName(secName)
+    
+    // !! maybe implement something like "iterator findItemInList"
+    //    (to avoid "return" in iterator_statement which causes segmentation violation error)
+    
+    // !! improve performace here using Set in Python
+    for idx = 0, usedNamesForDendrites.count() - 1 {
+        if (stringsEqual(secName, usedNamesForDendrites.o(idx).s)) {
+            return 1
+        }
+    }
+    
+    return 0
+}

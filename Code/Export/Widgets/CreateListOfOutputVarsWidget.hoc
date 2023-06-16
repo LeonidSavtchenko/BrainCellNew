@@ -1,0 +1,115 @@
+
+begintemplate CreateListOfOutputVarsWidget
+
+    public show, dismissHandler
+    
+    external exportOptions
+    external mwh, pyObj, math
+    external addVarToGraph, unmapIfNotNil
+    external eachItemInList
+    
+    objref mainBox
+    
+    objref watchedVarsList
+    
+    
+    proc init() { local inf
+        watchedVarsList = exportOptions.watchedVarsList
+        
+        inf = math.inf
+        variable_domain(&exportOptions.numItersPerOneRecord, 1, inf)
+    }
+    
+    proc show() { localobj graph, var, apcList
+        strdef text
+        
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            xlabel("Please add all the vars you want to watch to the Graph below")
+            xlabel("using the standard tool \"Plot what?\" and then click \"OK\".")
+            xlabel("(You can use \"Delete\" to remove the vars added by mistake.)")
+            xpanel()
+            graph = new Graph()
+            for eachItemInList(var, watchedVarsList) {
+                addVarToGraph(graph, var.s)
+            }
+            graph.menu_remove("Crosshair")
+            graph.menu_remove("Pick Vector")
+            graph.menu_remove("Color/Brush")
+            graph.menu_remove("View Axis")
+            graph.menu_remove("New Axis")
+            graph.menu_remove("View Box")
+            graph.menu_remove("Erase Axis")
+            graph.menu_remove("Axis Type")      // !! this one is not deleted for some reason
+            graph.menu_remove("Keep Lines")
+            graph.menu_remove("Family Label?")
+            graph.menu_remove("Erase")
+            graph.menu_remove("Move Text")
+            graph.menu_remove("Change Text")
+            xpanel("")
+            xlabel("")
+            xpvalue("Make one record per iterations", &exportOptions.numItersPerOneRecord, 1, "numItersPerOneRecordChangedHandler()")
+            xlabel("")
+            apcList = new List("APCount")
+            sprint(text, "Record and save the times with all existing APCount-s (%d detected)", apcList.count())
+            xcheckbox(text, &exportOptions.isRecordAndSaveWithAPCounts, "recordAndSaveWithAPCountsCheckBoxHandler()")
+            xlabel("")
+            xlabel("Save to:")
+            xradiobutton("TXT file (optimized for Origin)", "saveToTxtOrBinFileRadioButtonHandler(1)", exportOptions.isSaveToTxtOrBinFile == 1)
+            xradiobutton("BIN file (Python pickle)", "saveToTxtOrBinFileRadioButtonHandler(0)", exportOptions.isSaveToTxtOrBinFile == 0)
+            xlabel("")
+            xbutton("OK", "okHandler()")
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Output variables", 150, 150, -1, -1)
+        
+        // Keep the var name in sync with GraphUtils.parseVarsFromTheGraph
+        graph.save_name("someUniqueNameForTheParsedGraph")
+    }
+    
+    proc dismissHandler() {
+        unmapIfNotNil(mainBox)
+    }
+    
+    // All next staff is private
+    
+    
+    proc numItersPerOneRecordChangedHandler() {
+        exportOptions.numItersPerOneRecord = int(exportOptions.numItersPerOneRecord)
+    }
+    
+    proc recordAndSaveWithAPCountsCheckBoxHandler() {
+        strdef line1, line2, line3
+        if (!exportOptions.isRecordAndSaveWithAPCounts) {
+            return
+        }
+        line1 = "You can use the next standard widgets to add new or edit existing APCount-s:"
+        line2 = "* Tools -> Point Processes -> Managers -> Point Manager"
+        line3 = "* Tools -> Point Processes -> Managers -> Point Group"
+        mwh.startIntercepting()
+        {
+            mwh.showNotImplementedWarning()
+            mwh.showMessageBox(line1, line2, line3, "APCount-s")
+        }
+        mwh.endIntercepting()
+    }
+    
+    proc saveToTxtOrBinFileRadioButtonHandler() {
+        exportOptions.isSaveToTxtOrBinFile = $1
+        if (!exportOptions.isSaveToTxtOrBinFile) {
+            mwh.showNotImplementedWarning()
+        }
+    }
+    
+    proc okHandler() {
+        watchedVarsList.remove_all()
+        pyObj.GraphUtils.parseVarsFromTheGraph(watchedVarsList)
+        
+        dismissHandler()
+    }
+    
+endtemplate CreateListOfOutputVarsWidget

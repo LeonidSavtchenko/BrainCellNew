@@ -1,0 +1,54 @@
+
+objref msmBaseWidget, mechManagerMainWidget, synManagerMainWidget, varsEditorSubWidget
+objref mth, mmmowb, mcu, synGroup
+
+if (makeSureDeclared("inhomAndStochLibrary") && isBaseOrNanoStart) {
+    codeContractViolation()
+}
+
+if (isAstrocyteOrNeuron) {
+    objref smAllSyns, enumSynCompIdxs, seh
+}
+
+proc loadIfNotDeclared() { local numArg, isSkipCodeContractCheck
+    strdef templName, hocFileRelPathName
+    
+    numArg = numarg()
+    if (numArg < 2 || numArg > 3) {
+        codeContractViolation()
+    }
+    
+    templName = $s1
+    hocFileRelPathName = $s2
+    
+    if (numArg == 3) {
+        isSkipCodeContractCheck = $3
+    } else {
+        isSkipCodeContractCheck = 0
+    }
+    
+    if (!name_declared(templName)) {
+        load_file(hocFileRelPathName)
+    } else if (isBaseOrNanoStart && !isSkipCodeContractCheck) {
+        codeContractViolation()
+    }
+}
+
+{ load_file("MechTypeHelper.hoc") }
+
+{ load_file("InhomAndStochLibrary/InhomAndStochLibraryLoads.hoc") }
+
+{ load_file("Widgets/Inhomogeneity/InhomEditorSectionUtils.hoc") }
+loadIfNotDeclared("SegmentationHelper", "Widgets/Inhomogeneity/SegmentationHelper.hoc")
+{ load_file("Widgets/Inhomogeneity/InhomEditorSubWidget.hoc") }
+
+loadIfNotDeclared("ColourizationHelper", "Widgets/Stochasticity/Exported/ColourizationHelper.hoc")
+loadIfNotDeclared("BoundingHelper", "Widgets/Stochasticity/Exported/BoundingHelper.hoc")
+{ load_file("Widgets/Stochasticity/StochEditorSubWidget.hoc") }
+
+{ load_file("Widgets/StochButtonHiderForVarsEditor.hoc") }
+{ load_file("Widgets/VarsEditorWidget.hoc") }
+
+{ load_file("Widgets/MechOrSynManagerBaseWidget.hoc") }
+
+{ load_file("ManagersCommonUtils.hoc") }

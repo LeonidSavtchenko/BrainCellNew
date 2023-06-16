@@ -1,0 +1,1245 @@
+//  NEURON hoc file generated from CVapp (NeuroMorpho.org version)
+//  Original file: P32-DEV136.CNG.swc 
+
+//  Generated Wed May 31 09:53:21 BST 2017
+
+
+{create soma[1]}
+{create dendrite[125]}
+
+
+{access soma[0]}
+
+soma[0] {
+  pt3dclear()
+  pt3dadd(0.23,5.83,0,13.226) 
+  pt3dadd(0.23,-0.77,0,13.226) 
+  pt3dadd(0.23,-7.38,0,13.226) 
+
+} // end of points list
+
+{soma[0] connect dendrite[0](0), 0.5}
+
+dendrite[0] {
+  pt3dclear()
+
+  //  Note: not adding point: (0.23,-0.77,0,13.226) on parent, as this is a connection to the soma.
+  //  connect statement above means that this section is connected by a zero resistance wire to that point.
+
+  pt3dadd(1.67,4.01,0,1.67) 
+  pt3dadd(2,4.68,0,1.67) 
+  pt3dadd(2,8.02,0,1.67) 
+  pt3dadd(2.34,8.69,0,1.67) 
+
+} // end of points list
+
+{dendrite[0] connect dendrite[1](0), 1}
+
+dendrite[1] {
+  pt3dclear()
+  pt3dadd(2.34,8.69,0,1.67) 
+  pt3dadd(4.34,9.19,0,1.67) 
+
+} // end of points list
+
+{dendrite[1] connect dendrite[2](0), 1}
+
+dendrite[2] {
+  pt3dclear()
+  pt3dadd(4.34,9.19,0,1.67) 
+  pt3dadd(6.36,9.69,0,1.67) 
+  pt3dadd(7.36,10.71,0,1.67) 
+  pt3dadd(7.36,11.04,0,1.67) 
+  pt3dadd(10.71,11.71,0,1.67) 
+  pt3dadd(12.71,12.05,0,1.67) 
+  pt3dadd(14.39,12.05,0,1.67) 
+
+} // end of points list
+
+{dendrite[2] connect dendrite[3](0), 1}
+
+dendrite[3] {
+  pt3dclear()
+  pt3dadd(14.39,12.05,0,1.67) 
+  pt3dadd(19.07,10.71,0,1.67) 
+
+} // end of points list
+
+{dendrite[3] connect dendrite[4](0), 1}
+
+dendrite[4] {
+  pt3dclear()
+  pt3dadd(19.07,10.71,0,1.67) 
+  pt3dadd(23.08,7.7,0,1.67) 
+
+} // end of points list
+
+{dendrite[3] connect dendrite[5](0), 1}
+
+dendrite[5] {
+  pt3dclear()
+  pt3dadd(19.07,10.71,0,1.67) 
+  pt3dadd(21.75,12.72,0,1.67) 
+  pt3dadd(22.08,12.72,0,1.67) 
+
+} // end of points list
+
+{dendrite[2] connect dendrite[6](0), 1}
+
+dendrite[6] {
+  pt3dclear()
+  pt3dadd(14.39,12.05,0,1.67) 
+  pt3dadd(17.39,14.39,0,1.67) 
+
+} // end of points list
+
+{dendrite[1] connect dendrite[7](0), 1}
+
+dendrite[7] {
+  pt3dclear()
+  pt3dadd(4.34,9.19,0,1.67) 
+  pt3dadd(0.33,9.36,0,1.67) 
+  pt3dadd(0.33,9.69,0,1.67) 
+
+} // end of points list
+
+{dendrite[0] connect dendrite[8](0), 1}
+
+dendrite[8] {
+  pt3dclear()
+  pt3dadd(2.34,8.69,0,1.67) 
+  pt3dadd(0.67,12.05,0,1.67) 
+  pt3dadd(-0.67,13.38,0,1.67) 
+
+} // end of points list
+
+{dendrite[8] connect dendrite[9](0), 1}
+
+dendrite[9] {
+  pt3dclear()
+  pt3dadd(-0.67,13.38,0,1.67) 
+  pt3dadd(-2.34,12.38,0,1.67) 
+  pt3dadd(-2.34,12.72,0,1.67) 
+
+} // end of points list
+
+{dendrite[8] connect dendrite[10](0), 1}
+
+dendrite[10] {
+  pt3dclear()
+  pt3dadd(-0.67,13.38,0,1.67) 
+  pt3dadd(2.34,15.73,0,1.67) 
+
+} // end of points list
+
+{dendrite[10] connect dendrite[11](0), 1}
+
+dendrite[11] {
+  pt3dclear()
+  pt3dadd(2.34,15.73,0,1.67) 
+  pt3dadd(4.68,14.39,0,1.67) 
+
+} // end of points list
+
+{dendrite[10] connect dendrite[12](0), 1}
+
+dendrite[12] {
+  pt3dclear()
+  pt3dadd(2.34,15.73,0,1.67) 
+  pt3dadd(1.67,15.06,0,1.67) 
+  pt3dadd(-3.35,16.05,0,1.67) 
+
+} // end of points list
+
+{dendrite[12] connect dendrite[13](0), 1}
+
+dendrite[13] {
+  pt3dclear()
+  pt3dadd(-3.35,16.05,0,1.67) 
+  pt3dadd(-5.69,17.39,0,1.67) 
+
+} // end of points list
+
+{dendrite[12] connect dendrite[14](0), 1}
+
+dendrite[14] {
+  pt3dclear()
+  pt3dadd(-3.35,16.05,0,1.67) 
+  pt3dadd(2.34,18.73,0,1.67) 
+
+} // end of points list
+
+{dendrite[14] connect dendrite[15](0), 1}
+
+dendrite[15] {
+  pt3dclear()
+  pt3dadd(2.34,18.73,0,1.67) 
+  pt3dadd(4.68,20.07,0,1.67) 
+  pt3dadd(4.68,20.41,0,1.67) 
+
+} // end of points list
+
+{dendrite[15] connect dendrite[16](0), 1}
+
+dendrite[16] {
+  pt3dclear()
+  pt3dadd(4.68,20.41,0,1.67) 
+  pt3dadd(5.69,24.09,0,1.67) 
+  pt3dadd(3.68,28.11,0,1.67) 
+
+} // end of points list
+
+{dendrite[16] connect dendrite[17](0), 1}
+
+dendrite[17] {
+  pt3dclear()
+  pt3dadd(3.68,28.11,0,1.67) 
+  pt3dadd(8.36,28.11,0,1.67) 
+
+} // end of points list
+
+{dendrite[17] connect dendrite[18](0), 1}
+
+dendrite[18] {
+  pt3dclear()
+  pt3dadd(8.36,28.11,0,1.67) 
+  pt3dadd(11.71,28.11,0,1.67) 
+  pt3dadd(11.71,28.44,0,1.67) 
+
+} // end of points list
+
+{dendrite[17] connect dendrite[19](0), 1}
+
+dendrite[19] {
+  pt3dclear()
+  pt3dadd(8.36,28.11,0,1.67) 
+  pt3dadd(10.03,31.45,0,1.67) 
+
+} // end of points list
+
+{dendrite[16] connect dendrite[20](0), 1}
+
+dendrite[20] {
+  pt3dclear()
+  pt3dadd(3.68,28.11,0,1.67) 
+  pt3dadd(0.67,29.45,0,1.67) 
+
+} // end of points list
+
+{dendrite[20] connect dendrite[21](0), 1}
+
+dendrite[21] {
+  pt3dclear()
+  pt3dadd(0.67,29.45,0,1.67) 
+  pt3dadd(4.34,30.78,0,1.67) 
+  pt3dadd(4.01,30.78,0,1.67) 
+  pt3dadd(2.68,33.79,0,1.67) 
+  pt3dadd(2.34,33.79,0,1.67) 
+
+} // end of points list
+
+{dendrite[21] connect dendrite[22](0), 1}
+
+dendrite[22] {
+  pt3dclear()
+  pt3dadd(2.34,33.79,0,1.67) 
+  pt3dadd(6.69,34.46,0,1.67) 
+  pt3dadd(10.03,35.79,0,1.67) 
+
+} // end of points list
+
+{dendrite[21] connect dendrite[23](0), 1}
+
+dendrite[23] {
+  pt3dclear()
+  pt3dadd(2.34,33.79,0,1.67) 
+  pt3dadd(4.01,36.14,0,1.67) 
+
+} // end of points list
+
+{dendrite[20] connect dendrite[24](0), 1}
+
+dendrite[24] {
+  pt3dclear()
+  pt3dadd(0.67,29.45,0,1.67) 
+  pt3dadd(-0.67,33.46,0,1.67) 
+  pt3dadd(-0.67,35.47,0,1.67) 
+
+} // end of points list
+
+{dendrite[15] connect dendrite[25](0), 1}
+
+dendrite[25] {
+  pt3dclear()
+  pt3dadd(4.68,20.41,0,1.67) 
+  pt3dadd(9.69,18.07,0,1.67) 
+
+} // end of points list
+
+{dendrite[25] connect dendrite[26](0), 1}
+
+dendrite[26] {
+  pt3dclear()
+  pt3dadd(9.69,18.07,0,1.67) 
+  pt3dadd(8.69,14.72,0,1.67) 
+
+} // end of points list
+
+{dendrite[25] connect dendrite[27](0), 1}
+
+dendrite[27] {
+  pt3dclear()
+  pt3dadd(9.69,18.07,0,1.67) 
+  pt3dadd(12.38,21.08,0,1.67) 
+
+} // end of points list
+
+{dendrite[14] connect dendrite[28](0), 1}
+
+dendrite[28] {
+  pt3dclear()
+  pt3dadd(2.34,18.73,0,1.67) 
+  pt3dadd(1.67,18.07,0,1.67) 
+  pt3dadd(-3.35,20.07,0,1.67) 
+
+} // end of points list
+
+{dendrite[28] connect dendrite[29](0), 1}
+
+dendrite[29] {
+  pt3dclear()
+  pt3dadd(-3.35,20.07,0,1.67) 
+  pt3dadd(-1.67,21.25,0,1.67) 
+
+} // end of points list
+
+{dendrite[29] connect dendrite[30](0), 1}
+
+dendrite[30] {
+  pt3dclear()
+  pt3dadd(-1.67,21.25,0,1.67) 
+  pt3dadd(0,22.42,0,1.67) 
+  pt3dadd(0.33,22.42,0,1.67) 
+  pt3dadd(3.01,24.76,0,1.67) 
+  pt3dadd(8.02,26.1,0,1.67) 
+
+} // end of points list
+
+{dendrite[29] connect dendrite[31](0), 1}
+
+dendrite[31] {
+  pt3dclear()
+  pt3dadd(-1.67,21.25,0,1.67) 
+  pt3dadd(-6.36,20.75,0,1.67) 
+  pt3dadd(-6.69,20.75,0,1.67) 
+  pt3dadd(-8.69,22.42,0,1.67) 
+  pt3dadd(-8.69,22.75,0,1.67) 
+  pt3dadd(-9.69,23.09,0,1.67) 
+
+} // end of points list
+
+{dendrite[28] connect dendrite[32](0), 1}
+
+dendrite[32] {
+  pt3dclear()
+  pt3dadd(-3.35,20.07,0,1.67) 
+  pt3dadd(-2,24.09,0,1.67) 
+  pt3dadd(-2,27.1,-6.24,1.67) 
+
+} // end of points list
+
+{soma[0] connect dendrite[33](0), 0.5}
+
+dendrite[33] {
+  pt3dclear()
+
+  //  Note: not adding point: (0.23,-0.77,0,13.226) on parent, as this is a connection to the soma.
+  //  connect statement above means that this section is connected by a zero resistance wire to that point.
+
+  pt3dadd(3.68,-0.67,0,1.67) 
+  pt3dadd(6.69,1.67,0,1.67) 
+  pt3dadd(7.36,2.34,0,1.67) 
+
+} // end of points list
+
+{dendrite[33] connect dendrite[34](0), 1}
+
+dendrite[34] {
+  pt3dclear()
+  pt3dadd(7.36,2.34,0,1.67) 
+  pt3dadd(11.71,2.68,0,1.67) 
+
+} // end of points list
+
+{dendrite[33] connect dendrite[35](0), 1}
+
+dendrite[35] {
+  pt3dclear()
+  pt3dadd(7.36,2.34,0,1.67) 
+  pt3dadd(8.36,6.69,0,1.67) 
+
+} // end of points list
+
+{soma[0] connect dendrite[36](0), 0.5}
+
+dendrite[36] {
+  pt3dclear()
+
+  //  Note: not adding point: (0.23,-0.77,0,13.226) on parent, as this is a connection to the soma.
+  //  connect statement above means that this section is connected by a zero resistance wire to that point.
+
+  pt3dadd(6.69,-4.34,0,1.67) 
+  pt3dadd(10.71,-4.01,0,1.67) 
+
+} // end of points list
+
+{dendrite[36] connect dendrite[37](0), 1}
+
+dendrite[37] {
+  pt3dclear()
+  pt3dadd(10.71,-4.01,0,1.67) 
+  pt3dadd(10.71,-6.36,0,1.67) 
+
+} // end of points list
+
+{dendrite[37] connect dendrite[38](0), 1}
+
+dendrite[38] {
+  pt3dclear()
+  pt3dadd(10.71,-6.36,0,1.67) 
+  pt3dadd(10.71,-8.69,0,1.67) 
+  pt3dadd(10.71,-8.36,0,1.67) 
+  pt3dadd(13.72,-11.38,0,1.67) 
+
+} // end of points list
+
+{dendrite[38] connect dendrite[39](0), 1}
+
+dendrite[39] {
+  pt3dclear()
+  pt3dadd(13.72,-11.38,0,1.67) 
+  pt3dadd(16.73,-16.05,0,1.67) 
+
+} // end of points list
+
+{dendrite[38] connect dendrite[40](0), 1}
+
+dendrite[40] {
+  pt3dclear()
+  pt3dadd(13.72,-11.38,0,1.67) 
+  pt3dadd(18.07,-10.03,0,1.67) 
+  pt3dadd(19.07,-10.03,0,1.67) 
+  pt3dadd(19.07,-9.69,0,1.67) 
+
+} // end of points list
+
+{dendrite[37] connect dendrite[41](0), 1}
+
+dendrite[41] {
+  pt3dclear()
+  pt3dadd(10.71,-6.36,0,1.67) 
+  pt3dadd(14.39,-5.01,0,1.67) 
+
+} // end of points list
+
+{dendrite[36] connect dendrite[42](0), 1}
+
+dendrite[42] {
+  pt3dclear()
+  pt3dadd(10.71,-4.01,0,1.67) 
+  pt3dadd(13.38,-1,0,1.67) 
+
+} // end of points list
+
+{soma[0] connect dendrite[43](0), 0.5}
+
+dendrite[43] {
+  pt3dclear()
+
+  //  Note: not adding point: (0.23,-0.77,0,13.226) on parent, as this is a connection to the soma.
+  //  connect statement above means that this section is connected by a zero resistance wire to that point.
+
+  pt3dadd(3.68,-5.01,0,1.67) 
+  pt3dadd(5.69,-10.71,0,1.67) 
+
+} // end of points list
+
+{dendrite[43] connect dendrite[44](0), 1}
+
+dendrite[44] {
+  pt3dclear()
+  pt3dadd(5.69,-10.71,0,1.67) 
+  pt3dadd(8.36,-11.38,0,1.67) 
+  pt3dadd(9.02,-14.72,0,1.67) 
+
+} // end of points list
+
+{dendrite[44] connect dendrite[45](0), 1}
+
+dendrite[45] {
+  pt3dclear()
+  pt3dadd(9.02,-14.72,0,1.67) 
+  pt3dadd(12.04,-16.39,0,1.67) 
+
+} // end of points list
+
+{dendrite[44] connect dendrite[46](0), 1}
+
+dendrite[46] {
+  pt3dclear()
+  pt3dadd(9.02,-14.72,0,1.67) 
+  pt3dadd(7.69,-19.07,0,1.67) 
+
+} // end of points list
+
+{dendrite[43] connect dendrite[47](0), 1}
+
+dendrite[47] {
+  pt3dclear()
+  pt3dadd(5.69,-10.71,0,1.67) 
+  pt3dadd(3.68,-14.05,0,1.67) 
+
+} // end of points list
+
+{soma[0] connect dendrite[48](0), 0.5}
+
+dendrite[48] {
+  pt3dclear()
+
+  //  Note: not adding point: (0.23,-0.77,0,13.226) on parent, as this is a connection to the soma.
+  //  connect statement above means that this section is connected by a zero resistance wire to that point.
+
+  pt3dadd(-0.33,-6.02,0,1.67) 
+  pt3dadd(-0.33,-10.37,0,1.67) 
+  pt3dadd(0,-10.03,0,1.67) 
+  pt3dadd(-0.33,-12.38,0,1.67) 
+
+} // end of points list
+
+{dendrite[48] connect dendrite[49](0), 1}
+
+dendrite[49] {
+  pt3dclear()
+  pt3dadd(-0.33,-12.38,0,1.67) 
+  pt3dadd(1.67,-15.73,0,1.67) 
+  pt3dadd(5.01,-18.07,0,1.67) 
+
+} // end of points list
+
+{dendrite[49] connect dendrite[50](0), 1}
+
+dendrite[50] {
+  pt3dclear()
+  pt3dadd(5.01,-18.07,0,1.67) 
+  pt3dadd(6.35,-20.24,0,1.67) 
+
+} // end of points list
+
+{dendrite[50] connect dendrite[51](0), 1}
+
+dendrite[51] {
+  pt3dclear()
+  pt3dadd(6.35,-20.24,0,1.67) 
+  pt3dadd(7.69,-22.42,0,1.67) 
+  pt3dadd(11.71,-24.76,0,1.67) 
+  pt3dadd(15.39,-24.76,0,1.67) 
+
+} // end of points list
+
+{dendrite[50] connect dendrite[52](0), 1}
+
+dendrite[52] {
+  pt3dclear()
+  pt3dadd(6.35,-20.24,0,1.67) 
+  pt3dadd(4.68,-21.41,0,1.67) 
+
+} // end of points list
+
+{dendrite[52] connect dendrite[53](0), 1}
+
+dendrite[53] {
+  pt3dclear()
+  pt3dadd(4.68,-21.41,0,1.67) 
+  pt3dadd(7.03,-26.43,0,1.67) 
+
+} // end of points list
+
+{dendrite[52] connect dendrite[54](0), 1}
+
+dendrite[54] {
+  pt3dclear()
+  pt3dadd(4.68,-21.41,0,1.67) 
+  pt3dadd(2,-27.1,0,1.67) 
+
+} // end of points list
+
+{dendrite[49] connect dendrite[55](0), 1}
+
+dendrite[55] {
+  pt3dclear()
+  pt3dadd(5.01,-18.07,0,1.67) 
+  pt3dadd(0.33,-19.73,0,1.67) 
+  pt3dadd(0.67,-22.42,0,1.67) 
+
+} // end of points list
+
+{dendrite[48] connect dendrite[56](0), 1}
+
+dendrite[56] {
+  pt3dclear()
+  pt3dadd(-0.33,-12.38,0,1.67) 
+  pt3dadd(-1,-15.73,0,1.67) 
+
+} // end of points list
+
+{soma[0] connect dendrite[57](0), 0.5}
+
+dendrite[57] {
+  pt3dclear()
+
+  //  Note: not adding point: (0.23,-0.77,0,13.226) on parent, as this is a connection to the soma.
+  //  connect statement above means that this section is connected by a zero resistance wire to that point.
+
+  pt3dadd(-2,-5.69,0,1.67) 
+  pt3dadd(-3.68,-8.69,0,1.67) 
+  pt3dadd(-4.34,-10.37,0,1.67) 
+
+} // end of points list
+
+{dendrite[57] connect dendrite[58](0), 1}
+
+dendrite[58] {
+  pt3dclear()
+  pt3dadd(-4.34,-10.37,0,1.67) 
+  pt3dadd(-3.41,-14.47,0,1.67) 
+
+} // end of points list
+
+{dendrite[58] connect dendrite[59](0), 1}
+
+dendrite[59] {
+  pt3dclear()
+  pt3dadd(-3.41,-14.47,0,1.67) 
+  pt3dadd(-2.68,-17.73,0,1.67) 
+  pt3dadd(-2.34,-17.73,0,1.67) 
+
+} // end of points list
+
+{dendrite[58] connect dendrite[60](0), 1}
+
+dendrite[60] {
+  pt3dclear()
+  pt3dadd(-3.41,-14.47,0,1.67) 
+  pt3dadd(-4.68,-14.05,0,1.67) 
+
+} // end of points list
+
+{dendrite[60] connect dendrite[61](0), 1}
+
+dendrite[61] {
+  pt3dclear()
+  pt3dadd(-4.68,-14.05,0,1.67) 
+  pt3dadd(-5.85,-14.89,0,1.67) 
+
+} // end of points list
+
+{dendrite[61] connect dendrite[62](0), 1}
+
+dendrite[62] {
+  pt3dclear()
+  pt3dadd(-5.85,-14.89,0,1.67) 
+  pt3dadd(-7.03,-15.73,0,1.67) 
+  pt3dadd(-7.36,-15.73,0,1.67) 
+
+} // end of points list
+
+{dendrite[61] connect dendrite[63](0), 1}
+
+dendrite[63] {
+  pt3dclear()
+  pt3dadd(-5.85,-14.89,0,1.67) 
+  pt3dadd(-3.68,-19.73,0,1.67) 
+
+} // end of points list
+
+{dendrite[63] connect dendrite[64](0), 1}
+
+dendrite[64] {
+  pt3dclear()
+  pt3dadd(-3.68,-19.73,0,1.67) 
+  pt3dadd(-1.67,-23.42,0,1.67) 
+
+} // end of points list
+
+{dendrite[63] connect dendrite[65](0), 1}
+
+dendrite[65] {
+  pt3dclear()
+  pt3dadd(-3.68,-19.73,0,1.67) 
+  pt3dadd(-5.69,-23.42,0,1.67) 
+
+} // end of points list
+
+{dendrite[60] connect dendrite[66](0), 1}
+
+dendrite[66] {
+  pt3dclear()
+  pt3dadd(-4.68,-14.05,0,1.67) 
+  pt3dadd(-6.36,-17.07,0,1.67) 
+
+} // end of points list
+
+{dendrite[57] connect dendrite[67](0), 1}
+
+dendrite[67] {
+  pt3dclear()
+  pt3dadd(-4.34,-10.37,0,1.67) 
+  pt3dadd(-8.02,-11.71,0,1.67) 
+
+} // end of points list
+
+{dendrite[67] connect dendrite[68](0), 1}
+
+dendrite[68] {
+  pt3dclear()
+  pt3dadd(-8.02,-11.71,0,1.67) 
+  pt3dadd(-9.03,-14.39,0,1.67) 
+
+} // end of points list
+
+{dendrite[68] connect dendrite[69](0), 1}
+
+dendrite[69] {
+  pt3dclear()
+  pt3dadd(-9.03,-14.39,0,1.67) 
+  pt3dadd(-10.03,-17.07,0,1.67) 
+
+} // end of points list
+
+{dendrite[69] connect dendrite[70](0), 1}
+
+dendrite[70] {
+  pt3dclear()
+  pt3dadd(-10.03,-17.07,0,1.67) 
+  pt3dadd(-10.03,-22.42,0,1.67) 
+
+} // end of points list
+
+{dendrite[70] connect dendrite[71](0), 1}
+
+dendrite[71] {
+  pt3dclear()
+  pt3dadd(-10.03,-22.42,0,1.67) 
+  pt3dadd(-7.36,-27.77,0,1.67) 
+  pt3dadd(-8.02,-31.45,0,1.67) 
+
+} // end of points list
+
+{dendrite[71] connect dendrite[72](0), 1}
+
+dendrite[72] {
+  pt3dclear()
+  pt3dadd(-8.02,-31.45,0,1.67) 
+  pt3dadd(-6.19,-32.95,0,1.67) 
+
+} // end of points list
+
+{dendrite[72] connect dendrite[73](0), 1}
+
+dendrite[73] {
+  pt3dclear()
+  pt3dadd(-6.19,-32.95,0,1.67) 
+  pt3dadd(-4.34,-34.46,0,1.67) 
+
+} // end of points list
+
+{dendrite[72] connect dendrite[74](0), 1}
+
+dendrite[74] {
+  pt3dclear()
+  pt3dadd(-6.19,-32.95,0,1.67) 
+  pt3dadd(-9.02,-38.81,0,1.67) 
+
+} // end of points list
+
+{dendrite[71] connect dendrite[75](0), 1}
+
+dendrite[75] {
+  pt3dclear()
+  pt3dadd(-8.02,-31.45,0,1.67) 
+  pt3dadd(-11.04,-34.13,0,1.67) 
+
+} // end of points list
+
+{dendrite[70] connect dendrite[76](0), 1}
+
+dendrite[76] {
+  pt3dclear()
+  pt3dadd(-10.03,-22.42,0,1.67) 
+  pt3dadd(-11.37,-27.1,0,1.67) 
+
+} // end of points list
+
+{dendrite[69] connect dendrite[77](0), 1}
+
+dendrite[77] {
+  pt3dclear()
+  pt3dadd(-10.03,-17.07,0,1.67) 
+  pt3dadd(-13.72,-20.07,0,1.67) 
+
+} // end of points list
+
+{dendrite[77] connect dendrite[78](0), 1}
+
+dendrite[78] {
+  pt3dclear()
+  pt3dadd(-13.72,-20.07,0,1.67) 
+  pt3dadd(-19.39,-22.08,0,1.67) 
+
+} // end of points list
+
+{dendrite[77] connect dendrite[79](0), 1}
+
+dendrite[79] {
+  pt3dclear()
+  pt3dadd(-13.72,-20.07,0,1.67) 
+  pt3dadd(-13.05,-22.75,0,1.67) 
+  pt3dadd(-14.72,-26.1,0,1.67) 
+
+} // end of points list
+
+{dendrite[68] connect dendrite[80](0), 1}
+
+dendrite[80] {
+  pt3dclear()
+  pt3dadd(-9.03,-14.39,0,1.67) 
+  pt3dadd(-11.04,-15.06,0,1.67) 
+  pt3dadd(-14.39,-17.07,0,1.67) 
+
+} // end of points list
+
+{dendrite[80] connect dendrite[81](0), 1}
+
+dendrite[81] {
+  pt3dclear()
+  pt3dadd(-14.39,-17.07,0,1.67) 
+  pt3dadd(-16.39,-22.08,0,1.67) 
+
+} // end of points list
+
+{dendrite[80] connect dendrite[82](0), 1}
+
+dendrite[82] {
+  pt3dclear()
+  pt3dadd(-14.39,-17.07,0,1.67) 
+  pt3dadd(-18.73,-17.73,0,1.67) 
+
+} // end of points list
+
+{dendrite[67] connect dendrite[83](0), 1}
+
+dendrite[83] {
+  pt3dclear()
+  pt3dadd(-8.02,-11.71,0,1.67) 
+  pt3dadd(-12.71,-11.04,0,1.67) 
+
+} // end of points list
+
+{dendrite[83] connect dendrite[84](0), 1}
+
+dendrite[84] {
+  pt3dclear()
+  pt3dadd(-12.71,-11.04,0,1.67) 
+  pt3dadd(-16.39,-13.05,0,1.67) 
+  pt3dadd(-17.05,-13.38,0,1.67) 
+
+} // end of points list
+
+{dendrite[83] connect dendrite[85](0), 1}
+
+dendrite[85] {
+  pt3dclear()
+  pt3dadd(-12.71,-11.04,0,1.67) 
+  pt3dadd(-14.05,-9.02,0,1.67) 
+  pt3dadd(-14.39,-9.02,0,1.67) 
+
+} // end of points list
+
+{soma[0] connect dendrite[86](0), 0.5}
+
+dendrite[86] {
+  pt3dclear()
+
+  //  Note: not adding point: (0.23,-0.77,0,13.226) on parent, as this is a connection to the soma.
+  //  connect statement above means that this section is connected by a zero resistance wire to that point.
+
+  pt3dadd(-3.68,-0.33,0,1.67) 
+  pt3dadd(-9.02,0.33,0,1.67) 
+
+} // end of points list
+
+{dendrite[86] connect dendrite[87](0), 1}
+
+dendrite[87] {
+  pt3dclear()
+  pt3dadd(-9.02,0.33,0,1.67) 
+  pt3dadd(-11.04,1.67,0,1.67) 
+
+} // end of points list
+
+{dendrite[87] connect dendrite[88](0), 1}
+
+dendrite[88] {
+  pt3dclear()
+  pt3dadd(-11.04,1.67,0,1.67) 
+  pt3dadd(-13.05,-1.67,0,1.67) 
+
+} // end of points list
+
+{dendrite[88] connect dendrite[89](0), 1}
+
+dendrite[89] {
+  pt3dclear()
+  pt3dadd(-13.05,-1.67,0,1.67) 
+  pt3dadd(-11.04,-4.34,0,1.67) 
+  pt3dadd(-12.38,-6.02,0,1.67) 
+
+} // end of points list
+
+{dendrite[88] connect dendrite[90](0), 1}
+
+dendrite[90] {
+  pt3dclear()
+  pt3dadd(-13.05,-1.67,0,1.67) 
+  pt3dadd(-17.05,-3.35,0,1.67) 
+
+} // end of points list
+
+{dendrite[87] connect dendrite[91](0), 1}
+
+dendrite[91] {
+  pt3dclear()
+  pt3dadd(-11.04,1.67,0,1.67) 
+  pt3dadd(-15.72,0.67,0,1.67) 
+  pt3dadd(-18.73,-1,0,1.67) 
+
+} // end of points list
+
+{dendrite[91] connect dendrite[92](0), 1}
+
+dendrite[92] {
+  pt3dclear()
+  pt3dadd(-18.73,-1,0,1.67) 
+  pt3dadd(-19.9,1,0,1.67) 
+
+} // end of points list
+
+{dendrite[92] connect dendrite[93](0), 1}
+
+dendrite[93] {
+  pt3dclear()
+  pt3dadd(-19.9,1,0,1.67) 
+  pt3dadd(-21.08,3.01,0,1.67) 
+  pt3dadd(-21.41,3.01,0,1.67) 
+  pt3dadd(-25.09,3.01,0,1.67) 
+
+} // end of points list
+
+{dendrite[93] connect dendrite[94](0), 1}
+
+dendrite[94] {
+  pt3dclear()
+  pt3dadd(-25.09,3.01,0,1.67) 
+  pt3dadd(-26.43,0.33,0,1.67) 
+
+} // end of points list
+
+{dendrite[93] connect dendrite[95](0), 1}
+
+dendrite[95] {
+  pt3dclear()
+  pt3dadd(-25.09,3.01,0,1.67) 
+  pt3dadd(-25.43,8.02,0,1.67) 
+
+} // end of points list
+
+{dendrite[92] connect dendrite[96](0), 1}
+
+dendrite[96] {
+  pt3dclear()
+  pt3dadd(-19.9,1,0,1.67) 
+  pt3dadd(-19.39,-5.01,0,1.67) 
+
+} // end of points list
+
+{dendrite[96] connect dendrite[97](0), 1}
+
+dendrite[97] {
+  pt3dclear()
+  pt3dadd(-19.39,-5.01,0,1.67) 
+  pt3dadd(-20.41,-9.69,0,1.67) 
+
+} // end of points list
+
+{dendrite[97] connect dendrite[98](0), 1}
+
+dendrite[98] {
+  pt3dclear()
+  pt3dadd(-20.41,-9.69,0,1.67) 
+  pt3dadd(-18.23,-8.69,0,1.67) 
+
+} // end of points list
+
+{dendrite[98] connect dendrite[99](0), 1}
+
+dendrite[99] {
+  pt3dclear()
+  pt3dadd(-18.23,-8.69,0,1.67) 
+  pt3dadd(-16.05,-7.7,0,1.67) 
+
+} // end of points list
+
+{dendrite[98] connect dendrite[100](0), 1}
+
+dendrite[100] {
+  pt3dclear()
+  pt3dadd(-18.23,-8.69,0,1.67) 
+  pt3dadd(-19.73,-15.06,0,1.67) 
+  pt3dadd(-21.41,-16.73,0,1.67) 
+
+} // end of points list
+
+{dendrite[100] connect dendrite[101](0), 1}
+
+dendrite[101] {
+  pt3dclear()
+  pt3dadd(-21.41,-16.73,0,1.67) 
+  pt3dadd(-20.74,-21.08,0,1.67) 
+
+} // end of points list
+
+{dendrite[100] connect dendrite[102](0), 1}
+
+dendrite[102] {
+  pt3dclear()
+  pt3dadd(-21.41,-16.73,0,1.67) 
+  pt3dadd(-25.09,-18.07,0,1.67) 
+
+} // end of points list
+
+{dendrite[97] connect dendrite[103](0), 1}
+
+dendrite[103] {
+  pt3dclear()
+  pt3dadd(-20.41,-9.69,0,1.67) 
+  pt3dadd(-22.08,-12.72,0,1.67) 
+  pt3dadd(-24.42,-14.05,0,1.67) 
+
+} // end of points list
+
+{dendrite[96] connect dendrite[104](0), 1}
+
+dendrite[104] {
+  pt3dclear()
+  pt3dadd(-19.39,-5.01,0,1.67) 
+  pt3dadd(-24.76,-7.7,0,1.67) 
+
+} // end of points list
+
+{dendrite[91] connect dendrite[105](0), 1}
+
+dendrite[105] {
+  pt3dclear()
+  pt3dadd(-18.73,-1,0,1.67) 
+  pt3dadd(-23.75,-1.67,0,1.67) 
+  pt3dadd(-23.75,-1.34,0,1.67) 
+
+} // end of points list
+
+{dendrite[86] connect dendrite[106](0), 1}
+
+dendrite[106] {
+  pt3dclear()
+  pt3dadd(-9.02,0.33,0,1.67) 
+  pt3dadd(-9.02,-4.34,0,1.67) 
+
+} // end of points list
+
+{soma[0] connect dendrite[107](0), 0.5}
+
+dendrite[107] {
+  pt3dclear()
+
+  //  Note: not adding point: (0.23,-0.77,0,13.226) on parent, as this is a connection to the soma.
+  //  connect statement above means that this section is connected by a zero resistance wire to that point.
+
+  pt3dadd(-4.68,4.68,0,1.67) 
+  pt3dadd(-6.02,7.03,0,1.67) 
+
+} // end of points list
+
+{dendrite[107] connect dendrite[108](0), 1}
+
+dendrite[108] {
+  pt3dclear()
+  pt3dadd(-6.02,7.03,0,1.67) 
+  pt3dadd(-9.36,9.69,0,1.67) 
+  pt3dadd(-12.04,12.05,0,1.67) 
+
+} // end of points list
+
+{dendrite[108] connect dendrite[109](0), 1}
+
+dendrite[109] {
+  pt3dclear()
+  pt3dadd(-12.04,12.05,0,1.67) 
+  pt3dadd(-15.79,17.35,0,1.67) 
+
+} // end of points list
+
+{dendrite[109] connect dendrite[110](0), 1}
+
+dendrite[110] {
+  pt3dclear()
+  pt3dadd(-15.79,17.35,0,1.67) 
+  pt3dadd(-17.73,20.07,0,1.67) 
+  pt3dadd(-22.08,22.08,0,1.67) 
+
+} // end of points list
+
+{dendrite[109] connect dendrite[111](0), 1}
+
+dendrite[111] {
+  pt3dclear()
+  pt3dadd(-15.79,17.35,0,1.67) 
+  pt3dadd(-13.72,14.39,0,1.67) 
+  pt3dadd(-15.39,16.39,0,1.67) 
+
+} // end of points list
+
+{dendrite[111] connect dendrite[112](0), 1}
+
+dendrite[112] {
+  pt3dclear()
+  pt3dadd(-15.39,16.39,0,1.67) 
+  pt3dadd(-17.73,17.73,0,1.67) 
+  pt3dadd(-17.39,17.73,0,1.67) 
+  pt3dadd(-22.75,19.07,0,1.67) 
+
+} // end of points list
+
+{dendrite[111] connect dendrite[113](0), 1}
+
+dendrite[113] {
+  pt3dclear()
+  pt3dadd(-15.39,16.39,0,1.67) 
+  pt3dadd(-19.07,15.06,0,1.67) 
+  pt3dadd(-23.42,15.06,0,1.67) 
+
+} // end of points list
+
+{dendrite[108] connect dendrite[114](0), 1}
+
+dendrite[114] {
+  pt3dclear()
+  pt3dadd(-12.04,12.05,0,1.67) 
+  pt3dadd(-16.73,11.38,0,1.67) 
+
+} // end of points list
+
+{dendrite[107] connect dendrite[115](0), 1}
+
+dendrite[115] {
+  pt3dclear()
+  pt3dadd(-6.02,7.03,0,1.67) 
+  pt3dadd(-12.38,6.36,0,1.67) 
+
+} // end of points list
+
+{dendrite[115] connect dendrite[116](0), 1}
+
+dendrite[116] {
+  pt3dclear()
+  pt3dadd(-12.38,6.36,0,1.67) 
+  pt3dadd(-11.87,4.85,0,1.67) 
+
+} // end of points list
+
+{dendrite[116] connect dendrite[117](0), 1}
+
+dendrite[117] {
+  pt3dclear()
+  pt3dadd(-11.87,4.85,0,1.67) 
+  pt3dadd(-11.37,3.35,0,1.67) 
+
+} // end of points list
+
+{dendrite[116] connect dendrite[118](0), 1}
+
+dendrite[118] {
+  pt3dclear()
+  pt3dadd(-11.87,4.85,0,1.67) 
+  pt3dadd(-15.39,4.34,0,1.67) 
+
+} // end of points list
+
+{dendrite[115] connect dendrite[119](0), 1}
+
+dendrite[119] {
+  pt3dclear()
+  pt3dadd(-12.38,6.36,0,1.67) 
+  pt3dadd(-19.07,8.02,0,1.67) 
+
+} // end of points list
+
+{soma[0] connect dendrite[120](0), 0.5}
+
+dendrite[120] {
+  pt3dclear()
+
+  //  Note: not adding point: (0.23,-0.77,0,13.226) on parent, as this is a connection to the soma.
+  //  connect statement above means that this section is connected by a zero resistance wire to that point.
+
+  pt3dadd(-2,4.01,0,1.67) 
+  pt3dadd(-2,4.68,0,1.67) 
+  pt3dadd(-4.68,11.38,0,1.67) 
+  pt3dadd(-7.03,13.38,0,1.67) 
+
+} // end of points list
+
+{dendrite[120] connect dendrite[121](0), 1}
+
+dendrite[121] {
+  pt3dclear()
+  pt3dadd(-7.03,13.38,0,1.67) 
+  pt3dadd(-7.03,18.07,0,1.67) 
+
+} // end of points list
+
+{dendrite[120] connect dendrite[122](0), 1}
+
+dendrite[122] {
+  pt3dclear()
+  pt3dadd(-7.03,13.38,0,1.67) 
+  pt3dadd(-10.37,14.72,0,1.67) 
+
+} // end of points list
+
+{dendrite[122] connect dendrite[123](0), 1}
+
+dendrite[123] {
+  pt3dclear()
+  pt3dadd(-10.37,14.72,0,1.67) 
+  pt3dadd(-13.05,20.75,0,1.67) 
+  pt3dadd(-13.05,21.08,0,1.67) 
+
+} // end of points list
+
+{dendrite[122] connect dendrite[124](0), 1}
+
+dendrite[124] {
+  pt3dclear()
+  pt3dadd(-10.37,14.72,0,1.67) 
+  pt3dadd(-10.71,18.73,0,1.67) 
+
+}

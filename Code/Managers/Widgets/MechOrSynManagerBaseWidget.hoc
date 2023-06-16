@@ -1,0 +1,132 @@
+
+{ load_file("../../Core/Widgets/Exported/alt_stdrun.hoc") }
+loadIfNotDeclared("AltRunControlWidget", "../../Core/Widgets/Exported/AltRunControlWidget.hoc")
+
+
+isScheduledRescanningOfDistMechs = 0
+
+objref exportManagerMainWidget
+
+begintemplate MechOrSynManagerBaseWidget
+
+    public show, showMechManagerHandler, showSynManagerHandler, showAltRunControlHandler, onNanoReseedOrUpdateHandler, dismissHandler
+    
+    external mechManagerMainWidget, synManagerMainWidget, exportManagerMainWidget
+    external mmAllComps, smAllSyns, synGroup
+    external mwh
+    external inhomAndStochLibrary
+    external dismissIfNotNil
+    external isScheduledRescanningOfDistMechs
+    
+    objref mainBox, this
+    objref altRunControlWidget
+    
+    isMechOrSyn = -1
+    
+    
+    proc init() {
+        isMechOrSyn = $1
+    }
+    
+    proc show() {
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            if (isMechOrSyn) {
+                xbutton("Show biophys manager", "showMechManagerHandler()")
+            } else {
+                xbutton("Show synapse manager", "showSynManagerHandler()")
+            }
+            xbutton("Show Alt Run Control", "showAltRunControlHandler()")
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Base widget", 25, 575, -1, -1)
+    }
+    
+    proc showMechManagerHandler() { localobj nil
+        dismissIfNotNil(exportManagerMainWidget)
+        dismissIfNotNil(mechManagerMainWidget)
+        
+        if (mmAllComps.count() == 0) {
+            mwh.showWarningBox("Cannot open the biophys manager because there are no compartments.")
+            return
+        }
+        
+        if (mechManagerMainWidget == nil) {
+            execute("mechManagerMainWidget = new MechManagerMainWidget()", this)
+        }
+        mechManagerMainWidget.show()
+        if (isScheduledRescanningOfDistMechs) {
+            mechManagerMainWidget.rescanHandler()
+        }
+        mechManagerMainWidget.mechOpSelectHandler()
+    }
+    
+    proc showSynManagerHandler() { local isDisconnected, xMin, xMax localobj nil
+        dismissIfNotNil(exportManagerMainWidget)
+        dismissIfNotNil(synManagerMainWidget)
+        
+        if (smAllSyns.count() == 0) {
+            mwh.showWarningBox("Cannot open the synapse manager because there are no synapses.")
+            return
+        }
+        
+        if (synManagerMainWidget == nil) {
+            execute("synManagerMainWidget = new SynManagerMainWidget()", this)
+        }
+        
+        isDisconnected = synGroup.getDistRange(&xMin, &xMax)
+        if (isDisconnected) {
+            mwh.showWarningBox("Cannot edit inhomogeneity in synapses", "because at least one synapse target section doesn't have a topological connection with the distance centre.")
+            
+            // !! overkill here: we don't need to prevent opening the widget because user might wanted to do smth unrelated to inhomogeneity
+            return
+        }
+        
+        synManagerMainWidget.show(xMin, xMax)
+    }
+    
+    proc showAltRunControlHandler() {
+        dismissIfNotNil(altRunControlWidget)
+        altRunControlWidget = new AltRunControlWidget()
+        altRunControlWidget.show()
+    }
+    
+    proc onNanoReseedOrUpdateHandler() { localobj nil
+        mwh.startIntercepting()
+        {
+            if (mechManagerMainWidget != nil) {
+                mwh.showNotImplementedWarning("Cannot preserve the comps, mechs and vars defined with the biophys manager.")
+                // !! BUG: the values shown in VarsEditorWidget become inconsistent with the actual sections;
+                //         need schedule the call of proc analyzeSectsAndCreateComps() to reset vars in mechStds
+            }
+            if (synManagerMainWidget != nil) {
+                mwh.showNotImplementedWarning("Cannot preserve the syn loc, struc, PPs and vars defined with the synapse manager.")
+                // !! BUG: the values shown in VarsEditorWidget become inconsistent with the actual synapses;
+                //         need schedule the call of proc createSynComps() to reset vars in mechStds
+            }
+        }
+        mwh.endIntercepting()
+        inhomAndStochLibrary.onNanoReseedOrUpdate()
+        dismissManagers()
+        isScheduledRescanningOfDistMechs = 1    // !! for higher performance, it would be better to rescan only nanogeometry
+    }
+    
+    proc dismissHandler() {
+        dismissManagers()
+        dismissIfNotNil(altRunControlWidget)
+        mainBox.unmap()
+    }
+    
+    // All next staff is private
+    
+    
+    proc dismissManagers() {
+        dismissIfNotNil(mechManagerMainWidget)
+        dismissIfNotNil(synManagerMainWidget)
+    }
+    
+endtemplate MechOrSynManagerBaseWidget

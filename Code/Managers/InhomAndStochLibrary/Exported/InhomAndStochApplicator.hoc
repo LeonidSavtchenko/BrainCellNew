@@ -1,0 +1,85 @@
+
+begintemplate InhomAndStochApplicator
+    
+    public startPlayingVars, stopPlayingVars, onInit, onStep
+    
+    external smAllSyns
+    external inhomAndStochLibrary, seh
+    external eachItemInList
+    external codeContractViolation
+    
+    
+    iterator eachActiveSpecialVarFromLib() { codeContractViolation() }
+    
+    func startPlayingVars() { local isAllPlayed, isThisPlayed localobj specVar
+        isAllPlayed = 1
+        for eachActiveSpecialVarFromLib(specVar) {
+            isThisPlayed = specVar.setPlayIfPossible()
+            isAllPlayed = isAllPlayed && isThisPlayed
+        }
+        if (!isAllPlayed) {
+            return 1
+        }
+        return isMinRPlt1()
+    }
+    
+    proc stopPlayingVars() { localobj specVar
+        for eachActiveSpecialVarFromLib(specVar) {
+            specVar.stopPlayingVars()
+        }
+    }
+    
+    proc onInit() { localobj specVar
+        for eachActiveSpecialVarFromLib(specVar) {
+            specVar.onInit()
+        }
+    }
+    
+    proc onStep() { localobj specVar
+        for eachActiveSpecialVarFromLib(specVar) {
+            specVar.onStep()
+        }
+        afterStep()
+    }
+    
+    // All next staff is private
+    
+    
+    iterator eachActiveSpecialVarFromLib() { local specVarIdx localobj activeSpecVars
+        activeSpecVars = inhomAndStochLibrary.activeSpecVars
+        for specVarIdx = 0, activeSpecVars.count() - 1 {
+            $o1 = activeSpecVars.o(specVarIdx)
+            iterator_statement
+        }
+    }
+    
+    proc afterStep() { localobj syn
+        if (!isSefwEnabled()) {
+            return
+        }
+        for eachItemInList(syn, smAllSyns) {
+            // !! it would be better to set it back to 0 in MOD code rather than here,
+            //    but I couldn't figure out what type of block in MOD file should contain the assignment operator to execute it in the right time
+            syn.sefwPp.isAnyEventsOnThisIter = 0
+        }
+    }
+    
+    func isMinRPlt1() { localobj nil
+        if (seh == nil) {
+            return 0
+        }
+        return seh.isMinRPlt1
+    }
+    
+    func isSefwEnabled() { localobj nil
+        if (seh == nil) {
+            return 0
+        }
+        return seh.isSefwEnabled()
+    }
+    
+endtemplate InhomAndStochApplicator
+
+
+objref inhomAndStochApplicator
+inhomAndStochApplicator = new InhomAndStochApplicator()

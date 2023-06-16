@@ -1,0 +1,109 @@
+
+// Print bulleted list of all strings
+// $o1 - The List of String-s
+proc printListOfStrings() { local idx localobj list
+    list = $o1
+    for idx = 0, list.count() - 1 {
+        printf("    * %s\n", list.o(idx).s)
+    }
+}
+
+// Get file extension in lower case
+// $s1 - File path and name
+// $s2 (output) - The file extension in lower case (without dot)
+proc getFileExtLowerCase() { localobj strFunc
+    strdef filePathName, tempStr, fileExt
+    
+    filePathName = $s1
+    
+    strFunc = new StringFunctions()
+    
+    sprint(tempStr, "%s", filePathName)
+    while (1) {
+        strFunc.tail(tempStr, "\\.", fileExt)
+        if (stringEmpty(fileExt)) {
+            fileExt = tempStr
+            break
+        } else {
+            sprint(tempStr, "%s", fileExt)
+        }
+    }
+    
+    stringToLowerCase(fileExt, $s2)
+}
+
+// Try to load the HOC file with "load_file" and print some clues if failed
+// $s1 - Input HOC file path and name
+// Output: All new top-level declarations from the file
+proc loadHocFile() { local wasSomethingImported, status
+    strdef inFilePathName
+    
+    inFilePathName = $s1
+    
+    wasSomethingImported = isSomethingImported
+    mwh.showPleaseWaitBox("Loading geometry file.")
+    {
+        status = load_file(1, inFilePathName)
+    }
+    mwh.hidePleaseWaitBox()
+    isSomethingImported = 1
+    
+    if (!status) {
+        print "\n\n    Import Failed: The loaded HOC file"
+        print "        * Either has some internal error"
+        print "        * Or tries to declare a name reserved by the importer"
+        if (wasSomethingImported) {
+            print "        * Or tries to declare a name already declared by other HOC file imported earlier"
+        }
+        print ""
+        execerror("")
+    }
+}
+
+// Show imported geometry sketch
+// Input: isAstrocyteOrNeuron (taken from the top level)
+proc showImportedGeometry() {
+    if (isAstrocyteOrNeuron) {
+        // This proc is defined in Astro
+        showSelectedGeometry()
+    } else {
+        showImportedGeometry_importer()
+    }
+}
+
+// Hide imported geometry sketch
+// Input: isAstrocyteOrNeuron (taken from the top level)
+proc hideImportedGeometry() {
+    if (isAstrocyteOrNeuron) {
+        // This objref is defined in Astro
+        execute("plotShapeGeometry.unmap()")
+    } else {
+        plotShapeGeometry_importer.unmap()
+    }
+}
+
+// Choose the output location and export the resulting HOC file
+proc chooseOutLocationAndExportHocFile() { localobj file
+    strdef defaultDirPath
+    
+    file = new File()
+    sprint(defaultDirPath, "%sGeometry/", getcwd())
+    file.chooser("w", "Export base geometry", "*.hoc", "Save", "Cancel", defaultDirPath)
+    if (!file.chooser()) {
+        // User decided not to export anything
+        return
+    }
+    
+    // Copy HOC file from the temporary folder to the specified location
+    copyHocFile(file.getname)
+}
+
+// Cleanup before the next import
+// Input: isAstrocyteOrNeuron (taken from the top level)
+proc cleanupBeforeNextImport() {
+    hideImportedGeometry()
+    deleteAllSectionRefs()
+    deleteAllSections()
+    // delete NumberDendrites   // This will cause the strange error "NumberDendrites undefined variable" when we'll try to create it again in importHocFile_layer2
+    NumberDendrites = -1
+}

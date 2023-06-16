@@ -1,0 +1,105 @@
+
+begintemplate ListsFilterWidget
+
+    public show, loosenFilter, dismissHandler
+    public filterLevel
+    
+    external createEmptyPanel, unmapIfNotNil, codeContractViolation
+    
+    objref mainBox, deck1, deck2
+    objref lastParentWidget
+    
+    filterLevel = -1
+    
+    
+    proc init() {
+        filterLevel = 3     // 0: "No filtration", 1: "Minimum filtration", 2: "Moderate filtration", 3: "Maximum filtration"
+                            // (it's a code contract that the default value corresponds to "Maximum filtration")
+    }
+    
+    proc show() {
+        lastParentWidget = $o1
+        
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            xradiobutton("No filtration (safety is off)", "filterLevelChangedHandler(0)", filterLevel == 0)
+            xradiobutton("Minimum filtration (safety is off)", "filterLevelChangedHandler(1)", filterLevel == 1)
+            xradiobutton("Moderate filtration", "filterLevelChangedHandler(2)", filterLevel == 2)
+            xradiobutton("Maximum filtration", "filterLevelChangedHandler(3)", filterLevel == 3)
+            xlabel("")
+            xbutton("OK", "okHandler()")
+            xpanel()
+            deck1 = new Deck()
+            deck1.intercept(1)
+            {
+                xpanel("")
+                xlabel("All available PPs are shown, even incompatible")
+                xlabel("and designed for internal use only.")
+                xpanel()
+                xpanel("")
+                xlabel("Most of available PPs are shown, even incompatible.")
+                xlabel("But PPs designed for internal use only are not shown.")
+                xpanel()
+                xpanel("")
+                xlabel("Only compatible PPs are shown, even not suitable for the role.")
+                xpanel()
+                xpanel("")
+                xlabel("Only compatible PPs suitable for synapses are shown.")
+                xpanel()
+            }
+            deck1.intercept(0)
+            deck1.flip_to(filterLevel)
+            deck1.map()
+            deck2 = new Deck()
+            deck2.intercept(1)
+            {
+                xpanel("")
+                xlabel("Warning: Be ready for the following errors:")
+                xlabel("* No NET_RECEIVE in target PointProcess")
+                xlabel("* ARTIFICIAL_CELLs are not located in a section")
+                xlabel("as well as misbehaving without an explicit error.")
+                xpanel()
+                createEmptyPanel()
+            }
+            deck2.intercept(0)
+            deck2.flip_to(filterLevel >= 2)
+            deck2.map()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Lists filter", 200, 450, -1, -1)
+    }
+    
+    proc loosenFilter() {
+        if (filterLevel == 0) {
+            codeContractViolation()
+        }
+        filterLevel -= 1
+    }
+    
+    proc dismissHandler() {
+        unmapIfNotNil(mainBox)
+    }
+    
+    // All next staff is private
+    
+    
+    proc filterLevelChangedHandler() { local cardIdx
+        filterLevel = $1
+        cardIdx = filterLevel
+        deck1.flip_to(cardIdx)
+        cardIdx = (filterLevel >= 2)
+        deck2.flip_to(cardIdx)
+        lastParentWidget.onListsFilterLevelChangedHandler(0)
+    }
+    
+    proc okHandler() {
+        dismissHandler()
+    }
+    
+endtemplate ListsFilterWidget
+
+objref smlfw
+smlfw = new ListsFilterWidget()

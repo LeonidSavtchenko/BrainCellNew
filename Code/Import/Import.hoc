@@ -1,0 +1,79 @@
+
+{ load_file("TopLevelVars.hoc") }
+{ load_file("../InterModular/InterModularStringUtils.hoc") }    // stringEmpty, stringsEqual, containsSubstring
+{ load_file("../InterModular/InterModularPythonUtils.hoc") }    // stringToLowerCase
+{ load_file("ErrWarnUtils.hoc") }
+{ load_file("ListCopyUtils.hoc") }
+{ load_file("PythonUtilsForImport.hoc") }
+{ load_file("BatchUtils.hoc") }
+{ load_file("CheckUtils.hoc") }
+{ load_file("DefaultSelectionUtils.hoc") }
+{ load_file("../InterModular/InterModularSectionUtils.hoc") }   // getAllSectionNames
+{ load_file("SectionUtils.hoc") }
+{ load_file("SectionRefUtils.hoc") }
+{ load_file("PreviewUtils.hoc") }
+{ load_file("OtherUtils.hoc") }
+{ load_file("Widgets_layer2.hoc") }
+{ load_file("Import_layer2.hoc") }
+{ load_file("Widgets_layer1.hoc") }
+{ load_file("Import_layer1.hoc") }
+
+
+// !! need to add some check that user doesn't try to import a nanogeometry file in that way
+
+// Import a file
+// $s1 - (Optional) HOC command to execute after successful import completion
+// $s2 - (Optional) Path to the input file; if omitted, then file browser will be shown
+// Other input: isAstrocyteOrNeuron (taken from the top level)
+// Output (all initialized on the top level):
+//      always: soma_ref, dendrite_ref (both List-s of SectionRef-s), NumberDendrites (scalar), usedNamesForSoma, usedNamesForDendrites (both List-s of String-s)
+//      only if !isAstrocyteOrNeuron: axon_ref (List of SectionRef-s), usedNamesForAxon (List of String-s)
+proc importHocOrSwcOrZipOrOtherFile() { local numArg localobj file
+    strdef filePathName, defaultDirPath, fileExtLower
+    
+    if (unix_mac_pc() != 3) {
+        printImportFailedMsgAndRaiseError("The importer works only on Windows")
+    }
+    
+    if (!nrnpython("")) {
+        printImportFailedMsgAndRaiseError("Python is not available")
+    }
+    
+    numArg = numarg()
+    if (numArg > 2) {
+        printImportFailedMsgAndRaiseError("0, 1 or 2 input arguments expected")
+    }
+    
+    if (numArg >= 1) {
+        importCompleteHandler = $s1
+    } else {
+        importCompleteHandler = ""
+    }
+    
+    if (numArg == 2) {
+        filePathName = $s2
+    } else {
+        file = new File()
+        sprint(defaultDirPath, "%sGeometry/", getcwd())
+        file.chooser("r", "Import base geometry", "*.*", "Load", "Cancel", defaultDirPath)
+        if (!file.chooser()) {
+            // File wasn't selected
+            return
+        }
+        
+        filePathName = file.getname
+    }
+    
+    // Prepare the temporary folder
+    createOrCleanUpTempFolder("Code/Import/temp_folder")
+    
+    getFileExtLowerCase(filePathName, fileExtLower)
+    
+    if (stringsEqual(fileExtLower, "hoc")) {
+        importHocFile_layer1(filePathName, 0, 0, -1)
+    } else if (stringsEqual(fileExtLower, "zip")) {
+        importSwcFileFromZipArchive_layer1(filePathName)
+    } else {
+        importSwcOrOtherFile_layer1(filePathName)
+    }
+}

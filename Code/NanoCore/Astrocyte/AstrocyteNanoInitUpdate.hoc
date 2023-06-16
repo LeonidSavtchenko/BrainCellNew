@@ -1,0 +1,16 @@
+
+proc addLeaves() {
+    nanoBranchesManager.reseedBranches(distrStatusLeaves, distrStatusStalks)
+}
+
+proc setLeaves() { local isDiamDistrFromFileOrUniform
+    isDiamDistrFromFileOrUniform = $1
+    
+    nanoBranchesManager.updateBranches(1, isDiamDistrFromFileOrUniform)
+}
+
+proc setStalks() { local isDiamDistrFromFileOrUniform
+    isDiamDistrFromFileOrUniform = $1
+    
+    nanoBranchesManager.updateBranches(0, isDiamDistrFromFileOrUniform)
+}

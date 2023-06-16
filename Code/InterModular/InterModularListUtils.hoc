@@ -1,0 +1,56 @@
+
+{ load_file("Exported/InterModularListUtils_Exported.hoc") }
+
+// Append all items from the second list to the first one
+// $o1 (in/out) - The first List
+// $o2 - The second List
+proc concatenateTwoLists() { localobj list1, list2, item2
+    list1 = $o1
+    list2 = $o2
+    for eachItemInList(item2, list2) {
+        list1.append(item2)
+    }
+}
+
+// As a side effect, the replaced item will not be selected anymore
+proc replaceItemInList() { local idx localobj list, item
+    list = $o1
+    item = $o2
+    idx = $3
+    // list.o(idx) = item       // Error
+    list.remove(idx)
+    list.insrt(idx, item)
+}
+
+// $o1 (in/out) - The list to analyze which must contain objects with public "s" field
+// $s2 - The string to find
+// Returns: The index
+func findItemInListByStringAndSelect() { local idx localobj list
+    strdef strToFind
+    
+    list = $o1
+    strToFind = $s2
+    
+    for idx = 0, list.count() - 1 {
+        if (stringsEqual(list.o(idx).s, strToFind)) {
+            list.select(idx)
+            return idx
+        }
+    }
+    
+    codeContractViolation()
+}
+
+begintemplate ItemOfFilteredBrowsedList
+
+    public idx, s
+    
+    idx = -1
+    strdef s
+    
+    proc init() {
+        idx = $1
+        s = $s2
+    }
+    
+endtemplate ItemOfFilteredBrowsedList
