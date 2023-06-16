@@ -1,4 +1,0 @@
-
-loadIfNotDeclared("UtilsForFakeMechanismForNetCon", "Exported/UtilsForFakeMechanismForNetCon.hoc")
-{ load_file("FakeMechanismTypeForNetCon.hoc") }
-loadIfNotDeclared("FakeMechanismStandardForNetCon", "Exported/FakeMechanismStandardForNetCon.hoc")

@@ -1,9 +1,0 @@
-
-{ load_file("ItemOfInputVarsBrowsedList.hoc") }
-
-{ load_file("AddOneInputVarWidget.hoc") }
-{ load_file("DefineGridForInputVarWidget.hoc") }
-{ load_file("CreateListOfInputVarsWidget.hoc") }
-{ load_file("CreateListOfOutputVarsWidget.hoc") }
-{ load_file("ExportOptions.hoc") }
-{ load_file("ExportManagerMainWidget.hoc") }

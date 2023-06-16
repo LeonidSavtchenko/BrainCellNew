@@ -1,9 +1,0 @@
-
-isAstrocyteOrNeuron = -1    // Fixed var name
-{ load_file("../Code/InterModular/AllInterModularUtils.hoc") }
-
-strdef loadedNanoHocFilePathName    // Fixed var name
-{ sprint(loadedNanoHocFilePathName, "%s../Nanogeometry/Neuron/cellmorphology+nano.hoc", getcwd()) }
-
-isBaseOrNanoStart = 0       // Fixed var name
-{ load_file(loadedNanoHocFilePathName) }

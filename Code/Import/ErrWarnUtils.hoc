@@ -1,8 +1,0 @@
-
-// Print "Import Failed" message, print the call stack, raise the error
-// $s1 - The message
-proc printImportFailedMsgAndRaiseError() {
-    strdef msg
-    sprint(msg, "Import Failed: %s", $s1)
-    printMsgAndRaiseError(msg)
-}

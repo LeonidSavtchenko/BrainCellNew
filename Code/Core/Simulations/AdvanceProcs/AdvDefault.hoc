@@ -1,4 +1,0 @@
-// Used to replaces advance() from simulation by the default one.
-proc advance() {
-    fadvance()
-}
