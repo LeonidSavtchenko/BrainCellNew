@@ -177,13 +177,13 @@ begintemplate CreateListOfInputVarsWidget
             return
         }
         
-        exprsList.append(new ItemOfInputVarsBrowsedList(expr))
+        exprsList.append(new ExposedOrSweptInputVar(expr))
         
         numVars = exprsList.count()
         exprsList.select(numVars - 1)
     }
     
-    proc correctVarHandler() { local selVarIdx, enumSpDmCe, isOK localobj oldItem, newItem
+    proc correctVarHandler() { local selVarIdx, enumSpDmCeSt, isOK localobj oldItem, newItem
         strdef expr
         
         dismissChilds()
@@ -195,18 +195,18 @@ begintemplate CreateListOfInputVarsWidget
         }
         
         oldItem = exprsList.o(selVarIdx)
-        enumSpDmCe = oldItem.enumSpDmCe
-        if (enumSpDmCe == 0) {
+        enumSpDmCeSt = oldItem.enumSpDmCeSt
+        if (enumSpDmCeSt == 0) {
             correctBiophysOrSynVar(1, oldItem, selVarIdx)
-        } else if (enumSpDmCe == 1) {
+        } else if (enumSpDmCeSt == 1) {
             correctBiophysOrSynVar(0, oldItem, selVarIdx)
-        } else if (enumSpDmCe == 2) {
+        } else if (enumSpDmCeSt == 2) {
             expr = oldItem.customExpr
             isOK = enterVarExpression(expr, exprsList)
             if (!isOK) {
                 return
             }
-            newItem = new ItemOfInputVarsBrowsedList(expr)
+            newItem = new ExposedOrSweptInputVar(expr)
             onVarCorrectHandler(newItem, selVarIdx)
         } else {
             codeContractViolation()
@@ -235,7 +235,7 @@ begintemplate CreateListOfInputVarsWidget
         exprsList.select(selVarIdx)
     }
     
-    proc defineVarGridHandler() { local selVarIdx localobj gridInfoOrNil
+    proc defineVarGridHandler() { local selVarIdx localobj gridInfoOrNil, sweptVar
         dismissChilds()
         
         selVarIdx = exprsList.selected()
@@ -245,7 +245,8 @@ begintemplate CreateListOfInputVarsWidget
         }
         
         gridInfoOrNil = exprsList.o(selVarIdx).gridInfoOrNil
-        dg4ivWidget.show(gridInfoOrNil, selVarIdx)      // --> onDefineVarGridOkHandler
+        sweptVar = exprsList.o(selVarIdx)
+        dg4ivWidget.show(gridInfoOrNil, selVarIdx, sweptVar)    // --> onDefineVarGridOkHandler
     }
     
     proc okHandler() {

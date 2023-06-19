@@ -5,30 +5,47 @@ from Utils.OtherUtils import *
 
 class GensForRunnerHoc:
     
-    # Data members that will be added in the ctor:
-    #   _exportOptions
+    # Data member that will be added in the ctor:
     #   _outMainHocFileName
     
     def __init__(self, outMainHocFileName):
-        self._exportOptions = hocObj.exportOptions
         self._outMainHocFileName = outMainHocFileName
         
     def getPrologue(self):
         lines = []
-        lines.append('strdef runnedHocFileName, outFolderName')
-        lines.append('runnedHocFileName = "{}"'.format(self._outMainHocFileName))
-        lines.append('outFolderName = "results"')
+        
+        line2 = 'runnedHocFileName = "{}"'.format(self._outMainHocFileName)
+        
+        if hocObj.exportOptions.isAnySweptVars() or hocObj.exportOptions.isAnyWatchedVars():
+            # !!!! if not hocObj.exportOptions.isAnyWatchedVars(), then there is no need to define "outFolderName" and "outFileNameFormat",
+            #      but currently "outFolderName" accessed from hoc:createTempHocFileWithoutTemplatesAndOutputFolder, and skipping it here would lead to an error
+            lines.append('strdef runnedHocFileName, outFolderName, outFileNameFormat')
+            lines.append(line2)
+            lines.append('outFolderName = "results"')
+            lines.append('outFileNameFormat = "%Y-%m-%d %H.%M.%S.txt"')
+        else:
+            lines.append('strdef runnedHocFileName')
+            lines.append(line2)
+            
         return lines
         
     def getSweptVars(self):
-        if not self._exportOptions.isAnySweptVars():
+        if not hocObj.exportOptions.isAnySweptVars():
             return emptyParagraphHint()
             
         lines = []
         
-        sweptVarsList = self._exportOptions.sweptVarsList
+        sweptVarsList = hocObj.exportOptions.sweptVarsList
         numSweptVars = len(sweptVarsList)
         
+        if hocObj.exportOptions.isAnyWatchedVars():
+            lines.append('objref sweptVarUserReadableNames')
+            lines.append('sweptVarUserReadableNames = new List()')
+            for sweptVar in sweptVarsList:
+                userReadableName = sweptVar.s.replace('\\', '\\\\') + UnitsUtils.getUnitsCommentForExposedOrSweptVar(sweptVar)
+                lines.append(f'{{ sweptVarUserReadableNames.append(new String("{userReadableName}")) }}')
+            lines.append('')
+            
         for sweptVarIdx in range(numSweptVars):
             sweptVar = sweptVarsList[sweptVarIdx]
             lines.append(f'// {sweptVar.s}{UnitsUtils.getUnitsCommentForExposedOrSweptVar(sweptVar)}')
@@ -51,12 +68,12 @@ class GensForRunnerHoc:
         return lines
         
     def getWatchedVarsAndRecorderSettings(self):
-        if not self._exportOptions.isAnyWatchedVars():
+        if not hocObj.exportOptions.isAnyWatchedVars():
             return emptyParagraphHint()
             
         lines = []
         
-        watchedVarsList = self._exportOptions.watchedVarsList
+        watchedVarsList = hocObj.exportOptions.watchedVarsList
         
         lines.append('objref watchedVarNames')
         lines.append('watchedVarNames = new List()')
@@ -72,7 +89,7 @@ class GensForRunnerHoc:
         lines.append('')
         
         lines.append('// We\'ll record the values only once per "numItersPerOneRecord" iterations (it must be a positive integer)')
-        lines.append('numItersPerOneRecord = {}'.format(int(self._exportOptions.numItersPerOneRecord)))
+        lines.append('numItersPerOneRecord = {}'.format(int(hocObj.exportOptions.numItersPerOneRecord)))
         lines.append('')
         
         lines.append('// Hint: use "%g" for compact format and "%.15e" for max precision')
@@ -82,28 +99,61 @@ class GensForRunnerHoc:
         return lines
         
     def getUtils(self):
-        if not (self._exportOptions.isAnySweptVars() or self._exportOptions.isAnyWatchedVars()):
+        if not (hocObj.exportOptions.isAnySweptVars() or hocObj.exportOptions.isAnyWatchedVars()):
             # !!!! maybe it doesn't make sense to create "runner.hoc" in this case
             return emptyParagraphHint()
             
-        # !!!! we need to filter these utils and export only the required ones depending on self._exportOptions
-        relFilePathName = 'Code\\Export\\OutHocFileStructures\\RunnerHocUtils.hoc'
-        return getAllLinesFromFile(relFilePathName)
+        lines = []
+        
+        newLines = getAllLinesFromFile('Code\\InterModular\\Exported\\InterModularErrWarnUtilsPart1_Exported.hoc')
+        lines.extend(newLines)
+        lines.append('')
+        
+        basePath = 'Code\\Export\\OutHocFileStructures\\RunnerHocUtils\\'
+        
+        newLines = getAllLinesFromFile(basePath + 'RunnerHocBasicUtils.hoc')
+        lines.extend(newLines)
+        
+        if hocObj.exportOptions.isAnyWatchedVars():
+            lines.append('')
+            if hocObj.exportOptions.isAnySweptVars():
+                lines.append('numSweptVars = sweptVarUserReadableNames.count()')
+            else:
+                lines.append('numSweptVars = 0')
+                
+            lines.append('')
+            newLines = getAllLinesFromFile(basePath + 'RunnerHocWatchedVarsUtils.hoc')
+            lines.extend(newLines)
+            
+            if hocObj.exportOptions.isAnySweptVars():
+                lines.append('')
+                newLines = getAllLinesFromFile(basePath + 'RunnerHocSweptVarsUtils.hoc')
+                lines.extend(newLines)
+                
+        return lines
         
     def getPrerequisites(self):
-        if not (self._exportOptions.isAnySweptVars() or self._exportOptions.isAnyWatchedVars()):
+        if not (hocObj.exportOptions.isAnySweptVars() or hocObj.exportOptions.isAnyWatchedVars()):
             # !!!! maybe it doesn't make sense to create "runner.hoc" in this case
             return emptyParagraphHint()
             
-        return getAllLinesFromFile('Code\\Export\\OutHocFileStructures\\PythonCheck.hoc')
+        lines = getAllLinesFromFile('Code\\Export\\OutHocFileStructures\\PythonCheck.hoc')
+        
+        if hocObj.exportOptions.isAnyWatchedVars():
+            lines.append('')
+            lines.append('pyObj = new PythonObject()')
+            lines.append('{ nrnpython("ev = lambda arg : eval(arg)") }')
+            
+        return lines
         
     def getMainPart(self):
         lines = []
         
-        isAnySweptVars = self._exportOptions.isAnySweptVars()
-        isAnyWatchedVars = self._exportOptions.isAnyWatchedVars()
+        isAnySweptVars = hocObj.exportOptions.isAnySweptVars()
+        isAnyWatchedVars = hocObj.exportOptions.isAnyWatchedVars()
         
-        numSweptVars = len(self._exportOptions.sweptVarsList)
+        sweptVarsList = hocObj.exportOptions.sweptVarsList
+        numSweptVars = len(sweptVarsList)
         
         if isAnySweptVars or isAnyWatchedVars:
             lines.append('createTempHocFileWithoutTemplatesAndOutputFolder()')
@@ -112,11 +162,14 @@ class GensForRunnerHoc:
         indent = ''
         
         if isAnySweptVars:
-            lines.append(r'print "\nTo stop the entire process, click \"Tools -> RunControl -> Stop\" or uncheck \"Tools -> RunButton -> Init & Run\".\n"')
+            lines.append(r'print "\nIf you need to break the cycle by simulations, just Stop the current simulation.\n"')
             lines.append('')
             
-        if isAnySweptVars or isAnyWatchedVars:
-            # !!!! if isAnyWatchedVars, we need this to name the file (a temp solution)
+        if not hocObj.exportOptions.isExportReducedRNGUtils():
+            lines.append('nrncontrolmenu()')
+            lines.append('')
+            
+        if isAnySweptVars:
             lines.append('simIdx = 1')
             lines.append('')
             
@@ -124,7 +177,12 @@ class GensForRunnerHoc:
             for sweptVarIdx in range(numSweptVars):
                 lines.append(indent + f'for sweptVar{sweptVarIdx + 1}Idx = 0, sweptVar{sweptVarIdx + 1}GridSize - 1 {{')
                 indent += stdIndent
+                
+                sweptVar = sweptVarsList[sweptVarIdx]
+                lines.append(indent + '// ' + sweptVar.s)
+                
                 lines.append(indent + f'{getSweptVarName(sweptVarIdx)} = sweptVar{sweptVarIdx + 1}Grid[sweptVar{sweptVarIdx + 1}Idx]')
+                
                 lines.append(indent)
             lines.append(indent + r'printf("Running simulation %d of %d ...\n", simIdx, totalNumSims)')
         else:
@@ -144,6 +202,10 @@ class GensForRunnerHoc:
         lines.append(indent)
         
         if isAnyWatchedVars:
+            lines.append(indent + '// Letting NEURON change "dt" now rather than on start of the simulation,')
+            lines.append(indent + '// so we can set up the recorders correctly')
+            lines.append(indent + 'setdt()')
+            lines.append(indent)
             lines.append(indent + '// Both "dt" and "tstop" can be swept')
             lines.append(indent + 'Dt = numItersPerOneRecord * dt')
             lines.append(indent + 'numRecs = tstop / Dt + 1')       # !!!! test it when tstop / Dt is not integer
@@ -151,18 +213,26 @@ class GensForRunnerHoc:
             lines.append(indent + 'setUpVecsForRecording()')
             lines.append(indent)
             
-        lines.append(indent + 'run()')
-        
+        if not hocObj.exportOptions.isExportReducedRNGUtils():
+            lines.append(indent + 'run()')
+        else:
+            lines.append(indent + 'alt_run()')
+            
         if isAnySweptVars:
             lines.append(indent)
             lines.append(indent + 'if (stoprun) {')
             lines.append(extraIndent + 'stop')
             lines.append(indent + '}')
-        
+            
         if isAnyWatchedVars:
             lines.append(indent)
-            lines.append(indent + 'saveRecordedVecs()')
-            
+            if isAnySweptVars:
+                lines.append(indent + 'if (simIdx != totalNumSims) {')
+                lines.append(extraIndent + 'saveRecordedVecs()')
+                lines.append(indent + '}')
+            else:
+                lines.append(indent + 'saveRecordedVecs()')
+                
         if isAnySweptVars:
             lines.append(indent)
             lines.append(indent + 'simIdx += 1')
@@ -171,6 +241,11 @@ class GensForRunnerHoc:
                 indent = indent[: -indentSize]
                 lines.append(indent + '}')
                 
+        if isAnySweptVars and isAnyWatchedVars:
+            lines.append('')
+            lines.append('// This will save the vecs on the last iteration AND in case when user stops the cycle')
+            lines.append('saveRecordedVecs()')
+            
         if isAnySweptVars or isAnyWatchedVars:
             lines.append('')
             lines.append('deleteTempFolder()')

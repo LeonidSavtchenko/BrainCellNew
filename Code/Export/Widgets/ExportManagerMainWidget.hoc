@@ -3,8 +3,8 @@ begintemplate ExportManagerMainWidget
 
     public show, dismissHandler
     
-    external compUtils, inhomAndStochLibrary
-    external saveNanoHocFile, createEmptyPanel, openDeck, closeDeck, unmapIfNotNil
+    external mwh, compUtils, inhomAndStochLibrary
+    external saveNanoHocFile, saveNanoHocFile_deprecated, createEmptyPanel, openDeck, closeDeck, unmapIfNotNil
     external isAstrocyteOrNeuron
     external exportOptions
     
@@ -100,7 +100,7 @@ begintemplate ExportManagerMainWidget
                     xlabel("By default, the file will contain the following general settings:")
                     xlabel("    ENABLE_GRAPHICAL_INTERFACE, SHOW_TOPOLOGY, ENABLE_AUTORUN, ENABLE_AUTOEXIT")
                     xlabel("and general simulation params:")
-                    xlabel("    DT, TSTART, TSTOP")
+                    xlabel("    celsius, v_init, dt, tstop")
                     xcheckbox("Expose some vars (I will select them)", &exportOptions.isExposeModelVars, "varsSelectorCheckBoxHandler(0, exportOptions.isExposeModelVars)")
                     xpanel()
                 }
@@ -231,16 +231,23 @@ begintemplate ExportManagerMainWidget
     
     proc copyDllCheckBoxHandler() {
         deck5.flip_to(exportOptions.isCopyDll)
+        if (exportOptions.isCopyDll && exportOptions.isNewOrExistingDll) {
+            mwh.showNotImplementedWarning()
+        }
     }
     
     proc copyDllRadioButtonHandler() {
         exportOptions.isNewOrExistingDll = $1
+        if (exportOptions.isNewOrExistingDll) {
+            mwh.showNotImplementedWarning()
+        }
     }
     
     proc exportHandler() { local isCancel
         dismissChilds()
         
         isCancel = saveNanoHocFile()
+        // !!!! isCancel = saveNanoHocFile_deprecated()
         if (isCancel) {
             return
         }

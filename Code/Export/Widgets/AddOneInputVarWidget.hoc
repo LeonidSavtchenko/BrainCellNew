@@ -340,7 +340,7 @@ begintemplate AddOneInputVarWidget
             arraySize = mth.getVarNameAndArraySize(enumDmPpNc, selMechIdx, selVarType, varIdx, varName)
             for arrayIndex = 0, arraySize - 1 {
                 if (enumHomInhomStoch == 0 && !comp.isMechVarInhom(selMechIdx, selVarType, varName, arrayIndex)) {
-                    varNameWithIndexList.append(new ItemOfVarsList(varName, arraySize, arrayIndex))
+                    varNameWithIndexList.append(new WatchedOutputVar(varName, arraySize, arrayIndex))
                 } else {
                     numInhomVars += 1
                 }
@@ -376,7 +376,7 @@ begintemplate AddOneInputVarWidget
         
         itemOfVarsList = varNameWithIndexList.o(selVarNameWithIndexIdx)
         
-        newItem = new ItemOfInputVarsBrowsedList(isDmOrSynPart, selCompIdx, selMechIdx, selVarType, itemOfVarsList.varName, itemOfVarsList.arraySize, itemOfVarsList.arrayIndex)
+        newItem = new ExposedOrSweptInputVar(isDmOrSynPart, selCompIdx, selMechIdx, selVarType, itemOfVarsList.varName, itemOfVarsList.arraySize, itemOfVarsList.arrayIndex)
         
         if (isAddOrCorrect) {
             isUnique = parentWidget.onVarAddHandler(newItem)

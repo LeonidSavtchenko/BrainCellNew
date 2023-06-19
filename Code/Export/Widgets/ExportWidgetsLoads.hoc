@@ -1,6 +1,6 @@
 
-{ load_file("Helpers/ItemOfInputVarsBrowsedList.hoc") }
-{ load_file("Helpers/ItemOfVarsList.hoc") }
+{ load_file("Helpers/ExposedOrSweptInputVar.hoc") }
+{ load_file("Helpers/WatchedOutputVar.hoc") }
 { load_file("Helpers/SweptInputVarGridInfo.hoc") }
 { load_file("Helpers/ExportOptions.hoc") }
 

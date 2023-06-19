@@ -3,6 +3,7 @@ from neuron import h, nrn
 from GeneratorsForMainHocFile.GensForHomogenVars import GensForHomogenVars
 from GeneratorsForMainHocFile.GensForInhomAndStochModels import GensForInhomAndStochModels
 from Utils.LoopUtils import LoopUtils
+from Utils.UnitsUtils import UnitsUtils
 from Utils.OtherUtils import *
 
 
@@ -11,40 +12,40 @@ class GeneratorsForMainHocFile:
     _defaultNseg = 1
     _defaultRa = 35.4
     
-    # Other data members that will be added in the ctor (they all depend on hoc:ExportOptions, so we defer the construction):
-    #   _exportOptions
-    #   _gensForHomogenVars
-    #   _gensForInhomAndStochModels
+    _gensForHomogenVars = GensForHomogenVars()
+    _gensForInhomAndStochModels = GensForInhomAndStochModels()
     
-    def __init__(self):
-        self._exportOptions = hocObj.exportOptions
-        self._gensForHomogenVars = GensForHomogenVars()
-        self._gensForInhomAndStochModels = GensForInhomAndStochModels()
-        
-    def getParams(self):
-        if not self._exportOptions.isCreateParamsHoc:
+    def getUtilsPrologue(self):
+        if not hocObj.exportOptions.isAnyCustomSweptVars():
             return emptyParagraphHint()
             
-        lines = []
-        
-        lines.append('{ load_file("params.hoc") }')
-        
-        if not self._exportOptions.isAnyExposedVars():
-            return lines
-            
-        lines.append('')
-        
-        newLines = self._initCustomVars(self._exportOptions.exposedVarsList, getExposedVarName)
-        lines.extend(newLines)
+        lines = self.insertAllLinesFromFile('Code\\Export\\OutHocFileStructures\\MainHocUtils\\MainHocSweptVarsUtils.hoc')
         
         return lines
         
-    def getCustomSweptVars(self):
-        if not self._exportOptions.isAnySweptVars():
-            return emptyParagraphHint()
+    # Keep in sync with GenForParamsHoc.getParamsCode
+    def getParams(self):
+        lines = []
+        if hocObj.exportOptions.isCreateParamsHoc:
             
-        lines = self._initCustomVars(self._exportOptions.sweptVarsList, getSweptVarName)
-        
+            lines.append('{ load_file("params.hoc") }')
+            lines.append('')
+            
+            lines.append('// Exposed vars')
+            concExposedVarsList = list(hocObj.exportOptions.stdExposedVarsList) + list(hocObj.exportOptions.exposedVarsList)
+            newLines = self._initCustOrStdExposedOrSweptVars(concExposedVarsList, getExposedVarName, False)
+            lines.extend(newLines)
+        else:
+            for stdExposedVar in hocObj.exportOptions.stdExposedVarsList:
+                lines.append(f'{stdExposedVar.customExpr} = {stdExposedVar.getValue()}    //{UnitsUtils.getUnitsCommentForExposedOrSweptVar(stdExposedVar)}')
+                
+        if hocObj.exportOptions.isAnySweptVars():
+            newLines = self._initCustOrStdExposedOrSweptVars(hocObj.exportOptions.sweptVarsList, getSweptVarName, True)
+            if len(newLines) != 0:
+                lines.append('')
+                lines.append('// Swept vars')
+                lines.extend(newLines)
+                
         return lines
         
     def getUtils(self):
@@ -53,27 +54,38 @@ class GeneratorsForMainHocFile:
         lines.append('objref nil')
         lines.append('')
         
-        for fileName in ['InterModularErrWarnUtils_Exported.hoc', 'InterModularListUtils_Exported.hoc', 'InterModularStringUtils_Exported.hoc', 'InterModularOtherUtils_Exported.hoc']:
+        fileNames = [
+            'InterModularErrWarnUtilsPart1_Exported.hoc',
+            'InterModularErrWarnUtilsPart2_Exported.hoc',
+            'InterModularListUtils_Exported.hoc',
+            'InterModularStringUtils_Exported.hoc',
+            'InterModularOtherUtils_Exported.hoc'
+        ]
+        for fileName in fileNames:
             newLines = self.insertAllLinesFromFile('Code\\InterModular\\Exported\\' + fileName)
             lines.extend(newLines)
             lines.append('')
-        
+            
         # The instances of the next reduced templates from "InterModular" folder are created
         # only in standalone mode; otherwise we just reuse the instances created earlier in the main program
         
         newLines = self._insertAllLinesFromReducedVersionFile('InterModular\\ReducedBasicMath.hoc')
         lines.extend(newLines)
-        lines.append('')
         
-        if self._exportOptions.isExportReducedRNGUtils():
+        if hocObj.exportOptions.isExportReducedRNGUtils():
             lines.append('')
             newLines = self._insertAllLinesFromReducedVersionFile('InterModular\\ReducedRNGUtils.hoc')
+            lines.extend(newLines)
+            
+        if hocObj.exportOptions.isAnySweptVars() and not hocObj.exportOptions.isAnyCustomSweptVars():
+            lines.append('')
+            newLines = self.insertAllLinesFromFile('Code\\Export\\OutHocFileStructures\\MainHocUtils\\MainHocSweptVarsUtils.hoc')
             lines.extend(newLines)
             
         return lines
         
     def checkPrerequisites(self):
-        if not self._exportOptions.isPythonRequired():
+        if not hocObj.exportOptions.isPythonRequired():
             return emptyParagraphHint()
             
         lines = []
@@ -84,7 +96,7 @@ class GeneratorsForMainHocFile:
         lines.append('objref pyObj')
         lines.append('pyObj = new PythonObject()')
         
-        if self._exportOptions.isExportSyns:
+        if hocObj.exportOptions.isExportSyns:
             lines.append('')
             newLines = self.insertAllLinesFromFile('Code\\InterModular\\Exported\\InterModularPythonUtils_Exported.hoc')
             lines.extend(newLines)
@@ -205,12 +217,12 @@ class GeneratorsForMainHocFile:
         lines.append('objref mechType')
         lines.append('if (isLoadedFromMainProgram) {')
         lines.append('    mechsDllUtils.ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType()')
-        if self._exportOptions.isExportDistMechs or self._exportOptions.isExportSyns:
+        if hocObj.exportOptions.isExportDistMechs or hocObj.exportOptions.isExportSyns:
             lines.append('} else {')
-            if self._exportOptions.isExportDistMechs:
+            if hocObj.exportOptions.isExportDistMechs:
                 newLines = self._createCheckForNumMechs(0, 'Distributed Membrane Mechanisms')
                 lines.extend(newLines)
-            if self._exportOptions.isExportSyns:
+            if hocObj.exportOptions.isExportSyns:
                 newLines = self._createCheckForNumMechs(1, 'Point Processes')
                 lines.extend(newLines)
         lines.append('}')
@@ -223,26 +235,26 @@ class GeneratorsForMainHocFile:
         
         lines.append('{ makeSureDeclared("math", "objref %s", "%s = new ReducedBasicMath()") }')
         
-        if self._exportOptions.isExportReducedRNGUtils():
+        if hocObj.exportOptions.isExportReducedRNGUtils():
             # !!!! BUG: The random sequences won't be the same in the main program and the exported file until
             #      each seed given by rngUtils.getFor_stochFunc_withUniqueSeed is saved into corresponding stocDistFunc
             #      and exported/imported as a part of it
             lines.append('{ makeSureDeclared("rngUtils", "objref %s", "%s = new ReducedRNGUtils()") }')
-        elif self._exportOptions.isExportSyns or self._exportOptions.isExportInhomAndStochLibrary():
+        elif hocObj.exportOptions.isExportSyns or hocObj.exportOptions.isExportInhomAndStochLibrary():
             lines.append('{ makeSureDeclared("rngUtils") }')
             
         lines.append('')
         
         # Make sure all the required objref-s are declared as nil
         names = []
-        if self._exportOptions.isExportInhomAndStochLibrary():
+        if hocObj.exportOptions.isExportInhomAndStochLibrary():
             names.append('mth')
         names.append('mmAllComps')
-        if self._exportOptions.isExportSyns or self._exportOptions.isExportInhomAndStochLibrary():
+        if hocObj.exportOptions.isExportSyns or hocObj.exportOptions.isExportInhomAndStochLibrary():
             names.append('smAllComps')
             names.append('smAllSyns')
             names.append('seh')
-        if self._exportOptions.isExportAnyInhomSynModels():
+        if hocObj.exportOptions.isExportAnyInhomSynModels():
             names.append('synGroup')
             names.append('mcu')
             names.append('utils4FakeMech4NC')
@@ -250,7 +262,7 @@ class GeneratorsForMainHocFile:
         lines.append(line)
         
         # We export smEnumSynLoc, smSynLocP and spineNeckDiamCache just so user can work with SynLocationWidget after loading the exported file back into the main program
-        if self._exportOptions.isExportSyns:
+        if hocObj.exportOptions.isExportSyns:
             lines.append('')
             newLine = self.getIntegerValueFromTopLevel('smEnumSynLoc')
             lines.append(newLine)
@@ -276,12 +288,12 @@ class GeneratorsForMainHocFile:
         return lines
         
     def createInhomAndStochLibrary(self):
-        if not self._exportOptions.isExportInhomAndStochLibrary():
+        if not hocObj.exportOptions.isExportInhomAndStochLibrary():
             return emptyParagraphHint()
             
         lines = []
         
-        # !! try to avoid exporting the RNG staff in ReducedInhomAndStochTarget if not self._exportOptions.isExportAnyStochFuncs()
+        # !! try to avoid exporting the RNG staff in ReducedInhomAndStochTarget if not hocObj.exportOptions.isExportAnyStochFuncs()
         newLines = self._insertAllLinesFromReducedVersionFile('ReducedInhomAndStochTarget.hoc')
         lines.extend(newLines)
         lines.append('')
@@ -290,7 +302,7 @@ class GeneratorsForMainHocFile:
         lines.extend(newLines)
         lines.append('')
         
-        if self._exportOptions.isExportReducedRNGUtils():
+        if hocObj.exportOptions.isExportReducedRNGUtils():
             newLines = self.insertAllLinesFromFile('Code\\Managers\\InhomAndStochLibrary\\Exported\\InhomAndStochApplicator.hoc')
             lines.extend(newLines)
             lines.append('')
@@ -301,7 +313,7 @@ class GeneratorsForMainHocFile:
         
     # !! some code dupl. with insertAllUsedStochFuncs
     def insertAllUsedDistFuncs(self):
-        if not self._exportOptions.isExportAnyDistFuncs():
+        if not hocObj.exportOptions.isExportAnyDistFuncs():
             return emptyParagraphHint()
             
         lines = []
@@ -309,7 +321,7 @@ class GeneratorsForMainHocFile:
         dfhTemplNames = set()
         isTablePlusLinInterpDistFuncExported = False
         for actSpecVar in h.inhomAndStochLibrary.activeSpecVars:
-            if not self._exportOptions.isExportedInhomVar(actSpecVar):
+            if not hocObj.exportOptions.isExportedInhomVar(actSpecVar):
                 continue
             dfhTemplNames.add(getTemplateName(actSpecVar.distFuncHelper))
             if actSpecVar.distFuncCatIdx == hocObj.dfc.tablePlusLinInterpDistFuncCatIdx:
@@ -327,7 +339,7 @@ class GeneratorsForMainHocFile:
         self._exportTheseTemplatesFromThisDir(lines, relDirPath, dfhTemplNames)
         lines.append('')
         
-        if self._exportOptions.isExportSegmentationHelper():
+        if hocObj.exportOptions.isExportSegmentationHelper():
             newLines = self._insertAllLinesFromReducedVersionFile('ReducedSegmentationHelper.hoc')
             lines.extend(newLines)
             lines.append('')
@@ -338,7 +350,7 @@ class GeneratorsForMainHocFile:
         
     # !! some code dupl. with insertAllUsedDistFuncs
     def insertAllUsedStochFuncs(self):
-        if not self._exportOptions.isExportAnyStochFuncs():
+        if not hocObj.exportOptions.isExportAnyStochFuncs():
             return emptyParagraphHint()
             
         lines = []
@@ -360,7 +372,7 @@ class GeneratorsForMainHocFile:
         sdhTemplNames = set()
         sfhTemplNames = set()
         for actSpecVar in h.inhomAndStochLibrary.activeSpecVars:
-            if not self._exportOptions.isExportedStochVar(actSpecVar):
+            if not hocObj.exportOptions.isExportedStochVar(actSpecVar):
                 continue
             stochFuncHelper = actSpecVar.stochFuncHelper
             if actSpecVar.stochFuncCatIdx == hocObj.sfc.simpleModelStochFuncCatIdx:
@@ -389,7 +401,7 @@ class GeneratorsForMainHocFile:
     
         lines = []
         
-        if not self._exportOptions.isExportDistMechs:
+        if not hocObj.exportOptions.isExportDistMechs:
             fileName = 'ReducedMechComp1.hoc'   # name, list_ref
         else:
             fileName = 'ReducedMechComp2.hoc'   # name, list_ref, isMechInserted, mechStds
@@ -443,7 +455,7 @@ class GeneratorsForMainHocFile:
         return self._gensForInhomAndStochModels.createStochBiophysModels()
         
     def createProtoSyns(self):
-        if not self._exportOptions.isExportSyns:
+        if not hocObj.exportOptions.isExportSyns:
             return emptyParagraphHint()
             
         lines = []
@@ -466,13 +478,13 @@ class GeneratorsForMainHocFile:
         
     # Keep in sync with hoc:createSynComps
     def createReducedSynComps(self):
-        if not self._exportOptions.isExportSyns:
+        if not hocObj.exportOptions.isExportSyns:
             return emptyParagraphHint()
             
         lines = self.insertAllLinesFromFile('Code\\Managers\\SynManager\\Exported\\EnumSynCompIdxs.hoc')
         lines.append('')
         
-        if not self._exportOptions.isExportAnyInhomSynModels():
+        if not hocObj.exportOptions.isExportAnyInhomSynModels():
             reducedSynPPCompFileName = 'ReducedSynPPComp1.hoc'
             reducedSynNCCompFileName = 'ReducedSynNCComp1.hoc'
         else:
@@ -496,7 +508,7 @@ class GeneratorsForMainHocFile:
             lines.extend(newLines)
             lines.append('')
         
-        if self._exportOptions.isExportSynEventsHelper() or is3Or1PartInSynStruc:
+        if hocObj.exportOptions.isExportSynEventsHelper() or is3Or1PartInSynStruc:
             newLines = self._insertAllLinesFromReducedVersionFile('ReducedManagersCommonUtils.hoc')
             lines.extend(newLines)
             lines.append('')
@@ -521,16 +533,16 @@ class GeneratorsForMainHocFile:
         lines.append('smAllComps = new List()')
         lines.append('')
         
-        srcMechIdx = int(synGroup.getMechIdxAndOptionalName(0))
-        trgMechIdx = int(synGroup.getMechIdxAndOptionalName(1))
-        sngMechIdx = int(synGroup.getMechIdxAndOptionalName(2))
+        srcMechIdxOrMinus1 = int(synGroup.getMechIdxAndOptionalName(0))
+        trgMechIdxOrMinus1 = int(synGroup.getMechIdxAndOptionalName(1))
+        sngMechIdxOrMinus1 = int(synGroup.getMechIdxAndOptionalName(2))
         
         # Keep in sync with hoc:EnumSynCompIdxs.init, hoc:createOrImportSynComps and py:initHomogenSynVars
         # Note: NEURON doesn't allow appending "nil" to a List, so we don't optimize this depending on is3Or1PartInSynStruc
-        lines.append('{{ smAllComps.append(new ReducedSynPPComp("Source PP", 0, {})) }}'.format(srcMechIdx))
+        self._appendNewReducedSynPPComp(lines, 'Source PP', 0, srcMechIdxOrMinus1)
         lines.append('{ smAllComps.append(new ReducedSynNCComp()) }')
-        lines.append('{{ smAllComps.append(new ReducedSynPPComp("Target PP", 1, {})) }}'.format(trgMechIdx))
-        lines.append('{{ smAllComps.append(new ReducedSynPPComp("Single PP", 2, {})) }}'.format(sngMechIdx))
+        self._appendNewReducedSynPPComp(lines, 'Target PP', 1, trgMechIdxOrMinus1)
+        self._appendNewReducedSynPPComp(lines, 'Single PP', 2, sngMechIdxOrMinus1)
         
         return lines
         
@@ -544,7 +556,7 @@ class GeneratorsForMainHocFile:
         return self._gensForInhomAndStochModels.createStochSynModels()
         
     def createSynEpilogue(self):
-        if not self._exportOptions.isExportSyns:
+        if not hocObj.exportOptions.isExportSyns:
             return emptyParagraphHint()
             
         lines = []
@@ -565,13 +577,13 @@ class GeneratorsForMainHocFile:
         
         lines.append('{{ synGroup.applyChangesToAllHomogenVars({}, {}, {}) }}'.format(srcMechIdx, trgMechIdx, sngMechIdx))
         
-        if self._exportOptions.isExportAnyInhomSynModels():
+        if hocObj.exportOptions.isExportAnyInhomSynModels():
             lines.append('{ inhomAndStochLibrary.applyAllSynInhomModels() }')
             
         return lines
         
     def insertAltRunControlWidget(self):
-        if not self._exportOptions.isExportReducedRNGUtils():
+        if not hocObj.exportOptions.isExportReducedRNGUtils():
             return emptyParagraphHint()
             
         lines = self.insertAllLinesFromFile('Code\\Core\\Widgets\\Exported\\alt_stdrun.hoc')
@@ -610,12 +622,20 @@ class GeneratorsForMainHocFile:
         relFilePathName = 'Code\\Export\\OutHocFileStructures\\ReducedVersions\\' + fileName
         return self.insertAllLinesFromFile(relFilePathName)
         
-    def _initCustomVars(self, varsList, getVarName):
+    def _initCustOrStdExposedOrSweptVars(self, varsList, getVarName, isSwept):
         lines = []
         for varIdx in range(len(varsList)):
             var = varsList[varIdx]
-            if var.enumSpDmCe == 2:
-                lines.append(f'{var.customExpr} = {getVarName(varIdx)}')
+            if var.enumSpDmCeSt < 2:
+                continue
+            varName = getVarName(varIdx)
+            if isSwept:
+                notRunnedModeValue = var.getValue()
+                sweptVarInitializer = f'getSweptVarValue("{varName}", {notRunnedModeValue})'
+                unitsComment = UnitsUtils.getUnitsCommentForExposedOrSweptVar(var)
+                lines.append(f'{var.customExpr} = {sweptVarInitializer}    //{unitsComment}')
+            else:
+                lines.append(f'{var.customExpr} = {varName}')
         return lines
         
     def _createCheckForNumMechs(self, isDmOrPp, hint):
@@ -626,8 +646,18 @@ class GeneratorsForMainHocFile:
         lines.append('    }')
         return lines
         
+    def _appendNewReducedSynPPComp(self, lines, compName, enumPpRole, mechIdxOrMinus1):
+        if mechIdxOrMinus1 != -1:
+            mechName = h.ref('')
+            hocObj.mth.getMechName(1, mechIdxOrMinus1, mechName)
+            mechName = mechName[0]
+            comment = '    // ' + mechName
+        else:
+            comment = ''
+        lines.append('{{ smAllComps.append(new ReducedSynPPComp("{}", {}, {})) }}{}'.format(compName, enumPpRole, mechIdxOrMinus1, comment))
+        
     def _getHocVar(self, varName):
-        return eval('hocObj.' + varName)    # !! maybe can do it via refletion
+        return getattr(hocObj, varName)
         
     def _generateAssignment(self, varName, isIntegerOrDouble):
         value = self._getHocVar(varName)

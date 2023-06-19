@@ -1,0 +1,19 @@
+
+_sweptVarValue = -1
+
+func getSweptVarValue() { local notRunnedModeValue
+    strdef sweptVarName, hocCommand
+    
+    sweptVarName = $s1
+    notRunnedModeValue = $2
+    
+    if (name_declared(sweptVarName)) {
+        // We are called from "runner.hoc"
+        sprint(hocCommand, "_sweptVarValue = %s", sweptVarName)
+        execute(hocCommand)
+        return _sweptVarValue
+    } else {
+        // We are called in the standalone mode or in the "import nano" mode
+        return notRunnedModeValue
+    }
+}

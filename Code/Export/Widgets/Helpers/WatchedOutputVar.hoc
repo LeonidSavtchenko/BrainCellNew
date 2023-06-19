@@ -1,0 +1,23 @@
+
+begintemplate WatchedOutputVar
+
+    public varName, arraySize, arrayIndex
+    public s
+    
+    external mth
+    
+    strdef varName
+    arraySize = -1
+    arrayIndex = -1
+    
+    strdef s
+    
+    proc init() {
+        varName = $s1
+        arraySize = $2
+        arrayIndex = $3
+        
+        mth.getVarNameWithIndex(varName, arraySize, arrayIndex, s)
+    }
+    
+endtemplate WatchedOutputVar

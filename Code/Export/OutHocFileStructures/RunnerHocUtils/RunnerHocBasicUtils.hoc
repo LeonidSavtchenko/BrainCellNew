@@ -1,0 +1,33 @@
+
+strdef tempFolderName, tempHocFileName
+tempFolderName = "temp_folder"
+tempHocFileName = "last_cell_without_templates.hoc"
+
+strdef tempHocFilePathName
+{ sprint(tempHocFilePathName, "%s/%s", tempFolderName, tempHocFileName) }
+
+// in: tempFolderName, runnedHocFileName, tempHocFilePathName, outFolderName (taken from the top level)
+proc createTempHocFileWithoutTemplatesAndOutputFolder() { local status
+    strdef pyCode
+    
+    pyCode = "import os\ntempFolderName = '%s'\nrunnedHocFileName = '%s'\ntempHocFilePathName = '%s'\noutFolderName = '%s'\ndef createOrCleanUpFolder(folderName):\n    if os.path.exists(folderName):\n        for fileName in os.listdir(folderName):\n            filePath = os.path.join(folderName, fileName)\n            os.remove(filePath)\n    else:\n        os.mkdir(folderName)\ndef createTempHocFileWithoutTemplates():\n    with open(runnedHocFileName, 'r') as inFile, open(tempHocFilePathName, 'w') as outFile:\n        isSkipBlock = False\n        for line in inFile:\n            if line.startswith('begintemplate'):\n                isSkipBlock = True\n            elif line.startswith('endtemplate'):\n                isSkipBlock = False\n            elif not isSkipBlock:\n                outFile.write(line)\ncreateOrCleanUpFolder(tempFolderName)\ncreateTempHocFileWithoutTemplates()\ncreateOrCleanUpFolder(outFolderName)"
+    
+    sprint(pyCode, pyCode, tempFolderName, runnedHocFileName, tempHocFilePathName, outFolderName)
+    
+    status = nrnpython(pyCode)
+    if (!status) {
+        printMsgAndRaiseError("Failed to create the temporary HOC file or the output folder")
+    }
+}
+
+// in: tempFolderName (taken from the top level)
+proc deleteTempFolder() { local status
+    strdef pyCode
+    
+    sprint(pyCode, "import shutil\nshutil.rmtree('%s')", tempFolderName)
+    
+    status = nrnpython(pyCode)
+    if (!status) {
+        printMsgAndRaiseError("Failed to delete the temporary folder")
+    }
+}

@@ -1,0 +1,8 @@
+
+// Print the message, print the call stack, raise the error
+// $s1 - The message
+proc printMsgAndRaiseError() {
+    strdef msg
+    sprint(msg, "\n\n    %s\n", $s1)
+    execerror(msg)
+}

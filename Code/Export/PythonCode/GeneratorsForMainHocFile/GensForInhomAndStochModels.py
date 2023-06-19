@@ -5,17 +5,11 @@ from Utils.OtherUtils import *
 
 class GensForInhomAndStochModels:
     
-    # Data members that will be added in the ctor (they all depend on hoc:ExportOptions, so we defer the construction):
-    #   _exportOptions
-    
-    def __init__(self):
-        self._exportOptions = hocObj.exportOptions
-        
     def createInhomBiophysModels(self):
-        if not self._exportOptions.isExportAnyInhomBiophysModels():
+        if not hocObj.exportOptions.isExportAnyInhomBiophysModels():
             return emptyParagraphHint()
             
-        selector = lambda actSpecVar : self._exportOptions.isExportedInhomBiophysVar(actSpecVar)
+        selector = lambda actSpecVar : hocObj.exportOptions.isExportedInhomBiophysVar(actSpecVar)
         lines = self._createAllInhomModels(selector)
         
         lines.append('{ inhomAndStochLibrary.applyAllBiophysInhomModels() }')
@@ -23,33 +17,33 @@ class GensForInhomAndStochModels:
         return lines
         
     def createStochBiophysModels(self):
-        if not self._exportOptions.isExportAnyStochBiophysModels():
+        if not hocObj.exportOptions.isExportAnyStochBiophysModels():
             return emptyParagraphHint()
             
-        selector = lambda actSpecVar : self._exportOptions.isExportedStochBiophysVar(actSpecVar)
+        selector = lambda actSpecVar : hocObj.exportOptions.isExportedStochBiophysVar(actSpecVar)
         lines = self._createAllStochModels(selector)
         
         return lines
         
     def createInhomSynModels(self):
-        if not self._exportOptions.isExportAnyInhomSynModels():
+        if not hocObj.exportOptions.isExportAnyInhomSynModels():
             return emptyParagraphHint()
             
         lines = []
         
-        selector = lambda actSpecVar : self._exportOptions.isExportedInhomSynVar(actSpecVar)
+        selector = lambda actSpecVar : hocObj.exportOptions.isExportedInhomSynVar(actSpecVar)
         newLines = self._createAllInhomModels(selector)
         lines.extend(newLines)
         
         return lines
         
     def createStochSynModels(self):
-        if not self._exportOptions.isExportAnyStochSynModels():
+        if not hocObj.exportOptions.isExportAnyStochSynModels():
             return emptyParagraphHint()
             
         lines = []
         
-        selector = lambda actSpecVar : self._exportOptions.isExportedStochSynVar(actSpecVar)
+        selector = lambda actSpecVar : hocObj.exportOptions.isExportedStochSynVar(actSpecVar)
         newLines = self._createAllStochModels(selector)
         lines.extend(newLines)
         

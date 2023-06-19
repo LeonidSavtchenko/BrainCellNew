@@ -1,0 +1,13 @@
+
+// Print "Not implemented" message, print the call stack, raise the error
+proc printNotImplementedMsgAndRaiseError() {
+    strdef msg1, msg2
+    sprint(msg1, "\n\n    %s", $s1)
+    msg2 = "\n    Not implemented.\n    If required, please ask the developer to prioritize.\n"
+    execerror(msg1, msg2)
+}
+
+// Report the bug, print the call stack, raise the error
+proc codeContractViolation() {
+    execerror("\n\n    Bug in Cell program: Code contract violation", "\n    Please report this problem to the developer along with the call stack shown below\n")
+}

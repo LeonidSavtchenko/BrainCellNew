@@ -1,25 +1,35 @@
 //////////////////// Table of contents ///////////////////////////////////
 /*
-    Line 24:            Utils
-    Line 147:           Prerequisites
-    Line 187:           Sections
-    Line 206:           Imported section names
-    Line 379:           Section references
-    Line 611:           Topology
-    Line 3739:          Geometry, nseg, Ra
-    Line 38486:         Distance centre
-    Line 38495:         Importability measures
-    Line 40053:         Inhom and stoch library
-    Line 40484:         Biophys compartments
-    Line 40769:         Homogen biophysics
-    Line 41442:         Proto synapses
-    Line 41567:         Synaptic compartments
-    Line 42345:         Homogen synaptic vars
-    Line 42391:         Synapses epilogue
+    Line 25:            Params
+    Line 34:            Utils
+    Line 156:           Prerequisites
+    Line 196:           Sections
+    Line 215:           Imported section names
+    Line 388:           Section references
+    Line 620:           Topology
+    Line 3748:          Geometry, nseg, Ra
+    Line 38495:         Distance centre
+    Line 38504:         Importability measures
+    Line 40062:         Inhom and stoch library
+    Line 40493:         Biophys compartments
+    Line 40778:         Homogen biophysics
+    Line 41451:         Proto synapses
+    Line 41576:         Synaptic compartments
+    Line 42354:         Homogen synaptic vars
+    Line 42400:         Synapses epilogue
 */
 //////////////////////////////////////////////////////////////////////////
 
 isAstrocyteOrNeuron = 0
+
+//////////////////// Start of params /////////////////////////////////////
+
+celsius = 34.0    // (degC)
+v_init = -64.65    // (mV)
+dt = 0.1    // (ms)
+tstop = 100.0    // (ms)
+
+//////////////////// End of params ///////////////////////////////////////
 
 //////////////////// Start of utils //////////////////////////////////////
 
@@ -140,7 +150,6 @@ begintemplate ReducedBasicMath
     }
     
 endtemplate ReducedBasicMath
-
 
 //////////////////// End of utils ////////////////////////////////////////
 
@@ -40771,22 +40780,22 @@ comp = new ReducedMechComp("Extracellular Source", getListOfSecRefsForExtracellu
 proc addHomogenBiophysInfoToSomaComp() { localobj comp, mechStd
     comp = $o1
     
-    comp.isMechInserted[0] = 1
-    comp.isMechInserted[1] = 1
-    comp.isMechInserted[2] = 1
-    comp.isMechInserted[5] = 1
-    comp.isMechInserted[6] = 1
-    comp.isMechInserted[8] = 1
-    comp.isMechInserted[10] = 1
-    comp.isMechInserted[11] = 1
-    comp.isMechInserted[14] = 1
-    comp.isMechInserted[16] = 1
-    comp.isMechInserted[17] = 1
-    comp.isMechInserted[18] = 1
-    comp.isMechInserted[20] = 1
-    comp.isMechInserted[22] = 1
-    comp.isMechInserted[23] = 1
-    comp.isMechInserted[26] = 1
+    comp.isMechInserted[0] = 1    // morphology
+    comp.isMechInserted[1] = 1    // capacitance
+    comp.isMechInserted[2] = 1    // pas
+    comp.isMechInserted[5] = 1    // na_ion
+    comp.isMechInserted[6] = 1    // k_ion
+    comp.isMechInserted[8] = 1    // ca_ion
+    comp.isMechInserted[10] = 1    // frapion_ion
+    comp.isMechInserted[11] = 1    // FRAP
+    comp.isMechInserted[14] = 1    // IKa
+    comp.isMechInserted[16] = 1    // kir4
+    comp.isMechInserted[17] = 1    // ip3_ion
+    comp.isMechInserted[18] = 1    // cadifus
+    comp.isMechInserted[20] = 1    // hd
+    comp.isMechInserted[22] = 1    // kap
+    comp.isMechInserted[23] = 1    // kdr
+    comp.isMechInserted[26] = 1    // na3
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
     mechStd.set("diam", 20.0)    // (um)
@@ -40929,23 +40938,23 @@ proc addHomogenBiophysInfoToSomaComp() { localobj comp, mechStd
 proc addHomogenBiophysInfoToDendritesComp() { localobj comp, mechStd
     comp = $o1
     
-    comp.isMechInserted[0] = 1
-    comp.isMechInserted[1] = 1
-    comp.isMechInserted[2] = 1
-    comp.isMechInserted[5] = 1
-    comp.isMechInserted[6] = 1
-    comp.isMechInserted[8] = 1
-    comp.isMechInserted[9] = 1
-    comp.isMechInserted[10] = 1
-    comp.isMechInserted[11] = 1
-    comp.isMechInserted[14] = 1
-    comp.isMechInserted[16] = 1
-    comp.isMechInserted[17] = 1
-    comp.isMechInserted[18] = 1
-    comp.isMechInserted[21] = 1
-    comp.isMechInserted[22] = 1
-    comp.isMechInserted[23] = 1
-    comp.isMechInserted[26] = 1
+    comp.isMechInserted[0] = 1    // morphology
+    comp.isMechInserted[1] = 1    // capacitance
+    comp.isMechInserted[2] = 1    // pas
+    comp.isMechInserted[5] = 1    // na_ion
+    comp.isMechInserted[6] = 1    // k_ion
+    comp.isMechInserted[8] = 1    // ca_ion
+    comp.isMechInserted[9] = 1    // CAl
+    comp.isMechInserted[10] = 1    // frapion_ion
+    comp.isMechInserted[11] = 1    // FRAP
+    comp.isMechInserted[14] = 1    // IKa
+    comp.isMechInserted[16] = 1    // kir4
+    comp.isMechInserted[17] = 1    // ip3_ion
+    comp.isMechInserted[18] = 1    // cadifus
+    comp.isMechInserted[21] = 1    // kad
+    comp.isMechInserted[22] = 1    // kap
+    comp.isMechInserted[23] = 1    // kdr
+    comp.isMechInserted[26] = 1    // na3
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
     mechStd.set("diam", math.nan)
@@ -41092,16 +41101,16 @@ proc addHomogenBiophysInfoToDendritesComp() { localobj comp, mechStd
 proc addHomogenBiophysInfoToAxonComp() { localobj comp, mechStd
     comp = $o1
     
-    comp.isMechInserted[0] = 1
-    comp.isMechInserted[1] = 1
-    comp.isMechInserted[2] = 1
-    comp.isMechInserted[5] = 1
-    comp.isMechInserted[6] = 1
-    comp.isMechInserted[14] = 1
-    comp.isMechInserted[21] = 1
-    comp.isMechInserted[22] = 1
-    comp.isMechInserted[23] = 1
-    comp.isMechInserted[26] = 1
+    comp.isMechInserted[0] = 1    // morphology
+    comp.isMechInserted[1] = 1    // capacitance
+    comp.isMechInserted[2] = 1    // pas
+    comp.isMechInserted[5] = 1    // na_ion
+    comp.isMechInserted[6] = 1    // k_ion
+    comp.isMechInserted[14] = 1    // IKa
+    comp.isMechInserted[21] = 1    // kad
+    comp.isMechInserted[22] = 1    // kap
+    comp.isMechInserted[23] = 1    // kdr
+    comp.isMechInserted[26] = 1    // na3
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
     mechStd.set("diam", math.nan)
@@ -41184,18 +41193,18 @@ proc addHomogenBiophysInfoToAxonComp() { localobj comp, mechStd
 proc addHomogenBiophysInfoToSpineNeckComp() { localobj comp, mechStd
     comp = $o1
     
-    comp.isMechInserted[0] = 1
-    comp.isMechInserted[1] = 1
-    comp.isMechInserted[2] = 1
-    comp.isMechInserted[5] = 1
-    comp.isMechInserted[6] = 1
-    comp.isMechInserted[10] = 1
-    comp.isMechInserted[11] = 1
-    comp.isMechInserted[14] = 1
-    comp.isMechInserted[21] = 1
-    comp.isMechInserted[22] = 1
-    comp.isMechInserted[23] = 1
-    comp.isMechInserted[26] = 1
+    comp.isMechInserted[0] = 1    // morphology
+    comp.isMechInserted[1] = 1    // capacitance
+    comp.isMechInserted[2] = 1    // pas
+    comp.isMechInserted[5] = 1    // na_ion
+    comp.isMechInserted[6] = 1    // k_ion
+    comp.isMechInserted[10] = 1    // frapion_ion
+    comp.isMechInserted[11] = 1    // FRAP
+    comp.isMechInserted[14] = 1    // IKa
+    comp.isMechInserted[21] = 1    // kad
+    comp.isMechInserted[22] = 1    // kap
+    comp.isMechInserted[23] = 1    // kdr
+    comp.isMechInserted[26] = 1    // na3
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
     mechStd.set("diam", math.nan)
@@ -41291,18 +41300,18 @@ proc addHomogenBiophysInfoToSpineNeckComp() { localobj comp, mechStd
 proc addHomogenBiophysInfoToSpineHeadComp() { localobj comp, mechStd
     comp = $o1
     
-    comp.isMechInserted[0] = 1
-    comp.isMechInserted[1] = 1
-    comp.isMechInserted[2] = 1
-    comp.isMechInserted[5] = 1
-    comp.isMechInserted[6] = 1
-    comp.isMechInserted[10] = 1
-    comp.isMechInserted[11] = 1
-    comp.isMechInserted[14] = 1
-    comp.isMechInserted[21] = 1
-    comp.isMechInserted[22] = 1
-    comp.isMechInserted[23] = 1
-    comp.isMechInserted[26] = 1
+    comp.isMechInserted[0] = 1    // morphology
+    comp.isMechInserted[1] = 1    // capacitance
+    comp.isMechInserted[2] = 1    // pas
+    comp.isMechInserted[5] = 1    // na_ion
+    comp.isMechInserted[6] = 1    // k_ion
+    comp.isMechInserted[10] = 1    // frapion_ion
+    comp.isMechInserted[11] = 1    // FRAP
+    comp.isMechInserted[14] = 1    // IKa
+    comp.isMechInserted[21] = 1    // kad
+    comp.isMechInserted[22] = 1    // kap
+    comp.isMechInserted[23] = 1    // kdr
+    comp.isMechInserted[26] = 1    // na3
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
     mechStd.set("diam", math.nan)
@@ -41398,9 +41407,9 @@ proc addHomogenBiophysInfoToSpineHeadComp() { localobj comp, mechStd
 proc addHomogenBiophysInfoToExtracellularSourceComp() { localobj comp, mechStd
     comp = $o1
     
-    comp.isMechInserted[0] = 1
-    comp.isMechInserted[1] = 1
-    comp.isMechInserted[14] = 1
+    comp.isMechInserted[0] = 1    // morphology
+    comp.isMechInserted[1] = 1    // capacitance
+    comp.isMechInserted[14] = 1    // IKa
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
     mechStd.set("diam", 10.0)    // (um)
@@ -42335,9 +42344,9 @@ synGroup = new ReducedSynGroup()
 
 smAllComps = new List()
 
-{ smAllComps.append(new ReducedSynPPComp("Source PP", 0, 8)) }
+{ smAllComps.append(new ReducedSynPPComp("Source PP", 0, 8)) }    // NetStim
 { smAllComps.append(new ReducedSynNCComp()) }
-{ smAllComps.append(new ReducedSynPPComp("Target PP", 1, 3)) }
+{ smAllComps.append(new ReducedSynPPComp("Target PP", 1, 3)) }    // Exp2Syn
 { smAllComps.append(new ReducedSynPPComp("Single PP", 2, -1)) }
 
 //////////////////// End of synaptic compartments ////////////////////////

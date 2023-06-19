@@ -7,14 +7,8 @@ from Utils.OtherUtils import *
 
 class GensForHomogenVars:
     
-    # Data members that will be added in the ctor:
-    #   _exportOptions
-    
-    def __init__(self):
-        self._exportOptions = hocObj.exportOptions
-        
     def initHomogenBiophysics(self):
-        if not self._exportOptions.isExportDistMechs:
+        if not hocObj.exportOptions.isExportDistMechs:
             return emptyParagraphHint()
             
         lines = []
@@ -25,6 +19,7 @@ class GensForHomogenVars:
         procNames = []
         mth = hocObj.mth
         enumDmPpNc = 0
+        mechName = h.ref('')
         for compIdx in range(len(mmAllComps)):
             comp = mmAllComps[compIdx]
             procNameId = prepareUniqueNameId(comp.name)
@@ -36,13 +31,14 @@ class GensForHomogenVars:
             numMechs = int(mth.getNumMechs(enumDmPpNc))
             for mechIdx in range(numMechs):
                 if comp.isMechInserted[mechIdx]:
-                    lines.append('    comp.isMechInserted[{}] = 1'.format(mechIdx))
+                    mth.getMechName(enumDmPpNc, mechIdx, mechName)
+                    lines.append('    comp.isMechInserted[{}] = 1    // {}'.format(mechIdx, mechName[0]))
             lines.append('    ')
             for mechIdx in range(numMechs):
                 if not comp.isMechInserted[mechIdx]:
                     continue
                 # Generate code to init "mechStds" array slice for this mech of this comp
-                newLines = self._exportHomogenVarsOfThisMech(compIdx, comp, mechIdx, self._exportOptions.isExportDistMechAssignedAndState, self._exportOptions.isExportDistMechInhoms)
+                newLines = self._exportHomogenVarsOfThisMech(compIdx, comp, mechIdx, hocObj.exportOptions.isExportDistMechAssignedAndState, hocObj.exportOptions.isExportDistMechInhoms)
                 lines.extend(newLines)
                 
             lines[-1] = '}'
@@ -60,7 +56,7 @@ class GensForHomogenVars:
         
     # Keep in sync with hoc:EnumSynCompIdxs.init, hoc:createOrImportSynComps and py:createReducedSynComps
     def initHomogenSynVars(self):
-        if not self._exportOptions.isExportSyns:
+        if not hocObj.exportOptions.isExportSyns:
             return emptyParagraphHint()
             
         lines = []
@@ -86,7 +82,7 @@ class GensForHomogenVars:
             lines.append('    comp = $o1')
             lines.append('    ')
             if self._isExportedSynComp(compIdx):
-                newLines = self._exportHomogenVarsOfThisMech(compIdx, comp, mechIdx, self._exportOptions.isExportSynAssignedAndState, self._exportOptions.isExportSynInhoms)
+                newLines = self._exportHomogenVarsOfThisMech(compIdx, comp, mechIdx, hocObj.exportOptions.isExportSynAssignedAndState, hocObj.exportOptions.isExportSynInhoms)
                 lines.extend(newLines)
                 
             lines[-1] = '}'
@@ -107,8 +103,8 @@ class GensForHomogenVars:
         mcu = hocObj.mcu
         inhomAndStochLibrary = hocObj.inhomAndStochLibrary
         
-        isAnyExposedVars = self._exportOptions.isAnyExposedVars()
-        isAnySweptVars = self._exportOptions.isAnySweptVars()
+        isAnyExposedVars = hocObj.exportOptions.isAnyExposedVars()
+        isAnySweptVars = hocObj.exportOptions.isAnySweptVars()
         
         mechName = h.ref('')
         enumDmPpNc = comp.enumDmPpNc
@@ -143,18 +139,20 @@ class GensForHomogenVars:
                 arraySize = int(mth.getVarNameAndArraySize(enumDmPpNc, mechIdx, varType, varIdx, varName))
                 varName = varName[0]
                 for arrayIndex in range(arraySize):
-                    isContinue, isExposedOrSweptVar, isValueNaN, valueMathNaNOrExposedOrSweptName, unitsCommentOrEmpty = self._getOneValueInfo(enumDmPpNc, compIdx, comp, mechIdx, varType, varTypeIdx, varIdx, varName, arraySize, arrayIndex, defaultMechStd, isExportInhoms, isAnyExposedVars, isAnySweptVars)
+                    isContinue, isExposedOrSweptVar, isValueNaN, valueOrMathNaNOrExposedNameOrSweptInitializer, unitsCommentOrEmpty = self._getOneValueInfo(enumDmPpNc, compIdx, comp, mechIdx, varType, varTypeIdx, varIdx, varName, arraySize, arrayIndex, defaultMechStd, isExportInhoms, isAnyExposedVars, isAnySweptVars)
                     if isContinue:
                         continue
                     if arraySize == 1:
-                        newLines.append('    mechStd.set("{}", {}){}'.format(varName, valueMathNaNOrExposedOrSweptName, unitsCommentOrEmpty))
+                        newLines.append('    mechStd.set("{}", {}){}'.format(varName, valueOrMathNaNOrExposedNameOrSweptInitializer, unitsCommentOrEmpty))
                         if enumDmPpNc == 2 and mcu.isMetaVar(varName):
                             if isExposedOrSweptVar:
-                                newLines.append(f'    seh.isMinRPlt1 = ({valueMathNaNOrExposedOrSweptName} < 1)')
-                            elif isValueNaN or valueMathNaNOrExposedOrSweptName < 1:
+                                # !!!! for swept vars, the generated code calls "getSweptVarValue" twice;
+                                #      it would be better to assign the value to a local var and then use it twice
+                                newLines.append(f'    seh.isMinRPlt1 = ({valueOrMathNaNOrExposedNameOrSweptInitializer} < 1)')
+                            elif isValueNaN or valueOrMathNaNOrExposedNameOrSweptInitializer < 1:
                                 newLines.append('    seh.isMinRPlt1 = 1')
                     else:
-                        newLines.append('    mechStd.set("{}", {}, {}){}'.format(varName, valueMathNaNOrExposedOrSweptName, arrayIndex, unitsCommentOrEmpty))
+                        newLines.append('    mechStd.set("{}", {}, {}){}'.format(varName, valueOrMathNaNOrExposedNameOrSweptInitializer, arrayIndex, unitsCommentOrEmpty))
                     isAllDefault = False
                     
             if isAllDefault:
@@ -169,22 +167,35 @@ class GensForHomogenVars:
         
     def _getOneValueInfo(self, enumDmPpNc, compIdx, comp, mechIdx, varType, varTypeIdx, varIdx, varName, arraySize, arrayIndex, defaultMechStd, isExportInhoms, isAnyExposedVars, isAnySweptVars):
     
-        # !!!! need to make sure that user doesn't select the same var as both exposed and swept
-        
-        if isAnyExposedVars:
-            exposedVarNameOrEmpty = self._getExposedOrSweptVarNameOrEmpty(enumDmPpNc, compIdx, mechIdx, varType, varName, arrayIndex, self._exportOptions.exposedVarsList, getExposedVarName)
-            if exposedVarNameOrEmpty:
-                return False, True, None, exposedVarNameOrEmpty, ''
-                
-        if isAnySweptVars:
-            sweptVarNameOrEmpty = self._getExposedOrSweptVarNameOrEmpty(enumDmPpNc, compIdx, mechIdx, varType, varName, arrayIndex, self._exportOptions.sweptVarsList, getSweptVarName)
-            if sweptVarNameOrEmpty:
-                return False, True, None, sweptVarNameOrEmpty, ''
-                
-        value = comp.mechStds[mechIdx][varTypeIdx].get(varName, arrayIndex)
+        # !!!! need to make sure that user doesn't select the same var as both exposed and swept,
+        # but selection of a fixed exposed var (e.g. "v_init" or other from hocObj.exportOptions.stdExposedVarsList) as a swept var is fine:
+        # in this case, we'll use the swept value and ignore the fixed exposed value
         
         mth = hocObj.mth
         
+        value = comp.mechStds[mechIdx][varTypeIdx].get(varName, arrayIndex)
+        
+        varNameWithIndex = h.ref('')
+        mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
+        varNameWithIndex = varNameWithIndex[0]
+        isDmOrSynPart = (comp.enumDmPpNc == 0)
+        units = UnitsUtils.getUnitsForDmOrSynPart(isDmOrSynPart, compIdx, mechIdx, varName, varNameWithIndex)
+        if units:
+            unitsCommentOrEmpty = '    // ({})'.format(units)
+        else:
+            unitsCommentOrEmpty = ''
+            
+        if isAnySweptVars:
+            sweptVarNameOrEmpty = self._getExposedOrSweptVarNameOrEmpty(enumDmPpNc, compIdx, mechIdx, varType, varName, arrayIndex, hocObj.exportOptions.sweptVarsList, getSweptVarName)
+            if sweptVarNameOrEmpty:
+                sweptVarInitializer = f'getSweptVarValue("{sweptVarNameOrEmpty}", {value})'
+                return False, True, None, sweptVarInitializer, unitsCommentOrEmpty
+                
+        if isAnyExposedVars:
+            exposedVarNameOrEmpty = self._getExposedOrSweptVarNameOrEmpty(enumDmPpNc, compIdx, mechIdx, varType, varName, arrayIndex, hocObj.exportOptions.exposedVarsList, getExposedVarName)
+            if exposedVarNameOrEmpty:
+                return False, True, None, exposedVarNameOrEmpty, ''
+                
         # Decide whether to skip "mechStd.set" for this var;
         # for stoch vars, we don't skip it even though the value is default
         # because we'll need to read it just before adding the noise
@@ -197,10 +208,9 @@ class GensForHomogenVars:
             if (varType == 1 and value == defaultValue) or (varType > 1 and value == 0):
                 return True, None, None, None, None
                 
-        unitsCommentOrEmpty = ''
-        
         isValueNaN = math.isnan(value)
         if isValueNaN:
+            unitsCommentOrEmpty = ''
             if isExportInhoms:
                 value = 'math.nan'
             else:
@@ -211,15 +221,7 @@ class GensForHomogenVars:
                     # then the probability var gets effectively reverted to its default const value "1" and the 5-chain synapses become the 3-chain ones
                     # (except the case of stochasticity enabled)
                     return True, None, None, None, None
-        else:
-            varNameWithIndex = h.ref('')
-            mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
-            varNameWithIndex = varNameWithIndex[0]
-            isDmOrSynPart = (comp.enumDmPpNc == 0)
-            units = UnitsUtils.getUnitsForDmOrSynPart(isDmOrSynPart, compIdx, mechIdx, varName, varNameWithIndex)
-            if units:
-                unitsCommentOrEmpty = '    // ({})'.format(units)
-                
+                    
         return False, False, isValueNaN, value, unitsCommentOrEmpty
         
     def _getExposedOrSweptVarNameOrEmpty(self, enumDmPpNc, compIdx, mechIdx, varType, varName, arrayIndex, varsList, getVarName):

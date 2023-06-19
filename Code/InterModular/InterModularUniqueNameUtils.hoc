@@ -146,7 +146,7 @@ func enterVarExpression() { local isCancel, isOK localobj exprsList
         return isOK
     }
     
-    sprint(custVar, "Cust: %s", var)    // Keep in sync with ItemOfInputVarsBrowsedList.prepareString
+    sprint(custVar, "Cust: %s", var)    // Keep in sync with ExposedOrSweptInputVar.prepareString
     if (!isVarExprUnique(custVar, exprsList)) {
         return 0
     }

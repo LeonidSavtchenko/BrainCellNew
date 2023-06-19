@@ -3,15 +3,18 @@ begintemplate ExportOptions
 
     public isExportDistMechs, isExportDistMechAssignedAndState, isExportDistMechInhoms, isExportDistMechStochs, isExportSyns, isExportSynAssignedAndState, isExportSynInhoms, isExportSynStochs, isCreateParamsHoc, isExposeModelVars, isCreateRunnerHoc, isRecordAndSaveModelVars, isMakeSweepForModelVars, isCopyDll, isNewOrExistingDll
     public exposedVarsList, sweptVarsList, watchedVarsList
+    public stdExposedVarsList
     public numItersPerOneRecord, isRecordAndSaveWithAPCounts, isSaveToTxtOrBinFile
     public isExportAnyDistFuncs, isExportAnyStochFuncs, isExportAnyInhomBiophysModels, isExportSegmentationHelper, isExportAnyStochBiophysModels, isExportAnyInhomSynModels, isExportAnyStochSynModels, isExportInhomAndStochLibrary, isExportReducedRNGUtils, isExportSynEventsHelper
     public isExportedInhomVar, isExportedStochVar, isExportedInhomBiophysVar, isExportedStochBiophysVar, isExportedInhomSynVar, isExportedStochSynVar
     public isPythonRequired
     public isAnyExposedVars, isAnySweptVars, isAnyWatchedVars
+    public isAnyCustomSweptVars
     
     external isAstrocyteOrNeuron
     external inhomAndStochLibrary
     external synGroup, seh
+    external codeContractViolation
     
     isExportDistMechs = -1
     isExportDistMechAssignedAndState = -1
@@ -30,6 +33,7 @@ begintemplate ExportOptions
     isNewOrExistingDll = -1
     
     objref exposedVarsList, sweptVarsList, watchedVarsList
+    objref stdExposedVarsList
     
     numItersPerOneRecord = -1
     isRecordAndSaveWithAPCounts = -1
@@ -61,6 +65,12 @@ begintemplate ExportOptions
         numItersPerOneRecord = 4
         isRecordAndSaveWithAPCounts = 0
         isSaveToTxtOrBinFile = 1
+        
+        stdExposedVarsList = new List()
+        stdExposedVarsList.append(new ExposedOrSweptInputVar(3, "celsius"))
+        stdExposedVarsList.append(new ExposedOrSweptInputVar(3, "v_init"))
+        stdExposedVarsList.append(new ExposedOrSweptInputVar(3, "dt"))
+        stdExposedVarsList.append(new ExposedOrSweptInputVar(3, "tstop"))
     }
     
     func isExportAnyDistFuncs() {
@@ -234,6 +244,21 @@ begintemplate ExportOptions
     
     func isAnyWatchedVars() {
         return (isRecordAndSaveModelVars && watchedVarsList.count() != 0)
+    }
+    
+    func isAnyCustomSweptVars() { local sweptVarIdx, enumSpDmCeSt
+        if (!isAnySweptVars()) {
+            return 0
+        }
+        for sweptVarIdx = 0, sweptVarsList.count() - 1 {    // Don't replace with "eachItemInList" because we return
+            enumSpDmCeSt = sweptVarsList.o(sweptVarIdx).enumSpDmCeSt
+            if (enumSpDmCeSt == 2) {
+                return 1
+            } else if (enumSpDmCeSt == 3) {
+                codeContractViolation()
+            }
+        }
+        return 0
     }
     
     // All next staff is private

@@ -8,7 +8,8 @@ class LoopUtils:
     #    The depth 2 is sufficient to export astrocyte nanogeometry in the shortest way,
     #    but in general case it's not enough because the imported geometry file may store the sections
     #    in arbitrary n-dimentional structures
-    def tryInsertLoopsToShorten(lines, useNestedLoops):
+    @classmethod
+    def tryInsertLoopsToShorten(cls, lines, useNestedLoops):
     
         if len(lines) == 0:
             return lines
@@ -17,17 +18,19 @@ class LoopUtils:
             idxVarName = 'idx2'
         else:
             idxVarName = 'idx'
-        lines, isShortened, baseIndent = LoopUtils._insertLoopsToShortenCore(lines, idxVarName, False)
+        lines, isShortened, baseIndent = cls._insertLoopsToShortenCore(lines, idxVarName, False)
         
         if isShortened and useNestedLoops:
-            lines2 = LoopUtils._wrapInnerCycles(lines, baseIndent)
-            lines2, isShortened, _ = LoopUtils._insertLoopsToShortenCore(lines2, 'idx1', True)
+            lines2 = cls._wrapInnerCycles(lines, baseIndent)
+            lines2, isShortened, _ = cls._insertLoopsToShortenCore(lines2, 'idx1', True)
             if isShortened:
-                lines = LoopUtils._unwrapInnerCycles(lines2)
+                lines = cls._unwrapInnerCycles(lines2)
                 
         return lines
         
-    def _insertLoopsToShortenCore(lines, idxVarName, isSecondIteration):
+        
+    @classmethod
+    def _insertLoopsToShortenCore(cls, lines, idxVarName, isSecondIteration):
     
         outLines = []
         
@@ -45,14 +48,14 @@ class LoopUtils:
         #    but simple "sorted(lines)" won't work until we prepend each index with zeros so that all corresponding indices
         #    have the same length
         for line in lines:
-            idx2 = LoopUtils._rfindExt(line, ']', isSecondIteration)
+            idx2 = cls._rfindExt(line, ']', isSecondIteration)
             if idx2 == -1:
                 if isInsideBlock:
-                    isShortened = LoopUtils._finishBlock(outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName, baseIndent) or isShortened
+                    isShortened = cls._finishBlock(outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName, baseIndent) or isShortened
                     isInsideBlock = False
                 outLines.append(line)
                 continue
-            idx1 = LoopUtils._rfindExt(line, '[', isSecondIteration)
+            idx1 = cls._rfindExt(line, '[', isSecondIteration)
             if idx1 == -1:
                 codeContractViolation()
             idx1 += 1
@@ -60,7 +63,7 @@ class LoopUtils:
             thisParsedPattern = '{}{}{}'.format(line[: idx1], idxVarName, line[idx2 :])
             if not isInsideBlock:
                 # Found a new block
-                firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern = LoopUtils._startBlock(thisParsedIdx, line, thisParsedPattern)
+                firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern = cls._startBlock(thisParsedIdx, line, thisParsedPattern)
                 isInsideBlock = True
             else:
                 if thisParsedPattern == prevParsedPattern and thisParsedIdx == prevParsedIdx + 1:
@@ -68,12 +71,12 @@ class LoopUtils:
                     prevParsedIdx = thisParsedIdx
                 else:
                     # The block is over
-                    isShortened = LoopUtils._finishBlock(outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName, baseIndent) or isShortened
-                    firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern = LoopUtils._startBlock(thisParsedIdx, line, thisParsedPattern)
+                    isShortened = cls._finishBlock(outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName, baseIndent) or isShortened
+                    firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern = cls._startBlock(thisParsedIdx, line, thisParsedPattern)
                     isInsideBlock = True
                     
         if isInsideBlock:
-            isShortened = LoopUtils._finishBlock(outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName, baseIndent) or isShortened
+            isShortened = cls._finishBlock(outLines, firstParsedIdx, prevParsedIdx, prevLine, prevParsedPattern, idxVarName, baseIndent) or isShortened
             
         return outLines, isShortened, baseIndent
         

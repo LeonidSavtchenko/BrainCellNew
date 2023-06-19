@@ -34,9 +34,7 @@ def exportCore(outMainHocFilePathName):
     
     outDirPath = os.path.dirname(outMainHocFilePathName)
     
-    exportOptions = hocObj.exportOptions
-    
-    if exportOptions.isCreateParamsHoc:
+    if hocObj.exportOptions.isCreateParamsHoc:
         gen = GenForParamsHoc()
         lines = gen.getParamsCode()
         lines = _addNewLineChars(lines)
@@ -44,14 +42,14 @@ def exportCore(outMainHocFilePathName):
         with open(outHocFilePathName, 'w') as outFile:
             outFile.writelines(lines)
             
-    if exportOptions.isCreateRunnerHoc:
+    if hocObj.exportOptions.isCreateRunnerHoc:
         inSkeletonFileName = 'RunnerHocFileSkeleton.txt'
         outMainHocFileName = os.path.basename(outMainHocFilePathName)
         gens = GensForRunnerHoc(outMainHocFileName)
         outHocFilePathName = outDirPath + '\\runner.hoc'
         _exportSkeletonBasedHocFile(inSkeletonFileName, gens, outHocFilePathName)
         
-    if exportOptions.isCopyDll:
+    if hocObj.exportOptions.isCopyDll:
         _copyMechsDllFile(outDirPath, hocObj.mechsDllUtils.loadedDllDirPath)
         
         

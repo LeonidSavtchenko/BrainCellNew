@@ -6,16 +6,10 @@ from Utils.OtherUtils import hocObj
 class UnitsUtils:
     
     def getUnitsCommentForExposedOrSweptVar(var):
-        if var.enumSpDmCe != 2:
-            isDmOrSynPart = var.enumSpDmCe
-            units = UnitsUtils.getUnitsForDmOrSynPart(isDmOrSynPart, var.compIdx, var.mechIdx, var.varName, var.varNameWithIndex)
-        else:
-            units = h.units(var.customExpr)
-        if units:
-            return f' ({units})'
-        else:
-            return ''
-            
+        comment = h.ref('')
+        var.getUnitsCommentOrEmpty(comment)
+        return comment[0]
+        
     def getUnitsForWatchedVar(customExpr):
         
         # The next command gives errors like "Cannot find the symbol for  dendA1_00.PcalBar_CAl( 0.05 )"

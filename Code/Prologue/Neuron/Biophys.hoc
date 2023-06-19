@@ -1,3 +1,9 @@
+
+if (isBaseOrNanoStart) {
+    dt = 0.025
+    celsius = 34.0
+}
+
 mid=12
 dist=27
 secondorder=2
@@ -17,11 +23,11 @@ RaSoma=150
 RaAx = 50
 
 Vrest = -65
-dt = 0.025
+
 gna =  .032
 AXONM = 2
 gkdr = 0.01
-celsius = 34.0
+
 KMULT =  0.048
 KMULTP = 0.048
 ghd=0.0
@@ -57,9 +63,6 @@ proc Neuron_Biophysics_init() {
 forall {
     Neuron_Biophysics_init()
 }
-
-celsius = 34.0
-
 
 
 soma_ref.o(0).sec {
