@@ -90,12 +90,7 @@ begintemplate CreateListOfOutputVarsWidget
         line1 = "You can use the next standard widgets to add new or edit existing APCount-s:"
         line2 = "* Tools -> Point Processes -> Managers -> Point Manager"
         line3 = "* Tools -> Point Processes -> Managers -> Point Group"
-        mwh.startIntercepting()
-        {
-            mwh.showNotImplementedWarning()
-            mwh.showMessageBox(line1, line2, line3, "APCount-s")
-        }
-        mwh.endIntercepting()
+        mwh.showMessageBox(line1, line2, line3, "APCount-s")
     }
     
     proc saveToTxtOrBinFileRadioButtonHandler() {

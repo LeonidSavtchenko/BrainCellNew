@@ -30,7 +30,7 @@ class SaveFileDialogUtils:
                 title='Export brain cell with nanogeometry',
                 initialdir=defaultDirPath,
                 initialfile=defaultFileName,
-                filetypes=[('HOC', '*.hoc')],
+                filetypes=[('HOC File', '*.hoc'), ('All Files', '*.*')],
                 defaultextension='.hoc',
                 parent=cls.top
             )

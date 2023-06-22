@@ -599,6 +599,39 @@ class GeneratorsForMainHocFile:
         
         return lines
         
+    # Keep the filtration logic in sync with hoc:ExportOptions.isAnyWatchedAPCounts
+    def createAPCounts(self):
+        if not hocObj.exportOptions.isAnyWatchedAPCounts():
+            return emptyParagraphHint()
+            
+        # !!!! we export APCount-s independently on hocObj.exportOptions.isRecordAndSaveWithAPCounts
+        
+        allAPCs = h.List('APCount')
+        numAPCs = len(allAPCs)
+        if numAPCs == 0:
+            return codeContractViolation()
+            
+        newLines = []
+        for apcIdx in range(numAPCs):
+            apc = allAPCs[apcIdx]
+            seg = apc.get_segment()
+            if seg is None:
+                # !!!! maybe we need to warn user that we skip exporting those APCount-s not attached to any section
+                #      (but even an attempt to set or get "thresh" for them leads to an error)
+                continue
+            newLines.append('')
+            newLines.append('{} apCounts[{}] = new APCount({})'.format(seg.sec, apcIdx, seg.x))
+            newLines.append('apCounts[{}].thresh = {}'.format(apcIdx, apc.thresh))
+            
+        if len(newLines) == 0:
+            return codeContractViolation()
+            
+        lines = []
+        lines.append('objref apCounts[{}]'.format(numAPCs))
+        lines.extend(newLines)
+        
+        return lines
+        
     def insertAllLinesFromFile(self, relFilePathName):
         return getAllLinesFromFile(relFilePathName)
         

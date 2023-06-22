@@ -1,0 +1,6 @@
+
+SWEPT_VAR_1 = 2.000000000000000e+01    // Bio: Soma \ morphology \ PARAMETER \ diam (um)
+
+t
+ms
+2.575   

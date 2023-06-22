@@ -16,13 +16,14 @@ class GensForRunnerHoc:
         
         line2 = 'runnedHocFileName = "{}"'.format(self._outMainHocFileName)
         
-        if hocObj.exportOptions.isAnySweptVars() or hocObj.exportOptions.isAnyWatchedVars():
-            # !!!! if not hocObj.exportOptions.isAnyWatchedVars(), then there is no need to define "outFolderName" and "outFileNameFormat",
+        if hocObj.exportOptions.isAnySweptVars() or hocObj.exportOptions.isAnyWatchedVars() or hocObj.exportOptions.isAnyWatchedAPCounts():
+            # !!!! if not (hocObj.exportOptions.isAnyWatchedVars() or hocObj.exportOptions.isAnyWatchedAPCounts()),
+            #      then there is no need to define "outFolderName" and "outFileNameTimestampFormat",
             #      but currently "outFolderName" accessed from hoc:createTempHocFileWithoutTemplatesAndOutputFolder, and skipping it here would lead to an error
-            lines.append('strdef runnedHocFileName, outFolderName, outFileNameFormat')
+            lines.append('strdef runnedHocFileName, outFolderName, outFileNameTimestampFormat')
             lines.append(line2)
             lines.append('outFolderName = "results"')
-            lines.append('outFileNameFormat = "%Y-%m-%d %H.%M.%S.txt"')
+            lines.append('outFileNameTimestampFormat = "%Y-%m-%d %H.%M.%S"')
         else:
             lines.append('strdef runnedHocFileName')
             lines.append(line2)
@@ -68,30 +69,31 @@ class GensForRunnerHoc:
         return lines
         
     def getWatchedVarsAndRecorderSettings(self):
-        if not hocObj.exportOptions.isAnyWatchedVars():
+        if not (hocObj.exportOptions.isAnyWatchedVars() or hocObj.exportOptions.isAnyWatchedAPCounts()):
             return emptyParagraphHint()
             
         lines = []
         
-        watchedVarsList = hocObj.exportOptions.watchedVarsList
-        
-        lines.append('objref watchedVarNames')
-        lines.append('watchedVarNames = new List()')
-        for watchedVar in watchedVarsList:
-            lines.append('{{ watchedVarNames.append(new String("{}")) }}'.format(watchedVar.s))
-        lines.append('')
-        
-        lines.append('objref watchedVarUnits')
-        lines.append('watchedVarUnits = new List()')
-        for watchedVar in watchedVarsList:
-            units = UnitsUtils.getUnitsForWatchedVar(watchedVar.s)
-            lines.append('{{ watchedVarUnits.append(new String("{}")) }}'.format(units))
-        lines.append('')
-        
-        lines.append('// We\'ll record the values only once per "numItersPerOneRecord" iterations (it must be a positive integer)')
-        lines.append('numItersPerOneRecord = {}'.format(int(hocObj.exportOptions.numItersPerOneRecord)))
-        lines.append('')
-        
+        if hocObj.exportOptions.isAnyWatchedVars():
+            watchedVarsList = hocObj.exportOptions.watchedVarsList
+            
+            lines.append('objref watchedVarNames')
+            lines.append('watchedVarNames = new List()')
+            for watchedVar in watchedVarsList:
+                lines.append('{{ watchedVarNames.append(new String("{}")) }}'.format(watchedVar.s))
+            lines.append('')
+            
+            lines.append('objref watchedVarUnits')
+            lines.append('watchedVarUnits = new List()')
+            for watchedVar in watchedVarsList:
+                units = UnitsUtils.getUnitsForWatchedVar(watchedVar.s)
+                lines.append('{{ watchedVarUnits.append(new String("{}")) }}'.format(units))
+            lines.append('')
+            
+            lines.append('// We\'ll record the values only once per "numItersPerOneRecord" iterations (it must be a positive integer)')
+            lines.append('numItersPerOneRecord = {}'.format(int(hocObj.exportOptions.numItersPerOneRecord)))
+            lines.append('')
+            
         lines.append('// Hint: use "%g" for compact format and "%.15e" for max precision')
         lines.append('strdef oneValueFormat')
         lines.append('oneValueFormat = "%-8.4g"')
@@ -99,47 +101,65 @@ class GensForRunnerHoc:
         return lines
         
     def getUtils(self):
-        if not (hocObj.exportOptions.isAnySweptVars() or hocObj.exportOptions.isAnyWatchedVars()):
+        
+        isAnySweptVars = hocObj.exportOptions.isAnySweptVars()
+        isAnyWatchedVars = hocObj.exportOptions.isAnyWatchedVars()
+        isAnyWatchedAPCounts = hocObj.exportOptions.isAnyWatchedAPCounts()
+        
+        if not (isAnySweptVars or isAnyWatchedVars or isAnyWatchedAPCounts):
             # !!!! maybe it doesn't make sense to create "runner.hoc" in this case
             return emptyParagraphHint()
             
         lines = []
         
-        newLines = getAllLinesFromFile('Code\\InterModular\\Exported\\InterModularErrWarnUtilsPart1_Exported.hoc')
-        lines.extend(newLines)
-        lines.append('')
-        
         basePath = 'Code\\Export\\OutHocFileStructures\\RunnerHocUtils\\'
         
-        newLines = getAllLinesFromFile(basePath + 'RunnerHocBasicUtils.hoc')
-        lines.extend(newLines)
-        
-        if hocObj.exportOptions.isAnyWatchedVars():
+        if isAnySweptVars or isAnyWatchedVars:
+            newLines = getAllLinesFromFile('Code\\InterModular\\Exported\\InterModularErrWarnUtilsPart1_Exported.hoc')
+            lines.extend(newLines)
             lines.append('')
-            if hocObj.exportOptions.isAnySweptVars():
+            
+            newLines = getAllLinesFromFile(basePath + 'RunnerHocBasicUtils.hoc')
+            lines.extend(newLines)
+            
+        if isAnyWatchedVars or isAnyWatchedAPCounts:
+            if len(lines) != 0:
+                lines.append('')
+            if isAnySweptVars:
                 lines.append('numSweptVars = sweptVarUserReadableNames.count()')
             else:
                 lines.append('numSweptVars = 0')
                 
+        if isAnyWatchedVars:
             lines.append('')
             newLines = getAllLinesFromFile(basePath + 'RunnerHocWatchedVarsUtils.hoc')
             lines.extend(newLines)
             
-            if hocObj.exportOptions.isAnySweptVars():
+            if isAnySweptVars:
                 lines.append('')
                 newLines = getAllLinesFromFile(basePath + 'RunnerHocSweptVarsUtils.hoc')
                 lines.extend(newLines)
                 
+        if isAnyWatchedAPCounts:
+            lines.append('')
+            newLines = getAllLinesFromFile(basePath + 'RunnerHocWatchedAPCountsUtils.hoc')
+            lines.extend(newLines)
+            
         return lines
         
     def getPrerequisites(self):
-        if not (hocObj.exportOptions.isAnySweptVars() or hocObj.exportOptions.isAnyWatchedVars()):
+        
+        isAnySweptVars = hocObj.exportOptions.isAnySweptVars()
+        isAnyWatchedVars = hocObj.exportOptions.isAnyWatchedVars()
+        isAnyWatchedAPCounts = hocObj.exportOptions.isAnyWatchedAPCounts()
+        
+        if not (isAnySweptVars or isAnyWatchedVars or isAnyWatchedAPCounts):
             # !!!! maybe it doesn't make sense to create "runner.hoc" in this case
             return emptyParagraphHint()
             
         lines = getAllLinesFromFile('Code\\Export\\OutHocFileStructures\\PythonCheck.hoc')
         
-        if hocObj.exportOptions.isAnyWatchedVars():
+        if isAnyWatchedVars or isAnyWatchedAPCounts:
             lines.append('')
             lines.append('pyObj = new PythonObject()')
             lines.append('{ nrnpython("ev = lambda arg : eval(arg)") }')
@@ -151,6 +171,7 @@ class GensForRunnerHoc:
         
         isAnySweptVars = hocObj.exportOptions.isAnySweptVars()
         isAnyWatchedVars = hocObj.exportOptions.isAnyWatchedVars()
+        isAnyWatchedAPCounts = hocObj.exportOptions.isAnyWatchedAPCounts()
         
         sweptVarsList = hocObj.exportOptions.sweptVarsList
         numSweptVars = len(sweptVarsList)
@@ -193,9 +214,19 @@ class GensForRunnerHoc:
         
         if not isAnySweptVars:
             lines.append(indent + '{ load_file(runnedHocFileName) }')
+            if isAnyWatchedAPCounts:
+                lines.append(indent)
+                lines.append(indent + 'apcList = new List("APCount")')
+                lines.append(indent + 'numWatchedAPCounts = apcList.count()')
+                lines.append(indent + 'objref recordedVecsFromAPCounts[numWatchedAPCounts]')
         else:
             lines.append(indent + 'if (simIdx == 1) {')
             lines.append(extraIndent + 'load_file(runnedHocFileName)')
+            if isAnyWatchedAPCounts:
+                lines.append(extraIndent)
+                lines.append(extraIndent + 'apcList = new List("APCount")')
+                lines.append(extraIndent + 'numWatchedAPCounts = apcList.count()')
+                lines.append(extraIndent + 'objref recordedVecsFromAPCounts[numWatchedAPCounts]')
             lines.append(indent + '} else {')
             lines.append(extraIndent + 'load_file(1, tempHocFilePathName)')
             lines.append(indent + '}')
@@ -213,6 +244,10 @@ class GensForRunnerHoc:
             lines.append(indent + 'setUpVecsForRecording()')
             lines.append(indent)
             
+        if isAnyWatchedAPCounts:
+            lines.append(indent + 'setUpVecsForRecordingFromAPCounts()')
+            lines.append(indent)
+            
         if not hocObj.exportOptions.isExportReducedRNGUtils():
             lines.append(indent + 'run()')
         else:
@@ -224,14 +259,21 @@ class GensForRunnerHoc:
             lines.append(extraIndent + 'stop')
             lines.append(indent + '}')
             
-        if isAnyWatchedVars:
+        if isAnyWatchedVars or isAnyWatchedAPCounts:
             lines.append(indent)
             if isAnySweptVars:
                 lines.append(indent + 'if (simIdx != totalNumSims) {')
-                lines.append(extraIndent + 'saveRecordedVecs()')
-                lines.append(indent + '}')
+                indent_ = extraIndent
             else:
-                lines.append(indent + 'saveRecordedVecs()')
+                indent_ = indent
+                
+            if isAnyWatchedVars:
+                lines.append(indent_ + 'saveRecordedVecs()')
+            if isAnyWatchedAPCounts:
+                lines.append(indent_ + 'saveRecordedVecsFromAPCounts()')
+                
+            if isAnySweptVars:
+                lines.append(indent + '}')
                 
         if isAnySweptVars:
             lines.append(indent)
@@ -241,18 +283,21 @@ class GensForRunnerHoc:
                 indent = indent[: -indentSize]
                 lines.append(indent + '}')
                 
-        if isAnySweptVars and isAnyWatchedVars:
+        if isAnySweptVars and (isAnyWatchedVars or isAnyWatchedAPCounts):
             lines.append('')
             lines.append('// This will save the vecs on the last iteration AND in case when user stops the cycle')
-            lines.append('saveRecordedVecs()')
-            
+            if isAnyWatchedVars:
+                lines.append('saveRecordedVecs()')
+            if isAnyWatchedAPCounts:
+                lines.append('saveRecordedVecsFromAPCounts()')
+                
         if isAnySweptVars or isAnyWatchedVars:
             lines.append('')
             lines.append('deleteTempFolder()')
             
         # !!!! these messages must be different if user stopped the cycle
         lines.append('')
-        if isAnyWatchedVars:
+        if isAnyWatchedVars or isAnyWatchedAPCounts:
             lines.append(r'{ printf("\nComplete!\nThe results were saved to \"%s%s\"\n\n", getcwd(), outFolderName) }')
         else:
             lines.append(r'{ printf("\nComplete!\n\n") }')
