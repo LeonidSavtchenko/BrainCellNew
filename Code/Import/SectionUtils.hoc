@@ -155,7 +155,7 @@ func createDefaultSomaAndConnectAllRootSectionsToIt() { local isCancel localobj 
     
     // Morphology
     // !! maybe set nseg here as well
-    sprint(hocCommand, "%s { diam=%g L=%g }", chosenNameForSoma, ic.getDefaultSomaDiamAndLen(), ic.getDefaultSomaDiamAndLen())
+    sprint(hocCommand, "%s { diam=%s L=%s }", chosenNameForSoma, pyObj.str(ic.getDefaultSomaDiamAndLen()), pyObj.str(ic.getDefaultSomaDiamAndLen()))
     execute(hocCommand)
     
     $s1 = chosenNameForSoma

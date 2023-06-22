@@ -12,16 +12,11 @@ proc setUpVecsForRecordingFromAPCounts() { local apcIdx localobj vec
     }
 }
 
-objref pyObj
-
-// in: outFileNameTimestampFormat, outFolderName, numSweptVars, numWatchedAPCounts, apcList, recordedVecsFromAPCounts, oneValueFormat (taken from the top level)
+// in: outFolderName, timestamp, numSweptVars, numWatchedAPCounts, apcList, recordedVecsFromAPCounts, oneValueFormat (taken from the top level)
 proc saveRecordedVecsFromAPCounts() { local apcIdx, maxNumRecs, n, recIdx localobj outFile, vec
-    strdef pyCommand, outFileName, outFilePathName, line, unitsStr, oneValueStr
+    strdef outFilePathName, line, unitsStr, tempStr
     
-    sprint(pyCommand, "(exec('import datetime'), datetime.datetime.now().strftime('aps %s.txt'))[1]", outFileNameTimestampFormat)
-    outFileName = pyObj.ev(pyCommand)
-    
-    sprint(outFilePathName, "%s/%s", outFolderName, outFileName)
+    sprint(outFilePathName, "%s/aps %s.txt", outFolderName, timestamp)
     outFile = new File()
     outFile.wopen(outFilePathName)
     
@@ -42,6 +37,22 @@ proc saveRecordedVecsFromAPCounts() { local apcIdx, maxNumRecs, n, recIdx localo
     sprint(line, "%s", unitsStr)
     for apcIdx = 1, numWatchedAPCounts - 1 {
         sprint(line, "%s\t%s", line, unitsStr)
+    }
+    outFile.printf("%s\n", line)
+    
+    // The locations of APCount-s
+    getAPCountLocationHint(0, line)
+    for apcIdx = 1, numWatchedAPCounts - 1 {
+        getAPCountLocationHint(apcIdx, tempStr)
+        sprint(line, "%s\t%s", line, tempStr)
+    }
+    outFile.printf("%s\n", line)
+    
+    // The thresholds of APCount-s
+    getAPCountThresholdHint(0, line)
+    for apcIdx = 1, numWatchedAPCounts - 1 {
+        getAPCountThresholdHint(apcIdx, tempStr)
+        sprint(line, "%s\t%s", line, tempStr)
     }
     outFile.printf("%s\n", line)
     
@@ -68,8 +79,8 @@ proc saveRecordedVecsFromAPCounts() { local apcIdx, maxNumRecs, n, recIdx localo
         for apcIdx = 1, numWatchedAPCounts - 1 {
             vec = recordedVecsFromAPCounts[apcIdx]
             if (recIdx < vec.size()) {
-                sprint(oneValueStr, oneValueFormat, vec.x(recIdx))
-                sprint(line, "%s\t%s", line, oneValueStr)
+                sprint(tempStr, oneValueFormat, vec.x(recIdx))
+                sprint(line, "%s\t%s", line, tempStr)
             } else {
                 sprint(line, "%s\t", line)
             }
@@ -79,4 +90,20 @@ proc saveRecordedVecsFromAPCounts() { local apcIdx, maxNumRecs, n, recIdx localo
     }
     
     outFile.close()
+}
+
+// in: apcList, pyObj (taken from the top level)
+proc getAPCountLocationHint() { local apcIdx, x
+    apcIdx = $1
+    x = apcList.o(apcIdx).get_loc()
+    {
+        sprint($s2, "loc = %s( %s )", secname(), pyObj.str(x))
+    }
+    pop_section()
+}
+
+// in: apcList, pyObj (taken from the top level)
+proc getAPCountThresholdHint() { local apcIdx
+    apcIdx = $1
+    sprint($s2, "thresh = %s (mV)", pyObj.str(apcList.o(apcIdx).thresh))    // !!!! hardcode
 }

@@ -1,22 +1,23 @@
 //////////////////// Table of contents ///////////////////////////////////
 /*
-    Line 25:            Params
-    Line 34:            Utils
-    Line 156:           Prerequisites
-    Line 196:           Sections
-    Line 215:           Imported section names
-    Line 388:           Section references
-    Line 620:           Topology
-    Line 3748:          Geometry, nseg, Ra
-    Line 38495:         Distance centre
-    Line 38504:         Importability measures
-    Line 40062:         Inhom and stoch library
-    Line 40493:         Biophys compartments
-    Line 40778:         Homogen biophysics
-    Line 41451:         Proto synapses
-    Line 41576:         Synaptic compartments
-    Line 42354:         Homogen synaptic vars
-    Line 42400:         Synapses epilogue
+    Line 26:            Params
+    Line 36:            Utils
+    Line 158:           Prerequisites
+    Line 198:           Sections
+    Line 217:           Imported section names
+    Line 390:           Section references
+    Line 622:           Topology
+    Line 3750:          Geometry, nseg, Ra
+    Line 38497:         Distance centre
+    Line 38506:         Importability measures
+    Line 40064:         Inhom and stoch library
+    Line 40495:         Biophys compartments
+    Line 40780:         Homogen biophysics
+    Line 41453:         Proto synapses
+    Line 41578:         Synaptic compartments
+    Line 42356:         Homogen synaptic vars
+    Line 42402:         Synapses epilogue
+    Line 42409:         APCount-s
 */
 //////////////////////////////////////////////////////////////////////////
 
@@ -26,8 +27,9 @@ isAstrocyteOrNeuron = 0
 
 celsius = 34.0    // (degC)
 v_init = -64.65    // (mV)
-dt = 0.1    // (ms)
 tstop = 100.0    // (ms)
+dt = 0.1    // (ms)
+steps_per_ms = 10.0
 
 //////////////////// End of params ///////////////////////////////////////
 
@@ -38511,11 +38513,11 @@ objref mechType
 if (isLoadedFromMainProgram) {
     mechsDllUtils.ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType()
 } else {
-    mechType = new MechanismType(0)     // 0: "Distributed Membrane Mechanisms"
+    mechType = new MechanismType(0)    // 0: "Distributed Membrane Mechanisms"
     if (mechType.count() != 30) {
         printMsgAndRaiseError("Please make sure the correct file \"nrnmech.dll\" is present in the same folder with this HOC file.")
     }
-    mechType = new MechanismType(1)     // 1: "Point Processes"
+    mechType = new MechanismType(1)    // 1: "Point Processes"
     if (mechType.count() != 23) {
         printMsgAndRaiseError("Please make sure the correct file \"nrnmech.dll\" is present in the same folder with this HOC file.")
     }
@@ -42403,5 +42405,14 @@ addHomogenVarsInfoToSinglePPSynComp(comp)
 { synGroup.applyChangesToAllHomogenVars(8, 3, -1) }
 
 //////////////////// End of synapses epilogue ////////////////////////////
+
+//////////////////// Start of APCount-s //////////////////////////////////
+
+objref apCounts[1]
+
+s apCounts[0] = new APCount(0.55)
+apCounts[0].thresh = 0.0    // (mV)
+
+//////////////////// End of APCount-s ////////////////////////////////////
 
 access soma_ref.o(0).sec

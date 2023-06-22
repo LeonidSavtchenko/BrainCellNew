@@ -21,16 +21,11 @@ proc setUpVecsForRecording() { local watchedVarIdx
     }
 }
 
-objref pyObj
-
-// in: outFileNameTimestampFormat, outFolderName, numSweptVars, numWatchedVars, watchedVarNames, recordedVecs, Dt, oneValueFormat (taken from the top level)
+// in: outFolderName, timestamp, numSweptVars, numWatchedVars, watchedVarNames, recordedVecs, Dt, oneValueFormat (taken from the top level)
 proc saveRecordedVecs() { local watchedVarIdx, actNumRecs, recIdx, time localobj outFile
-    strdef pyCommand, outFileName, outFilePathName, line, oneValueStr
+    strdef outFilePathName, line, oneValueStr
     
-    sprint(pyCommand, "(exec('import datetime'), datetime.datetime.now().strftime('vars %s.txt'))[1]", outFileNameTimestampFormat)
-    outFileName = pyObj.ev(pyCommand)
-    
-    sprint(outFilePathName, "%s/%s", outFolderName, outFileName)
+    sprint(outFilePathName, "%s/vars %s.txt", outFolderName, timestamp)
     outFile = new File()
     outFile.wopen(outFilePathName)
     

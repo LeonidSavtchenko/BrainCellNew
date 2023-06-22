@@ -3,6 +3,7 @@ begintemplate DefineGridForInputVarWidget
 
     public show, dismissHandler
     
+    external pyObj
     external stringEmpty, unmapIfNotNil
     
     objref mainBox
@@ -56,7 +57,7 @@ begintemplate DefineGridForInputVarWidget
             }
             xpvalue("Number of points", &gridInfo.numPts, 1)
             xlabel("")
-            sprint(label, "Current value: %.15e%s", sweptVar.getValue(), unitsCommentOrEmpty)
+            sprint(label, "Current value: %s%s", pyObj.str(sweptVar.getValue()), unitsCommentOrEmpty)
             xlabel(label)
             xlabel("(will be applied when loading without \"runner.hoc\")")
             xlabel("")

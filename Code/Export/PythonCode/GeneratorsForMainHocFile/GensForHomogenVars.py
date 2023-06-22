@@ -179,12 +179,8 @@ class GensForHomogenVars:
         mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
         varNameWithIndex = varNameWithIndex[0]
         isDmOrSynPart = (comp.enumDmPpNc == 0)
-        units = UnitsUtils.getUnitsForDmOrSynPart(isDmOrSynPart, compIdx, mechIdx, varName, varNameWithIndex)
-        if units:
-            unitsCommentOrEmpty = '    // ({})'.format(units)
-        else:
-            unitsCommentOrEmpty = ''
-            
+        unitsCommentOrEmpty = UnitsUtils.getUnitsCommentOrEmptyForDmOrSynPart(isDmOrSynPart, compIdx, mechIdx, varName, varNameWithIndex)
+        
         if isAnySweptVars:
             sweptVarNameOrEmpty = self._getExposedOrSweptVarNameOrEmpty(enumDmPpNc, compIdx, mechIdx, varType, varName, arrayIndex, hocObj.exportOptions.sweptVarsList, getSweptVarName)
             if sweptVarNameOrEmpty:

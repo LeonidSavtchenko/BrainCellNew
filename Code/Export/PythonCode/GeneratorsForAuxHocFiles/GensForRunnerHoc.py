@@ -39,17 +39,18 @@ class GensForRunnerHoc:
         sweptVarsList = hocObj.exportOptions.sweptVarsList
         numSweptVars = len(sweptVarsList)
         
-        if hocObj.exportOptions.isAnyWatchedVars():
+        if hocObj.exportOptions.isAnyWatchedVars() or hocObj.exportOptions.isAnyWatchedAPCounts():
             lines.append('objref sweptVarUserReadableNames')
             lines.append('sweptVarUserReadableNames = new List()')
             for sweptVar in sweptVarsList:
-                userReadableName = sweptVar.s.replace('\\', '\\\\') + UnitsUtils.getUnitsCommentForExposedOrSweptVar(sweptVar)
+                userReadableName = sweptVar.s.replace('\\', '\\\\') + UnitsUtils.getUnitsCommentOrEmptyForExposedOrSweptVar1(sweptVar)
                 lines.append(f'{{ sweptVarUserReadableNames.append(new String("{userReadableName}")) }}')
             lines.append('')
             
         for sweptVarIdx in range(numSweptVars):
             sweptVar = sweptVarsList[sweptVarIdx]
-            lines.append(f'// {sweptVar.s}{UnitsUtils.getUnitsCommentForExposedOrSweptVar(sweptVar)}')
+            unitsCommentOrEmpty = UnitsUtils.getUnitsCommentOrEmptyForExposedOrSweptVar1(sweptVar)
+            lines.append(f'// {sweptVar.s}{unitsCommentOrEmpty}')
             gridInfoOrNil = sweptVar.gridInfoOrNil
             if gridInfoOrNil is not None:
                 gridSize = int(gridInfoOrNil.numPts)
@@ -114,12 +115,17 @@ class GensForRunnerHoc:
         
         basePath = 'Code\\Export\\OutHocFileStructures\\RunnerHocUtils\\'
         
-        if isAnySweptVars or isAnyWatchedVars:
+        if isAnySweptVars or isAnyWatchedVars or isAnyWatchedAPCounts:
             newLines = getAllLinesFromFile('Code\\InterModular\\Exported\\InterModularErrWarnUtilsPart1_Exported.hoc')
             lines.extend(newLines)
             lines.append('')
             
-            newLines = getAllLinesFromFile(basePath + 'RunnerHocBasicUtils.hoc')
+            newLines = getAllLinesFromFile(basePath + 'RunnerHocCreateUtils.hoc')
+            lines.extend(newLines)
+            
+        if isAnySweptVars:
+            lines.append('')
+            newLines = getAllLinesFromFile(basePath + 'RunnerHocDeleteUtils.hoc')
             lines.extend(newLines)
             
         if isAnyWatchedVars or isAnyWatchedAPCounts:
@@ -169,15 +175,18 @@ class GensForRunnerHoc:
     def getMainPart(self):
         lines = []
         
-        isAnySweptVars = hocObj.exportOptions.isAnySweptVars()
-        isAnyWatchedVars = hocObj.exportOptions.isAnyWatchedVars()
-        isAnyWatchedAPCounts = hocObj.exportOptions.isAnyWatchedAPCounts()
+        # Have to convert to "bool" explicitly because we'll use str.format
+        isAnySweptVars = bool(hocObj.exportOptions.isAnySweptVars())
+        isAnyWatchedVars = bool(hocObj.exportOptions.isAnyWatchedVars())
+        isAnyWatchedAPCounts = bool(hocObj.exportOptions.isAnyWatchedAPCounts())
         
         sweptVarsList = hocObj.exportOptions.sweptVarsList
         numSweptVars = len(sweptVarsList)
         
-        if isAnySweptVars or isAnyWatchedVars:
-            lines.append('createTempHocFileWithoutTemplatesAndOutputFolder()')
+        if isAnySweptVars or isAnyWatchedVars or isAnyWatchedAPCounts:
+            isCreateTempHocFileWithoutTemplates = isAnySweptVars
+            isCreateOrCleanUpOutFolder = (isAnyWatchedVars or isAnyWatchedAPCounts)
+            lines.append('createTempHocFileWithoutTemplatesAndOutputFolder("{}", "{}")'.format(isCreateTempHocFileWithoutTemplates, isCreateOrCleanUpOutFolder))
             lines.append('')
             
         indent = ''
@@ -186,7 +195,11 @@ class GensForRunnerHoc:
             lines.append(r'print "\nIf you need to break the cycle by simulations, just Stop the current simulation.\n"')
             lines.append('')
             
-        if not hocObj.exportOptions.isExportReducedRNGUtils():
+        if hocObj.exportOptions.isExportReducedRNGUtils():
+            if isAnySweptVars:
+                lines.append('objref altRunControlWidget')
+                lines.append('')
+        else:
             lines.append('nrncontrolmenu()')
             lines.append('')
             
@@ -214,20 +227,23 @@ class GensForRunnerHoc:
         
         if not isAnySweptVars:
             lines.append(indent + '{ load_file(runnedHocFileName) }')
-            if isAnyWatchedAPCounts:
-                lines.append(indent)
-                lines.append(indent + 'apcList = new List("APCount")')
-                lines.append(indent + 'numWatchedAPCounts = apcList.count()')
-                lines.append(indent + 'objref recordedVecsFromAPCounts[numWatchedAPCounts]')
+            indent_ = indent
         else:
             lines.append(indent + 'if (simIdx == 1) {')
             lines.append(extraIndent + 'load_file(runnedHocFileName)')
-            if isAnyWatchedAPCounts:
-                lines.append(extraIndent)
-                lines.append(extraIndent + 'apcList = new List("APCount")')
-                lines.append(extraIndent + 'numWatchedAPCounts = apcList.count()')
-                lines.append(extraIndent + 'objref recordedVecsFromAPCounts[numWatchedAPCounts]')
+            indent_ = extraIndent
+            
+        if isAnyWatchedAPCounts:
+            lines.append(indent_)
+            lines.append(indent_ + 'apcList = new List("APCount")')
+            lines.append(indent_ + 'numWatchedAPCounts = apcList.count()')
+            lines.append(indent_ + 'objref recordedVecsFromAPCounts[numWatchedAPCounts]')
+            
+        if isAnySweptVars:
             lines.append(indent + '} else {')
+            if hocObj.exportOptions.isExportReducedRNGUtils():
+                lines.append(extraIndent + 'altRunControlWidget.dismissHandler()')
+                lines.append(extraIndent)
             lines.append(extraIndent + 'load_file(1, tempHocFilePathName)')
             lines.append(indent + '}')
         lines.append(indent)
@@ -252,6 +268,10 @@ class GensForRunnerHoc:
             lines.append(indent + 'run()')
         else:
             lines.append(indent + 'alt_run()')
+            
+        if isAnyWatchedVars or isAnyWatchedAPCounts:
+            lines.append(indent)
+            lines.append(indent + 'timestamp = pyObj.ev(getTimestampPyCommand)')
             
         if isAnySweptVars:
             lines.append(indent)
@@ -285,22 +305,27 @@ class GensForRunnerHoc:
                 
         if isAnySweptVars and (isAnyWatchedVars or isAnyWatchedAPCounts):
             lines.append('')
-            lines.append('// This will save the vecs on the last iteration AND in case when user stops the cycle')
+            lines.append('// Saving the vecs on the last iteration AND in case when user breaks the cycle by simulations')
             if isAnyWatchedVars:
                 lines.append('saveRecordedVecs()')
             if isAnyWatchedAPCounts:
                 lines.append('saveRecordedVecsFromAPCounts()')
                 
-        if isAnySweptVars or isAnyWatchedVars:
+        if isAnySweptVars:
             lines.append('')
             lines.append('deleteTempFolder()')
             
-        # !!!! these messages must be different if user stopped the cycle
         lines.append('')
+        lines.append('strdef word')
+        lines.append('if (stoprun) {')
+        lines.append('    word = "Stopped"')
+        lines.append('} else {')
+        lines.append('    word = "Complete"')
+        lines.append('}')
         if isAnyWatchedVars or isAnyWatchedAPCounts:
-            lines.append(r'{ printf("\nComplete!\nThe results were saved to \"%s%s\"\n\n", getcwd(), outFolderName) }')
+            lines.append(r'{ printf("\n%s!\nThe results were saved to \"%s%s\"\n\n", word, getcwd(), outFolderName) }')
         else:
-            lines.append(r'{ printf("\nComplete!\n\n") }')
+            lines.append(r'{ printf("\n%s!\n\n", word) }')
             
         return lines
         

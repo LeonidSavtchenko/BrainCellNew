@@ -69,8 +69,12 @@ begintemplate ExportOptions
         stdExposedVarsList = new List()
         stdExposedVarsList.append(new ExposedOrSweptInputVar(3, "celsius"))
         stdExposedVarsList.append(new ExposedOrSweptInputVar(3, "v_init"))
-        stdExposedVarsList.append(new ExposedOrSweptInputVar(3, "dt"))
         stdExposedVarsList.append(new ExposedOrSweptInputVar(3, "tstop"))
+        stdExposedVarsList.append(new ExposedOrSweptInputVar(3, "dt"))
+        // Always exporting "steps_per_ms" looks like overkill,
+        // but in fact it's used by the standard "proc setdt()", so omitting it for export
+        // would result in "Changed dt" when we run the exported file even though "dt" was exported
+        stdExposedVarsList.append(new ExposedOrSweptInputVar(3, "steps_per_ms"))
     }
     
     func isExportAnyDistFuncs() {
@@ -122,7 +126,7 @@ begintemplate ExportOptions
         if (seh.isMinRPlt1) {
             return 1
         }
-        return isReleaseProbabilityInExposedVars()
+        return isReleaseProbabilityInExposedOrSweptVars()
     }
     
     func isExportSynEventsHelper() {
@@ -130,7 +134,7 @@ begintemplate ExportOptions
             if (seh.isSefwEnabled()) {
                 return 1
             }
-            return isReleaseProbabilityInExposedVars()
+            return isReleaseProbabilityInExposedOrSweptVars()
         } else {
             // seh is nil
             return 0
@@ -235,15 +239,15 @@ begintemplate ExportOptions
     }
     
     func isAnyExposedVars() {
-        return (isExposeModelVars && exposedVarsList.count() != 0)
+        return (isCreateParamsHoc && isExposeModelVars && exposedVarsList.count() != 0)
     }
     
     func isAnySweptVars() {
-        return (isMakeSweepForModelVars && sweptVarsList.count() != 0)
+        return (isCreateRunnerHoc && isMakeSweepForModelVars && sweptVarsList.count() != 0)
     }
     
     func isAnyWatchedVars() {
-        return (isRecordAndSaveModelVars && watchedVarsList.count() != 0)
+        return (isCreateRunnerHoc && isRecordAndSaveModelVars && watchedVarsList.count() != 0)
     }
     
     func isAnyCustomSweptVars() { local sweptVarIdx, enumSpDmCeSt
@@ -263,6 +267,9 @@ begintemplate ExportOptions
     
     // Keep the filtration logic in sync with py:GeneratorsForMainHocFile.createAPCounts
     func isAnyWatchedAPCounts() { local apcIdx localobj apcList
+        if (!(isCreateRunnerHoc && isRecordAndSaveModelVars && isRecordAndSaveWithAPCounts)) {
+            return 0
+        }
         apcList = new List("APCount")
         if (apcList.count() == 0) {
             return 0
@@ -278,10 +285,19 @@ begintemplate ExportOptions
     // All next staff is private
     
     
-    func isReleaseProbabilityInExposedVars() { local exposedVarIdx
-        for exposedVarIdx = 0, exposedVarsList.count() - 1 {    // Don't replace with "eachItemInList" because we return
-            if (exposedVarsList.o(exposedVarIdx).isReleaseProbability()) {
-                return 1
+    func isReleaseProbabilityInExposedOrSweptVars() { local varIdx
+        if (isCreateParamsHoc && isExposeModelVars) {
+            for varIdx = 0, exposedVarsList.count() - 1 {   // Don't replace with "eachItemInList" because we return
+                if (exposedVarsList.o(varIdx).isReleaseProbability()) {
+                    return 1
+                }
+            }
+        }
+        if (isCreateRunnerHoc && isMakeSweepForModelVars) {
+            for varIdx = 0, sweptVarsList.count() - 1 {     // The same comment
+                if (sweptVarsList.o(varIdx).isReleaseProbability()) {
+                    return 1
+                }
             }
         }
         return 0

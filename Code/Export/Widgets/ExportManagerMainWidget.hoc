@@ -100,7 +100,7 @@ begintemplate ExportManagerMainWidget
                     xlabel("By default, the file will contain the following general settings:")
                     xlabel("    ENABLE_GRAPHICAL_INTERFACE, SHOW_TOPOLOGY, ENABLE_AUTORUN, ENABLE_AUTOEXIT")
                     xlabel("and general simulation params:")
-                    xlabel("    celsius, v_init, dt, tstop")
+                    xlabel("    celsius, v_init, tstop, dt, steps_per_ms")
                     xcheckbox("Expose some vars (I will select them)", &exportOptions.isExposeModelVars, "varsSelectorCheckBoxHandler(0, exportOptions.isExposeModelVars)")
                     xpanel()
                 }

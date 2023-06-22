@@ -37,7 +37,8 @@ class GeneratorsForMainHocFile:
             lines.extend(newLines)
         else:
             for stdExposedVar in hocObj.exportOptions.stdExposedVarsList:
-                lines.append(f'{stdExposedVar.customExpr} = {stdExposedVar.getValue()}    //{UnitsUtils.getUnitsCommentForExposedOrSweptVar(stdExposedVar)}')
+                unitsCommentOrEmpty = UnitsUtils.getUnitsCommentOrEmptyForExposedOrSweptVar2(stdExposedVar)
+                lines.append(f'{stdExposedVar.customExpr} = {stdExposedVar.getValue()}{unitsCommentOrEmpty}')
                 
         if hocObj.exportOptions.isAnySweptVars():
             newLines = self._initCustOrStdExposedOrSweptVars(hocObj.exportOptions.sweptVarsList, getSweptVarName, True)
@@ -601,17 +602,16 @@ class GeneratorsForMainHocFile:
         
     # Keep the filtration logic in sync with hoc:ExportOptions.isAnyWatchedAPCounts
     def createAPCounts(self):
-        if not hocObj.exportOptions.isAnyWatchedAPCounts():
-            return emptyParagraphHint()
-            
-        # !!!! we export APCount-s independently on hocObj.exportOptions.isRecordAndSaveWithAPCounts
+        
+        # By design, we export APCount-s independently on hocObj.exportOptions
         
         allAPCs = h.List('APCount')
         numAPCs = len(allAPCs)
         if numAPCs == 0:
-            return codeContractViolation()
+            return emptyParagraphHint()
             
         newLines = []
+        threshUnits = 'mV'  # !!!! hardcode
         for apcIdx in range(numAPCs):
             apc = allAPCs[apcIdx]
             seg = apc.get_segment()
@@ -621,10 +621,10 @@ class GeneratorsForMainHocFile:
                 continue
             newLines.append('')
             newLines.append('{} apCounts[{}] = new APCount({})'.format(seg.sec, apcIdx, seg.x))
-            newLines.append('apCounts[{}].thresh = {}'.format(apcIdx, apc.thresh))
+            newLines.append('apCounts[{}].thresh = {}    // ({})'.format(apcIdx, apc.thresh, threshUnits))
             
         if len(newLines) == 0:
-            return codeContractViolation()
+            return emptyParagraphHint()
             
         lines = []
         lines.append('objref apCounts[{}]'.format(numAPCs))
@@ -665,15 +665,15 @@ class GeneratorsForMainHocFile:
             if isSwept:
                 notRunnedModeValue = var.getValue()
                 sweptVarInitializer = f'getSweptVarValue("{varName}", {notRunnedModeValue})'
-                unitsComment = UnitsUtils.getUnitsCommentForExposedOrSweptVar(var)
-                lines.append(f'{var.customExpr} = {sweptVarInitializer}    //{unitsComment}')
+                unitsCommentOrEmpty = UnitsUtils.getUnitsCommentOrEmptyForExposedOrSweptVar2(var)
+                lines.append(f'{var.customExpr} = {sweptVarInitializer}{unitsCommentOrEmpty}')
             else:
                 lines.append(f'{var.customExpr} = {varName}')
         return lines
         
     def _createCheckForNumMechs(self, isDmOrPp, hint):
         lines = []
-        lines.append('    mechType = new MechanismType({})     // {}: "{}"'.format(isDmOrPp, isDmOrPp, hint))
+        lines.append('    mechType = new MechanismType({})    // {}: "{}"'.format(isDmOrPp, isDmOrPp, hint))
         lines.append('    if (mechType.count() != {}) {{'.format(int(hocObj.mth.getNumMechs(isDmOrPp))))
         lines.append('        printMsgAndRaiseError("Please make sure the correct file \\"nrnmech.dll\\" is present in the same folder with this HOC file.")')
         lines.append('    }')
