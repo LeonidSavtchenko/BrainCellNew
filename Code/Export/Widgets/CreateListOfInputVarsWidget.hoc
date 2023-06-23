@@ -235,7 +235,7 @@ begintemplate CreateListOfInputVarsWidget
         exprsList.select(selVarIdx)
     }
     
-    proc defineVarGridHandler() { local selVarIdx localobj gridInfoOrNil
+    proc defineVarGridHandler() { local selVarIdx localobj gridInfoOrNil, sweptVar
         dismissChilds()
         
         selVarIdx = exprsList.selected()
@@ -245,7 +245,8 @@ begintemplate CreateListOfInputVarsWidget
         }
         
         gridInfoOrNil = exprsList.o(selVarIdx).gridInfoOrNil
-        dg4ivWidget.show(gridInfoOrNil, selVarIdx)      // --> onDefineVarGridOkHandler
+        sweptVar = exprsList.o(selVarIdx)
+        dg4ivWidget.show(gridInfoOrNil, selVarIdx, sweptVar)    // --> onDefineVarGridOkHandler
     }
     
     proc okHandler() {

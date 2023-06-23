@@ -14,11 +14,6 @@ access soma_ref.o(0).sec    // !! is that needed?
 { finitialize() }   // !! Already moved to NanoBranchesManager.hoc
 
 
-objref apc
-apc = new APCount(0.5)
-apc.thresh=0
-
-
 proc advance() {
      
     fadvance()
@@ -29,7 +24,7 @@ proc advance() {
 }
 
 
-/* !! The next APCount staff is deprecated in favour of the Export module functionality (in development)
+/* !!!! The next APCount staff is deprecated in favour of the Export module functionality
 
 objref f1            //declare object references
 f1 = new File()

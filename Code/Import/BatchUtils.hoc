@@ -81,10 +81,10 @@ proc convertFileToHocWithNLMorphologyConverter() { local somaDiamAndLenOrMinusOn
     outFilePathNameTempl = "%sCode/Import/temp_folder/last_converted.hoc"
     sprint(outFilePathName, outFilePathNameTempl, getcwd())
     if (somaDiamAndLenOrMinusOne != -1) {
-        extraArgTempl = "--forceCylinderSoma %g %g"
+        extraArgTempl = "--forceCylinderSoma %s %s"
         // There is a typo in the manual for NLMorphologyConverter.exe: it claims to expect the radius as the first argument,
         // but actually it expects the diameter
-        sprint(extraArg, extraArgTempl, somaDiamAndLenOrMinusOne, somaDiamAndLenOrMinusOne)
+        sprint(extraArg, extraArgTempl, pyObj.str(somaDiamAndLenOrMinusOne), pyObj.str(somaDiamAndLenOrMinusOne))
     } else {
         extraArg = ""
     }

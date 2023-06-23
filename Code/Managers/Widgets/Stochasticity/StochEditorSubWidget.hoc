@@ -39,6 +39,7 @@ begintemplate StochEditorSubWidget
     arraySize = -1
     arrayIndex = -1
     strdef varNameWithIndex
+    strdef varNameWithIndexAndUnits
     
     isCalledFromVarsEditor = -1
     isCalledFromReviewStochVars = -1
@@ -178,7 +179,7 @@ begintemplate StochEditorSubWidget
     }
     
     proc show() { local isInhom, isStoch, idx localobj hBox1, hBox2, hBox3, hBox4, hBox5, hBox6, hBox7, vBox1, vBox2, vBox3, vBox4
-        strdef compName, varTypeName, varNameWithIndex, varNameWithIndexAndUnits, text, yesNo, line2, when
+        strdef compName, varTypeName, varNameWithIndex, text, yesNo, line2, when
         
         compName = comp.name
         mth.getVarTypeName(varType, varTypeName)
@@ -484,24 +485,31 @@ begintemplate StochEditorSubWidget
                 deck10.intercept(1)
                 {
                     graph1 = new Graph()    // PDF (model)
+                    setXYLabels(graph1, 0)
                     graph1.brush(0)         // Without this, graph1 will be dashed if the widget is unmapped and shown again
                     graph1.color(3)         // Blue
                     graph2 = new Graph()    // CDF (model)
+                    setXYLabels(graph2, 1)
                     graph2.brush(0)
                     graph2.color(3)         // Blue
                     graph3 = new Graph()    // A sample
+                    setXYLabels(graph3, 2)
                     graph3.brush(0)
                     graph3.color(2)         // Red
                     graph4 = new Graph()    // PDF (from the sample + model)
+                    setXYLabels(graph4, 0)
                     graph4.brush(1, 1, 0)   // Installing a dash brush; looks like the "pattern" arg doesn't work as described in NEURON docs
                     graph4.brush(0)         // Switching to solid line by default
                     graph5 = new Graph()    // CDF (from the sample + model)
+                    setXYLabels(graph5, 1)
                     graph5.brush(1, 1, 0)
                     graph5.brush(0)
                     graph6 = new Graph()    // ACF (from the sample + model)
+                    setXYLabels(graph6, 3)
                     graph6.brush(1, 1, 0)
                     graph6.brush(0)
                     graph7 = new Graph()    // PSD (from the sample + model)
+                    setXYLabels(graph7, 4)
                     graph7.brush(1, 1, 0)
                     graph7.brush(0)
                     xpanel("")
@@ -726,7 +734,7 @@ begintemplate StochEditorSubWidget
         isCancel = stochFuncHelper.selectedHandler()
         if (isCancel) {
             graph1.erase()
-            graph2.erase_all()
+            graph2.erase()
             return
         }
         
@@ -799,7 +807,9 @@ begintemplate StochEditorSubWidget
         
         graph3.erase()
         graph4.erase_all()
+        setXYLabels(graph4, 0)
         graph5.erase_all()
+        setXYLabels(graph5, 1)
         graph6.erase()
         graph7.erase()
         
@@ -948,7 +958,7 @@ begintemplate StochEditorSubWidget
             graph5.line(x, y)
             for binIdx = 0, numBins_ - 1 {
                 // Integrating PDF here
-                // !! for beter performance, we can calculate CDF first, and then get PDF from it
+                // !! for better performance, we can calculate CDF first, and then get PDF from it
                 //    (actually, CDF must be available somewhere inside histVec.hist called earlier)
                 y += histVec.x[binIdx] * binWidth
                 graph5.line(x, y)
@@ -1227,10 +1237,6 @@ begintemplate StochEditorSubWidget
         }
     }
     
-    proc dismissChild() {
-        stochFuncHelpers[stochFuncIdx].dismissHandler()
-    }
-    
     func makeSureCanProceed() {
         if (!isBoundsOK) {
             boundingHelper.makeSureBoundsOK()   // !! actually, no need to check, just show the last warning once again
@@ -1254,6 +1260,43 @@ begintemplate StochEditorSubWidget
             cardIdx = 7
         }
         deck10.flip_to(cardIdx)
+    }
+    
+    proc setXYLabels() { local enumPdfCdfSampleAcfPsd localobj graph
+        strdef deltaLabel, xLabel, yLabel
+        
+        graph = $o1
+        enumPdfCdfSampleAcfPsd = $2
+        
+        sprint(deltaLabel, "delta %s", varNameWithIndexAndUnits)
+        
+        if (enumPdfCdfSampleAcfPsd < 2) {
+            xLabel = deltaLabel
+        } else {
+            xLabel = "index"
+        }
+        
+        if (enumPdfCdfSampleAcfPsd == 0) {
+            yLabel = "PDF"
+        } else if (enumPdfCdfSampleAcfPsd == 1) {
+            yLabel = "CDF"
+        } else if (enumPdfCdfSampleAcfPsd == 2) {
+            yLabel = deltaLabel
+        } else if (enumPdfCdfSampleAcfPsd == 3) {
+            yLabel = "ACF"
+        } else if (enumPdfCdfSampleAcfPsd == 4) {
+            yLabel = "PSD"
+        } else {
+            codeContractViolation()
+        }
+        
+        graph.color(1)  // Black
+        graph.label(0.44, 0.015, xLabel)
+        graph.label(0.04, 0.95, yLabel)
+    }
+    
+    proc dismissChild() {
+        stochFuncHelpers[stochFuncIdx].dismissHandler()
     }
     
 endtemplate StochEditorSubWidget

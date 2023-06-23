@@ -13,6 +13,7 @@ begintemplate ImportCompleteWidget
     
     objref mainBox
     
+    external pyObj
     external isAstrocyteOrNeuron, mwh, ic, importCompleteHandler
     external chooseOutLocationAndExportHocFile, hideImportedGeometry, cleanupBeforeNextImport, printMsgAndRaiseError
     
@@ -50,8 +51,8 @@ begintemplate ImportCompleteWidget
                 xlabel("================== Modifier(s) ===================")
                 if (isSomaInsered) {
                     xlabel("Soma was missing, so we created a default one")
-                    template = "as a cylinder with diameter and length of %g um"
-                    sprint(text, template, ic.getDefaultSomaDiamAndLen())
+                    template = "as a cylinder with diameter and length of %s um"
+                    sprint(text, template, pyObj.str(ic.getDefaultSomaDiamAndLen()))
                     xlabel(text)
                     xlabel("and connected all root dendrites to its centre.")
                 }

@@ -10,10 +10,12 @@ proc removeIfExists() { local itemIndex
 }
 
 proc initVoltage() {
-    if (isAstrocyteOrNeuron) {
-        v_init = -85    // mV
-    } else {
-        v_init = -64.65
+    if (isBaseOrNanoStart) {
+        if (isAstrocyteOrNeuron) {
+            v_init = -85    // mV
+        } else {
+            v_init = -64.65
+        }
     }
     finitialize(v_init)
 }
@@ -22,14 +24,19 @@ proc initVoltageAndRunControlParams() {
     initVoltage()
     
     t = 0
-    if (isAstrocyteOrNeuron) {
-        dt = 1              // ms
-        steps_per_ms = 1
-        tstop = 10000
-    } else {
-        dt = 1
-        steps_per_ms = 10
-        tstop = 100
+    
+    if (isBaseOrNanoStart) {
+        dt = 1  // ms
+        if (isAstrocyteOrNeuron) {
+            tstop = 10000
+            steps_per_ms = 1
+        } else {
+            tstop = 100
+            steps_per_ms = 10
+        }
+    }
+    
+    if (!isAstrocyteOrNeuron) {
         runStopAt = 5
         runStopIn = 1
         screen_update_invl = 0.05

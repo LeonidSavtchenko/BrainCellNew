@@ -38,6 +38,7 @@ begintemplate InhomEditorSubWidget
     arraySize = -1
     arrayIndex = -1
     strdef varNameWithIndex
+    strdef varNameWithIndexAndUnits
     
     isCalledFromVarsEditor = -1
     
@@ -176,7 +177,7 @@ begintemplate InhomEditorSubWidget
     }
     
     proc show() { local isInhom, isStoch, idx localobj secList, hBox1, hBox2, hBox3, hBox4, hBox5, vBox1, vBox2, vBox3, vBox4, vBox5, nil
-        strdef compName, varNameWithIndexAndUnits, text, yesNo, what, when
+        strdef compName, text, yesNo, what, when
         
         compName = comp.name
         mth.getVarTypeName(varType, varTypeName)
@@ -422,10 +423,12 @@ begintemplate InhomEditorSubWidget
                     {
                         // Model curve
                         graph1 = new Graph()
+                        setXYLabels(graph1)
                         graph1.brush(0)         // Without this, graph1 will be dashed if the widget is unmapped and shown again
                         
                         // Stats curve
                         graph2 = new Graph()
+                        setXYLabels(graph2)
                         graph2.brush(1, 1, 0)   // Installing a dash brush; looks like the "pattern" arg doesn't work as described in NEURON docs
                         graph2.brush(0)         // Switching to solid line by default
                         
@@ -623,6 +626,7 @@ begintemplate InhomEditorSubWidget
         if (isCancel) {
             graph1.erase()
             graph2.erase_all()
+            setXYLabels(graph2)
             return
         }
         
@@ -696,6 +700,7 @@ begintemplate InhomEditorSubWidget
         }
         
         graph2.erase_all()
+        setXYLabels(graph2)
         graph2.color(2)     // Red
         yMin = math.inf
         yMax = -math.inf
@@ -953,6 +958,15 @@ begintemplate InhomEditorSubWidget
             line3 = "(The checkbox \"Enable stochasticity\" must be checked.)"
             mwh.showMessageBox(line1, "", line2, line3, title)
         }
+    }
+    
+    proc setXYLabels() { localobj graph
+        strdef xLabel
+        graph = $o1
+        graph.color(1)  // Black
+        sprint(xLabel, "Distance (%s)", units("L"))
+        graph.label(0.44, 0.015, xLabel)
+        graph.label(0.04, 0.95, varNameWithIndexAndUnits)
     }
     
     proc dismissChild() {

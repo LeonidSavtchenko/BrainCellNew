@@ -7,13 +7,13 @@ begintemplate ExposedOrSweptInputVar
     public enumSpDmCeSt, compIdx, mechIdx, varType, varName, varNameWithIndex, customExpr
     public gridInfoOrNil
     public s
-    public getValue, isEqual, isReleaseProbability
+    public getValue, getUnitsCommentOrEmpty, isEqual, isReleaseProbability
     
     external mth, mcu, compUtils
-    external stringsEqual, codeContractViolation
+    external stringEmpty, stringsEqual, codeContractViolation
     external _tempValue
     
-    enumSpDmCeSt = -1   // 0: "Synapse part", 1: "Distributed mechanism", 2: "Custom expression", 3: "Standard NEURON var"
+    enumSpDmCeSt = -1   // 0: "Synapse part", 1: "Distributed mechanism", 2: "Custom expression", 3: "Standard NEURON var (exposed only)"
     compIdx = -1
     mechIdx = -1
     varType = -1
@@ -67,6 +67,35 @@ begintemplate ExposedOrSweptInputVar
             }
         } else {
             return getGlobalOrCustomValue(customExpr)
+        }
+    }
+    
+    proc getUnitsCommentOrEmpty() { local numArg, isDmOrSynPart, enumDmPpNc
+        strdef unitsOrEmpty
+        
+        numArg = numarg()
+        if (numArg == 0 || numArg > 2) {
+            codeContractViolation()
+        }
+        
+        // !! is that needed?
+        unitsOrEmpty = ""
+        
+        if (enumSpDmCeSt < 2) {
+            isDmOrSynPart = enumSpDmCeSt
+            enumDmPpNc = compUtils.getComp(isDmOrSynPart, compIdx).enumDmPpNc
+            mth.getVarUnits(enumDmPpNc, mechIdx, varName, varNameWithIndex, unitsOrEmpty)
+        } else {
+            unitsOrEmpty = units(customExpr)
+        }
+        if (!stringEmpty(unitsOrEmpty)) {
+            sprint($s1, " (%s)", unitsOrEmpty)
+        } else {
+            $s1 = ""
+        }
+        
+        if (numArg == 2) {
+            $s2 = unitsOrEmpty
         }
     }
     

@@ -1,19 +1,19 @@
 
 if (isAstrocyteOrNeuron) {
-    { load_file("Astrocyte/AstrocyteGeometryPanel.hoc") }
-    { load_file("Astrocyte/AstrocyteHandlers.hoc") }
+    load_file("Astrocyte/AstrocyteGeometryPanel.hoc")
+    load_file("Astrocyte/AstrocyteHandlers.hoc")
 } else {
-    { load_file("Neuron/NeuronGeometryPanel.hoc") }
+    load_file("Neuron/NeuronGeometryPanel.hoc")
 }
 
 if (isBaseOrNanoStart) {
-    { load_file("Widgets/SeededDendritesWidget_deprecated.hoc") }
+    load_file("Widgets/SeededDendritesWidget_deprecated.hoc")
 }
 
 { load_file("../Managers/CommonLoads.hoc") }
 { load_file("../Managers/MechManager/MechManager.hoc") }
 if (!isAstrocyteOrNeuron) {
-    { load_file("../Managers/SynManager/SynManager.hoc") }
+    load_file("../Managers/SynManager/SynManager.hoc")
 }
 
 { load_file("../Export/Widgets/ExportWidgetsLoads.hoc") }

@@ -13,7 +13,8 @@ class GenForParamsHoc:
         for concExposedVarIdx in range(len(concExposedVarsList)):
             lines.append('')
             exposedVar = concExposedVarsList[concExposedVarIdx]
-            lines.append(f'// {exposedVar.s}{UnitsUtils.getUnitsCommentForExposedOrSweptVar(exposedVar)}')
+            unitsCommentOrEmpty = UnitsUtils.getUnitsCommentOrEmptyForExposedOrSweptVar1(exposedVar)
+            lines.append(f'// {exposedVar.s}{unitsCommentOrEmpty}')
             lines.append(f'{getExposedVarName(concExposedVarIdx)} = {exposedVar.getValue()}')
             
         return lines

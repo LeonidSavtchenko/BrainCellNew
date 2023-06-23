@@ -1,7 +1,7 @@
 
 _sweptVarValue = -1
 
-// in: numSweptVars, sweptVarUserReadableNames (taken from the top level)
+// in: numSweptVars, pyObj, sweptVarUserReadableNames (taken from the top level)
 proc dumpSweptVarsToFileHeader() { local sweptVarIdx localobj outFile
     strdef sweptVarName, hocCommand
     
@@ -12,7 +12,7 @@ proc dumpSweptVarsToFileHeader() { local sweptVarIdx localobj outFile
         sprint(sweptVarName, "SWEPT_VAR_%d", sweptVarIdx + 1)
         sprint(hocCommand, "_sweptVarValue = %s", sweptVarName)
         execute(hocCommand)
-        outFile.printf("%s = %.15e    // %s\n", sweptVarName, _sweptVarValue, sweptVarUserReadableNames.o(sweptVarIdx).s)   // !!!! max precision, but still not the same as in sweptVar*Grid
+        outFile.printf("%s = %s    // %s\n", sweptVarName, pyObj.str(_sweptVarValue), sweptVarUserReadableNames.o(sweptVarIdx).s)
     }
     outFile.printf("\n")
 }

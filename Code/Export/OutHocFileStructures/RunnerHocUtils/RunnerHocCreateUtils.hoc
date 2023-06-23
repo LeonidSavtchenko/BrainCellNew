@@ -1,0 +1,29 @@
+
+strdef tempFolderName, tempHocFileName
+tempFolderName = "temp_folder"
+tempHocFileName = "last_cell_without_templates.hoc"
+
+strdef tempHocFilePathName
+{ sprint(tempHocFilePathName, "%s/%s", tempFolderName, tempHocFileName) }
+
+objref pyObj
+
+strdef getTimestampPyCommand, timestamp
+{ sprint(getTimestampPyCommand, "(exec('import datetime'), datetime.datetime.now().strftime('%s'))[1]", outFileNameTimestampFormat) }
+
+// in: tempFolderName, runnedHocFileName, tempHocFilePathName, outFolderName (taken from the top level)
+proc createTempHocFileWithoutTemplatesAndOutputFolder() { local status
+    strdef isCreateTempHocFileWithoutTemplates, isCreateOrCleanUpOutFolder, pyCode
+    
+    isCreateTempHocFileWithoutTemplates = $s1
+    isCreateOrCleanUpOutFolder = $s2
+    
+    pyCode = "import os\nisCreateTempHocFileWithoutTemplates = %s\nisCreateOrCleanUpOutFolder = %s\ntempFolderName = '%s'\nrunnedHocFileName = '%s'\ntempHocFilePathName = '%s'\noutFolderName = '%s'\ndef createOrCleanUpFolder(folderName):\n    if os.path.exists(folderName):\n        for fileName in os.listdir(folderName):\n            filePath = os.path.join(folderName, fileName)\n            os.remove(filePath)\n    else:\n        os.mkdir(folderName)\ndef createTempHocFileWithoutTemplates():\n    with open(runnedHocFileName, 'r') as inFile, open(tempHocFilePathName, 'w') as outFile:\n        isSkipBlock = False\n        for line in inFile:\n            if line.startswith('begintemplate'):\n                isSkipBlock = True\n            elif line.startswith('endtemplate'):\n                isSkipBlock = False\n            elif not isSkipBlock:\n                outFile.write(line)\nif isCreateTempHocFileWithoutTemplates:\n    createOrCleanUpFolder(tempFolderName)\n    createTempHocFileWithoutTemplates()\nif isCreateOrCleanUpOutFolder:\n    createOrCleanUpFolder(outFolderName)"
+    
+    sprint(pyCode, pyCode, isCreateTempHocFileWithoutTemplates, isCreateOrCleanUpOutFolder, tempFolderName, runnedHocFileName, tempHocFilePathName, outFolderName)
+    
+    status = nrnpython(pyCode)
+    if (!status) {
+        printMsgAndRaiseError("Failed to create the temporary HOC file or the output folder")
+    }
+}

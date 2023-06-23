@@ -1,0 +1,12 @@
+
+// in: tempFolderName (taken from the top level)
+proc deleteTempFolder() { local status
+    strdef pyCode
+    
+    sprint(pyCode, "import shutil\nshutil.rmtree('%s')", tempFolderName)
+    
+    status = nrnpython(pyCode)
+    if (!status) {
+        printMsgAndRaiseError("Failed to delete the temporary folder")
+    }
+}

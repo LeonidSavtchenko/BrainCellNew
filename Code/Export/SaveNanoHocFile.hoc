@@ -1,9 +1,31 @@
 
-// Save nanogeometry HOC file
-func saveNanoHocFile() { local isSelected
+// !! maybe propose user the default saved file name in style "<imported_name>_nano.hoc"
+
+// For both file browsers:
+// * selecting other disk is OK
+// * spaces in file path or name is OK
+// * unicode chars in file path or name is NOT OK
+
+
+// Save nanogeometry HOC file (using the new file browser)
+func saveNanoHocFile() {
     strdef filePathName
     
-    isSelected = selectNanoHocFile("w", "Save", filePathName)    // !! maybe propose default file name in style "<imported_name>_nano.hoc"
+    callPythonSaveFileDialog(filePathName)
+    if (stringEmpty(filePathName)) {
+        return 1
+    }
+    
+    _exportCellToHocFile(filePathName)
+    
+    return 0
+}
+
+// Save nanogeometry HOC file (using the deprecated file browser)
+func saveNanoHocFile_deprecated() { local isSelected
+    strdef filePathName
+    
+    isSelected = selectNanoHocFile("w", "Save", filePathName)
     if (!isSelected) {
         return 1
     }
@@ -15,9 +37,13 @@ func saveNanoHocFile() { local isSelected
 
 
 proc _exportCellToHocFile() { local cond
-    strdef outHocFilePathName, line1, line2, line3, line4, line5, line6, line7, line8, line9, line10, line11
+    strdef outHocFilePathName, line1, line2, line3, line4, line5, line6, line7, line8, line9, line10
     
     outHocFilePathName = $s1
+    
+    // Letting NEURON change "dt" now rather than on start of the simulation,
+    // so we export already corrected value of "dt"
+    setdt()
     
     mwh.showPleaseWaitBox("Exporting nanogeometry file.")
     {
@@ -29,32 +55,33 @@ proc _exportCellToHocFile() { local cond
     {
         line1 = "Here is what we don't export at the moment (the list is incomplete):"
         line2 = "    * GLOBAL vars of biophys mechs%s"
-        line3 = "    * %sPPs/ACs%s, e.g. gap junctions in Soma and Dendrites%s"
+        line3 = "    * %sPPs/ACs%s, e.g. gap junctions in Soma and Dendrites%s (but APCount-s are saved)"
+        line4 = "    * custom \"proc advance() { ... }\"%s"
         if (isAstrocyteOrNeuron) {
             sprint(line2, line2, "")
             sprint(line3, line3, "", "", "")
+            sprint(line4, line4, "")
         } else {
             sprint(line2, line2, " and synaptic PPs/ACs")
             sprint(line3, line3, "custom ", " (outside synapses)", " and Point3DRelease in Extracellular Source")
+            sprint(line4, line4, ", e.g. the one updating Extracellular Potassium")
         }
-        line4 = "    * the distance centre location (if you change it)"
+        line5 = "    * the distance centre location (if you change it)"
         cond = exportOptions.isExportAnyStochFuncs()
         if (!isAstrocyteOrNeuron) {
             cond = (cond || smEnumSynLoc == 2)  // smEnumSynLoc is not defined for Astrocyte
         }
         if (cond) {
-            line5 = "    * states of RNGs"
+            line6 = "    * states of RNGs"
         }
-        line6 = "    * if creating \"runner.hoc\", the times recorded by APCount-s are not saved"
-        line7 = "    * if creating \"runner.hoc\", the results cannot be saved to BIN file (only TXT file is supported)"
+        line7 = "    * if creating \"runner.hoc\", the results cannot be saved to BIN files (only TXT files are supported)"
         line8 = "    * a new file \"nrnmech.dll\" is not built (only the old one is copied)"
-        line9 = ""
-        line10 = "Not implemented."
-        line11 = "If required, please ask the developer to prioritize."
+        line9 = "Not implemented."
+        line10 = "If required, please ask the developer to prioritize."
         if (cond) {
-            mwh.showWarningBox(line1, line2, line3, line4, line5, line6, line7, line8, line9, line10, line11)
+            mwh.showWarningBox(line1, line2, line3, line4, line5, line6, line7, line8, "", line9, line10)
         } else {
-            mwh.showWarningBox(line1, line2, line3, line4, line6, line7, line8, line9, line10, line11)
+            mwh.showWarningBox(line1, line2, line3, line4, line5, line7, line8, "", line9, line10)
         }
         
         mwh.showMessageBox("Export complete successfully", "Complete")

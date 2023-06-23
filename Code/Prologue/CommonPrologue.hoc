@@ -1,5 +1,5 @@
 
-// This file is sourced just after successful completion of the import
+// This file is sourced just after successful completion of the import of Base geometry
 
 
 MinDistance = 1             // um
@@ -25,4 +25,5 @@ if (isAstrocyteOrNeuron) {
     nanoBranchesManager = new NanoBranchesManager(MaxNumberSpinesPerDendrite)
 }
 
+// The default distance centre
 soma_ref.o(0).sec distance()

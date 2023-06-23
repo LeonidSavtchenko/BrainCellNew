@@ -3,7 +3,8 @@ begintemplate DefineGridForInputVarWidget
 
     public show, dismissHandler
     
-    external unmapIfNotNil
+    external pyObj
+    external stringEmpty, unmapIfNotNil
     
     objref mainBox
     objref parentWidget
@@ -16,13 +17,25 @@ begintemplate DefineGridForInputVarWidget
         parentWidget = $o1
     }
     
-    proc show() { localobj nil
+    proc show() { local isNoUnits localobj sweptVar, nil
+        strdef unitsCommentOrEmpty, unitsOrEmpty, label
+        
         gridInfo = $o1
         oldVarIdx = $2
+        sweptVar = $o3
         
         if (gridInfo == nil) {
             gridInfo = new SweptInputVarGridInfo()
         }
+        
+        sweptVar.getUnitsCommentOrEmpty(unitsCommentOrEmpty, unitsOrEmpty)
+        
+        // Unfortunately, we cannot move the units assignment to SweptInputVarGridInfo ctor
+        // because each time it has global effect on all instances of the template
+        units(&gridInfo.firstValue, unitsOrEmpty)
+        units(&gridInfo.lastValue, unitsOrEmpty)
+        
+        isNoUnits = stringEmpty(unitsOrEmpty)
         
         mainBox = new VBox()
         mainBox.intercept(1)
@@ -32,9 +45,21 @@ begintemplate DefineGridForInputVarWidget
             xradiobutton("Linear:          next = prev + delta", "gridInfo.isLinOrExpGrid = 1", gridInfo.isLinOrExpGrid == 1)
             xradiobutton("Exponential: next = prev * delta", "gridInfo.isLinOrExpGrid = 0", gridInfo.isLinOrExpGrid == 0)
             xlabel("")
+            if (isNoUnits) {
+                // Without this, for unitless vars, user will see "Fist/Last value ()" instead of "Fist/Last value"
+                units(0)
+            }
             xpvalue("First value", &gridInfo.firstValue, 1)
             xpvalue("Last value", &gridInfo.lastValue, 1)
+            if (isNoUnits) {
+                // Restoring the old state
+                units(1)
+            }
             xpvalue("Number of points", &gridInfo.numPts, 1)
+            xlabel("")
+            sprint(label, "Current value: %s%s", pyObj.str(sweptVar.getValue()), unitsCommentOrEmpty)
+            xlabel(label)
+            xlabel("(will be applied when loading without \"runner.hoc\")")
             xlabel("")
             xbutton("OK", "okHandler()")
             xpanel()

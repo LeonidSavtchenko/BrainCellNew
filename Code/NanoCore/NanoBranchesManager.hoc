@@ -17,11 +17,11 @@ NumberNanoBranches = -1
 { load_file("Exported/CreateNanoRefs_Exported.hoc") }
 
 if (isAstrocyteOrNeuron) {
-    { load_file("Astrocyte/AstrocyteNanoBranch.hoc") }
+    load_file("Astrocyte/AstrocyteNanoBranch.hoc")
     objref spineNeckDiamCache
 } else {
-    { load_file("Neuron/NeuronNanoBranch.hoc") }
-    { load_file("../Managers/SynManager/Exported/SpineNeckDiamCache.hoc") }
+    load_file("Neuron/NeuronNanoBranch.hoc")
+    load_file("../Managers/SynManager/Exported/SpineNeckDiamCache.hoc")
 }
 
 
