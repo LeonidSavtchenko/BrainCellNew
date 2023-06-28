@@ -51,6 +51,7 @@ begintemplate CreateListOfOutputVarsWidget
             xpanel("")
             xlabel("")
             xpvalue("Make one record per iterations", &exportOptions.numItersPerOneRecord, 1, "numItersPerOneRecordChangedHandler()")
+            xlabel("(has no effect when CVode is ACTIVE, so time step \"dt\" varies)")
             xlabel("")
             apcList = new List("APCount")
             sprint(text, "Record and save the times with all existing APCount-s (%d detected)", apcList.count())

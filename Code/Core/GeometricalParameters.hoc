@@ -50,7 +50,7 @@ proc calculateGeometricalParams() {local i, distanceToCenter, SectionsInside, Vo
     Radius = 0
     Step = 2
     distanceToCenter = 0
-    NumberOfSections = 200       // Number of Volume calculations. NumberOfSections*Step should be less than 50.
+    NumberOfSections = 200      // Number of Volume calculations. NumberOfSections*Step should be less than 50.
     
     for i = 1, NumberOfSections {
         forall {

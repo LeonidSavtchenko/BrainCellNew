@@ -91,10 +91,11 @@ class GensForRunnerHoc:
                 lines.append('{{ watchedVarUnits.append(new String("{}")) }}'.format(units))
             lines.append('')
             
-            lines.append('// We\'ll record the values only once per "numItersPerOneRecord" iterations (it must be a positive integer)')
-            lines.append('numItersPerOneRecord = {}'.format(int(hocObj.exportOptions.numItersPerOneRecord)))
-            lines.append('')
-            
+            if not hocObj.cvode.active():
+                lines.append('// We\'ll record the values only once per "numItersPerOneRecord" iterations (it must be a positive integer)')
+                lines.append('numItersPerOneRecord = {}'.format(int(hocObj.exportOptions.numItersPerOneRecord)))
+                lines.append('')
+                
         lines.append('// Hint: use "%g" for compact format and "%.15e" for max precision')
         lines.append('strdef oneValueFormat')
         lines.append('oneValueFormat = "%-8.4g"')
@@ -138,17 +139,31 @@ class GensForRunnerHoc:
                 
         if isAnyWatchedVars:
             lines.append('')
-            newLines = getAllLinesFromFile(basePath + 'RunnerHocWatchedVarsUtils.hoc')
+            lines.append('numWatchedVars = watchedVarNames.count()')
+            lines.append('objref recordedVarVecs[numWatchedVars]')
+            lines.append('')
+            lines.append('objref recordedTimeVec')
+            
+            lines.append('')
+            if hocObj.cvode.active():
+                fileName = 'RunnerHocWatchedVarsSetUpForCVodeUtils.hoc'
+            else:
+                fileName = 'RunnerHocWatchedVarsSetUpUtils.hoc'
+            newLines = getAllLinesFromFile(basePath + fileName)
             lines.extend(newLines)
             
-            if isAnySweptVars:
-                lines.append('')
-                newLines = getAllLinesFromFile(basePath + 'RunnerHocSweptVarsUtils.hoc')
-                lines.extend(newLines)
-                
+            lines.append('')
+            newLines = getAllLinesFromFile(basePath + 'RunnerHocWatchedVarsSaveUtils.hoc')
+            lines.extend(newLines)
+            
         if isAnyWatchedAPCounts:
             lines.append('')
             newLines = getAllLinesFromFile(basePath + 'RunnerHocWatchedAPCountsUtils.hoc')
+            lines.extend(newLines)
+            
+        if (isAnyWatchedVars or isAnyWatchedAPCounts) and isAnySweptVars:
+            lines.append('')
+            newLines = getAllLinesFromFile(basePath + 'RunnerHocSweptVarsUtils.hoc')
             lines.extend(newLines)
             
         return lines
@@ -169,6 +184,30 @@ class GensForRunnerHoc:
             lines.append('')
             lines.append('pyObj = new PythonObject()')
             lines.append('{ nrnpython("ev = lambda arg : eval(arg)") }')
+            
+            lines.append('')
+            lines.append('proc checkCVodePrerequisites() { localobj pc')
+            if hocObj.cvode.active():
+                s1 = '!'
+                s2 = 'ACTIVE'
+                s3 = 'INACTIVE'
+            else:
+                s1 = ''
+                s2 = 'INACTIVE'
+                s3 = 'ACTIVE'
+            lines.append(f'    if ({s1}cvode.active()) {{')
+            lines.append(f'        printMsgAndRaiseError("This runner HOC file was generated to be used exclusively with {s2} CVode.\\n    Please generate another specialized runner HOC file to be used with {s3} CVode.")')
+            lines.append('    }')
+            
+            if hocObj.cvode.active():
+                lines.append('    ')
+                lines.append('    pc = new ParallelContext()')
+                lines.append('    if (pc.nhost() > 1 && cvode.use_local_dt()) {')
+                lines.append('        printMsgAndRaiseError("This runner HOC file cannot be used given parallel context and CVode settings.")')
+                lines.append('        // To support this, we\'ll have to update setUpVarVecsForRecording and saveRecordedVarVecs assuming each watched var having individual recordedTimeVec')
+                lines.append('    }')
+                
+            lines.append('}')
             
         return lines
         
@@ -233,6 +272,10 @@ class GensForRunnerHoc:
             lines.append(extraIndent + 'load_file(runnedHocFileName)')
             indent_ = extraIndent
             
+        if isAnyWatchedVars or isAnyWatchedAPCounts:
+            lines.append(indent_)
+            lines.append(indent_ + 'checkCVodePrerequisites()')
+            
         if isAnyWatchedAPCounts:
             lines.append(indent_)
             lines.append(indent_ + 'apcList = new List("APCount")')
@@ -249,15 +292,16 @@ class GensForRunnerHoc:
         lines.append(indent)
         
         if isAnyWatchedVars:
-            lines.append(indent + '// Letting NEURON change "dt" now rather than on start of the simulation,')
-            lines.append(indent + '// so we can set up the recorders correctly')
-            lines.append(indent + 'setdt()')
-            lines.append(indent)
-            lines.append(indent + '// Both "dt" and "tstop" can be swept')
-            lines.append(indent + 'Dt = numItersPerOneRecord * dt')
-            lines.append(indent + 'numRecs = tstop / Dt + 1')       # !!!! test it when tstop / Dt is not integer
-            lines.append(indent)
-            lines.append(indent + 'setUpVecsForRecording()')
+            if not hocObj.cvode.active():
+                lines.append(indent + '// Letting NEURON change "dt" now rather than on start of the simulation,')
+                lines.append(indent + '// so we can set up the recorders correctly')
+                lines.append(indent + 'setdt()')
+                lines.append(indent)
+                lines.append(indent + '// Both "dt" and "tstop" can be swept')
+                lines.append(indent + 'Dt = numItersPerOneRecord * dt')
+                lines.append(indent + 'numRecs = tstop / Dt + 1')       # !!!! test it when tstop / Dt is not integer
+                lines.append(indent)
+            lines.append(indent + 'setUpVarVecsForRecording()')
             lines.append(indent)
             
         if isAnyWatchedAPCounts:
@@ -288,7 +332,7 @@ class GensForRunnerHoc:
                 indent_ = indent
                 
             if isAnyWatchedVars:
-                lines.append(indent_ + 'saveRecordedVecs()')
+                lines.append(indent_ + 'saveRecordedVarVecs()')
             if isAnyWatchedAPCounts:
                 lines.append(indent_ + 'saveRecordedVecsFromAPCounts()')
                 
@@ -307,7 +351,7 @@ class GensForRunnerHoc:
             lines.append('')
             lines.append('// Saving the vecs on the last iteration AND in case when user breaks the cycle by simulations')
             if isAnyWatchedVars:
-                lines.append('saveRecordedVecs()')
+                lines.append('saveRecordedVarVecs()')
             if isAnyWatchedAPCounts:
                 lines.append('saveRecordedVecsFromAPCounts()')
                 

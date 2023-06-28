@@ -24,7 +24,7 @@ proc advance() {
 }
 
 
-/* !!!! The next APCount staff is deprecated in favour of the Export module functionality (in development)
+/* !!!! The next APCount staff is deprecated in favour of the Export module functionality
 
 objref f1            //declare object references
 f1 = new File()

@@ -1,14 +1,14 @@
 { load_file("nrngui.hoc") }
 
 if (isBaseOrNanoStart) {
-    { load_file("CellInit.hoc") }
-    { load_file("CellUpdate.hoc") }
+    load_file("CellInit.hoc")
+    load_file("CellUpdate.hoc")
     // !! move to caller file
     if (isAstrocyteOrNeuron) {
-        { load_file("../NanoCore/Astrocyte/AstrocyteNanoInitUpdate.hoc") }
+        load_file("../NanoCore/Astrocyte/AstrocyteNanoInitUpdate.hoc")
         objref nanoDistal_ref, nanoProximal_ref // !! just to source MechanismSwitch.hoc without errors
     }
-    { load_file("InitParamsMain.hoc") }
+    load_file("InitParamsMain.hoc")
 }
 
 { load_file("MechanismSwitch.hoc") }

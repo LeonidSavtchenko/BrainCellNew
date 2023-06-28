@@ -1,6 +1,6 @@
 
 if (!isBaseOrNanoStart) {
-    { load_file("../Widgets/Inhomogeneity/SegmentationHelper.hoc") }
+    load_file("../Widgets/Inhomogeneity/SegmentationHelper.hoc")
 }
 
 begintemplate InhomAndStochTarget

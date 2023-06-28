@@ -47,6 +47,12 @@ class GeneratorsForMainHocFile:
                 lines.append('// Swept vars')
                 lines.extend(newLines)
                 
+        if hocObj.cvode.active():
+            lines.append('')
+            lines.append('// CVode')
+            lines.append('{ cvode.active(1) }')
+            lines.append(f'{{ cvode.atol({hocObj.cvode.atol()}) }}')
+            
         return lines
         
     def getUtils(self):

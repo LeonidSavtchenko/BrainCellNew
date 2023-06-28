@@ -37,7 +37,7 @@ func saveNanoHocFile_deprecated() { local isSelected
 
 
 proc _exportCellToHocFile() { local cond
-    strdef outHocFilePathName, line1, line2, line3, line4, line5, line6, line7, line8, line9, line10, line11
+    strdef outHocFilePathName, line1, line2, line3, line4, line5, line6, line7, line8, line9, line10
     
     outHocFilePathName = $s1
     
@@ -74,15 +74,14 @@ proc _exportCellToHocFile() { local cond
         if (cond) {
             line6 = "    * states of RNGs"
         }
-        line7 = "    * variable time step \"dt\" is not yet supported by the exporter" 
-        line8 = "    * if creating \"runner.hoc\", the results cannot be saved to BIN files (only TXT files are supported)"
-        line9 = "    * a new file \"nrnmech.dll\" is not built (only the old one is copied)"
-        line10 = "Not implemented."
-        line11 = "If required, please ask the developer to prioritize."
+        line7 = "    * if creating \"runner.hoc\", the results cannot be saved to BIN files (only TXT files are supported)"
+        line8 = "    * a new file \"nrnmech.dll\" is not built (only the old one is copied)"
+        line9 = "Not implemented."
+        line10 = "If required, please ask the developer to prioritize."
         if (cond) {
-            mwh.showWarningBox(line1, line2, line3, line4, line5, line6, line7, line8, line9, "", line10, line11)
+            mwh.showWarningBox(line1, line2, line3, line4, line5, line6, line7, line8, "", line9, line10)
         } else {
-            mwh.showWarningBox(line1, line2, line3, line4, line5, line7, line8, line9, "", line10, line11)
+            mwh.showWarningBox(line1, line2, line3, line4, line5, line7, line8, "", line9, line10)
         }
         
         mwh.showMessageBox("Export complete successfully", "Complete")

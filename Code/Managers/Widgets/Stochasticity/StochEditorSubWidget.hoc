@@ -958,7 +958,7 @@ begintemplate StochEditorSubWidget
             graph5.line(x, y)
             for binIdx = 0, numBins_ - 1 {
                 // Integrating PDF here
-                // !! for beter performance, we can calculate CDF first, and then get PDF from it
+                // !! for better performance, we can calculate CDF first, and then get PDF from it
                 //    (actually, CDF must be available somewhere inside histVec.hist called earlier)
                 y += histVec.x[binIdx] * binWidth
                 graph5.line(x, y)
