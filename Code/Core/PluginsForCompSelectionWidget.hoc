@@ -48,7 +48,7 @@ begintemplate PluginForCSW_FromMM
     objref selectable_ref
     
     proc getTopHint() {
-        $s1 = "Please select sections that will be removed from this and assigned to a new mech-homogeneous compartment."
+        $s1 = "Please select sections that will be removed from this and assigned to a new compartment."
     }
     
     proc init() {

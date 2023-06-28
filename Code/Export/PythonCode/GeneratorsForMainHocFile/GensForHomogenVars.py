@@ -146,8 +146,8 @@ class GensForHomogenVars:
                         newLines.append('    mechStd.set("{}", {}){}'.format(varName, valueOrMathNaNOrExposedNameOrSweptInitializer, unitsCommentOrEmpty))
                         if enumDmPpNc == 2 and mcu.isMetaVar(varName):
                             if isExposedOrSweptVar:
-                                # !!!! for swept vars, the generated code calls "getSweptVarValue" twice;
-                                #      it would be better to assign the value to a local var and then use it twice
+                                # !! for swept vars, the generated code calls "getSweptVarValue" twice;
+                                #    it would be better to assign the value to a local var and then use it twice
                                 newLines.append(f'    seh.isMinRPlt1 = ({valueOrMathNaNOrExposedNameOrSweptInitializer} < 1)')
                             elif isValueNaN or valueOrMathNaNOrExposedNameOrSweptInitializer < 1:
                                 newLines.append('    seh.isMinRPlt1 = 1')
@@ -167,9 +167,9 @@ class GensForHomogenVars:
         
     def _getOneValueInfo(self, enumDmPpNc, compIdx, comp, mechIdx, varType, varTypeIdx, varIdx, varName, arraySize, arrayIndex, defaultMechStd, isExportInhoms, isAnyExposedVars, isAnySweptVars):
     
-        # !!!! need to make sure that user doesn't select the same var as both exposed and swept,
-        # but selection of a fixed exposed var (e.g. "v_init" or other from hocObj.exportOptions.stdExposedVarsList) as a swept var is fine:
-        # in this case, we'll use the swept value and ignore the fixed exposed value
+        # !! need to make sure that user doesn't select the same var as both exposed and swept,
+        #    but selection of a fixed exposed var (e.g. "v_init" or other from hocObj.exportOptions.stdExposedVarsList) as a swept var is fine:
+        #    in this case, we'll use the swept value and ignore the fixed exposed value
         
         mth = hocObj.mth
         
@@ -236,7 +236,7 @@ class GensForHomogenVars:
             lines.append('{}(comp)'.format(procName))
             lines.append('')
             
-        # !!! BUG: we don't export GLOBAL-s
+        # !! BUG: we don't export GLOBAL-s
         
         return lines
         

@@ -24,6 +24,7 @@ begintemplate RNGUtils
         }
         
         // How many times user can change synapse structure per 1 session with the guarantee of unique seeds
+        // (important only when pc.nhost() > 1)
         maxNumSeedsPerRankForMod = 1000
         
         pc = new ParallelContext()

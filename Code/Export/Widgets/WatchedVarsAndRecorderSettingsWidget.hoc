@@ -1,8 +1,9 @@
 
-begintemplate CreateListOfOutputVarsWidget
+begintemplate WatchedVarsAndRecorderSettingsWidget
 
     public show, dismissHandler
     
+    external cvode
     external exportOptions
     external mwh, pyObj, math
     external addVarToGraph, unmapIfNotNil
@@ -13,15 +14,19 @@ begintemplate CreateListOfOutputVarsWidget
     objref watchedVarsList
     
     
-    proc init() { local inf
+    proc init() {
         watchedVarsList = exportOptions.watchedVarsList
-        
-        inf = math.inf
-        variable_domain(&exportOptions.numItersPerOneRecord, 1, inf)
     }
     
     proc show() { localobj graph, var, apcList
         strdef text
+        
+        // Default recording period
+        if (!cvode.active()) {
+            exportOptions.DtOrMinus1 = 4 * dt
+        } else {
+            exportOptions.DtOrMinus1 = -1
+        }
         
         mainBox = new VBox()
         mainBox.intercept(1)
@@ -50,11 +55,13 @@ begintemplate CreateListOfOutputVarsWidget
             graph.menu_remove("Change Text")
             xpanel("")
             xlabel("")
-            xpvalue("Make one record per iterations", &exportOptions.numItersPerOneRecord, 1, "numItersPerOneRecordChangedHandler()")
-            xlabel("(has no effect when CVode is ACTIVE, so time step \"dt\" varies)")
+            xpvalue("Recording period, Dt", &exportOptions.DtOrMinus1, 1, "DtChangedHandler()")
+            xlabel("set \"-1\" to make one record per one iteration;")
+            xlabel("when \"Dt\" is not a multiple of \"dt\", the performance drops;")
+            xlabel("when CVode is ACTIVE, this happens for any \"Dt\" except \"-1\"")
             xlabel("")
             apcList = new List("APCount")
-            sprint(text, "Record and save the times with all existing APCount-s (%d detected)", apcList.count())
+            sprint(text, "Record and save the times with all APCount-s (%d detected)", apcList.count())
             xcheckbox(text, &exportOptions.isRecordAndSaveWithAPCounts, "recordAndSaveWithAPCountsCheckBoxHandler()")
             xlabel("")
             xlabel("Save to:")
@@ -66,7 +73,7 @@ begintemplate CreateListOfOutputVarsWidget
         }
         mainBox.intercept(0)
         mainBox.dismiss_action("dismissHandler()")
-        mainBox.map("Output variables", 150, 150, -1, -1)
+        mainBox.map("Watched vars and recorder settings", 300, 80, -1, -1)
         
         // Keep the var name in sync with GraphUtils.parseVarsFromTheGraph
         graph.save_name("someUniqueNameForTheParsedGraph")
@@ -79,8 +86,10 @@ begintemplate CreateListOfOutputVarsWidget
     // All next staff is private
     
     
-    proc numItersPerOneRecordChangedHandler() {
-        exportOptions.numItersPerOneRecord = int(exportOptions.numItersPerOneRecord)
+    proc DtChangedHandler() {
+        if (exportOptions.DtOrMinus1 <= 0) {
+            exportOptions.DtOrMinus1 = -1
+        }
     }
     
     proc recordAndSaveWithAPCountsCheckBoxHandler() {
@@ -114,4 +123,4 @@ begintemplate CreateListOfOutputVarsWidget
         dismissHandler()
     }
     
-endtemplate CreateListOfOutputVarsWidget
+endtemplate WatchedVarsAndRecorderSettingsWidget

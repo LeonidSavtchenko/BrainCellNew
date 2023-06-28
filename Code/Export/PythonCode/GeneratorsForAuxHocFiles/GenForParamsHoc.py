@@ -15,7 +15,10 @@ class GenForParamsHoc:
             exposedVar = concExposedVarsList[concExposedVarIdx]
             unitsCommentOrEmpty = UnitsUtils.getUnitsCommentOrEmptyForExposedOrSweptVar1(exposedVar)
             lines.append(f'// {exposedVar.s}{unitsCommentOrEmpty}')
-            lines.append(f'{getExposedVarName(concExposedVarIdx)} = {exposedVar.getValue()}')
+            value = exposedVar.getValue()
+            if exposedVar.isInteger:
+                value = int(value)
+            lines.append(f'{getExposedVarName(concExposedVarIdx)} = {value}')
             
         return lines
         

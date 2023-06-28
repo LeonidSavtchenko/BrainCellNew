@@ -105,5 +105,5 @@ proc getAPCountLocationHint() { local apcIdx, x
 // in: apcList, pyObj (taken from the top level)
 proc getAPCountThresholdHint() { local apcIdx
     apcIdx = $1
-    sprint($s2, "thresh = %s (mV)", pyObj.str(apcList.o(apcIdx).thresh))    // !!!! hardcode
+    sprint($s2, "thresh = %s (%s)", pyObj.str(apcList.o(apcIdx).thresh), units(&APCount[0].thresh))
 }

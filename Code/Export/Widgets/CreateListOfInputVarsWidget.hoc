@@ -11,7 +11,7 @@ begintemplate CreateListOfInputVarsWidget
     objref aoivWidgets[1], dg4ivWidget
     objref this
     
-    cloivWidIdx = -1
+    isExposedOrSwept = -1
     
     numAoivWidgets = -1
     
@@ -21,45 +21,48 @@ begintemplate CreateListOfInputVarsWidget
     
     
     proc init() { local aoivWidIdx
-        cloivWidIdx = $1
+        isExposedOrSwept = $1
         
         numAoivWidgets = 2
         
         objref aoivWidgets[numAoivWidgets]
         for aoivWidIdx = 0, numAoivWidgets - 1 {
-            aoivWidgets[aoivWidIdx] = new AddOneInputVarWidget(aoivWidIdx, this)
+            aoivWidgets[aoivWidIdx] = new AddOneInputVarWidget(isExposedOrSwept, aoivWidIdx, this)
         }
         
         dg4ivWidget = new DefineGridForInputVarWidget(this)
         
-        if (cloivWidIdx == 0) {
+        // The width was chosen to fit "Spine Neck" -> frapiono0_frapion_ion[ (99 values)]
+        if (isExposedOrSwept) {
             exprsList = exportOptions.exposedVarsList
-        } else if (cloivWidIdx == 1) {
-            exprsList = exportOptions.sweptVarsList
+            firstColWidth = 325
         } else {
-            codeContractViolation()
+            exprsList = exportOptions.sweptVarsList
+            firstColWidth = 375
         }
         
-        firstColWidth = 325     // The width was chosen to fit "Spine Neck" -> frapiono0_frapion_ion
         secondColWidth = 105
         slotHeight = 190
     }
     
     proc show() { localobj hBox, deck
-        strdef text
+        strdef label, title, field
+        
+        if (isExposedOrSwept) {
+            label = "Vars to expose in the params file:"
+            title = "Exposed variables"
+            field = "s"
+        } else {
+            label = "Vars to sweep:"
+            title = "Swept variables"
+            field = "sg"
+        }
         
         mainBox = new VBox()
         mainBox.intercept(1)
         {
             xpanel("")
-            if (cloivWidIdx == 0) {
-                text = "Vars to expose in the params file:"
-            } else if (cloivWidIdx == 1) {
-                text = "Vars to sweep:"
-            } else {
-                codeContractViolation()
-            }
-            xlabel(text)
+            xlabel(label)
             xpanel()
             hBox = new HBox()
             hBox.intercept(1)
@@ -68,7 +71,7 @@ begintemplate CreateListOfInputVarsWidget
                 // gives a nicer UI compared to other options (VBox, HBox or no-box)
                 deck = openDeck()
                 {
-                    exprsList.browser("", "s")
+                    exprsList.browser("", field)
                     if (exprsList.count() != 0) {
                         exprsList.select(0)
                     }
@@ -86,7 +89,7 @@ begintemplate CreateListOfInputVarsWidget
                     xbutton("Correct var", "correctVarHandler()")
                     xbutton("Delete var", "deleteVarHandler()")
                     
-                    if (cloivWidIdx == 1) {
+                    if (!isExposedOrSwept) {
                         xlabel("")
                         xbutton("Define var grid", "defineVarGridHandler()")
                     }
@@ -102,7 +105,7 @@ begintemplate CreateListOfInputVarsWidget
         }
         mainBox.intercept(0)
         mainBox.dismiss_action("dismissHandler()")
-        mainBox.map("Input variables", 110, 150, -1, -1)
+        mainBox.map(title, 110, 150, -1, -1)
     }
     
     func onVarAddHandler() { local numVars localobj newItem
@@ -127,17 +130,21 @@ begintemplate CreateListOfInputVarsWidget
             return 0
         }
         
-        replaceItemInList(exprsList, newItem, varIdx)
-        exprsList.select(varIdx)
+        replaceAndSelect(newItem, varIdx)
         
         return 1
     }
     
-    proc onDefineVarGridOkHandler() { local varIdx localobj gridInfo
+    proc onDefineVarGridOkHandler() { local varIdx localobj gridInfo, thisItem
         gridInfo = $o1
         varIdx = $2
         
-        exprsList.o(varIdx).gridInfoOrNil = gridInfo
+        thisItem = exprsList.o(varIdx)
+        thisItem.gridInfoOrNil = gridInfo
+        thisItem.prepareShownStrings()
+        
+        // Without this, the old string will be shown in UI until user closes the widget and opens it again
+        replaceAndSelect(thisItem, varIdx)
     }
     
     proc dismissHandler() {
@@ -177,7 +184,7 @@ begintemplate CreateListOfInputVarsWidget
             return
         }
         
-        exprsList.append(new ExposedOrSweptInputVar(expr))
+        exprsList.append(new ExposedOrSweptInputVar(isExposedOrSwept, expr))
         
         numVars = exprsList.count()
         exprsList.select(numVars - 1)
@@ -206,11 +213,18 @@ begintemplate CreateListOfInputVarsWidget
             if (!isOK) {
                 return
             }
-            newItem = new ExposedOrSweptInputVar(expr)
+            newItem = new ExposedOrSweptInputVar(isExposedOrSwept, expr)
             onVarCorrectHandler(newItem, selVarIdx)
         } else {
             codeContractViolation()
         }
+    }
+    
+    proc replaceAndSelect() { local varIdx localobj newItem
+        newItem = $o1
+        varIdx = $2
+        replaceItemInList(exprsList, newItem, varIdx)
+        exprsList.select(varIdx)
     }
     
     proc deleteVarHandler() { local selVarIdx, numVars
@@ -250,7 +264,6 @@ begintemplate CreateListOfInputVarsWidget
     }
     
     proc okHandler() {
-        // !!
         dismissHandler()
     }
     

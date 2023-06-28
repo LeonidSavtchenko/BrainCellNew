@@ -17,9 +17,9 @@ class GensForRunnerHoc:
         line2 = 'runnedHocFileName = "{}"'.format(self._outMainHocFileName)
         
         if hocObj.exportOptions.isAnySweptVars() or hocObj.exportOptions.isAnyWatchedVars() or hocObj.exportOptions.isAnyWatchedAPCounts():
-            # !!!! if not (hocObj.exportOptions.isAnyWatchedVars() or hocObj.exportOptions.isAnyWatchedAPCounts()),
-            #      then there is no need to define "outFolderName" and "outFileNameTimestampFormat",
-            #      but currently "outFolderName" accessed from hoc:createTempHocFileWithoutTemplatesAndOutputFolder, and skipping it here would lead to an error
+            # !! if not (hocObj.exportOptions.isAnyWatchedVars() or hocObj.exportOptions.isAnyWatchedAPCounts()),
+            #    then there is no need to define "outFolderName" and "outFileNameTimestampFormat",
+            #    but currently "outFolderName" accessed from hoc:createTempHocFileWithoutTemplatesAndOutputFolder, and skipping it here would lead to an error
             lines.append('strdef runnedHocFileName, outFolderName, outFileNameTimestampFormat')
             lines.append(line2)
             lines.append('outFolderName = "results"')
@@ -91,11 +91,14 @@ class GensForRunnerHoc:
                 lines.append('{{ watchedVarUnits.append(new String("{}")) }}'.format(units))
             lines.append('')
             
-            if not hocObj.cvode.active():
-                lines.append('// We\'ll record the values only once per "numItersPerOneRecord" iterations (it must be a positive integer)')
-                lines.append('numItersPerOneRecord = {}'.format(int(hocObj.exportOptions.numItersPerOneRecord)))
-                lines.append('')
-                
+            lines.append('// Recording period (in model time, optional)')
+            if hocObj.exportOptions.DtOrMinus1 != -1:
+                units = UnitsUtils.getUnitsForWatchedVar('dt')
+                lines.append('DtOrMinus1 = {}    // ({})'.format(hocObj.exportOptions.DtOrMinus1, units))
+            else:
+                lines.append('DtOrMinus1 = {}'.format(int(hocObj.exportOptions.DtOrMinus1)))
+            lines.append('')
+            
         lines.append('// Hint: use "%g" for compact format and "%.15e" for max precision')
         lines.append('strdef oneValueFormat')
         lines.append('oneValueFormat = "%-8.4g"')
@@ -109,7 +112,7 @@ class GensForRunnerHoc:
         isAnyWatchedAPCounts = hocObj.exportOptions.isAnyWatchedAPCounts()
         
         if not (isAnySweptVars or isAnyWatchedVars or isAnyWatchedAPCounts):
-            # !!!! maybe it doesn't make sense to create "runner.hoc" in this case
+            # !! maybe it doesn't make sense to create "runner.hoc" in this case
             return emptyParagraphHint()
             
         lines = []
@@ -139,21 +142,7 @@ class GensForRunnerHoc:
                 
         if isAnyWatchedVars:
             lines.append('')
-            lines.append('numWatchedVars = watchedVarNames.count()')
-            lines.append('objref recordedVarVecs[numWatchedVars]')
-            lines.append('')
-            lines.append('objref recordedTimeVec')
-            
-            lines.append('')
-            if hocObj.cvode.active():
-                fileName = 'RunnerHocWatchedVarsSetUpForCVodeUtils.hoc'
-            else:
-                fileName = 'RunnerHocWatchedVarsSetUpUtils.hoc'
-            newLines = getAllLinesFromFile(basePath + fileName)
-            lines.extend(newLines)
-            
-            lines.append('')
-            newLines = getAllLinesFromFile(basePath + 'RunnerHocWatchedVarsSaveUtils.hoc')
+            newLines = getAllLinesFromFile(basePath + 'RunnerHocWatchedVarsUtils.hoc')
             lines.extend(newLines)
             
         if isAnyWatchedAPCounts:
@@ -175,39 +164,15 @@ class GensForRunnerHoc:
         isAnyWatchedAPCounts = hocObj.exportOptions.isAnyWatchedAPCounts()
         
         if not (isAnySweptVars or isAnyWatchedVars or isAnyWatchedAPCounts):
-            # !!!! maybe it doesn't make sense to create "runner.hoc" in this case
+            # !! maybe it doesn't make sense to create "runner.hoc" in this case
             return emptyParagraphHint()
             
         lines = getAllLinesFromFile('Code\\Export\\OutHocFileStructures\\PythonCheck.hoc')
         
         if isAnyWatchedVars or isAnyWatchedAPCounts:
             lines.append('')
-            lines.append('pyObj = new PythonObject()')
-            lines.append('{ nrnpython("ev = lambda arg : eval(arg)") }')
-            
-            lines.append('')
-            lines.append('proc checkCVodePrerequisites() { localobj pc')
-            if hocObj.cvode.active():
-                s1 = '!'
-                s2 = 'ACTIVE'
-                s3 = 'INACTIVE'
-            else:
-                s1 = ''
-                s2 = 'INACTIVE'
-                s3 = 'ACTIVE'
-            lines.append(f'    if ({s1}cvode.active()) {{')
-            lines.append(f'        printMsgAndRaiseError("This runner HOC file was generated to be used exclusively with {s2} CVode.\\n    Please generate another specialized runner HOC file to be used with {s3} CVode.")')
-            lines.append('    }')
-            
-            if hocObj.cvode.active():
-                lines.append('    ')
-                lines.append('    pc = new ParallelContext()')
-                lines.append('    if (pc.nhost() > 1 && cvode.use_local_dt()) {')
-                lines.append('        printMsgAndRaiseError("This runner HOC file cannot be used given parallel context and CVode settings.")')
-                lines.append('        // To support this, we\'ll have to update setUpVarVecsForRecording and saveRecordedVarVecs assuming each watched var having individual recordedTimeVec')
-                lines.append('    }')
-                
-            lines.append('}')
+            newLines = getAllLinesFromFile('Code\\Export\\OutHocFileStructures\\RunnerHocUtils\\RunnerHocWatchedVarsPrereqs.hoc')
+            lines.extend(newLines)
             
         return lines
         
@@ -234,7 +199,7 @@ class GensForRunnerHoc:
             lines.append(r'print "\nIf you need to break the cycle by simulations, just Stop the current simulation.\n"')
             lines.append('')
             
-        if hocObj.exportOptions.isExportReducedRNGUtils():
+        if hocObj.exportOptions.isExportAltRunControl():
             if isAnySweptVars:
                 lines.append('objref altRunControlWidget')
                 lines.append('')
@@ -284,7 +249,7 @@ class GensForRunnerHoc:
             
         if isAnySweptVars:
             lines.append(indent + '} else {')
-            if hocObj.exportOptions.isExportReducedRNGUtils():
+            if hocObj.exportOptions.isExportAltRunControl():
                 lines.append(extraIndent + 'altRunControlWidget.dismissHandler()')
                 lines.append(extraIndent)
             lines.append(extraIndent + 'load_file(1, tempHocFilePathName)')
@@ -292,15 +257,6 @@ class GensForRunnerHoc:
         lines.append(indent)
         
         if isAnyWatchedVars:
-            if not hocObj.cvode.active():
-                lines.append(indent + '// Letting NEURON change "dt" now rather than on start of the simulation,')
-                lines.append(indent + '// so we can set up the recorders correctly')
-                lines.append(indent + 'setdt()')
-                lines.append(indent)
-                lines.append(indent + '// Both "dt" and "tstop" can be swept')
-                lines.append(indent + 'Dt = numItersPerOneRecord * dt')
-                lines.append(indent + 'numRecs = tstop / Dt + 1')       # !!!! test it when tstop / Dt is not integer
-                lines.append(indent)
             lines.append(indent + 'setUpVarVecsForRecording()')
             lines.append(indent)
             
@@ -308,7 +264,7 @@ class GensForRunnerHoc:
             lines.append(indent + 'setUpVecsForRecordingFromAPCounts()')
             lines.append(indent)
             
-        if not hocObj.exportOptions.isExportReducedRNGUtils():
+        if not hocObj.exportOptions.isExportAltRunControl():
             lines.append(indent + 'run()')
         else:
             lines.append(indent + 'alt_run()')

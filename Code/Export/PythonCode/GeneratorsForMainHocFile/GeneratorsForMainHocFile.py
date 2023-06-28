@@ -37,8 +37,11 @@ class GeneratorsForMainHocFile:
             lines.extend(newLines)
         else:
             for stdExposedVar in hocObj.exportOptions.stdExposedVarsList:
+                value = stdExposedVar.getValue()
+                if stdExposedVar.isInteger:
+                    value = int(value)
                 unitsCommentOrEmpty = UnitsUtils.getUnitsCommentOrEmptyForExposedOrSweptVar2(stdExposedVar)
-                lines.append(f'{stdExposedVar.customExpr} = {stdExposedVar.getValue()}{unitsCommentOrEmpty}')
+                lines.append(f'{stdExposedVar.customExpr} = {value}{unitsCommentOrEmpty}')
                 
         if hocObj.exportOptions.isAnySweptVars():
             newLines = self._initCustOrStdExposedOrSweptVars(hocObj.exportOptions.sweptVarsList, getSweptVarName, True)
@@ -76,10 +79,10 @@ class GeneratorsForMainHocFile:
         # The instances of the next reduced templates from "InterModular" folder are created
         # only in standalone mode; otherwise we just reuse the instances created earlier in the main program
         
-        newLines = self._insertAllLinesFromReducedVersionFile('InterModular\\ReducedBasicMath.hoc')
+        newLines = self._insertAllLinesFromReducedVersionFile('InterModular\\ReducedBasicMath.hoc')     # Keep in sync with hoc:loadHocFile and hoc:loadNanoHocFile
         lines.extend(newLines)
         
-        if hocObj.exportOptions.isExportReducedRNGUtils():
+        if hocObj.exportOptions.isExportAltRunControl():
             lines.append('')
             newLines = self._insertAllLinesFromReducedVersionFile('InterModular\\ReducedRNGUtils.hoc')
             lines.extend(newLines)
@@ -242,10 +245,10 @@ class GeneratorsForMainHocFile:
         
         lines.append('{ makeSureDeclared("math", "objref %s", "%s = new ReducedBasicMath()") }')
         
-        if hocObj.exportOptions.isExportReducedRNGUtils():
-            # !!!! BUG: The random sequences won't be the same in the main program and the exported file until
-            #      each seed given by rngUtils.getFor_stochFunc_withUniqueSeed is saved into corresponding stocDistFunc
-            #      and exported/imported as a part of it
+        if hocObj.exportOptions.isExportAltRunControl():
+            # !! BUG: The random sequences won't be the same in the main program and the exported file until
+            #         each seed given by rngUtils.getFor_stochFunc_withUniqueSeed is saved into corresponding stocDistFunc
+            #         and exported/imported as a part of it
             lines.append('{ makeSureDeclared("rngUtils", "objref %s", "%s = new ReducedRNGUtils()") }')
         elif hocObj.exportOptions.isExportSyns or hocObj.exportOptions.isExportInhomAndStochLibrary():
             lines.append('{ makeSureDeclared("rngUtils") }')
@@ -309,7 +312,7 @@ class GeneratorsForMainHocFile:
         lines.extend(newLines)
         lines.append('')
         
-        if hocObj.exportOptions.isExportReducedRNGUtils():
+        if hocObj.exportOptions.isExportAltRunControl():
             newLines = self.insertAllLinesFromFile('Code\\Managers\\InhomAndStochLibrary\\Exported\\InhomAndStochApplicator.hoc')
             lines.extend(newLines)
             lines.append('')
@@ -579,7 +582,7 @@ class GeneratorsForMainHocFile:
         srcMechName = srcMechName[0]
         trgMechName = trgMechName[0]
         sngMechName = sngMechName[0]
-        isForceNewTrgOrSng = 1  # !!!!??
+        isForceNewTrgOrSng = 1  # !! we create synapses from scratch, so it would be better to modify the exported code not to use this arg anymore
         lines.append('{{ synGroup.applyChangesToStrucIfNeeded({}, {}, {}, {}, "{}", "{}", "{}", {}) }}'.format(is3Or1PartInSynStruc, srcMechIdx, trgMechIdx, sngMechIdx, srcMechName, trgMechName, sngMechName, isForceNewTrgOrSng))
         
         lines.append('{{ synGroup.applyChangesToAllHomogenVars({}, {}, {}) }}'.format(srcMechIdx, trgMechIdx, sngMechIdx))
@@ -590,7 +593,7 @@ class GeneratorsForMainHocFile:
         return lines
         
     def insertAltRunControlWidget(self):
-        if not hocObj.exportOptions.isExportReducedRNGUtils():
+        if not hocObj.exportOptions.isExportAltRunControl():
             return emptyParagraphHint()
             
         lines = self.insertAllLinesFromFile('Code\\Core\\Widgets\\Exported\\alt_stdrun.hoc')
@@ -617,13 +620,13 @@ class GeneratorsForMainHocFile:
             return emptyParagraphHint()
             
         newLines = []
-        threshUnits = 'mV'  # !!!! hardcode
+        threshUnits = UnitsUtils.getUnitsForWatchedVar('APCount[0].thresh')
         for apcIdx in range(numAPCs):
             apc = allAPCs[apcIdx]
             seg = apc.get_segment()
             if seg is None:
-                # !!!! maybe we need to warn user that we skip exporting those APCount-s not attached to any section
-                #      (but even an attempt to set or get "thresh" for them leads to an error)
+                # !! maybe we need to warn user that we skip exporting those APCount-s not attached to any section
+                #    (but even an attempt to set or get "thresh" for them leads to an error)
                 continue
             newLines.append('')
             newLines.append('{} apCounts[{}] = new APCount({})'.format(seg.sec, apcIdx, seg.x))

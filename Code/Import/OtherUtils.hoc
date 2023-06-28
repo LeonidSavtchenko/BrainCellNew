@@ -58,6 +58,11 @@ proc loadHocFile() { local wasSomethingImported, status
         print ""
         execerror("")
     }
+    
+    if (name_declared("ReducedBasicMath")) {    // Keep in sync with loadNanoHocFile and py:GeneratorsForMainHocFile.getUtils
+        mwh.showWarningBox("Invalid Base geometry file.", "Please make sure you don't load a Nano geometry file this way.")
+        execerror("")
+    }
 }
 
 // Show imported geometry sketch

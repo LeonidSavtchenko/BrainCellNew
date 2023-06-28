@@ -6,12 +6,14 @@ begintemplate ExposedOrSweptInputVar
     
     public enumSpDmCeSt, compIdx, mechIdx, varType, varName, varNameWithIndex, customExpr
     public gridInfoOrNil
-    public s
-    public getValue, getUnitsCommentOrEmpty, isEqual, isReleaseProbability
+    public s, sg
+    public prepareShownStrings, getValue, getUnitsCommentOrEmpty, isEqual, isReleaseProbability
     
     external mth, mcu, compUtils
-    external stringEmpty, stringsEqual, codeContractViolation
+    external getWatchedVarUnits, stringEmpty, stringsEqual, codeContractViolation
     external _tempValue
+    
+    isExposedOrSwept = -1
     
     enumSpDmCeSt = -1   // 0: "Synapse part", 1: "Distributed mechanism", 2: "Custom expression", 3: "Standard NEURON var (exposed only)"
     compIdx = -1
@@ -24,35 +26,90 @@ begintemplate ExposedOrSweptInputVar
     
     objref gridInfoOrNil
     
-    strdef s
+    strdef s, sg
+    
+    isInteger = -1
     
     
     proc init() { local numArg
         numArg = numarg()
         
-        if (numArg == 1) {
-            enumSpDmCeSt = 2
-            customExpr = $s1
-        } else if (numArg == 2) {
-            enumSpDmCeSt = $1
+        isInteger = 0
+        
+        if (numArg == 2) {
+            isExposedOrSwept = $1
             customExpr = $s2
+            enumSpDmCeSt = 2
+        } else if (numArg == 3 || numArg == 4) {
+            isExposedOrSwept = $1
+            enumSpDmCeSt = $2
+            customExpr = $s3
+            if (numArg == 4) {
+                isInteger = $4
+            }
+            if (!isExposedOrSwept) {
+                codeContractViolation()
+            }
             if (enumSpDmCeSt != 3) {
                 codeContractViolation()
             }
-        } else if (numArg == 7) {
-            enumSpDmCeSt = $1
-            compIdx = $2
-            mechIdx = $3
-            varType = $4
-            varName = $s5
-            arraySize = $6
-            arrayIndex = $7
+        } else if (numArg == 8) {
+            isExposedOrSwept = $1
+            enumSpDmCeSt = $2
+            compIdx = $3
+            mechIdx = $4
+            varType = $5
+            varName = $s6
+            arraySize = $7
+            arrayIndex = $8
             mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
         } else {
             codeContractViolation()
         }
         
-        prepareShownString()
+        prepareShownStrings()
+    }
+    
+    proc prepareShownStrings() { local isDmOrSynPart, enumDmPpNc localobj comp, nil
+        strdef compTypeName, compName, varTypeName, mechName
+        
+        if (enumSpDmCeSt == 0) {
+            compTypeName = "Syn"
+        } else if (enumSpDmCeSt == 1) {
+            compTypeName = "Bio"
+        } else if (enumSpDmCeSt == 2) {
+            compTypeName = "Cust"   // Keep in sync with enterVarExpression
+        } else if (enumSpDmCeSt == 3) {
+            compTypeName = "Std"
+        } else {
+            codeContractViolation()
+        }
+        
+        if (enumSpDmCeSt < 2) {
+            isDmOrSynPart = enumSpDmCeSt
+            comp = compUtils.getComp(isDmOrSynPart, compIdx)
+            compName = comp.name
+            mth.getVarTypeName(varType, varTypeName)
+            enumDmPpNc = comp.enumDmPpNc
+            if (enumDmPpNc != 2) {
+                mth.getMechName(enumDmPpNc, mechIdx, mechName)
+                sprint(s, "%s: %s \\ %s \\ %s \\ %s", compTypeName, compName, mechName, varTypeName, varNameWithIndex)
+            } else {
+                sprint(s, "%s: %s \\ %s \\ %s", compTypeName, compName, varTypeName, varNameWithIndex)
+            }
+        } else {
+            sprint(s, "%s: %s", compTypeName, customExpr)   // Keep in sync with enterVarExpression
+        }
+        
+        if (isExposedOrSwept) {
+            return
+        }
+        
+        if (gridInfoOrNil == nil) {
+            sprint(sg, "%s (1 value)", s)
+        } else {
+            sprint(sg, "%s (%d values)", s, gridInfoOrNil.numPts)
+        }
     }
     
     func getValue() { local isDmOrSynPart, varTypeIdx localobj comp
@@ -86,7 +143,7 @@ begintemplate ExposedOrSweptInputVar
             enumDmPpNc = compUtils.getComp(isDmOrSynPart, compIdx).enumDmPpNc
             mth.getVarUnits(enumDmPpNc, mechIdx, varName, varNameWithIndex, unitsOrEmpty)
         } else {
-            unitsOrEmpty = units(customExpr)
+            getWatchedVarUnits(customExpr, unitsOrEmpty)
         }
         if (!stringEmpty(unitsOrEmpty)) {
             sprint($s1, " (%s)", unitsOrEmpty)
@@ -122,38 +179,6 @@ begintemplate ExposedOrSweptInputVar
     
     // All next staff is private
     
-    
-    proc prepareShownString() { local isDmOrSynPart, enumDmPpNc localobj comp
-        strdef compTypeName, compName, varTypeName, mechName
-        
-        if (enumSpDmCeSt == 0) {
-            compTypeName = "Syn"
-        } else if (enumSpDmCeSt == 1) {
-            compTypeName = "Bio"
-        } else if (enumSpDmCeSt == 2) {
-            compTypeName = "Cust"   // Keep in sync with enterVarExpression
-        } else if (enumSpDmCeSt == 3) {
-            compTypeName = "Std"
-        } else {
-            codeContractViolation()
-        }
-        
-        if (enumSpDmCeSt < 2) {
-            isDmOrSynPart = enumSpDmCeSt
-            comp = compUtils.getComp(isDmOrSynPart, compIdx)
-            compName = comp.name
-            mth.getVarTypeName(varType, varTypeName)
-            enumDmPpNc = comp.enumDmPpNc
-            if (enumDmPpNc != 2) {
-                mth.getMechName(enumDmPpNc, mechIdx, mechName)
-                sprint(s, "%s: %s \\ %s \\ %s \\ %s", compTypeName, compName, mechName, varTypeName, varNameWithIndex)
-            } else {
-                sprint(s, "%s: %s \\ %s \\ %s", compTypeName, compName, varTypeName, varNameWithIndex)
-            }
-        } else {
-            sprint(s, "%s: %s", compTypeName, customExpr)   // Keep in sync with enterVarExpression
-        }
-    }
     
     func getGlobalOrCustomValue() {
         strdef hocCommand

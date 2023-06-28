@@ -5,11 +5,13 @@ begintemplate AltRunControlWidget
 
     public show, dismissHandler
     
+    external cvode
     external v_init, runStopAt, runStopIn, tstop, steps_per_ms, screen_update_invl, realtime, running_
     external stdinit, run, continuerun, steprun, tstop_changed, setdt
     external alt_stdinit, alt_run, alt_continuerun, alt_steprun
     
-    external inhomAndStochApplicator
+    external inhomAndStochApplicator, inhomAndStochLibrary
+    external printNotImplementedMsgAndRaiseError
     
     objref mainBox
     
@@ -107,6 +109,7 @@ begintemplate AltRunControlWidget
         if (!isEnableStoch) {
             stdinit()
         } else {
+            checkCVodeStochPrereqs()
             alt_stdinit()
         }
     }
@@ -115,6 +118,7 @@ begintemplate AltRunControlWidget
         if (!isEnableStoch) {
             run()
         } else {
+            checkCVodeStochPrereqs()
             isWaitingForCallbacks = inhomAndStochApplicator.startPlayingVars()
             if (!isWaitingForCallbacks) {
                 run()
@@ -129,6 +133,7 @@ begintemplate AltRunControlWidget
         if (!isEnableStoch) {
             continuerun(runStopAt)
         } else {
+            checkCVodeStochPrereqs()
             isWaitingForCallbacks = inhomAndStochApplicator.startPlayingVars()
             if (!isWaitingForCallbacks) {
                 continuerun(runStopAt)
@@ -144,6 +149,7 @@ begintemplate AltRunControlWidget
         if (!isEnableStoch) {
             continuerun(tStopAt)
         } else {
+            checkCVodeStochPrereqs()
             isWaitingForCallbacks = inhomAndStochApplicator.startPlayingVars()
             if (!isWaitingForCallbacks) {
                 continuerun(tStopAt)
@@ -158,6 +164,7 @@ begintemplate AltRunControlWidget
         if (!isEnableStoch) {
             steprun()
         } else {
+            checkCVodeStochPrereqs()
             isWaitingForCallbacks = inhomAndStochApplicator.startPlayingVars()
             if (!isWaitingForCallbacks) {
                 steprun()
@@ -165,6 +172,12 @@ begintemplate AltRunControlWidget
                 alt_steprun()
             }
             inhomAndStochApplicator.stopPlayingVars()
+        }
+    }
+    
+    proc checkCVodeStochPrereqs() {
+        if (cvode.active() && inhomAndStochLibrary.isAnyStochVars()) {
+            printNotImplementedMsgAndRaiseError("Cannot run simulation with stoch models and variable time step \"dt\".")
         }
     }
     

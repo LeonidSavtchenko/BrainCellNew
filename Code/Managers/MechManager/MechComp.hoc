@@ -184,7 +184,7 @@ begintemplate MechComp
                     // but that's not a problem (no warnings printed)
                     if (isMechInserted[mechIdx]) {
                         mechType.make()
-                        // !! inhomAndStochLibrary.onMechInsert(!!!compIdx, mechIdx)
+                        // !! inhomAndStochLibrary.onMechInsert(!!compIdx, mechIdx)
                         for varType = 1, 3 {    // 1: "PARAMETER", 2: "ASSIGNED", 3: "STATE"
                             varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
                             compMechStd = mechStds[mechIdx][varTypeIdx]
@@ -214,7 +214,7 @@ begintemplate MechComp
                         // Don't remove this IF because it would lead to warnings for "sticky" mechs
                         if (ismembrane(mechName)) {
                             mechType.remove()
-                            // !! inhomAndStochLibrary.onMechUninsert(!!!compIdx, mechIdx)
+                            // !! inhomAndStochLibrary.onMechUninsert(!!compIdx, mechIdx)
                         }
                     }
                 }
@@ -462,7 +462,7 @@ begintemplate MechComp
                             continue
                         }
                         
-                        // !!!! BUG: this won't work correctly if MechComp ctor is called from .split
+                        // !! BUG: this won't work correctly if MechComp ctor is called from .split
                         compIdx = mmAllComps.count()
                         
                         if (inhomAndStochLibrary.isInhomEnabledFor(0, compIdx, mechIdx, varType, varIdx, arrayIndex)) {
@@ -471,7 +471,7 @@ begintemplate MechComp
                         
                         distFuncHelper = new VerbatimDistFuncHelper(list_ref, varName, arrayIndex, tempMechStd)
                         
-                        // !!!! would it make sense to store distFuncCatIdx and distFuncIdx inside distFuncHelper?
+                        // !! would it make sense to store distFuncCatIdx and distFuncIdx inside distFuncHelper?
                         inhomTargetProto = new DistMechVerbatimInhomTargetProto(mechIdx, varType, varIdx, arrayIndex, distFuncHelper)
                         inhomTargetProtos.append(inhomTargetProto)
                     }

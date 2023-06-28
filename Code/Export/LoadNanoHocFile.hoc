@@ -8,7 +8,6 @@ func loadNanoHocFile() { local isSelected, status
         return 0
     }
     
-    // !! need to add some check that user doesn't try to load a base geometry file in that way
     // !! if called from MainUi, then need to delete the old cell here (something like proc cleanupBeforeNextImport from Import module, but much more to cleanup)
     
     mwh.showPleaseWaitBox("Loading nanogeometry file.")
@@ -21,11 +20,12 @@ func loadNanoHocFile() { local isSelected, status
         return 0
     }
     
-    // !! validation: make sure the next vars were created: isAstrocyteOrNeuron, soma_ref, dendrite_ref, axon_ref (for neuron only), nanoProximal_ref, nanoDistal_ref etc.
-    if (!name_declared("dendrite_ref")) {
-        mwh.showWarningBox("Invalid nanogeometry file")
+    if (!name_declared("ReducedBasicMath")) {   // Keep in sync with loadHocFile and py:GeneratorsForMainHocFile.getUtils
+        mwh.showWarningBox("Invalid Nano geometry file.", "Please make sure you don't load a Base geometry file this way.")
         return 0
     }
+    // !! maybe extend this validation to make sure the next vars were created:
+    //    isAstrocyteOrNeuron, soma_ref, dendrite_ref, axon_ref (for neuron only), nanoProximal_ref, nanoDistal_ref etc.
     
     return 1
 }

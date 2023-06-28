@@ -12,6 +12,8 @@ begintemplate AddOneInputVarWidget
     objref parentWidget
     objref compList, mechList, varTypeList, varNameWithIndexList
     
+    isExposedOrSwept = -1
+    
     isDmOrSynPart = -1
     
     selCompIdx = -1
@@ -30,8 +32,9 @@ begintemplate AddOneInputVarWidget
     
     
     proc init() { local aoivWidIdx
-        aoivWidIdx = $1
-        parentWidget = $o2
+        isExposedOrSwept = $1
+        aoivWidIdx = $2
+        parentWidget = $o3
         
         isDmOrSynPart = 1 - aoivWidIdx
         
@@ -317,7 +320,7 @@ begintemplate AddOneInputVarWidget
     }
     
     proc varTypeSelectHandler() { local varTypeListIdx, enumDmPpNc, numVars, numInhomVars, varIdx, arraySize, arrayIndex localobj comp
-        strdef varName
+        strdef varName, varNameWithIndex
         
         varTypeListIdx = $1
         
@@ -376,7 +379,7 @@ begintemplate AddOneInputVarWidget
         
         itemOfVarsList = varNameWithIndexList.o(selVarNameWithIndexIdx)
         
-        newItem = new ExposedOrSweptInputVar(isDmOrSynPart, selCompIdx, selMechIdx, selVarType, itemOfVarsList.varName, itemOfVarsList.arraySize, itemOfVarsList.arrayIndex)
+        newItem = new ExposedOrSweptInputVar(isExposedOrSwept, isDmOrSynPart, selCompIdx, selMechIdx, selVarType, itemOfVarsList.varName, itemOfVarsList.arraySize, itemOfVarsList.arrayIndex)
         
         if (isAddOrCorrect) {
             isUnique = parentWidget.onVarAddHandler(newItem)

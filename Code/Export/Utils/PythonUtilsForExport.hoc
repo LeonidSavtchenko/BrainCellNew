@@ -15,7 +15,7 @@ proc callPythonSaveFileDialog() {
     
     sprint(defaultDirPath, "%sNanogeometry/", getcwd())
     
-    // !!!!
+    // !!
     if (isBaseOrNanoStart) {
         defaultFileName = ""
     } else {

@@ -26,7 +26,7 @@ class GraphUtils:
         with open(sesFilePath, 'r') as file:
             for line in file:
                 if not isStartFound:
-                    # Keep the var name in sync with CreateListOfOutputVarsWidget.show
+                    # Keep the var name in sync with WatchedVarsAndRecorderSettingsWidget.show
                     if line.startswith('someUniqueNameForTheParsedGraph = '):
                         isStartFound = 1
                 else:

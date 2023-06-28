@@ -7,7 +7,6 @@ currentMechanismSetup = 0       // 0 - Electric mechanisms, 1 - Glutamate mechan
 DensityGluTransporters = 1e12   // 1/um2
 
 objref soma_ref
-objref roadmapWidget
 
 { load_file("Code/InterModular/AllInterModularUtils.hoc") }
 
@@ -17,13 +16,6 @@ mechsDllUtils = new MechsDllUtils(getcwd())
 proc prologueCompleteHandler() {
     load_file("Code/Core/MainProgram.hoc")
     runMain()
-}
-
-{ load_file("Code/RoadmapWidget.hoc") }
-
-proc showRoadmapWidget() {
-    roadmapWidget = new RoadmapWidget()
-    roadmapWidget.show()
 }
 
 proc roadmapChosenHandler() { local isLoaded localobj plotShape
@@ -55,6 +47,13 @@ proc roadmapChosenHandler() { local isLoaded localobj plotShape
         initVoltageAndRunControlParams()
         prologueCompleteHandler()
     }
+}
+
+{ load_file("Code/RoadmapWidget.hoc") }
+
+proc showRoadmapWidget() {
+    roadmapWidget = new RoadmapWidget()
+    roadmapWidget.show()
 }
 
 // Don't rename this proc to "init" because NEURON will call it once user clicks "Init & Run"

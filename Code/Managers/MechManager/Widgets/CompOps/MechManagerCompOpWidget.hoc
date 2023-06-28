@@ -147,7 +147,7 @@ begintemplate MechManagerCompOpWidget
         }
         
         // Select unique name for the new compartment
-        isCancel = chooseUniqueNameForCompartmentForMechManager(comp.name, newCompName)
+        isCancel = chooseUniqueNameForCompartmentForMechManager(comp.name, 1, newCompName)
         if (isCancel) {
             return 1
         }
@@ -163,7 +163,7 @@ begintemplate MechManagerCompOpWidget
         
         inhomAndStochLibrary.onCompSplit(splitCompIdx)
         
-        // !!!
+        // !!
         newComp.finishAllVerbatimInhomProtos(splitCompIdx + 1)
         
         updateWidgetsAfterOp()
@@ -200,7 +200,7 @@ begintemplate MechManagerCompOpWidget
         // No check for mech dirtiness here - renaming is always OK
         
         comp = mmAllComps.o(renameCompIdx)
-        isCancel = chooseUniqueNameForCompartmentForMechManager(comp.name, comp.name)
+        isCancel = chooseUniqueNameForCompartmentForMechManager(comp.name, 0, comp.name)
         if (isCancel) {
             return
         }

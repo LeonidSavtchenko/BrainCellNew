@@ -1,6 +1,5 @@
 
 if (isBaseOrNanoStart) {
-    dt = 0.025
     celsius = 34.0
 }
 

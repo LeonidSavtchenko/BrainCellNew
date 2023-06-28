@@ -46,20 +46,27 @@ func chooseUniqueAndValidNameForNewCompartmentForImport() { local isFound, type,
 
 // Ask user to choose a unique name for the compartment
 // $s1 - The base compartment name being also the first guess for the new name
-// $s2 (out) - The chosen unique name
+// $2 - 0/1 flag indicating Rename/Split respectively
+// $s3 (out) - The chosen unique name
 // Other input: mmAllComps (taken from the top level)
 // Returns: 0/1 flag indicating Accept/Cancel respectively
-func chooseUniqueNameForCompartmentForMechManager() { local hintIdx, isCancel, isFound localobj comp
+func chooseUniqueNameForCompartmentForMechManager() { local isSplitOrRename, hintIdx, isCancel, isFound localobj comp
     strdef baseCompName, chosenName, hint
     
     baseCompName = $s1
+    isSplitOrRename = $2
     
     chosenName = baseCompName
     
     hintIdx = 0
     while (1) {
         if (hintIdx == 0) {
-            hint = "Please choose a unique name for the compartment:"
+            hint = "Please choose a unique name for the%s compartment:"
+            if (isSplitOrRename) {
+                sprint(hint, hint, " new")
+            } else {
+                sprint(hint, hint, "")
+            }
         } else if (hintIdx == 1) {
             hint = "Double spaces are not allowed. Please correct the name:"
         } else if (hintIdx == 2) {
@@ -101,7 +108,7 @@ func chooseUniqueNameForCompartmentForMechManager() { local hintIdx, isCancel, i
         hintIdx = 2
     }
     
-    $s2 = chosenName
+    $s3 = chosenName
     
     return 0
 }

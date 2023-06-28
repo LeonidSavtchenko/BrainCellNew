@@ -95,7 +95,7 @@ py:initGeometry()
 
 //////////////////// Start of distance centre ////////////////////////////
 
-// !!! BUG: hardcoded rather than exported
+// !! BUG: hardcoded rather than exported
 
 // The distance centre
 soma_ref.o(0).sec distance()

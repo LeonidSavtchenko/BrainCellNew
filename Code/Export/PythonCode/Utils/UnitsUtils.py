@@ -25,7 +25,8 @@ class UnitsUtils:
         # The next command gives errors like "Cannot find the symbol for  dendA1_00.PcalBar_CAl( 0.05 )"
         #   return h.units(customExpr)
         
-        # !!!! test this for PPs
+        # This works fine for any vars from DMs, PPs/ACs and top-level vars
+        # !! BUG: it gives an empty string for NetCon vars, e.g. "NetCon[0].delay"
         units = h.ref('')
         h.getWatchedVarUnits(customExpr, units)
         return units[0]

@@ -1,0 +1,74 @@
+
+begintemplate RepeatForStatsWidget
+
+    public show, dismissHandler
+    
+    external exportOptions
+    external math, mwh
+    external unmapIfNotNil
+    external isAstrocyteOrNeuron
+    
+    objref mainBox
+    
+    numRepeatsForStats = -1
+    
+    
+    proc init() { local inf
+        inf = math.inf
+        variable_domain(&numRepeatsForStats, 2, inf)
+    }
+    
+    proc show() {
+        strdef line1, line2
+        
+        numRepeatsForStats = exportOptions.numRepeatsForStats
+        
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            xlabel("To collect the stats, we'll repeat the entire process several times")
+            xlabel("each time using different seeds for the random number generators.")
+            xlabel("The results from each repetition will be saved to a separate folder.")
+            xlabel("")
+            xlabel("Warning: We don't change the seeds while sweeping vars")
+            xlabel("and do it only between the repetitions.")
+            xlabel("")
+            xpvalue("Number of repetitions", &numRepeatsForStats, 1, "numRepeatsChangedHandler()")
+            xlabel("")
+            xbutton("OK", "okHandler()")
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Repeat for stats", 300, 475, -1, -1)
+        
+        if (!exportOptions.isExportAltRunControl()) {
+            line1 = "There won't be any stoch vars%s in the exported HOC file,"
+            line2 = "so changing RNG seeds between the repetitions won't have any effect."
+            if (!isAstrocyteOrNeuron) {
+                sprint(line1, line1, " or release probability mechanics")
+            } else {
+                sprint(line1, line1, "")
+            }
+            mwh.showWarningBox(line1, line2)
+        }
+    }
+    
+    proc dismissHandler() {
+        unmapIfNotNil(mainBox)
+    }
+    
+    // All next staff is private
+    
+    
+    proc numRepeatsChangedHandler() {
+        numRepeatsForStats = int(numRepeatsForStats)
+    }
+    
+    proc okHandler() {
+        exportOptions.numRepeatsForStats = numRepeatsForStats
+        dismissHandler()
+    }
+    
+endtemplate RepeatForStatsWidget

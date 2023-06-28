@@ -1,0 +1,12 @@
+
+pyObj = new PythonObject()
+{ nrnpython("ev = lambda arg : eval(arg)") }
+
+proc checkCVodePrerequisites() { localobj pc
+    pc = new ParallelContext()
+    if ((pc.nhost() > 1 || pc.nthread() > 1) && cvode.use_local_dt()) {
+        printMsgAndRaiseError("This runner HOC file cannot be used given parallel context and CVode settings.")
+        // To support this, we'll have to update setUpVarVecsForRecording to use CVode.record instead of Vector.record assuming each watched var to have individual recordedTimeVec,
+        // but CVode.record seems not to work when we try to record a var from PP/AC or a top-level var
+    }
+}

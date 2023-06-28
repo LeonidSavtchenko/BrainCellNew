@@ -17,7 +17,7 @@ begintemplate InhomAndStochLibrary
     
     public isInhomEnabledFor, isStochEnabledFor, onInhomApply, onStochApply, getInhomModelDataFor, getStochModelDataFor, onMakingVarHomogen, onStochDisable, onNanoReseedOrUpdate
     public isAnyNonVerbatimInhomVarsForDistMechs, getNumInhomVarsForDistMechs, getNumStochVarsForDistMechs, onMechInsert, onMechUninsert, onCompSplit, onCompMerge
-    public getNumInhomVarsForSyns, getNumStochVarsForSyns, isAnyStochVarsForSyns, onSynLocChange, onSynStrucChange, restoreToActiveIfWasMadeInactiveOnSynStrucChange
+    public getNumInhomVarsForSyns, getNumStochVarsForSyns, isAnyStochVarsForSyns, isAnyStochVars, onSynLocChange, onSynStrucChange, restoreToActiveIfWasMadeInactiveOnSynStrucChange
     public doesDistMechHaveAnyStochVars, doesThisVarHaveVerbatimInhomModel, doesAnyInhomVarRequirePython, doesAnyStochVarRequirePython
     
     public activeSpecVars
@@ -310,6 +310,15 @@ begintemplate InhomAndStochLibrary
             }
         }
         return isFound
+    }
+    
+    func isAnyStochVars() { local idx
+        for idx = 0, activeSpecVars.count() - 1 {
+            if (activeSpecVars.o(idx).isStoch) {
+                return 1
+            }
+        }
+        return 0
     }
     
     proc onSynLocChange() { localobj actSpecVar

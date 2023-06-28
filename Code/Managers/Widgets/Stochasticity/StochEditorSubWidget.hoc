@@ -4,6 +4,7 @@ begintemplate StochEditorSubWidget
     public show, updateModelCurves, dismissHandler
     public boundingHelper, sampleSize
     
+    external cvode
     external varsEditorSubWidget, synManagerMainWidget
     external mwh, math, mth, mmmowb, mcu, sfc, compUtils, inhomAndStochLibrary, seh
     external createEmptyPanel, oneZeroToYesNo, codeContractViolation
@@ -1175,7 +1176,14 @@ begintemplate StochEditorSubWidget
             verb = "enabled"
         }
         
-        showStochStatusMsg(1, verb)
+        mwh.startIntercepting()
+        {
+            if (cvode.active()) {
+                mwh.showNotImplementedWarning("Cannot run simulation with stoch models and variable time step \"dt\".")
+            }
+            showStochStatusMsg(1, verb)
+        }
+        mwh.endIntercepting()
     }
     
     proc disableHandler() { local isOK, wasStoch
@@ -1229,7 +1237,7 @@ begintemplate StochEditorSubWidget
         verb = $s2
         sprint(line1, "The stochasticity is %s for \"%s\" in %s.", verb, varNameWithIndex, comp.name)
         sprint(title, "Stochasticity %s", verb)
-        if (isEnabled) {
+        if (isEnabled && !cvode.active()) {
             line2 = "Now you can start the simulation using \"AltRunControl\" widget."
             mwh.showMessageBox(line1, line2, title)
         } else {

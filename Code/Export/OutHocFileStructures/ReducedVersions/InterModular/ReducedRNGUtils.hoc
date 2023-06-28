@@ -2,14 +2,14 @@
 // Keep in sync with RNGUtils
 begintemplate ReducedRNGUtils
 
-    public getFor_stochFunc_withUniqueSeed, getSeedFor_SEFW
+    public getFor_stochFunc_withUniqueSeed, getSeedFor_SEFW, getAllSeeds, setAllSeeds
     
     uniqueSeedForHoc = -1
     uniqueSeedForMod = -1
     
     
     proc init() { local minSeedForMod, maxNumSeedsPerRankForMod localobj pc
-        uniqueSeedForHoc = 9
+        uniqueSeedForHoc = 9    // Just copied from RNGUtils
         
         if (!use_mcell_ran4()) {
             minSeedForMod = 0       // HOC and MOD use different RNGs, so we don't care about seeds overlapping
@@ -17,7 +17,8 @@ begintemplate ReducedRNGUtils
             minSeedForMod = 10000   // HOC and MOD can use the same RNG, so we try to prevent seeds overlapping
         }
         
-        // How many times user can change synapse structure per 1 session with the guarantee of unique seeds
+        // The maximum value for exportOptions.numRepeatsForStats user can use with the guarantee of unique seeds
+        // (important only when pc.nhost() > 1)
         maxNumSeedsPerRankForMod = 1000
         
         pc = new ParallelContext()
@@ -34,6 +35,16 @@ begintemplate ReducedRNGUtils
         seed = uniqueSeedForMod
         uniqueSeedForMod += 1
         return seed
+    }
+    
+    proc getAllSeeds() {
+        $&1 = uniqueSeedForHoc
+        $&2 = uniqueSeedForMod
+    }
+    
+    proc setAllSeeds() {
+        uniqueSeedForHoc = $1
+        uniqueSeedForMod = $2
     }
     
 endtemplate ReducedRNGUtils

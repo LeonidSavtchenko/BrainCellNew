@@ -23,8 +23,6 @@ proc initVoltage() {
 proc initVoltageAndRunControlParams() {
     initVoltage()
     
-    t = 0
-    
     if (isBaseOrNanoStart) {
         dt = 1  // ms
         if (isAstrocyteOrNeuron) {
@@ -34,6 +32,7 @@ proc initVoltageAndRunControlParams() {
             tstop = 100
             steps_per_ms = 10
         }
+        setdt()     // Letting NEURON change "dt" now rather than on start of the simulation
     }
     
     if (!isAstrocyteOrNeuron) {

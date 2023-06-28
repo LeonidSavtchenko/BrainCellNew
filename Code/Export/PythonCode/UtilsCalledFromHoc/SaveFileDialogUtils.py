@@ -35,7 +35,7 @@ class SaveFileDialogUtils:
                 parent=cls.top
             )
             
-            # !!!! if the folder is not empty, then ask user whether to clean up
+            # !! if the folder is not empty, then ask user whether to clean up
             
             return outHocFilePathName
             

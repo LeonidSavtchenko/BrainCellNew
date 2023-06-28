@@ -7,6 +7,7 @@
 { load_file("AddOneInputVarWidget.hoc") }
 { load_file("DefineGridForInputVarWidget.hoc") }
 { load_file("CreateListOfInputVarsWidget.hoc") }
-{ load_file("CreateListOfOutputVarsWidget.hoc") }
+{ load_file("WatchedVarsAndRecorderSettingsWidget.hoc") }
+{ load_file("RepeatForStatsWidget.hoc") }
 { load_file("../SaveNanoHocFile.hoc") }
 { load_file("ExportManagerMainWidget.hoc") }
