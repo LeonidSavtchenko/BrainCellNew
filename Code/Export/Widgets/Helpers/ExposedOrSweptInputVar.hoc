@@ -93,7 +93,11 @@ begintemplate ExposedOrSweptInputVar
             enumDmPpNc = comp.enumDmPpNc
             if (enumDmPpNc != 2) {
                 mth.getMechName(enumDmPpNc, mechIdx, mechName)
-                sprint(s, "%s: %s \\ %s \\ %s \\ %s", compTypeName, compName, mechName, varTypeName, varNameWithIndex)
+                if (varType != -1) {    // -1: GLOBAL
+                    sprint(s, "%s: %s \\ %s \\ %s \\ %s", compTypeName, compName, mechName, varTypeName, varNameWithIndex)
+                } else {
+                    sprint(s, "%s: @All \\ %s \\ %s \\ %s", compTypeName, mechName, varTypeName, varNameWithIndex)
+                }
             } else {
                 sprint(s, "%s: %s \\ %s \\ %s", compTypeName, compName, varTypeName, varNameWithIndex)
             }
@@ -156,7 +160,7 @@ begintemplate ExposedOrSweptInputVar
         }
     }
     
-    func isEqual() { local isDmOrSynPart, enumDmPpNc localobj comp
+    func isEqual() { local isDmOrSynPart, enumDmPpNc, res localobj comp
         if (enumSpDmCeSt == 2) {
             return 0
         } else if (enumSpDmCeSt == 3) {
@@ -165,7 +169,11 @@ begintemplate ExposedOrSweptInputVar
         isDmOrSynPart = enumSpDmCeSt
         comp = compUtils.getComp(isDmOrSynPart, compIdx)
         enumDmPpNc = comp.enumDmPpNc
-        return (enumDmPpNc == $1 && compIdx == $2 && mechIdx == $3 && varType == $4 && stringsEqual(varName, $s5) && arrayIndex == $6)
+        res = (enumDmPpNc == $1 && mechIdx == $3 && varType == $4 && stringsEqual(varName, $s5) && arrayIndex == $6)
+        if (varType != -1) {    // -1: GLOBAL
+            res = res && (compIdx == $2)
+        }
+        return res
     }
     
     func isReleaseProbability() { local enumDmPpNc localobj comp

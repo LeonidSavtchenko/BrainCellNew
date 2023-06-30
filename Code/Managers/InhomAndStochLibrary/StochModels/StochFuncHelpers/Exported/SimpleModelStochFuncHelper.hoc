@@ -9,7 +9,7 @@ begintemplate SimpleModelStochFuncHelper
     public mainBox, distHelper, rng
     public parentWidget
     
-    external mwh, math, rngUtils
+    external mwh, math, rngUtils, mcu
     external codeContractViolation
     external eachPointInGrid
     
@@ -63,13 +63,15 @@ begintemplate SimpleModelStochFuncHelper
         parentWidget.updateModelCurves()
     }
     
-    proc showPdf() { local xMin, xMax, x, y localobj graph
+    proc showPdf() { local xMin, xMax, yMax, x, y localobj graph
         graph = $o1
         
         getXminXmaxForGraph(&xMin, &xMax)
         
         graph.erase()
         graph.beginline()
+        
+        yMax = -1
         
         math.disableGreedyComparison()  // Needed for calcPdf
         {
@@ -78,11 +80,12 @@ begintemplate SimpleModelStochFuncHelper
             for eachPointInGrid(&x, xMin, xMax, numPts4Curve) {
                 y = parentWidget.boundingHelper.calcPdf(x)
                 graph.line(x, y)
+                yMax = math.max(y, yMax)
             }
         }
         math.restoreGreedyComparison()
         
-        graph.exec_menu("View = plot")
+        mcu.setGraphSize(graph, xMin, xMax, 0, yMax)
         graph.flush()
     }
     
@@ -104,7 +107,7 @@ begintemplate SimpleModelStochFuncHelper
         }
         math.restoreGreedyComparison()
         
-        graph.exec_menu("View = plot")
+        mcu.setGraphSize(graph, xMin, xMax, 0, 1)
         graph.flush()
     }
     

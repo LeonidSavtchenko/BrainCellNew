@@ -5,6 +5,8 @@ begintemplate ExportOptions
     public exposedVarsList, sweptVarsList, watchedVarsList
     public stdExposedVarsList
     public DtOrMinus1, isRecordAndSaveWithAPCounts, isSaveToTxtOrBinFile, numRepeatsForStats
+    
+    public validate
     public isExportAnyDistFuncs, isExportAnyStochFuncs, isExportAnyInhomBiophysModels, isExportSegmentationHelper, isExportAnyStochBiophysModels, isExportAnyInhomSynModels, isExportAnyStochSynModels, isExportInhomAndStochLibrary, isExportAltRunControl, isExportSynEventsHelper
     public isExportedInhomVar, isExportedStochVar, isExportedInhomBiophysVar, isExportedStochBiophysVar, isExportedInhomSynVar, isExportedStochSynVar
     public isPythonRequired
@@ -72,6 +74,7 @@ begintemplate ExportOptions
         isSaveToTxtOrBinFile = 1
         numRepeatsForStats = 2
         
+        // Keep in sync with ExportManagerMainWidget.show
         stdExposedVarsList = new List()
         stdExposedVarsList.append(new ExposedOrSweptInputVar(1, 3, "celsius"))
         stdExposedVarsList.append(new ExposedOrSweptInputVar(1, 3, "v_init"))
@@ -87,6 +90,14 @@ begintemplate ExportOptions
             sprint(unitsStr, "in model time, %s", unitsStr)
         }
         units(&DtOrMinus1, unitsStr)    // Do not replace with "units(&DtOrMinus1, units(&dt))"
+    }
+    
+    // out: isCancel
+    func validate() {
+        if (isCreateRunnerHoc && (isAnySweptVars() || isRepeatForStats) && !(isAnyWatchedVars() || isAnyWatchedAPCounts())) {
+            return !boolean_dialog("Are you sure want to proceed without specifying any watched variables?", "Yes", "No")
+        }
+        return 0
     }
     
     func isExportAnyDistFuncs() {

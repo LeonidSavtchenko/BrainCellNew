@@ -266,8 +266,9 @@ class GeneratorsForMainHocFile:
             names.append('seh')
         if hocObj.exportOptions.isExportAnyInhomSynModels():
             names.append('synGroup')
-            names.append('mcu')
             names.append('utils4FakeMech4NC')
+        if hocObj.exportOptions.isExportAnyInhomSynModels() or hocObj.exportOptions.isExportAnyStochFuncs():
+            names.append('mcu')
         line = 'objref ' + ', '.join(names)
         lines.append(line)
         

@@ -730,7 +730,7 @@ begintemplate InhomEditorSubWidget
         }
     }
     
-    proc updateModelCurveCore() { local numArg, isStatsCurveRangeProvided, yMinStats, yMaxStats, minNseg4Curve, nseg4Curve, xyMargin4Graph, xRange, yMin, yMax, x, y, xMargin4Graph, xMin4Graph, xMax4Graph, yRange, yMargin4Graph, yMin4Graph, yMax4Graph localobj graph, distFuncHelper, sec_ref
+    proc updateModelCurveCore() { local numArg, isStatsCurveRangeProvided, yMinStats, yMaxStats, minNseg4Curve, nseg4Curve, yMin, yMax, x, y localobj graph, distFuncHelper, sec_ref
     
         numArg = numarg()
         if (numArg == 1) {
@@ -746,10 +746,6 @@ begintemplate InhomEditorSubWidget
         graph = $o1
 
         graph.color(3)     // Blue
-        
-        xyMargin4Graph = 0.1    // !! hardcode
-        
-        xRange = xMax - xMin
         
         yMin = math.inf
         yMax = -math.inf
@@ -788,14 +784,7 @@ begintemplate InhomEditorSubWidget
         // This makes the axes box too small compared to the curve (no idea why)
         // graph.exec_menu("View = plot")
         
-        xMargin4Graph = xyMargin4Graph * xRange
-        xMin4Graph = xMin - xMargin4Graph
-        xMax4Graph = xMax + xMargin4Graph
-        yRange = yMax - yMin
-        yMargin4Graph = xyMargin4Graph * yRange
-        yMin4Graph = yMin - yMargin4Graph
-        yMax4Graph = yMax + yMargin4Graph
-        graph.size(xMin4Graph, xMax4Graph, yMin4Graph, yMax4Graph)
+        mcu.setGraphSize(graph, xMin, xMax, yMin, yMax)
         
         // Looks unnecessary because we are not in the process of simulation
         // But if removed, then the default exp. model is not shown (no idea why)

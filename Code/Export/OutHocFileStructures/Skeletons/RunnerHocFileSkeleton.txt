@@ -1,11 +1,11 @@
 
 py:getPrologue()
 
-//////////////////// Start of swept vars /////////////////////////////////
+//////////////////// Start of swept vars and repetition settings /////////
 
-py:getSweptVars()
+py:getSweptVarsAndRepetitionSettings()
 
-//////////////////// End of swept vars ///////////////////////////////////
+//////////////////// End of swept vars and repetition settings ///////////
 
 //////////////////// Start of watched vars and recorder settings /////////
 

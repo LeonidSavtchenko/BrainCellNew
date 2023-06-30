@@ -857,7 +857,7 @@ begintemplate StochEditorSubWidget
             sampleVec.x[idx] = y
             math.updateMinMax(&yMin, &yMax, y)
         }
-        graph3.size(0, sampleSize - 1, yMin, yMax)
+        mcu.setGraphSize(graph3, 0, sampleSize - 1, yMin, yMax)
         graph3.flush()
         
         // ========== Calculating and showing PDF (from the sample + model)
@@ -1108,7 +1108,7 @@ begintemplate StochEditorSubWidget
         }
     }
     
-    proc showPsdOrAcfVecOnGraph() { local n, idx0, idx1, idx2 localobj vec, graph
+    proc showPsdOrAcfVecOnGraph() { local n, idx0, yMin, yMax, idx1, idx2, y localobj vec, graph
         vec = $o1
         graph = $o2
         
@@ -1116,15 +1116,21 @@ begintemplate StochEditorSubWidget
         graph.beginline()
         n = vec.size()
         idx0 = n / 2
+        
+        yMin = math.inf
+        yMax = -math.inf
+        
         for idx1 = 0, n - 1 {
             if (idx1 >= idx0) {
                 idx2 = idx1 - idx0
             } else {
                 idx2 = idx1 + idx0
             }
-            graph.line(idx1 - idx0, vec.x[idx2])
+            y = vec.x[idx2]
+            graph.line(idx1 - idx0, y)
+            math.updateMinMax(&yMin, &yMax, y)
         }
-        graph.exec_menu("View = plot")
+        mcu.setGraphSize(graph, -idx0, idx0 - 1, yMin, yMax)
         graph.flush()
     }
     

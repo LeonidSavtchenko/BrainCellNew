@@ -147,7 +147,7 @@ begintemplate AddOneInputVarWidget
                 comp = compUtils.getComp(1, compIdx)
                 compList.append(new ItemOfFilteredBrowsedList(compIdx, comp.name))
             }
-            compList.append(new ItemOfFilteredBrowsedList(-1, "All"))
+            compList.append(new ItemOfFilteredBrowsedList(-1, "@All"))
         } else {
             if (synGroup.is3Or1PartInSynStruc()) {
                 addOneSynCompToList(enumSynCompIdxs.srcPp)
