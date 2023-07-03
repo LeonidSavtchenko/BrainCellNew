@@ -1,5 +1,6 @@
 
 import os, shutil
+from tkinter.messagebox import askyesno
 from neuron import h, nrn
 from GeneratorsForMainHocFile.GeneratorsForMainHocFile import GeneratorsForMainHocFile
 from GeneratorsForAuxHocFiles.GenForParamsHoc import GenForParamsHoc
@@ -87,14 +88,20 @@ def _copyMechsDllFile(outDirPath, loadedDllDirPath):
     dllFileName = 'nrnmech.dll'
     
     srcDllFilePath = loadedDllDirPath + '\\' + dllFileName
-    dstDllFilePath = outDirPath + '/' + dllFileName     # Will be printed in case of shutil.PermissionError
+    dstDllFilePath = outDirPath + '/' + dllFileName     # Will be printed in case of uncaught PermissionError
     
     try:
         shutil.copyfile(srcDllFilePath, dstDllFilePath)
     except shutil.SameFileError:
         # Maybe user loaded a nano HOC file exported earlier and now just exports it again
         pass
-    
+    except PermissionError:
+        isTryAgain = askyesno(
+            title='Permission Error',
+            message=f'Cannot replace "{dllFileName}" in the target folder.\nPerhaps it\'s in use by another instance of NEURON.\n\nTry again?')
+        if isTryAgain:
+            _copyMechsDllFile(outDirPath, loadedDllDirPath)
+            
 def _findAllGenerators(lines):
     lineIdxToGenInfoDict = {}
     for lineIdx in range(len(lines)):

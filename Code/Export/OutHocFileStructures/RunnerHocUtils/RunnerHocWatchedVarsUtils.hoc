@@ -43,7 +43,7 @@ proc setUpVarVecsForRecording() { local numRecsOr0, watchedVarIdx
     }
 }
 
-// in: outFolderName, timestamp, numSweptVars, numWatchedVars, watchedVarNames, recordedVarVecs, recordedTimeVec, DtOrMinus1, oneValueFormat (taken from the top level)
+// in: outFolderName, timestamp, numSweptVars, numWatchedVars, watchedVarNames, recordedVarVecs, recordedTimeVec, DtOrMinus1 (taken from the top level)
 proc saveRecordedVarVecs() { local watchedVarIdx, actNumRecs, recIdx, time localobj outFile
     strdef outFilePathName, line, oneValueStr
     
@@ -82,9 +82,9 @@ proc saveRecordedVarVecs() { local watchedVarIdx, actNumRecs, recIdx, time local
         } else {
             time = recIdx * dt
         }
-        sprint(line, oneValueFormat, time)
+        oneValueToString(time, line)
         for watchedVarIdx = 0, numWatchedVars - 1 {
-            sprint(oneValueStr, oneValueFormat, recordedVarVecs[watchedVarIdx].x[recIdx])
+            oneValueToString(recordedVarVecs[watchedVarIdx].x[recIdx], oneValueStr)
             sprint(line, "%s\t%s", line, oneValueStr)
         }
         outFile.printf("%s\n", line)

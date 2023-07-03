@@ -1,0 +1,19 @@
+
+SWEPT_VAR_1 = 95.0    // Syn: Source PP \ NetStim \ PARAMETER \ interval (ms)
+
+t
+ms
+loc = s( 0.55 )
+thresh = 0.0 (mV)
+18.9    
+107.9   
+131.3   
+147.1   
+223.1   
+250.7   
+295.3   
+318     
+570.7   
+721     
+739.1   
+806.3   

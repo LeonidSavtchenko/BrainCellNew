@@ -27,6 +27,9 @@ proc ExtracellularPotassium() { local DeltaR, i, IterNumber, j
     input1.Distance = $5
     DeltaR= input1.Distance/(input1.NANN -1)
     forall {
+        if (!ismembrane("IKa")) {
+            continue
+        }
         if (t > $4) { 
             for i=0,n3d()-1 {
                 for IterNumber=1,input1.NANN-1 {

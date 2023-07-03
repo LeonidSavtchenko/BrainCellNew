@@ -12,7 +12,7 @@ proc setUpVecsForRecordingFromAPCounts() { local apcIdx localobj vec
     }
 }
 
-// in: outFolderName, timestamp, numSweptVars, numWatchedAPCounts, apcList, recordedVecsFromAPCounts, oneValueFormat (taken from the top level)
+// in: outFolderName, timestamp, numSweptVars, numWatchedAPCounts, apcList, recordedVecsFromAPCounts (taken from the top level)
 proc saveRecordedVecsFromAPCounts() { local apcIdx, maxNumRecs, n, recIdx localobj outFile, vec
     strdef outFilePathName, line, unitsStr, tempStr
     
@@ -70,7 +70,7 @@ proc saveRecordedVecsFromAPCounts() { local apcIdx, maxNumRecs, n, recIdx localo
         // The first column
         vec = recordedVecsFromAPCounts[0]
         if (recIdx < vec.size()) {
-            sprint(line, oneValueFormat, vec.x(recIdx))
+            oneValueToString(vec.x(recIdx), line)
         } else {
             line = ""
         }
@@ -79,7 +79,7 @@ proc saveRecordedVecsFromAPCounts() { local apcIdx, maxNumRecs, n, recIdx localo
         for apcIdx = 1, numWatchedAPCounts - 1 {
             vec = recordedVecsFromAPCounts[apcIdx]
             if (recIdx < vec.size()) {
-                sprint(tempStr, oneValueFormat, vec.x(recIdx))
+                oneValueToString(vec.x(recIdx), tempStr)
                 sprint(line, "%s\t%s", line, tempStr)
             } else {
                 sprint(line, "%s\t", line)

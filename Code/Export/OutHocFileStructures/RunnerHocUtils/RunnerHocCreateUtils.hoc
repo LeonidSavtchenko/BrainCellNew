@@ -6,11 +6,6 @@ tempHocFileName = "last_cell_without_templates.hoc"
 strdef tempHocFilePathName
 { sprint(tempHocFilePathName, "%s/%s", tempFolderName, tempHocFileName) }
 
-objref pyObj
-
-strdef getTimestampPyCommand, timestamp
-{ sprint(getTimestampPyCommand, "(exec('import datetime'), datetime.datetime.now().strftime('%s'))[1]", outFileNameTimestampFormat) }
-
 // in: tempFolderName, runnedHocFileName, tempHocFilePathName, outFolderName (taken from the top level)
 proc createTempHocFileWithoutTemplatesAndOutputFolder() { local status
     strdef isCreateTempHocFileWithoutTemplates, isCreateOrCleanUpOutFolder, pyCode

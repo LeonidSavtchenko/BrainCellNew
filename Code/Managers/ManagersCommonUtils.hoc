@@ -1,7 +1,7 @@
 
 begintemplate ManagersCommonUtils
 
-    public defineDistFuncHandler, defineStochFuncHandler, createApplyReminder, createEditorSubWidgetDigest, copyAllVarsValuesExceptInhom, setOneIfNeededIn_isMechVarTypeInhom, update_isMechVarTypeInhom, isMetaVar
+    public defineDistFuncHandler, defineStochFuncHandler, createApplyReminder, createEditorSubWidgetDigest, copyAllVarsValuesExceptInhom, setOneIfNeededIn_isMechVarTypeInhom, update_isMechVarTypeInhom, isMetaVar, setGraphSize
     
     external mmAllComps, smAllComps
     external mwh, math, mth, compUtils
@@ -166,6 +166,26 @@ begintemplate ManagersCommonUtils
         strdef varName
         varName = $s1
         return stringStartsWith(varName, "@")
+    }
+    
+    proc setGraphSize() { local xDataMin, xDataMax, yDataMin, yDataMax, xyMargin4Graph, xMargin4Graph, xMin4Graph, xMax4Graph, yMargin4Graph, yMin4Graph, yMax4Graph localobj graph
+        graph = $o1
+        xDataMin = $2
+        xDataMax = $3
+        yDataMin = $4
+        yDataMax = $5
+        
+        xyMargin4Graph = 0.1    // !! hardcode
+        
+        xMargin4Graph = xyMargin4Graph * (xDataMax - xDataMin)
+        xMin4Graph = xDataMin - xMargin4Graph
+        xMax4Graph = xDataMax + xMargin4Graph
+        
+        yMargin4Graph = xyMargin4Graph * (yDataMax - yDataMin)
+        yMin4Graph = yDataMin - yMargin4Graph
+        yMax4Graph = yDataMax + yMargin4Graph
+        
+        graph.size(xMin4Graph, xMax4Graph, yMin4Graph, yMax4Graph)
     }
     
 endtemplate ManagersCommonUtils

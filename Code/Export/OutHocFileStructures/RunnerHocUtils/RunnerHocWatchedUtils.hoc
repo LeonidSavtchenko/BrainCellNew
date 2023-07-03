@@ -1,0 +1,15 @@
+
+objref pyObj
+
+strdef getTimestampPyCommand, timestamp
+{ sprint(getTimestampPyCommand, "(exec('import datetime'), datetime.datetime.now().strftime('%s'))[1]", outFileNameTimestampFormat) }
+
+// in: oneValueFormat, pyObj (taken from the top level)
+proc oneValueToString() { local value
+    value = $1
+    if (strcmp(oneValueFormat, "@py") != 0) {
+        sprint($s2, oneValueFormat, value)
+    } else {
+        $s2 = pyObj.str(value)
+    }
+}
