@@ -273,9 +273,13 @@ proc startSynManager() {
     makeSureSynCompsCreatedOrImportedThenShowSynManagerBaseWidget()
 }
 
-proc startExportManager() {
+proc startExportManager() { localobj nil
     dismissIfNotNil(msmBaseWidget)
     
-    exportManagerMainWidget.dismissHandler()
+    if (exportManagerMainWidget == nil) {
+        exportManagerMainWidget = new ExportManagerMainWidget()
+    } else {
+        exportManagerMainWidget.dismissHandler()
+    }
     exportManagerMainWidget.show()
 }

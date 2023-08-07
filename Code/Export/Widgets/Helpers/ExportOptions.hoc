@@ -13,9 +13,10 @@ begintemplate ExportOptions
     public isAnyExposedVars, isAnySweptVars, isAnyWatchedVars
     public isAnyCustomSweptVars, isAnyWatchedAPCounts
     
-    external isAstrocyteOrNeuron
+    external cvode
+    external isAstrocyteOrNeuron, soma_ref
     external inhomAndStochLibrary
-    external synGroup, seh
+    external pyObj, synGroup, seh
     external stringEmpty, codeContractViolation
     
     isExportDistMechs = -1
@@ -44,8 +45,8 @@ begintemplate ExportOptions
     numRepeatsForStats = -1
     
     
-    proc init() {
-        strdef unitsStr
+    proc init() { local x localobj apc, nil
+        strdef defWatchedVar, unitsStr
         
         // Default options
         isExportDistMechs = 1
@@ -69,8 +70,29 @@ begintemplate ExportOptions
         sweptVarsList = new List()
         watchedVarsList = new List()
         
-        DtOrMinus1 = -1     // Will be assigned later after we change dt
-        isRecordAndSaveWithAPCounts = 0
+        // Add one default watched variable
+        apc = getFirstValidAPCountOrNil()
+        if (apc != nil) {
+            x = apc.get_loc()
+            {
+                sprint(defWatchedVar, "%s.v( %s )", secname(), pyObj.str(x))
+            }
+            pop_section()
+        } else {
+            soma_ref.o(0).sec {
+                sprint(defWatchedVar, "%s.v( 0.5 )", secname())
+            }
+        }
+        watchedVarsList.append(new String(defWatchedVar))
+        
+        // Default recording period
+        if (!cvode.active()) {
+            DtOrMinus1 = 4 * dt
+        } else {
+            DtOrMinus1 = -1
+        }
+        
+        isRecordAndSaveWithAPCounts = 1
         isSaveToTxtOrBinFile = 1
         numRepeatsForStats = 2
         
@@ -289,7 +311,7 @@ begintemplate ExportOptions
         return 0
     }
     
-    // Keep the filtration logic in sync with py:GeneratorsForMainHocFile.createAPCounts
+    // Keep the filtration logic in sync with getFirstValidAPCountOrNil and py:GeneratorsForMainHocFile.createAPCounts
     func isAnyWatchedAPCounts() { local apcIdx localobj apcList
         if (!(isCreateRunnerHoc && isRecordAndSaveModelVars && isRecordAndSaveWithAPCounts)) {
             return 0
@@ -327,8 +349,22 @@ begintemplate ExportOptions
         return 0
     }
     
+    // Keep the filtration logic in sync with isAnyWatchedAPCounts and py:GeneratorsForMainHocFile.createAPCounts
+    obfunc getFirstValidAPCountOrNil() { local apcIdx localobj apcList, nil, apc
+        apcList = new List("APCount")
+        if (apcList.count() == 0) {
+            return nil
+        }
+        for apcIdx = 0, apcList.count() - 1 {   // Don't replace with "eachItemInList" because we return
+            apc = apcList.o(apcIdx)
+            if (apc.has_loc()) {
+                return apc
+            }
+        }
+        return nil
+    }
+    
 endtemplate ExportOptions
 
 
 objref exportOptions
-exportOptions = new ExportOptions()

@@ -1,4 +1,5 @@
 
+objref pyObj
 pyObj = new PythonObject()
 { nrnpython("ev = lambda arg : eval(arg)") }
 

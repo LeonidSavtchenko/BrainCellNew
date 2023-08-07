@@ -3,107 +3,111 @@
 numWatchedAPCounts = -1
 objref apcList, recordedVecsFromAPCounts[1]
 
-// in: numWatchedAPCounts, apcList, recordedVecsFromAPCounts (taken from the top level)
+// in: numWatchedAPCounts, recordedVecsFromAPCounts (taken from the top level)
 proc setUpVecsForRecordingFromAPCounts() { local apcIdx localobj vec
     for apcIdx = 0, numWatchedAPCounts - 1 {
         vec = new Vector()
-        apcList.o(apcIdx).record(vec)
+        APCount[apcIdx].record(vec)
         recordedVecsFromAPCounts[apcIdx] = vec
     }
 }
 
-// in: outFolderName, timestamp, numSweptVars, numWatchedAPCounts, apcList, recordedVecsFromAPCounts (taken from the top level)
-proc saveRecordedVecsFromAPCounts() { local apcIdx, maxNumRecs, n, recIdx localobj outFile, vec
-    strdef outFilePathName, line, unitsStr, tempStr
+// in: outAPsFileNameFormat, timestamp, outFolderPathName, numSweptVars, pyObj, numWatchedAPCounts, colSep, recordedVecsFromAPCounts (taken from the top level)
+proc saveRecordedVecsFromAPCounts() { local apcIdx, maxNumRecs, n, recIdx localobj outFile, listOfStrs1, listOfStrs2, listOfStrs3, listOfStrs4, listOfStrs5, listOfStrs, vec
+    strdef outFileName, outFilePathName, unitsStr, str
     
-    sprint(outFilePathName, "%s/aps %s.txt", outFolderName, timestamp)
+    sprint(outFileName, outAPsFileNameFormat, timestamp)
+    sprint(outFilePathName, "%s/%s", outFolderPathName, outFileName)
     outFile = new File()
     outFile.wopen(outFilePathName)
     
-    // The swept var names and values
     if (numSweptVars != 0) {
-        dumpSweptVarsToFileHeader(outFile)
+        // Invisible rows: the swept var names and values
+        dumpSweptVarsToFileHeader(outFile)      // This uses numSweptVars, pyObj
     }
     
-    // The time var name
-    line = "t"
-    for apcIdx = 1, numWatchedAPCounts - 1 {
-        sprint(line, "%s\tt", line)
-    }
-    outFile.printf("%s\n", line)
+    listOfStrs1 = new List()
+    listOfStrs2 = new List()
+    listOfStrs3 = new List()
+    listOfStrs4 = new List()
+    listOfStrs5 = new List()
     
-    // The time var units
-    unitsStr = units(&t)
-    sprint(line, "%s", unitsStr)
-    for apcIdx = 1, numWatchedAPCounts - 1 {
-        sprint(line, "%s\t%s", line, unitsStr)
-    }
-    outFile.printf("%s\n", line)
+    unitsStr = units(&APCount[0].time)
     
-    // The locations of APCount-s
-    getAPCountLocationHint(0, line)
-    for apcIdx = 1, numWatchedAPCounts - 1 {
-        getAPCountLocationHint(apcIdx, tempStr)
-        sprint(line, "%s\t%s", line, tempStr)
+    for apcIdx = 0, numWatchedAPCounts - 1 {
+        // "Long Name" row
+        sprint(str, "APCount[%d].time", apcIdx)
+        listOfStrs1.append(new String(str))
+        
+        // "Units" row
+        listOfStrs2.append(new String(unitsStr))
+        
+        // "Comments" row: the locations of APCount-s
+        getAPCountLocationHint(apcIdx, str)
+        listOfStrs3.append(new String(str))
+        
+        // "Comments" row: the thresholds of APCount-s
+        getAPCountThresholdHint(apcIdx, str)
+        listOfStrs4.append(new String(str))
+        
+        // "Comments" row: the spike counters
+        getAPCountSpikeCounterHint(apcIdx, str)
+        listOfStrs5.append(new String(str))
     }
-    outFile.printf("%s\n", line)
     
-    // The thresholds of APCount-s
-    getAPCountThresholdHint(0, line)
-    for apcIdx = 1, numWatchedAPCounts - 1 {
-        getAPCountThresholdHint(apcIdx, tempStr)
-        sprint(line, "%s\t%s", line, tempStr)
-    }
-    outFile.printf("%s\n", line)
+    writeOneLineToFile(listOfStrs1, outFile)    // This uses colSep
+    writeOneLineToFile(listOfStrs2, outFile)
+    writeOneLineToFile(listOfStrs3, outFile)
+    writeOneLineToFile(listOfStrs4, outFile)
+    writeOneLineToFile(listOfStrs5, outFile)
     
     maxNumRecs = -1
     for apcIdx = 0, numWatchedAPCounts - 1 {
-        n = apcList.o(apcIdx).n
+        n = APCount[apcIdx].n
         if (n > maxNumRecs) {
             maxNumRecs = n
         }
     }
     
-    // The recorded times of action potentials
+    listOfStrs = new List()
+    
+    // Data rows: the spike times
     for recIdx = 0, maxNumRecs - 1 {
-        
-        // The first column
-        vec = recordedVecsFromAPCounts[0]
-        if (recIdx < vec.size()) {
-            oneValueToString(vec.x(recIdx), line)
-        } else {
-            line = ""
-        }
-        
-        // All next columns
-        for apcIdx = 1, numWatchedAPCounts - 1 {
+        for apcIdx = 0, numWatchedAPCounts - 1 {
             vec = recordedVecsFromAPCounts[apcIdx]
             if (recIdx < vec.size()) {
-                oneValueToString(vec.x(recIdx), tempStr)
-                sprint(line, "%s\t%s", line, tempStr)
+                oneValueToString(vec.x(recIdx), str)
             } else {
-                sprint(line, "%s\t", line)
+                str = ""
             }
+            listOfStrs.append(new String(str))
         }
         
-        outFile.printf("%s\n", line)
+        writeOneLineToFile(listOfStrs, outFile)
+        
+        listOfStrs.remove_all()
     }
     
     outFile.close()
 }
 
-// in: apcList, pyObj (taken from the top level)
+// in: pyObj (taken from the top level)
 proc getAPCountLocationHint() { local apcIdx, x
     apcIdx = $1
-    x = apcList.o(apcIdx).get_loc()
+    x = APCount[apcIdx].get_loc()
     {
         sprint($s2, "loc = %s( %s )", secname(), pyObj.str(x))
     }
     pop_section()
 }
 
-// in: apcList, pyObj (taken from the top level)
+// in: pyObj (taken from the top level)
 proc getAPCountThresholdHint() { local apcIdx
     apcIdx = $1
-    sprint($s2, "thresh = %s (%s)", pyObj.str(apcList.o(apcIdx).thresh), units(&APCount[0].thresh))
+    sprint($s2, "thresh = %s (%s)", pyObj.str(APCount[apcIdx].thresh), units(&APCount[0].thresh))
+}
+
+proc getAPCountSpikeCounterHint() { local apcIdx
+    apcIdx = $1
+    sprint($s2, "n = %d", APCount[apcIdx].n)
 }

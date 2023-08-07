@@ -132,21 +132,46 @@ func isVarExprUnique() { local isUnique localobj exprsList, oldExpr
     return isUnique
 }
 
-func enterVarExpression() { local isCancel, isOK localobj exprsList
+func enterVarExpression() { local numArg, isCancel, isOK, type localobj exprsList
     strdef var, hint, custVar
+    
+    numArg = numarg()
+    if (numArg < 2 || numArg > 3) {
+        codeContractViolation()
+    }
     
     var = $s1
     exprsList = $o2
     
-    hint = "Please enter a top-level var name, e.g. celsius, v_init, dt etc.:"
+    if (numArg == 3) {
+        hint = $s3
+    } else {
+        hint = "Please enter a top-level var name, e.g. celsius, v_init, dt etc.:"
+        // !! entering a GLOBAL var name here (e.g. "Currentip3_cadifus") is fine as well, but only until
+        //    we add the explicit export of GLOBAL-s resulting in overwriting of the custom vars entered this way
+    }
+    
     isCancel = _stringInputDialog(hint, var)
     if (isCancel) {
         return 0
     }
     
+    isOK = -1
+    
     if (stringEmpty(var)) {
         // Recursive call
         isOK = enterVarExpression(var, exprsList)
+    } else {
+        type = name_declared(var)   // "h", "v" -> 1
+        if (type == 0 || type == 1) {
+            // Recursive call
+            // !! if user tried an expression like "Exp2Syn[123].g", then the hint below looks somewhat inconsistent,
+            //    but doing this recursive call is fine anyway because we cannot expose or sweep such custom vars correclty
+            isOK = enterVarExpression(var, exprsList, "Cannot find this var at the top level. Please enter a valid var name:")
+        }
+    }
+    
+    if (isOK != -1) {
         if (isOK) {
             $s1 = var
         }

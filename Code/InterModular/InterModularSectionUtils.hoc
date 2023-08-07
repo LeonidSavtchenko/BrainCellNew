@@ -1,4 +1,7 @@
 
+{ load_file("Exported/InterModularSectionUtils_Exported.hoc") }
+
+
 // Get the name of the currently accessed section (either object name or array name)
 // Does not work if the section owned by a template!!
 // $s1 (output) - The section name
@@ -53,5 +56,13 @@ proc secListToListOfSecRef() { localobj secList, list_ref
     list_ref = $o2
     forsec secList {
         list_ref.append(new SectionRef())
+    }
+}
+
+// Delete all sections
+// (The names remain declared and cannot be used for anything else than creating new sections and section arrays)
+proc deleteAllSections() {
+    forall {
+        delete_section()
     }
 }

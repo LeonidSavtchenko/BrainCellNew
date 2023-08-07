@@ -1,0 +1,25 @@
+
+begintemplate ReducedSynPPComp
+
+    public name, enumDmPpNc, enumPpRole, mechIdx, mechStds
+    
+    strdef name
+    enumDmPpNc = -1
+    enumPpRole = -1
+    mechIdx = -1
+    objref mechStds[1][1]   // All nil-s except some col(s) of mechIdx row
+    
+    
+    proc init() { local numMechs localobj mechType
+        name = $s1
+        enumPpRole = $2
+        mechIdx = $3
+        
+        enumDmPpNc = 1
+        
+        mechType = new MechanismType(1) // 1: "Point Processes"
+        numMechs = mechType.count
+        objref mechStds[numMechs][3]    // 0: "PARAMETER", 1: "ASSIGNED", 2: "STATE"
+    }
+    
+endtemplate ReducedSynPPComp

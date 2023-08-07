@@ -1,0 +1,100 @@
+
+// in: outFolderPathName, outAPsSweepSummaryFileName, numSweptVars, sweptVarUnits, sweptVarUserReadableNames, numWatchedAPCounts, colSep (taken from the top level)
+// Keep in sync with createAPCountsRepSummaryFileWithHeaders
+proc createAPCountsSweepSummaryFileWithHeaders() { local apcIdx localobj outFile, listOfStrs1, listOfStrs2, listOfStrs3, listOfStrs4
+    strdef outFilePathName, str
+    
+    sprint(outFilePathName, "%s/%s", outFolderPathName, outAPsSweepSummaryFileName)
+    outFile = new File()
+    outFile.wopen(outFilePathName)
+    
+    listOfStrs1 = new List()
+    listOfStrs2 = new List()
+    listOfStrs3 = new List()
+    listOfStrs4 = new List()
+    
+    createSweptVarHeaderColumns(listOfStrs1, listOfStrs2, listOfStrs3, listOfStrs4)     // This uses numSweptVars, sweptVarUnits, sweptVarUserReadableNames
+    
+    for apcIdx = 0, numWatchedAPCounts - 1 {
+        // "Long Name" row
+        sprint(str, "APCount[%d].n", apcIdx)
+        listOfStrs1.append(new String(str))
+        
+        // "Units" row
+        listOfStrs2.append(new String(""))
+        
+        // "Comments" row 1
+        getAPCountLocationHint(apcIdx, str)
+        listOfStrs3.append(new String(str))
+        
+        // "Comments" row 2
+        getAPCountThresholdHint(apcIdx, str)
+        listOfStrs4.append(new String(str))
+    }
+    
+    writeOneLineToFile(listOfStrs1, outFile)    // This uses colSep
+    writeOneLineToFile(listOfStrs2, outFile)
+    writeOneLineToFile(listOfStrs3, outFile)
+    writeOneLineToFile(listOfStrs4, outFile)
+    
+    outFile.close()
+}
+
+// in: outFolderPathName, outAPsSweepSummaryFileName, numSweptVars, SWEPT_VAR_*, numWatchedAPCounts, colSep (taken from the top level)
+// Keep in sync with appendOneDataRowToAPCountsRepSummaryFile
+proc appendOneDataRowToAPCountsSweepSummaryFile() { local apcIdx localobj outFile, listOfStrs
+    strdef outFilePathName, str
+    
+    sprint(outFilePathName, "%s/%s", outFolderPathName, outAPsSweepSummaryFileName)
+    outFile = new File()
+    outFile.aopen(outFilePathName)
+    
+    // Swept var value columns
+    listOfStrs = createSweptVarValueColumns()   // This uses numSweptVars, SWEPT_VAR_*
+    
+    // APCount spike counter columns
+    for apcIdx = 0, numWatchedAPCounts - 1 {
+        sprint(str, "%d", APCount[apcIdx].n)
+        listOfStrs.append(new String(str))
+    }
+    
+    writeOneLineToFile(listOfStrs, outFile)     // This uses colSep
+    
+    outFile.close()
+}
+
+// in: numSweptVars, sweptVarUnits, sweptVarUserReadableNames (taken from the top level)
+proc createSweptVarHeaderColumns() { local sweptVarIdx localobj listOfStrs1, listOfStrs2, listOfStrs3, listOfStrs4
+
+    listOfStrs1 = $o1
+    listOfStrs2 = $o2
+    listOfStrs3 = $o3
+    listOfStrs4 = $o4
+    
+    for sweptVarIdx = 0, numSweptVars - 1 {
+        // "Long Name" row
+        getSweptVarNameAndValue(sweptVarIdx)    // -> _sweptVarName
+        listOfStrs1.append(new String(_sweptVarName))
+        
+        // "Units" row
+        listOfStrs2.append(new String(sweptVarUnits.o(sweptVarIdx).s))
+        
+        // "Comments" row 1
+        listOfStrs3.append(new String(sweptVarUserReadableNames.o(sweptVarIdx).s))
+        
+        // "Comments" row 2
+        listOfStrs4.append(new String(""))
+    }
+}
+
+// in: numSweptVars, SWEPT_VAR_* (taken from the top level)
+obfunc createSweptVarValueColumns() { local sweptVarIdx localobj listOfStrs
+    strdef str
+    listOfStrs = new List()
+    for sweptVarIdx = 0, numSweptVars - 1 {
+        getSweptVarNameAndValue(sweptVarIdx)    // -> _sweptVarValue
+        oneValueToString(_sweptVarValue, str)
+        listOfStrs.append(new String(str))
+    }
+    return listOfStrs
+}

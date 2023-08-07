@@ -31,14 +31,6 @@ func getNumberOfDendrites() { local totalNumDend, idx, numDend localobj dendrite
     return totalNumDend
 }
 
-// Delete all sections
-// (The names remain declared and cannot be used for anything else than creating new sections and section arrays)
-proc deleteAllSections() {
-    forall {
-        delete_section()
-    }
-}
-
 // Delete extra dendrite sections when user loads old-style Astro HOC file
 // Input: OriginalDendrite (taken from the top level)
 proc deleteExtraDendrites() { local idx
@@ -129,6 +121,7 @@ obfunc getNamesOfAllTopologicalRoots() { local numArg localobj usedNames, secLis
 // !! need to investigate the difference between my default soma and that one created by NLMorphologyConverter
 // !! test this code on a hoc file with two disconnected cells
 // Create a default soma and connect all root sections to its centre
+// Input: pyObj (taken from the top level)
 // $s1 (out) - The name chosen for the soma
 // Returns: 0/1 flag indicating Accept/Cancel respectively
 func createDefaultSomaAndConnectAllRootSectionsToIt() { local isCancel localobj secList
@@ -190,9 +183,9 @@ func createDefaultAxonAndConnectToFirstSomaSection() { local isCancel
     }
     
     // Morphology
-    sprint(hocCommand, "%s[0] {nseg=5 diam=1 L=50}", chosenNameForAxon)
+    sprint(hocCommand, "%s[0] {nseg=5 diam=1 L=5}", chosenNameForAxon)
     execute(hocCommand)
-    sprint(hocCommand, "%s[1] {nseg=10 diam=0.7 L=250}", chosenNameForAxon)
+    sprint(hocCommand, "%s[1] {nseg=10 diam=0.7 L=5}", chosenNameForAxon)
     execute(hocCommand)
     
     $s2 = chosenNameForAxon

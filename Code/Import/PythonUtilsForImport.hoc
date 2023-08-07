@@ -1,21 +1,26 @@
 
-// !! replace "\n" with "; " where possible
-
 // Create a copy of the first "*.CNG.swc" file in just unzipped folder giving it fixed name
 // $s1 - The unzipped folder path and name
 // $s2 - The destination file name
-proc copyAndRenameFirstSwcFile() { local status
-    strdef folderPathName, outSwcFileName, pyCommandTempl, pyCommand
+proc copyAndRenameFirstSwcFile() { local status, isMissing
+    strdef folderPathName, outSwcFileName, outSwcFilePathName, pyCommandTempl, pyCommand
     
     folderPathName = $s1
     outSwcFileName = $s2
     
-    pyCommandTempl = "import glob\nimport shutil\nfor file in glob.glob('%s/*.CNG.swc'):\n    shutil.copy(file, '%s/%s')\n    break"
-    sprint(pyCommand, pyCommandTempl, folderPathName, folderPathName, outSwcFileName)
+    sprint(outSwcFilePathName, "%s/%s", folderPathName, outSwcFileName)
+    
+    pyCommandTempl = "import glob\nimport shutil\nfor file in glob.glob('%s/*.CNG.swc'):\n    shutil.copy(file, '%s')\n    break"
+    sprint(pyCommand, pyCommandTempl, folderPathName, outSwcFilePathName)
     
     status = nrnpython(pyCommand)
     if (!status) {
         printImportFailedMsgAndRaiseError("Cannot create a copy of the first \"*.CNG.swc\" file in just unzipped folder")
+    }
+    
+    isMissing = checkIfFileMissing(outSwcFilePathName)
+    if (isMissing) {
+        printImportFailedMsgAndRaiseError("The archive doesn't contain any \"*.CNG.swc\" files")
     }
 }
 

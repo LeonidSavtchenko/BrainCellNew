@@ -1,0 +1,45 @@
+
+strdef _sweptVarName
+_sweptVarValue = -1
+
+// in: SWEPT_VAR_* (taken from the top level)
+proc getSweptVarNameAndValue() { local sweptVarIdx
+    strdef hocCommand
+    
+    sweptVarIdx = $1
+    
+    sprint(_sweptVarName, "SWEPT_VAR_%d", sweptVarIdx + 1)
+    sprint(hocCommand, "_sweptVarValue = %s", _sweptVarName)
+    execute(hocCommand)
+}
+
+// in: sweptVarUserReadableNames, sweptVarUnits (taken from the top level)
+proc getSweptVarComment() { local sweptVarIdx
+    strdef svName, svUnits
+    
+    sweptVarIdx = $1
+    
+    svName = sweptVarUserReadableNames.o(sweptVarIdx).s
+    svUnits = sweptVarUnits.o(sweptVarIdx).s
+    
+    if (stringsEqual(svUnits, "")) {
+        $s2 = svName
+    } else {
+        sprint($s2, "%s (%s)", svName, svUnits)
+    }
+}
+
+// in: numSweptVars, pyObj (taken from the top level)
+proc dumpSweptVarsToFileHeader() { local sweptVarIdx localobj outFile
+    strdef sweptVarComment
+    
+    outFile = $o1
+    
+    outFile.printf("\n")
+    for sweptVarIdx = 0, numSweptVars - 1 {
+        getSweptVarNameAndValue(sweptVarIdx)    // -> _sweptVarName, _sweptVarValue
+        getSweptVarComment(sweptVarIdx, sweptVarComment)
+        outFile.printf("%s = %s    // %s\n", _sweptVarName, pyObj.str(_sweptVarValue), sweptVarComment)
+    }
+    outFile.printf("\n")
+}

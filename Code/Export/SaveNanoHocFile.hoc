@@ -55,7 +55,7 @@ proc _exportCellToHocFile() { local cond
     {
         line1 = "Here is what we don't export at the moment (the list is incomplete):"
         line2 = "    * GLOBAL vars of biophys mechs%s"
-        line3 = "    * %sPPs/ACs%s, e.g. gap junctions in Soma and Dendrites%s (but APCount-s are saved)"
+        line3 = "    * %sPPs/ACs%s, e.g. gap junctions in Soma and Dendrites%s (but APCount-s are exported)"
         line4 = "    * custom \"proc advance() { ... }\"%s"
         if (isAstrocyteOrNeuron) {
             sprint(line2, line2, "")

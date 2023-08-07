@@ -69,6 +69,7 @@ class GeneratorsForMainHocFile:
             'InterModularErrWarnUtilsPart2_Exported.hoc',
             'InterModularListUtils_Exported.hoc',
             'InterModularStringUtils_Exported.hoc',
+            "InterModularSectionUtils_Exported.hoc",
             'InterModularOtherUtils_Exported.hoc'
         ]
         for fileName in fileNames:
@@ -583,10 +584,9 @@ class GeneratorsForMainHocFile:
         srcMechName = srcMechName[0]
         trgMechName = trgMechName[0]
         sngMechName = sngMechName[0]
-        isForceNewTrgOrSng = 1  # !! we create synapses from scratch, so it would be better to modify the exported code not to use this arg anymore
-        lines.append('{{ synGroup.applyChangesToStrucIfNeeded({}, {}, {}, {}, "{}", "{}", "{}", {}) }}'.format(is3Or1PartInSynStruc, srcMechIdx, trgMechIdx, sngMechIdx, srcMechName, trgMechName, sngMechName, isForceNewTrgOrSng))
+        lines.append('{{ synGroup.createSynStruc({}, {}, "{}", "{}", "{}") }}'.format(is3Or1PartInSynStruc, srcMechIdx, srcMechName, trgMechName, sngMechName))
         
-        lines.append('{{ synGroup.applyChangesToAllHomogenVars({}, {}, {}) }}'.format(srcMechIdx, trgMechIdx, sngMechIdx))
+        lines.append('{{ synGroup.initAllHomogenVars({}, {}, {}, {}) }}'.format(is3Or1PartInSynStruc, srcMechIdx, trgMechIdx, sngMechIdx))
         
         if hocObj.exportOptions.isExportAnyInhomSynModels():
             lines.append('{ inhomAndStochLibrary.applyAllSynInhomModels() }')
@@ -610,7 +610,7 @@ class GeneratorsForMainHocFile:
         
         return lines
         
-    # Keep the filtration logic in sync with hoc:ExportOptions.isAnyWatchedAPCounts
+    # Keep the filtration logic in sync with hoc:ExportOptions.isAnyWatchedAPCounts and .getFirstValidAPCountOrNil
     def createAPCounts(self):
         
         # By design, we export APCount-s independently on hocObj.exportOptions
@@ -662,7 +662,7 @@ class GeneratorsForMainHocFile:
         
         
     def _insertAllLinesFromReducedVersionFile(self, fileName):
-        relFilePathName = 'Code\\Export\\OutHocFileStructures\\ReducedVersions\\' + fileName
+        relFilePathName = 'Code\\Export\\OutHocFileStructures\\MainHocUtils\\ReducedVersions\\' + fileName
         return self.insertAllLinesFromFile(relFilePathName)
         
     def _initCustOrStdExposedOrSweptVars(self, varsList, getVarName, isSwept):

@@ -1,0 +1,19 @@
+
+begintemplate ReducedBasicMath
+
+    public inf, nan
+    public isNaN
+    
+    inf = -1
+    nan = -1
+    
+    proc init() {
+        sscanf("inf", "%f", &inf)
+        sscanf("nan", "%f", &nan)
+    }
+    
+    func isNaN() {
+        return !($1 == $1)  // Do not replace with "!="
+    }
+    
+endtemplate ReducedBasicMath

@@ -37,13 +37,11 @@ begintemplate SynGroup
         witheredSpineNeckDiam = 1e-9
     }
     
-    // Keep in sync with ReducedSynGroup.is3Or1PartInSynStruc
     func is3Or1PartInSynStruc() { localobj nil
         // It's a code contract that all the syns have the same structure
         return (smAllSyns.o(0).netCon != nil)
     }
     
-    // Keep in sync with ReducedSynGroup.getPpNameOrEmpty
     proc getPpNameOrEmpty() { local enumPpRole, idx localobj pp, nil, strFunc
         strdef ppNameWithBrackets, ppName
         
@@ -150,8 +148,8 @@ begintemplate SynGroup
         isScheduledRescanningOfDistMechs = 1    // !! for higher performance, it would be better to rescan only spine_neck.morphology
     }
     
-    // Keep in sync with ReducedSynGroup.applyChangesToStrucIfNeeded
-    func applyChangesToStrucIfNeeded() { local is3Or1PartInSynStruc_new, srcMechIdx, trgMechIdx, sngMechIdx, isForceNewTrgOrSng, is3Or1PartInSynStruc_old, enumTrgOrSngPpRole_old, isSefwEnabled, isSrcMechNameUnchanged, isSefwPresenceUnchanged, isTrgMechNameUnchanged, seed localobj syn, srcPp, trgPp, netCon, sefwPp, sefwNetCon, oldPp, sngPp
+    // Keep in sync with ReducedSynGroup.createSynStruc
+    func applyChangesToStrucIfNeeded() { local is3Or1PartInSynStruc_new, srcMechIdx, trgMechIdx, sngMechIdx, isForceNewTrgOrSng, is3Or1PartInSynStruc_old, enumTrgOrSngPpRole_old, isSefwEnabled, isSrcMechNameUnchanged, isSefwPresenceUnchanged, isTrgMechNameUnchanged, seed localobj syn, srcPp, trgPp, netCon, sefwPp, sefwNetCon, sngPp
         strdef srcMechName, trgMechName, sngMechName, trgOrSngMechName_old, srcMechName_old, trgMechName_old, sngMechName_old
         
         is3Or1PartInSynStruc_new = $1
@@ -222,7 +220,7 @@ begintemplate SynGroup
         return 1
     }
     
-    // Keep in sync with ReducedSynGroup.applyChangesToAllHomogenVars
+    // Keep in sync with ReducedSynGroup.initAllHomogenVars
     func applyChangesToDirtyHomogenVars() { local srcMechIdx, trgMechIdx, sngMechIdx, isSmthChanged
         srcMechIdx = $1
         trgMechIdx = $2
@@ -306,7 +304,7 @@ begintemplate SynGroup
     // All next staff is private
     
     
-    // Keep in sync with ReducedSynGroup.createNewSrcPpButTryToInherit
+    // Keep in sync with ReducedSynGroup.createNewSrcPp
     obfunc createNewSrcPpButTryToInherit() { local mechIdx, isSrcMechNameUnchanged, doesSrcPpRequireSection, synCompIdx localobj syn, mechType, outPp
         strdef mechName
         
@@ -333,7 +331,6 @@ begintemplate SynGroup
         }
     }
     
-    // Keep in sync with ReducedSynGroup.createNewTrgOrSngPpButTryToInherit
     obfunc createNewTrgOrSngPpButTryToInherit() { local mechIdx, isForceNew, synCompIdx, enumPpRole_old, isMechNameUnchanged localobj syn, pp_old
         strdef mechName, mechName_old
         
@@ -354,7 +351,6 @@ begintemplate SynGroup
         }
     }
     
-    // Keep in sync with ReducedSynGroup.createNewNetConButTryToInherit
     obfunc createNewNetConButTryToInherit() { local is3Or1PartInSynStruc_old localobj syn, srcPp, nextPp, netCon, mechStd
         syn = $o1
         srcPp = $o2
@@ -375,7 +371,7 @@ begintemplate SynGroup
     
     objref _tempPp
     
-    // Keep in sync with ReducedSynGroup.createNewPpAttachedToSectionButTryToInherit
+    // Keep in sync with ReducedSynGroup.createNewPpAttachedToSection
     obfunc createNewPpAttachedToSectionButTryToInherit() { local synCompIdx, mechIdx, x, isMechNameUnchanged localobj pp_old, sec_ref, pp_new, nil, mechStd
         strdef mechName, hocCommand
         
@@ -406,7 +402,7 @@ begintemplate SynGroup
         return pp_new
     }
     
-    // Keep in sync with ReducedSynGroup.applyHomogenChanges
+    // Keep in sync with ReducedSynGroup.initHomogenVars
     func ifMechDirtyThenApplyHomogenChanges() { local compIdx, mechIdx, enumPpRole, isPPorNC, maxVarType, varType, varTypeIdx, release_probability localobj comp, syn, nil, sefwPpOrNil, sefwNetConOrNil, ppOrNetCon, compMechStd, tempMechStdExt
         strdef mechName
         
@@ -525,7 +521,6 @@ begintemplate SynGroup
         }
     }
     
-    // Keep in sync with ReducedSynGroup.isSefwPresentInSynStruc
     func isSefwPresentInSynStruc() { localobj nil
         // It's a code contract that all the syns have the same structure
         return (smAllSyns.o(0).sefwPp != nil)

@@ -1,0 +1,18 @@
+
+begintemplate ReducedManagersCommonUtils
+
+    public isMetaVar
+    
+    external stringStartsWith
+    
+    // Keep in sync with ManagersCommonUtils.isMetaVar
+    func isMetaVar() {
+        strdef varName
+        varName = $s1
+        return stringStartsWith(varName, "@")
+    }
+    
+endtemplate ReducedManagersCommonUtils
+
+objref mcu
+mcu = new ReducedManagersCommonUtils()

@@ -9,22 +9,25 @@ begintemplate ExportManagerMainWidget
     external exportOptions
     
     objref mainBox, deck1, deck2, deck3, deck4, deck5
-    objref clovWidgets[1]
+    objref childWidgets[1]
     
-    numClovWidgets = -1
+    numChildWidgets = -1
     
     firstColWidth = -1
     secondColWidth = -1
     
     
     proc init() {
-        numClovWidgets = 4
+    
+        exportOptions = new ExportOptions()
         
-        objref clovWidgets[numClovWidgets]
-        clovWidgets[0] = new CreateListOfInputVarsWidget(1)
-        clovWidgets[1] = new WatchedVarsAndRecorderSettingsWidget()
-        clovWidgets[2] = new CreateListOfInputVarsWidget(0)
-        clovWidgets[3] = new RepeatForStatsWidget()
+        numChildWidgets = 4
+        
+        objref childWidgets[numChildWidgets]
+        childWidgets[0] = new CreateListOfInputVarsWidget(1)
+        childWidgets[1] = new WatchedVarsAndRecorderSettingsWidget()
+        childWidgets[2] = new CreateListOfInputVarsWidget(0)
+        childWidgets[3] = new RepeatForStatsWidget()
         
         firstColWidth = 140
         secondColWidth = 450
@@ -226,12 +229,12 @@ begintemplate ExportManagerMainWidget
         deck4.flip_to(exportOptions.isCreateRunnerHoc)
     }
     
-    proc varsSelectorCheckBoxHandler() { local clovWidIdx, isChecked
-        clovWidIdx = $1
+    proc varsSelectorCheckBoxHandler() { local childWidIdx, isChecked
+        childWidIdx = $1
         isChecked = $2
         dismissChilds()
         if (isChecked) {
-            clovWidgets[clovWidIdx].show()
+            childWidgets[childWidIdx].show()
         }
     }
     
@@ -266,13 +269,13 @@ begintemplate ExportManagerMainWidget
         unmapIfNotNil(mainBox)
     }
     
-    proc dismissChilds() { local clovWidIdx
-        for clovWidIdx = 0, numClovWidgets - 1 {
-            clovWidgets[clovWidIdx].dismissHandler()
+    proc dismissChilds() { local childWidIdx
+        for childWidIdx = 0, numChildWidgets - 1 {
+            childWidgets[childWidIdx].dismissHandler()
         }
     }
     
 endtemplate ExportManagerMainWidget
 
+
 objref exportManagerMainWidget
-exportManagerMainWidget = new ExportManagerMainWidget()

@@ -1,5 +1,5 @@
 
-pwman_place(0,0,0)
+{ pwman_place(0,0,0) }
 
 { load_file("pointgrp.hoc") }
 
@@ -7,7 +7,7 @@ objref ocbox_
 ocbox_ = new PointProcessGroupManager(0)
 
 // We have to keep this push-pop block at the top level rather than in a proc because otherwise it won't work
-object_push(ocbox_)
+{ object_push(ocbox_) }
 {
     ms = new MechanismStandard("IClamp")
     ms.set("del", 0, 0)
@@ -17,7 +17,7 @@ object_push(ocbox_)
     select(0)
     execute("soma_ref.o(0).sec ocbox_.move(0.5)")
 }
-object_pop()
+{ object_pop() }
 
 ocbox_ = ocbox_.v1
-ocbox_.map("PointProcessGroupManager", 61, 576, 559.8, 371.7)
+{ ocbox_.map("PointProcessGroupManager", 61, 576, 559.8, 371.7) }
