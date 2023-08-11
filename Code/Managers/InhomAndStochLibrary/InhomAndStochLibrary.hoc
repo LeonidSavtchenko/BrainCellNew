@@ -4,7 +4,7 @@
 //  callers are commented for:
 //      * onMechInsert, onMechUninsert
 //  implementations are missing or incomplete for:
-//      * onNanoReseedOrUpdate, onCompSplit, onCompMerge (the last two require changes in the stored VerbatimDistFuncHelper-s)
+//      * onNanoReseedOrUpdate (but we already lock the reseeding), onCompSplit, onCompMerge (the last two require changes in the stored VerbatimDistFuncHelper-s)
 //  both caller and implementation are missing for:
 //      * onRescanInMechManager (if we find out that user has made an inhomogen var homogen, then we need to remove the inhomogen model from this library)
 //      * onChangingNsegInMechManager (if nseg was increased for already inhomogen comp, then we need to re-apply all inhomogen models again for this comp;

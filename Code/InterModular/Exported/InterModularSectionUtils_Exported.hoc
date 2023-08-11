@@ -1,0 +1,27 @@
+
+// Create a List of SectionRef-s containing references to all the sections given name or regex
+// $s1 - The name or regex
+// $2 - 0/1 flag indicating whether to look for top-level sections or the sections owned by objects (template instances)
+// Returns: The List of SectionRef-s
+obfunc createListOfSectionRefs() { local isOwnedByObjects localobj list_ref
+    strdef secNameOrRegex
+    
+    secNameOrRegex = $s1
+    isOwnedByObjects = $2
+    
+    if (isOwnedByObjects) {
+        sprint(secNameOrRegex, ".*].%s", secNameOrRegex)
+        // !! the format string ".*]\\.%s" looks more correct (using "verbatim" dot instead of "any char" dot), but doesn't work for unknown reason
+        //    the format string ".*]\.%s" doesn't look correct even though works fine (perhaps the unknown escape sequence "\." is interpreted as ".")
+    }
+    
+    list_ref = new List()
+    
+    // forsec secNameOrRegex {                  // - These two don't require that match must start at the beginning of the string
+    // forall ifsec secNameOrRegex {            // /
+    forall if (issection(secNameOrRegex)) {     // - This does
+        list_ref.append(new SectionRef())
+    }
+    
+    return list_ref
+}

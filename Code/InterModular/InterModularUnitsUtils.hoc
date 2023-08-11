@@ -1,0 +1,25 @@
+
+proc addLengthUnits() {
+    strdef varName, unitsStr, hocCommand
+    varName = $s1
+    unitsStr = units("L")
+    hocCommand = "units(&%s, unitsStr)"
+    sprint(hocCommand, hocCommand, varName)
+    execute(hocCommand)
+}
+
+// Keeping this proc on the top level rather than in a template because otherwise
+// "units" would fail due to missing access to the section
+// See also: MechTypeHelper.getVarUnits
+proc getWatchedVarUnits() {
+    strdef watchedVarName, unitsStr, hocCommand
+    watchedVarName = $s1
+    
+    // !! is that needed?
+    unitsStr = ""
+    
+    sprint(hocCommand, "unitsStr = units(&%s)", watchedVarName)
+    execute(hocCommand)
+    
+    $s2 = unitsStr
+}

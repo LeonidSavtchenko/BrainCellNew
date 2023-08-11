@@ -37,7 +37,7 @@ func saveNanoHocFile_deprecated() { local isSelected
 
 
 proc _exportCellToHocFile() { local cond
-    strdef outHocFilePathName, line1, line2, line3, line4, line5, line6, line7, line8, line9, line10
+    strdef outHocFilePathName, line1, line2, line3, line4, line5, line6, line7, line8, line9, line10, line11
     
     outHocFilePathName = $s1
     
@@ -55,7 +55,7 @@ proc _exportCellToHocFile() { local cond
     {
         line1 = "Here is what we don't export at the moment (the list is incomplete):"
         line2 = "    * GLOBAL vars of biophys mechs%s"
-        line3 = "    * %sPPs/ACs%s, e.g. gap junctions in Soma and Dendrites%s (but APCount-s are saved)"
+        line3 = "    * %sPPs/ACs%s, e.g. gap junctions in Soma and Dendrites%s (but APCount-s are exported)"
         line4 = "    * custom \"proc advance() { ... }\"%s"
         if (isAstrocyteOrNeuron) {
             sprint(line2, line2, "")
@@ -63,25 +63,26 @@ proc _exportCellToHocFile() { local cond
             sprint(line4, line4, "")
         } else {
             sprint(line2, line2, " and synaptic PPs/ACs")
-            sprint(line3, line3, "custom ", " (outside synapses)", " and Point3DRelease in Extracellular Source")
-            sprint(line4, line4, ", e.g. the one updating Extracellular Potassium")
+            sprint(line3, line3, "custom ", " (outside synapses)", " and Point3DRelease in Extracellular Source")   // !!!
+            sprint(line4, line4, ", e.g. the one updating Extracellular Potassium")     // !!!
         }
         line5 = "    * the distance centre location (if you change it)"
+        line6 = "    * the extracellular sources"   // !!!
         cond = exportOptions.isExportAnyStochFuncs()
         if (!isAstrocyteOrNeuron) {
             cond = (cond || smEnumSynLoc == 2)  // smEnumSynLoc is not defined for Astrocyte
         }
         if (cond) {
-            line6 = "    * states of RNGs"
+            line7 = "    * states of RNGs"
         }
-        line7 = "    * if creating \"runner.hoc\", the results cannot be saved to BIN files (only TXT files are supported)"
-        line8 = "    * a new file \"nrnmech.dll\" is not built (only the old one is copied)"
-        line9 = "Not implemented."
-        line10 = "If required, please ask the developer to prioritize."
+        line8 = "    * if creating \"runner.hoc\", the results cannot be saved to BIN files (only TXT files are supported)"
+        line9 = "    * a new file \"nrnmech.dll\" is not built (only the old one is copied)"
+        line10 = "Not implemented."
+        line11 = "If required, please ask the developer to prioritize."
         if (cond) {
-            mwh.showWarningBox(line1, line2, line3, line4, line5, line6, line7, line8, "", line9, line10)
+            mwh.showWarningBox(line1, line2, line3, line4, line5, line6, line7, line8, line9, "", line10, line11)
         } else {
-            mwh.showWarningBox(line1, line2, line3, line4, line5, line7, line8, "", line9, line10)
+            mwh.showWarningBox(line1, line2, line3, line4, line5, line6, line8, line9, "", line10, line11)
         }
         
         mwh.showMessageBox("Export complete successfully", "Complete")

@@ -1,0 +1,434 @@
+
+begintemplate OneExtracellularSourceWidget
+
+    public show, dismissHandler
+    
+    external mwh, math
+    
+    objref mainBox, plotShape
+    objref parentWidget
+    
+    objref spcNamesList, srcShapesList, srcDynamicsList
+    
+    // !!! maybe just use an instance of ExtracellularSource_ here
+    //     (then get rid of units and variable_domain staff in ctor below)
+    radius = -1
+    startTime = -1
+    endTime = -1
+    spikeTime = -1
+    isSeries = -1
+    x = -1
+    y = -1
+    z = -1
+    
+    x_soma = -1
+    y_soma = -1
+    z_soma = -1
+    
+    minRadius = -1
+    maxRadius = -1
+    screenToWorldFactor = -1
+    screenToMarkerFactor = -1
+    
+    create test_sec[1]
+    
+    isCreateOrCorrect = -1
+    
+    
+    proc init() { local inf
+        strdef unitsStr
+        
+        parentWidget = $o1
+        
+        spcNamesList = new List()
+        spcNamesList.append(new String("K+"))       // !!! v just for test (the list will depend on user's MOD files)
+        spcNamesList.append(new String("Na+"))
+        spcNamesList.append(new String("Ca2+"))
+        spcNamesList.append(new String("Cl+"))      // !!! ^
+        
+        srcShapesList = new List()
+        srcShapesList.append(new String("point"))
+        srcShapesList.append(new String("ball"))
+        
+        srcDynamicsList = new List()
+        srcDynamicsList.append(new String("static"))
+        srcDynamicsList.append(new String("on-off"))    // !!! need to hide this for point shape
+        srcDynamicsList.append(new String("spike"))
+        
+        isSeries = 0
+        
+        // !!! review the default values below taking them from the legacy code
+        
+        radius = 111.5  // um
+        
+        startTime = 2.3     // ms
+        endTime = 4.5       //
+        spikeTime = 1.1     //
+        
+        x = 456.5       // um
+        y = 123.5       //
+        z = 789.5       //
+        
+        x_soma = -1     // !!! v need to read from the soma
+        y_soma = -1
+        z_soma = -1     // !!! ^
+        
+        unitsStr = units("L")
+        units(&radius, unitsStr)
+        units(&x, unitsStr)
+        units(&y, unitsStr)
+        units(&z, unitsStr)
+        units(&x_soma, unitsStr)
+        units(&y_soma, unitsStr)
+        units(&z_soma, unitsStr)
+        
+        unitsStr = units("t")
+        units(&startTime, unitsStr)
+        units(&endTime, unitsStr)
+        units(&spikeTime, unitsStr)
+        
+        initConstants()
+        
+        inf = math.inf
+        
+        // !!! variable_domain(&radius, float_epsilon, inf)
+        variable_domain(&radius, minRadius, maxRadius)
+        
+        variable_domain(&startTime, 0, inf)
+        variable_domain(&endTime, 0, inf)
+        variable_domain(&spikeTime, 0, inf)
+        
+        // !!! doing this, we achive that the name remains declared and ready
+        //     to be used in proc show() as we need
+        test_sec[0] delete_section()
+    }
+    
+    proc initConstants() { local minMarkerSize, maxMarkerSize, totalFactor
+        // !!! these two constants are related to this line of code:
+        //         plotShape.mark(x_screen, y_screen, "o", marker_size)
+        //     which raises the error "Arg out of range in user function" when marker_size is too small or too big
+        minMarkerSize = 0.1
+        maxMarkerSize = 100
+        
+        // !!! this constant was chosen empirically so that the circle marker fits 3 orthogonal test sections
+        //     (but it depends on the widget size and PlotShape zoom)
+        //     maybe get rid of it at all or use in convertCoordsWorldToScreen and convertCoordsScreenToWorld
+        screenToWorldFactor = 1
+        
+        // !!! this constant was chosen empirically so that the circle sticks to the arrow tip when user resizes it holding "Shift"
+        //     (but it depends on the widget size and PlotShape zoom)
+        screenToMarkerFactor = 0.44
+        
+        totalFactor = screenToWorldFactor / screenToMarkerFactor
+        minRadius = minMarkerSize * totalFactor
+        maxRadius = maxMarkerSize * totalFactor
+    }
+    
+    proc show() { localobj hBox, vBox
+        strdef menuToolName
+        
+        isCreateOrCorrect = $1
+        
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            hBox = new HBox()
+            hBox.intercept(1)
+            {
+                vBox = new VBox()
+                vBox.intercept(1)
+                {
+                    xpanel("")
+                    xlabel("Species name:")
+                    xpanel()
+                    spcNamesList.browser("", "s")
+                    spcNamesList.select_action("spcNameSelectHandler(hoc_ac_)")
+                    xpanel("")
+                    xbutton("Add new species", "addNewSpeciesHandler()")
+                    xpanel()
+                }
+                vBox.intercept(0)
+                vBox.map()
+                vBox = new VBox()
+                vBox.intercept(1)
+                {
+                    xpanel("")
+                    xlabel("Source shape:")
+                    xpanel()
+                    srcShapesList.browser("", "s")
+                    srcShapesList.select_action("srcShapeSelectHandler(hoc_ac_)")
+                    xpanel("")
+                    xpvalue("Radius", &radius, 1, "ballRadiusChangedHandler()")
+                    xpanel()
+                }
+                vBox.intercept(0)
+                vBox.map()
+                vBox = new VBox()
+                vBox.intercept(1)
+                {
+                    xpanel("")
+                    xlabel("Source dynamics:")
+                    xpanel()
+                    srcDynamicsList.browser("", "s")
+                    srcDynamicsList.select_action("srcDynamicsSelectHandler(hoc_ac_)")
+                    xpanel("")
+                    xpvalue("Start time", &startTime, 1)    // !!! add handlers to prevent startTime > endTime
+                    xpvalue("End time", &endTime, 1)        //
+                    xcheckbox("Make a series", &isSeries, "isSeriesChangedHandler()")
+                    xpanel()
+                }
+                vBox.intercept(0)
+                vBox.map()
+            }
+            hBox.intercept(0)
+            hBox.map()
+            hBox = new HBox()
+            hBox.intercept(1)
+            {
+                vBox = new VBox()
+                vBox.intercept(1)
+                {
+                    xpanel("")
+                    xlabel("Source location:")  // !!! maybe get rid of this label
+                    xpanel()
+                    plotShape = new PlotShape()
+                    // !!! maybe remove unnecessary menu items
+                    menuToolName = "Position extracellular source"
+                    plotShape.menu_tool(menuToolName, "mouseEventsHandler")
+                }
+                vBox.intercept(0)
+                vBox.map()
+                vBox = new VBox()
+                vBox.intercept(1)
+                {
+                    xpanel("")
+                    xpvalue("x", &x, 1, "xyzChangedHandler()")
+                    xpvalue("y", &y, 1, "xyzChangedHandler()")
+                    xpvalue("z", &z, 1, "xyzChangedHandler()")
+                    xlabel("")
+                    xpvalue("x_soma", &x_soma, 1, "xyzSomaChangedHandler()")
+                    xpvalue("y_soma", &y_soma, 1, "xyzSomaChangedHandler()")
+                    xpvalue("z_soma", &z_soma, 1, "xyzSomaChangedHandler()")
+                    xlabel("")
+                    xlabel("Hints: Click PlotShape to move the source,")
+                    xlabel("hold \"Shift\" to resize the ball.")
+                    xpanel()
+                }
+                vBox.intercept(0)
+                vBox.map()
+            }
+            hBox.intercept(0)
+            hBox.map()
+            xpanel("")
+            xbutton("Apply", "applyHandler()")
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("One extracellular source", 460, 150, -1, -1)   // !!!
+        
+        // This must be done only after mapping of the mainBox
+        plotShape.exec_menu("View = plot")
+        
+        plotShape.exec_menu(menuToolName)   // !!!
+        
+        // This must be done only after "View = plot"
+        create test_sec[3]
+        xyzOrRadiusChangedHandler()
+    }
+    
+    proc dismissHandler() { local idx localobj nil
+        if (mainBox == nil) {
+            return
+        }
+        
+        mainBox.unmap()
+        mainBox = nil
+        
+        for idx = 0, 2 {
+            test_sec[idx] delete_section()
+        }
+    }
+    
+    // All next staff is private
+    
+    
+    proc spcNameSelectHandler() {
+        // !!! need to change the RANGE var shown on the PlotShape
+        mwh.showNotImplementedWarning()
+    }
+    
+    proc addNewSpeciesHandler() {
+        // !!! show another widget to select the species
+        mwh.showNotImplementedWarning()
+    }
+    
+    proc srcShapeSelectHandler() {
+        // !!!
+        mwh.showNotImplementedWarning()
+    }
+    
+    proc ballRadiusChangedHandler() {
+        xyzOrRadiusChangedHandler()
+        
+        // !!! update PlotShape here (everything must be in the visible area)
+        // mwh.showNotImplementedWarning()
+    }
+    
+    proc srcDynamicsSelectHandler() {
+        // !!!
+        mwh.showNotImplementedWarning()
+    }
+    
+    proc isSeriesChangedHandler() {
+        if (isSeries) {
+            // !!! show another widget to define the series
+            mwh.showNotImplementedWarning()
+        }
+    }
+    
+    proc mouseEventsHandler() { local eventType, x_screen, y_screen, keystate, isMoveOrResize, xc_screen, yc_screen, radius_screen
+        eventType = $1
+        x_screen = $2
+        y_screen = $3
+        keystate = $4
+        
+        // !!!
+        print "eventType: ", eventType, "\tx_screen: ", x_screen, "\ty_screen: ", y_screen, "\tkeystate: ", keystate
+        
+        isMoveOrResize = (keystate != 2)    // 2: Shift
+        if (isMoveOrResize) {
+            updateBallMark(x_screen, y_screen)
+            convertCoordsScreenToWorld(x_screen, y_screen, &x, &y, &z)
+        } else {
+            // !!! if point rather than ball, then simply return from the proc
+            
+            convertCoordsWorldToScreen(x, y, z, &xc_screen, &yc_screen)
+            
+            // !!! maybe this is wrong
+            radius_screen = sqrt((x_screen - xc_screen) ^ 2 + (y_screen - yc_screen) ^ 2)
+            
+            radius = convertRadiusScreenToWorld(radius_screen)
+            updateBallMark(xc_screen, yc_screen)
+        }
+        
+        // !!! this causes error "Didn't close the previous panel"
+        // mwh.showNotImplementedWarning()
+    }
+    
+    proc xyzChangedHandler() {
+        xyzOrRadiusChangedHandler()
+        
+        // !!! update PlotShape here (everything must be in the visible area)
+        // mwh.showNotImplementedWarning()
+    }
+    
+    proc xyzSomaChangedHandler() {
+        // !!! update PlotShape here (everything must be in the visible area)
+        mwh.showNotImplementedWarning()
+    }
+    
+    proc applyHandler() { local oldSrcIdx, isUnique localobj newItem, nil
+    
+        // !!!
+        oldSrcIdx = -1
+        newItem = nil
+        
+        if (isCreateOrCorrect) {
+            isUnique = parentWidget.onCreateHandler(newItem)
+        } else {
+            isUnique = parentWidget.onCorrectHandler(newItem, oldSrcIdx)
+        }
+        
+        if (!isUnique) {
+            return
+        }
+        
+        dismissHandler()
+    }
+    
+    proc xyzOrRadiusChangedHandler() { local x_screen, y_screen
+        convertCoordsWorldToScreen(x, y, z, &x_screen, &y_screen)   // !!! no need to do this each time user changes the ball radius
+        updateBallMark(x_screen, y_screen)
+    }
+    
+    proc updateBallMark() { local x_screen, y_screen, radius_screen, marker_size, test_diam
+        x_screen = $1
+        y_screen = $2
+        
+        plotShape.erase()
+        
+        // !!!
+        radius_screen = convertRadiusWorldToScreen(radius)  // !!! no need to do this on each mouseEventsHandler
+        
+        // !!! "Arg out of range in user function" if marker_size < 0.1 or > 100
+        // !!! the marker is not visible if marker_size < 0.9 until we maximize the widget
+        marker_size = radius_screen * screenToMarkerFactor
+        plotShape.mark(x_screen, y_screen, "o", marker_size)
+        
+        // !!! some test construction just to choose screenToWorldFactor const
+        test_diam = 1   // um
+        test_sec[0] {
+            pt3dclear()
+            pt3dadd(x - radius, y, z, test_diam)
+            pt3dadd(x + radius, y, z, test_diam)
+        }
+        test_sec[1] {
+            pt3dclear()
+            pt3dadd(x, y - radius, z, test_diam)
+            pt3dadd(x, y + radius, z, test_diam)
+        }
+        test_sec[2] {
+            pt3dclear()
+            pt3dadd(x, y, z - radius, test_diam)
+            pt3dadd(x, y, z + radius, test_diam)
+        }
+    }
+    
+    // !!! maybe move the next 4 converters to other place
+    
+    func convertRadiusWorldToScreen() { local radius_world
+        radius_world = $1
+        return radius_world / screenToWorldFactor   // !!! very wrong
+    }
+    
+    func convertRadiusScreenToWorld() { local radius_screen, radius_world
+        radius_screen = $1
+        
+        radius_world = radius_screen * screenToWorldFactor  // !!! very wrong
+        
+        if (radius_world < minRadius) {
+            radius_world = minRadius
+        } else if (radius_world > maxRadius) {
+            radius_world = maxRadius
+        }
+        
+        return radius_world
+    }
+    
+    proc convertCoordsWorldToScreen() { local x_world, y_world, z_world
+        x_world = $1
+        y_world = $2
+        z_world = $3
+        $&4 = x_world   // !!! very wrong
+        $&5 = y_world   //
+        
+        // !!! need to perform the coords transformation based on the view direction
+        //     some ideas to get the view direction:
+        //     1. read it from PlotShape somehow using Python
+        //     2. save_session
+        //     3. custom implementation of "3D Rotate" (as a new PlotShape menu item or 2 sliders) which tracks the view direction and relies on PlotShape.rotate()
+        //     4. disallow scene rotation at all and propose user to work with 3 orthogonal projections of the scene
+    }
+    
+    proc convertCoordsScreenToWorld() { local x_screen, y_screen
+        x_screen = $1
+        y_screen = $2
+        $&3 = x_screen  // !!! very wrong
+        $&4 = y_screen  //
+        $&5 = 0         //
+        
+        // !!! see the comment in convertCoordsWorldToScreen
+    }
+    
+endtemplate OneExtracellularSourceWidget

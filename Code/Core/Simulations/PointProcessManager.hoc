@@ -4,7 +4,7 @@
 // Show point process group manager with SEClamp params
 objref pointProcessWindow
 pointProcessWindow = new PointProcessGroupManager(0)
-object_push(pointProcessWindow)
+{ object_push(pointProcessWindow) }
 {
     ms = new MechanismStandard("SEClamp")
     ms.set("rs", 1, 0)
@@ -18,6 +18,6 @@ object_push(pointProcessWindow)
     select(0)
     execute("soma_ref.o(0).sec pointProcessWindow.move(0.65)")
 }
-object_pop()
+{ object_pop() }
 pointProcessWindow = pointProcessWindow.v1
-pointProcessWindow.map("PointProcessGroupManager",  196, 810, 608.4, 352.8)
+{ pointProcessWindow.map("PointProcessGroupManager",  196, 810, 608.4, 352.8) }

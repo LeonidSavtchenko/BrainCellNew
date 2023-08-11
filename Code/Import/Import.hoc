@@ -1,14 +1,14 @@
 
 { load_file("TopLevelVars.hoc") }
 { load_file("../InterModular/InterModularStringUtils.hoc") }    // stringEmpty, stringsEqual, containsSubstring
-{ load_file("../InterModular/InterModularPythonUtils.hoc") }    // stringToLowerCase
+{ load_file("../InterModular/InterModularPythonUtils.hoc") }    // stringToLowerCase, checkIfFileMissing, pyObj
 { load_file("ErrWarnUtils.hoc") }
 { load_file("ListCopyUtils.hoc") }
 { load_file("PythonUtilsForImport.hoc") }
 { load_file("BatchUtils.hoc") }
 { load_file("CheckUtils.hoc") }
 { load_file("DefaultSelectionUtils.hoc") }
-{ load_file("../InterModular/InterModularSectionUtils.hoc") }   // getAllSectionNames
+{ load_file("../InterModular/InterModularSectionUtils.hoc") }   // getAllSectionNames, deleteAllSections
 { load_file("SectionUtils.hoc") }
 { load_file("SectionRefUtils.hoc") }
 { load_file("PreviewUtils.hoc") }
@@ -19,17 +19,19 @@
 { load_file("Import_layer1.hoc") }
 
 
-// !! need to add some check that user doesn't try to import a nanogeometry file in that way
-
 // Import a file
 // $s1 (optional) - HOC command to execute after successful import completion
 // $s2 (optional) - Path to the input file; if omitted, then file browser will be shown
-// Other input: isAstrocyteOrNeuron (taken from the top level)
+// Other input: isRestartRequired, isAstrocyteOrNeuron (taken from the top level)
 // Output (all initialized on the top level):
 //      always: soma_ref, dendrite_ref (both List-s of SectionRef-s), NumberDendrites (scalar), usedNamesForSoma, usedNamesForDendrites (both List-s of String-s)
 //      only if !isAstrocyteOrNeuron: axon_ref (List of SectionRef-s), usedNamesForAxon (List of String-s)
 proc importHocOrSwcOrZipOrOtherFile() { local numArg localobj file
     strdef filePathName, defaultDirPath, fileExtLower
+    
+    if (isRestartRequired) {
+        printImportFailedMsgAndRaiseError("Please restart and try again")
+    }
     
     if (unix_mac_pc() != 3) {
         printImportFailedMsgAndRaiseError("The importer works only on Windows")

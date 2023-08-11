@@ -13,11 +13,7 @@ proc analyzeSectsAndCreateComps() { local compIdx localobj endFoot_ref, ecSource
         mmAllComps.append(new MechComp("Dendrites", dendrite_ref))
         
         if (isAstrocyteOrNeuron) {
-            // !! endFoot_ref = createListOfSectionRef("EndFoot[.*")    // !! why this doesn't work?
-            endFoot_ref = new List()
-            forsec "EndFoot" {
-                endFoot_ref.append(new SectionRef())
-            }
+            endFoot_ref = createListOfSectionRefs("EndFoot[.*", 0)
             if (endFoot_ref.count() != 0) {
                 mmAllComps.append(new MechComp("End Foot", endFoot_ref))
             }
@@ -30,11 +26,7 @@ proc analyzeSectsAndCreateComps() { local compIdx localobj endFoot_ref, ecSource
             mmAllComps.append(new MechComp("Spine Neck", nanoProximal_ref))
             mmAllComps.append(new MechComp("Spine Head", nanoDistal_ref))
             
-            // !! ecSource_ref = createListOfSectionRef("ExtracellularSource")  // !! why this doesn't work?
-            ecSource_ref = new List()
-            forsec "ExtracellularSource" {
-                ecSource_ref.append(new SectionRef())
-            }
+            ecSource_ref = createListOfSectionRefs("ExtracellularSource", 0)
             mmAllComps.append(new MechComp("Extracellular Source", ecSource_ref))
         }
         
@@ -73,11 +65,11 @@ proc makeSureMechCompsCreatedOrImportedThenShowMechManagerBaseWidget() {
 
     makeSureMechCompsCreatedOrImported()
     
-    dismissIfNotNil(msmBaseWidget)
-    msmBaseWidget = new MechOrSynManagerBaseWidget(1)
-    msmBaseWidget.show()
-    msmBaseWidget.showMechManagerHandler()
-    msmBaseWidget.showAltRunControlHandler()
+    dismissIfNotNil(manageAndRunWidget)
+    manageAndRunWidget = new ManageAndRunWidget(0)
+    manageAndRunWidget.show()
+    manageAndRunWidget.showBioManagerHandler()
+    manageAndRunWidget.showAltRunControlHandler()
 }
 
 

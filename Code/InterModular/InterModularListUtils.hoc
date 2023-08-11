@@ -41,6 +41,27 @@ func findItemInListByStringAndSelect() { local idx localobj list
     codeContractViolation()
 }
 
+proc deleteSelectedItemFromBrowsedList() { local selItemIdx localobj list
+    list = $o1
+    
+    selItemIdx = list.selected()
+    if (selItemIdx == -1) {
+        // The list is empty
+        return
+    }
+    
+    list.remove(selItemIdx)
+    
+    if (list.count() == 0) {
+        return
+    }
+    selItemIdx -= 1
+    if (selItemIdx == -1) {
+        selItemIdx = 0
+    }
+    list.select(selItemIdx)
+}
+
 begintemplate ItemOfFilteredBrowsedList
 
     public idx, s

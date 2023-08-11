@@ -3,6 +3,7 @@
 
 
 MinDistance = 1             // um
+addLengthUnits("MinDistance")
 
 // The next ones will be assigned just below
 MaxDendriticLength = -1     // um

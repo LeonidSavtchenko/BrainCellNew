@@ -525,6 +525,12 @@ begintemplate SynManagerMainWidget
         cardIdx = 1 - is3Or1PartInSynStruc
         deck1.flip_to(cardIdx)
         deck2.flip_to(cardIdx)
+        if (is3Or1PartInSynStruc) {
+            scroll(srcChoices)
+            scroll(trgChoices)
+        } else {
+            scroll(sngChoices)
+        }
         deck5.flip_to(cardIdx)
         deck7.flip_to(cardIdx)
         dismissChilds(1)
@@ -532,23 +538,35 @@ begintemplate SynManagerMainWidget
     
     proc selectNewSrc() { local srcChoiceIdx
         srcChoiceIdx = $1
-        srcChoices.select(srcChoiceIdx)
-        srcChoices.scroll_pos(srcChoiceIdx)
+        selectAndScroll(srcChoices, srcChoiceIdx)
         srcChoicesSelectHandler(srcChoiceIdx)
     }
     
     proc selectNewTrg() { local trgChoiceIdx
         trgChoiceIdx = $1
-        trgChoices.select(trgChoiceIdx)
-        trgChoices.scroll_pos(trgChoiceIdx)
+        selectAndScroll(trgChoices, trgChoiceIdx)
         trgChoicesSelectHandler(trgChoiceIdx)
     }
     
     proc selectNewSng() { local sngChoiceIdx
         sngChoiceIdx = $1
-        sngChoices.select(sngChoiceIdx)
-        sngChoices.scroll_pos(sngChoiceIdx)
+        selectAndScroll(sngChoices, sngChoiceIdx)
         sngChoicesSelectHandler(sngChoiceIdx)
+    }
+    
+    proc selectAndScroll() { local choiceIdx localobj choices
+        choices = $o1
+        choiceIdx = $2
+        choices.select(choiceIdx)
+        scroll(choices)
+    }
+    
+    proc scroll() { local choiceIdx localobj choices
+        choices = $o1
+        choiceIdx = choices.selected()
+        if (choiceIdx != -1) {
+            choices.scroll_pos(choiceIdx)
+        }
     }
     
     proc srcChoicesSelectHandler() {

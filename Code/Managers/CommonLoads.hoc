@@ -1,8 +1,13 @@
 
-objref msmBaseWidget, mechManagerMainWidget, synManagerMainWidget, varsEditorSubWidget
+objref manageAndRunWidget, mechManagerMainWidget, synManagerMainWidget, varsEditorSubWidget
 objref mth, mmmowb, mcu, synGroup
 
 if (makeSureDeclared("inhomAndStochLibrary") && isBaseOrNanoStart) {
+    codeContractViolation()
+}
+
+// !!!
+if (makeSureDeclared("ecsLibrary") && isBaseOrNanoStart) {
     codeContractViolation()
 }
 
@@ -49,6 +54,6 @@ loadIfNotDeclared("BoundingHelper", "Widgets/Stochasticity/Exported/BoundingHelp
 { load_file("Widgets/StochButtonHiderForVarsEditor.hoc") }
 { load_file("Widgets/VarsEditorWidget.hoc") }
 
-{ load_file("Widgets/MechOrSynManagerBaseWidget.hoc") }
+{ load_file("Widgets/ManageAndRunWidget.hoc") }
 
 { load_file("ManagersCommonUtils.hoc") }

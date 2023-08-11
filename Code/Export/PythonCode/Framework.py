@@ -146,9 +146,12 @@ def _prependTableOfContents(lines):
         header = line[hdrStartIdx : hdrEndIdx]
         header = header[0].upper() + header[1 :]
         lineIdxToHeaderDict[lineIdx] = header
-    if len(lineIdxToHeaderDict) == 0:
+    numHeaders = len(lineIdxToHeaderDict)
+    if numHeaders == 0:
         codeContractViolation()
-    numToCLines = len(lineIdxToHeaderDict) + 5
+    elif numHeaders == 1:
+        return
+    numToCLines = numHeaders + 5
     genLines = []
     genLines.append('//////////////////// Table of contents ///////////////////////////////////')
     genLines.append('/*')

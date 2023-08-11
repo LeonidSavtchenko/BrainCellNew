@@ -2,7 +2,6 @@
 // A container for the common data and methods shared between different mech operation widgets
 begintemplate MechOpWidgetBase
 
-    external msmBaseWidget
     external mmAllComps
     external mwh, mth, mcu
     external stringEmpty

@@ -50,3 +50,10 @@ func isValidSecName() {
     _callPythonStringFunc(secName, "isidentifier()")
     return pyObj.pyRes
 }
+
+func checkIfFileMissing() {
+    strdef filePathName, pyCommand
+    filePathName = $s1
+    sprint(pyCommand, "(exec('import os'), not os.path.exists('%s'))[1]", filePathName)
+    return pyObj.ev(pyCommand)
+}

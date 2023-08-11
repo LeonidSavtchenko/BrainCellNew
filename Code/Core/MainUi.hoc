@@ -15,12 +15,13 @@ if (isBaseOrNanoStart) {
 if (!isAstrocyteOrNeuron) {
     load_file("../Managers/SynManager/SynManager.hoc")
 }
+{ load_file("../Extracellular/ExtracellularManager.hoc") }
 
 { load_file("../Export/Widgets/ExportWidgetsLoads.hoc") }
 
 
 // UI
-objref hBoxMainPanel
+objref hBoxMainPanel, deckReseeding
 
 // Runs selected simulation from UI.
 // $1 - Number of selected simulation
@@ -96,12 +97,8 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
                 xbutton("Import cell", "loadNanoHocFile()")
                 xpanel()
                 */
-                xpanel("")
-                xlabel("=============== Where to Seed the Nanostructures ===============")
-                xradiobutton("All dendrites", "isAllOrSomeDendritesSeeded = 1", isAllOrSomeDendritesSeeded == 1)
-                xradiobutton("Some dendrites (I will select them)", "isAllOrSomeDendritesSeeded = 0", isAllOrSomeDendritesSeeded == 0)
-                xbutton("Reseed", "seededDendritesChangedHandler()")
-                xpanel()
+                
+                createReseedingDeck()
                 
                 if (isAstrocyteOrNeuron) {
                     createAstrocyteGeometryPanel()
@@ -191,7 +188,10 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
         {
             xpanel("")
             if (isBaseOrNanoStart && !isAstrocyteOrNeuron) {
-                xbutton("Edit extra potassium", "showExtraPotassiumControlPanels()")
+                xbutton("Edit extra potassium (deprecated)", "showExtraPotassiumControlPanels()")   // !!!
+            }
+            xbutton("Edit extracellular sources (in development)", "startECSManager()")             // !!!
+            if (isBaseOrNanoStart && !isAstrocyteOrNeuron) {
                 xbutton("Insert electrode", "insertElectrode()")
             }
             xbutton("Edit biophysics", "startMechManager()")
@@ -243,6 +243,47 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
     hBoxMainPanel.map("Repertoire of computation", 285, 0, -1, -1)
 }
 
+proc createReseedingDeck() {
+    strdef text
+    
+    deckReseeding = new Deck()
+    deckReseeding.intercept(1)
+    {
+        xpanel("")
+        xlabel("=============== Where to Seed the Nanostructures ===============")
+        xradiobutton("All dendrites", "isAllOrSomeDendritesSeeded = 1", isAllOrSomeDendritesSeeded == 1)
+        xradiobutton("Some dendrites (I will select them)", "isAllOrSomeDendritesSeeded = 0", isAllOrSomeDendritesSeeded == 0)
+        xbutton("Reseed", "seededDendritesChangedHandler()")
+        if (isAstrocyteOrNeuron) {
+            xlabel("Initial min. distance between stalks is limit value that cannot be reduced using panel.")
+            xlabel("To decrease this value, increase value - MaxNumberStalksPerDendrite")
+            xvalue("Min distribution over branches","MinDistance", 1, "addLeaves(MinDistance)", 0, 1)
+        } else {
+            xlabel("Initial min. distance between spines is limit value that cannot be reduced using panel.")
+            xlabel("To decrease this value, increase value - MaxNumberSpinesPerDendrite")
+            xvalue("Min distribution over branches","MinDistance", 1, "ReseedSpines()", 0, 1)
+        }
+        xpanel()
+        xpanel("")
+        xlabel("=============== Where to Seed the Nanostructures ===============")
+        xlabel("")
+        text = "Not available after the first interaction with %s"
+        if (isAstrocyteOrNeuron) {
+            sprint(text, text, "Manager of Biophysics")
+            xlabel(text)
+        } else {
+            sprint(text, text, "any of these widgets:")
+            xlabel(text)
+            xlabel("    * Manager of Biophysics")
+            xlabel("    * Manager of Synapses")
+        }
+        xpanel()
+    }
+    deckReseeding.intercept(0)
+    deckReseeding.flip_to(0)
+    deckReseeding.map()
+}
+
 proc showRunControlPanel() {
     xpanel("RunControl", 0)
     xvalue("Init","v_init", 1,"stdinit()", 1, 1 )
@@ -265,17 +306,49 @@ proc insertElectrode() {
     mwh.showMessageBox("IClamp was inserted into the centre of the first soma section.", "Please be advised that it will be deleted immediately once you close the \"PointProcessGroupManager\" widget.", "IClamp inserted")
 }
 
-proc startMechManager() {
+proc startMechManager() { local isCancel
+    isCancel = makeSureReseedingLocked()
+    if (isCancel) {
+        return
+    }
+    
     makeSureMechCompsCreatedOrImportedThenShowMechManagerBaseWidget()
 }
 
-proc startSynManager() {
+proc startSynManager() { local isCancel
+    isCancel = makeSureReseedingLocked()
+    if (isCancel) {
+        return
+    }
+    
     makeSureSynCompsCreatedOrImportedThenShowSynManagerBaseWidget()
 }
 
-proc startExportManager() {
-    dismissIfNotNil(msmBaseWidget)
+proc startECSManager() {
+    showExtracellularManagerBaseWidget()
+}
+
+proc startExportManager() { localobj nil
+    dismissIfNotNil(manageAndRunWidget)
     
-    exportManagerMainWidget.dismissHandler()
+    if (exportManagerMainWidget == nil) {
+        exportManagerMainWidget = new ExportManagerMainWidget()
+    } else {
+        exportManagerMainWidget.dismissHandler()
+    }
     exportManagerMainWidget.show()
+}
+
+isReseedingLocked = 0
+
+func makeSureReseedingLocked() { local isCancel
+    if (isReseedingLocked || !isBaseOrNanoStart) {
+        return 0
+    }
+    isCancel = !boolean_dialog("To proceed, we need to lock the ability to reseed the nanostructures. Do you want to proceed?", "Yes", "No")
+    if (!isCancel) {
+        deckReseeding.flip_to(1)
+        isReseedingLocked = 1
+    }
+    return isCancel
 }

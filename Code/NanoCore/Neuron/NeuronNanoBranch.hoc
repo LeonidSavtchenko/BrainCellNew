@@ -31,12 +31,25 @@ proc NormalDistributionOfSpineGeometry_setParams() {
 
 NormalDistributionOfSpineGeometry_setParams()
 
+addLengthUnits("MinRadiusHead")
+addLengthUnits("MaxRadiusHead")
+addLengthUnits("MinSpineNeckLength")
+addLengthUnits("MaxSpineNeckLength")
+addLengthUnits("MinSpineNeckDiameter")
+addLengthUnits("MaxSpineNeckDiameter")
+addLengthUnits("MeanRadiusHead")
+addLengthUnits("SDRadiusHead")
+addLengthUnits("MeanSpineNeckLength")
+addLengthUnits("SDSpineNeckLength")
+addLengthUnits("MeanSpineNeckDiameter")
+addLengthUnits("SDSpineNeckDiameter")
+
 // *********************** Set of Parameters independent on distribution
 SpineNeckNSeg = 2
 inf = math.inf
-variable_domain(&SpineNeckNSeg, 2, inf)
+{ variable_domain(&SpineNeckNSeg, 2, inf) }
 SpineHeadNSeg = 7
-variable_domain(&SpineHeadNSeg, 2, inf)
+{ variable_domain(&SpineHeadNSeg, 2, inf) }
 
 
 // The next "declarations" are needed just to bind the template's external-s at the file sourcing time

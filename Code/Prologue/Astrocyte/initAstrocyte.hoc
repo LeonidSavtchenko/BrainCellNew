@@ -160,7 +160,7 @@ proc showSelectGeometryUi() {
         xlabel("========== Load astrocyte geometry files ==========")
         xlabel("Load astrocyte stem tree.")
         xlabel("(Several examples can be found in 'Geometry' folder.)")
-        xbutton("Select library  stem tree", "loadGeometryFile()")
+        xbutton("Select library stem tree", "loadGeometryFile()")
         //**************************************************************
         xlabel("========== Load astrocyte geometry files ==========")
         xlabel("Load basic astrocyte model with dendrites, soma and endfoot.")
@@ -180,7 +180,7 @@ proc showSelectGeometryUi() {
         xlabel("=============================================")
         xlabel("Astrocyte model with protocols of computation:")
         xlabel("FRAP, Electrical, Calcium, Glutamate and Potassium  dynamics")
-        xbutton("Start Astro.", "initMainProgram()")
+        xbutton("Start Astro", "initMainProgram()")
         xlabel("-----------------------------------------------------------------------------------------")
         xbutton("Quit", "quit()")
         xpanel(0)

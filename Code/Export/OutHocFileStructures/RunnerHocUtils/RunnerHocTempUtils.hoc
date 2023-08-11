@@ -1,0 +1,7 @@
+
+strdef tempFolderName, tempHocFileName
+tempFolderName = "temp_folder"
+tempHocFileName = "last_cell_without_templates.hoc"
+
+strdef tempHocFilePathName
+{ sprint(tempHocFilePathName, "%s/%s", tempFolderName, tempHocFileName) }

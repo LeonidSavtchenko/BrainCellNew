@@ -56,11 +56,14 @@ proc loadHocFile() { local wasSomethingImported, status
             print "        * Or tries to declare a name already declared by other HOC file imported earlier"
         }
         print ""
+        deleteAllSections()
         execerror("")
     }
     
-    if (name_declared("ReducedBasicMath")) {    // Keep in sync with loadNanoHocFile and py:GeneratorsForMainHocFile.getUtils
-        mwh.showWarningBox("Invalid Base geometry file.", "Please make sure you don't load a Nano geometry file this way.")
+    isRestartRequired = name_declared("ReducedBasicMath")
+    if (isRestartRequired) {    // Keep in sync with loadNanoHocFile and py:GeneratorsForMainHocFile.getUtils
+        mwh.showWarningBox("Invalid Base geometry file.", "Please restart and make sure you don't load a Nano geometry file this way.")
+        // deleteAllSections()
         execerror("")
     }
 }

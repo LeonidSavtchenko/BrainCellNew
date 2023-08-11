@@ -1,0 +1,24 @@
+
+begintemplate ExtracellularLibrary
+
+    public getNumECSs
+    public ecsList
+    
+    objref ecsList
+    
+    
+    proc init() {
+        ecsList = new List()
+        
+        // !!! just for test
+        ecsList.append(new ExtracellularSource_("K+", 1, 1, 12.3, 45.6, 78.9, 11.1))
+        ecsList.append(new ExtracellularSource_("Ca2+", 0, 2, 98.7, 65.4, 32.1))
+    }
+    
+    func getNumECSs() {
+        return ecsList.count()
+    }
+    
+endtemplate ExtracellularLibrary
+
+ecsLibrary = new ExtracellularLibrary()     // !!! make sure it's imported when we start with nano

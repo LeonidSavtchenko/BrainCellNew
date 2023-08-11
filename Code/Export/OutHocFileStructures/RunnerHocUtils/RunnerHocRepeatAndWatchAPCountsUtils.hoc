@@ -1,0 +1,80 @@
+
+// in: outBaseFolder, outAPsRepSummaryFileName, numSweptVars, sweptVarUnits, sweptVarUserReadableNames, numWatchedAPCounts, colSep (taken from the top level)
+// Keep in sync with createAPCountsSweepSummaryFileWithHeaders
+obfunc createAPCountsRepSummaryFileWithHeaders() { local apcIdx localobj outFile, listOfStrs1, listOfStrs2, listOfStrs3, listOfStrs4
+    strdef outFilePathName, str
+    
+    sprint(outFilePathName, "%s/%s", outBaseFolder, outAPsRepSummaryFileName)
+    outFile = new File()
+    outFile.wopen(outFilePathName)
+    
+    listOfStrs1 = new List()
+    listOfStrs2 = new List()
+    listOfStrs3 = new List()
+    listOfStrs4 = new List()
+    
+    if (numSweptVars != 0) {
+        createSweptVarHeaderColumns(listOfStrs1, listOfStrs2, listOfStrs3, listOfStrs4)     // This uses numSweptVars, sweptVarUnits, sweptVarUserReadableNames
+    }
+    
+    for apcIdx = 0, numWatchedAPCounts - 1 {
+        // "Long Name" row
+        sprint(str, "APCount[%d].n", apcIdx)
+        listOfStrs1.append(new String(str))
+        listOfStrs1.append(new String(""))
+        listOfStrs1.append(new String(""))
+        
+        // "Units" row
+        listOfStrs2.append(new String("min"))
+        listOfStrs2.append(new String("max"))
+        listOfStrs2.append(new String("avg"))
+        
+        // "Comments" row 1
+        getAPCountLocationHint(apcIdx, str)
+        listOfStrs3.append(new String(str))
+        listOfStrs3.append(new String(""))
+        listOfStrs3.append(new String(""))
+        
+        // "Comments" row 2
+        getAPCountThresholdHint(apcIdx, str)
+        listOfStrs4.append(new String(str))
+        listOfStrs4.append(new String(""))
+        listOfStrs4.append(new String(""))
+    }
+    
+    writeOneLineToFile(listOfStrs1, outFile)    // This uses colSep
+    writeOneLineToFile(listOfStrs2, outFile)
+    writeOneLineToFile(listOfStrs3, outFile)
+    writeOneLineToFile(listOfStrs4, outFile)
+    
+    return outFile
+}
+
+// in: numSweptVars, SWEPT_VAR_*, numWatchedAPCounts, sweptVar*Idx, numRepeatsForStats, colSep (taken from the top level)
+// Keep in sync with appendAllDataRowsToAPCountsSweepSummaryFile
+proc appendOneDataRowToAPCountsRepSummaryFile() { local apcIdx, min, max, sum, avg localobj outFile, listOfStrs
+    strdef str
+    
+    outFile = $o1
+    
+    if (numSweptVars != 0) {
+        // Swept var value columns
+        listOfStrs = createSweptVarValueColumns()   // This uses numSweptVars, SWEPT_VAR_*
+    } else {
+        listOfStrs = new List()
+    }
+    
+    // APCount spike counter columns
+    for apcIdx = 0, numWatchedAPCounts - 1 {
+        getMinMaxSumNumSpikes(apcIdx, &min, &max, &sum)     // This uses sweptVar*Idx
+        sprint(str, "%d", min)
+        listOfStrs.append(new String(str))
+        sprint(str, "%d", max)
+        listOfStrs.append(new String(str))
+        avg = sum / numRepeatsForStats
+        oneValueToString(avg, str)
+        listOfStrs.append(new String(str))
+    }
+    
+    writeOneLineToFile(listOfStrs, outFile)     // This uses colSep
+}

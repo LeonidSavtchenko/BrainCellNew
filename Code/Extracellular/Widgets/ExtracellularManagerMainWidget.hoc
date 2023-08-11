@@ -1,0 +1,133 @@
+
+// !! some code dupl. with CreateListOfInputVarsWidget
+begintemplate ExtracellularManagerMainWidget
+
+    public show, onCreateHandler, onCorrectHandler, dismissHandler
+    
+    external mwh, ecsLibrary
+    external deleteSelectedItemFromBrowsedList, openDeck, closeDeck, unmapIfNotNil
+    
+    objref mainBox, ecsList
+    objref oneECSWidget
+    objref this
+    
+    firstColWidth = -1
+    secondColWidth = -1
+    slotHeight = -1
+    
+    
+    proc init() {
+        ecsList = ecsLibrary.ecsList
+        
+        // !!!
+        firstColWidth = 325
+        secondColWidth = 105
+        slotHeight = 190
+        
+        oneECSWidget = new OneExtracellularSourceWidget(this)
+    }
+    
+    proc show() { localobj hBox, deck
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            xlabel("Extracellular sources:")
+            xpanel()
+            hBox = new HBox()
+            hBox.intercept(1)
+            {
+                // It turns out, the usage of two Deck-s with just 1 card below
+                // gives a nicer UI compared to other options (VBox, HBox or no-box)
+                deck = openDeck()
+                {
+                    ecsList.browser("", "s")
+                    if (ecsList.count() != 0) {
+                        ecsList.select(0)
+                    }
+                    ecsList.accept_action("correctHandler()")   // Double click
+                }
+                closeDeck(deck, 0, firstColWidth, secondColWidth)
+                deck = openDeck()
+                {
+                    xpanel("")
+                    xbutton("Create new", "createNewHandler()")
+                    xbutton("Copy and edit", "copyAndEditHandler()")
+                    xlabel("")
+                    xbutton("Correct", "correctHandler()")
+                    xbutton("Delete", "deleteHandler()")
+                    xpanel()
+                }
+                closeDeck(deck, 0, secondColWidth, slotHeight)
+            }
+            hBox.intercept(0)
+            hBox.map()
+            xpanel("")
+            xbutton("OK", "okHandler()")
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Manager of extracellular sources", 110, 150, -1, -1)
+    }
+    
+    func onCreateHandler() {
+        // !!!
+        mwh.showNotImplementedWarning()
+        
+        return 0
+    }
+    
+    func onCorrectHandler() {
+        // !!!
+        mwh.showNotImplementedWarning()
+        
+        return 0
+    }
+    
+    proc dismissHandler() {
+        dismissChild()
+        unmapIfNotNil(mainBox)
+    }
+    
+    // All next staff is private
+    
+    
+    proc createNewHandler() {
+        dismissChild()
+        oneECSWidget.show(0)    // --> onCreateHandler
+        
+        // !!!
+        mwh.showNotImplementedWarning()
+    }
+    
+    proc copyAndEditHandler() {
+        dismissChild()
+        oneECSWidget.show(0)    // --> onCreateHandler
+        
+        // !!!
+        mwh.showNotImplementedWarning()
+    }
+    
+    proc correctHandler() {
+        dismissChild()
+        oneECSWidget.show(1)    // --> onCorrectHandler
+        
+        // !!!
+        mwh.showNotImplementedWarning()
+    }
+    
+    proc deleteHandler() {
+        dismissChild()
+        deleteSelectedItemFromBrowsedList(ecsList)
+    }
+    
+    proc okHandler() {
+        dismissHandler()
+    }
+    
+    proc dismissChild() {
+        oneECSWidget.dismissHandler()
+    }
+    
+endtemplate ExtracellularManagerMainWidget

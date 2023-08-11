@@ -3,34 +3,38 @@ begintemplate ExportManagerMainWidget
 
     public show, dismissHandler
     
-    external mwh, compUtils, inhomAndStochLibrary
+    external mwh, compUtils, inhomAndStochLibrary, ecsLibrary
     external saveNanoHocFile, saveNanoHocFile_deprecated, createEmptyPanel, openDeck, closeDeck, unmapIfNotNil
     external isAstrocyteOrNeuron
     external exportOptions
     
-    objref mainBox, deck1, deck2, deck3, deck4, deck5
-    objref clovWidgets[1]
+    objref mainBox, deck1, deck2, deck3, deck4, deck5, deck6
+    objref childWidgets[1]
     
-    numClovWidgets = -1
+    numChildWidgets = -1
     
     firstColWidth = -1
     secondColWidth = -1
     
     
     proc init() {
-        numClovWidgets = 4
+    
+        exportOptions = new ExportOptions()
         
-        objref clovWidgets[numClovWidgets]
-        clovWidgets[0] = new CreateListOfInputVarsWidget(1)
-        clovWidgets[1] = new WatchedVarsAndRecorderSettingsWidget()
-        clovWidgets[2] = new CreateListOfInputVarsWidget(0)
-        clovWidgets[3] = new RepeatForStatsWidget()
+        numChildWidgets = 4
+        
+        objref childWidgets[numChildWidgets]
+        childWidgets[0] = new CreateListOfInputVarsWidget(1)
+        childWidgets[1] = new WatchedVarsAndRecorderSettingsWidget()
+        childWidgets[2] = new CreateListOfInputVarsWidget(0)
+        childWidgets[3] = new RepeatForStatsWidget()
         
         firstColWidth = 140
         secondColWidth = 450
     }
     
-    proc show() { local slotHeight, numInhomVars, numStochVars localobj hBox, deck
+    proc show() { local slotHeight, numInhomVars, numStochVars, numECSs localobj hBox, deck
+        strdef text
         
         compUtils.makeSureAllCompsCreatedOrImported()
         
@@ -79,6 +83,30 @@ begintemplate ExportManagerMainWidget
                 hBox.intercept(0)
                 hBox.map()
             }
+            hBox = new HBox()
+            hBox.intercept(1)
+            {
+                slotHeight = 38
+                deck = openDeck()
+                {
+                    xpanel("")
+                    xcheckbox("All extracellular sources", &exportOptions.isExportECSs, "ECSsCheckBoxHandler()")
+                    xpanel()
+                }
+                closeDeck(deck, 0, firstColWidth, slotHeight)
+                deck3 = openDeck()
+                {
+                    createEmptyPanel()
+                    xpanel("")
+                    numECSs = ecsLibrary.getNumECSs()
+                    sprint(text, "       (%d detected)", numECSs)
+                    xlabel(text)
+                    xpanel()
+                }
+                closeDeck(deck3, exportOptions.isExportECSs, secondColWidth, slotHeight)
+            }
+            hBox.intercept(0)
+            hBox.map()
             xpanel("")
             xlabel("")
             xlabel("Please choose what other files must be created or copied:")
@@ -86,7 +114,6 @@ begintemplate ExportManagerMainWidget
             hBox = new HBox()
             hBox.intercept(1)
             {
-                // !! slotHeight = 89
                 slotHeight = 55
                 deck = openDeck()
                 {
@@ -95,21 +122,16 @@ begintemplate ExportManagerMainWidget
                     xpanel()
                 }
                 closeDeck(deck, 0, firstColWidth, slotHeight)
-                deck3 = openDeck()
+                deck4 = openDeck()
                 {
                     createEmptyPanel()
                     xpanel("")
-                    /* !!
-                    xlabel("By default, the file will contain the following general settings:")
-                    xlabel("    ENABLE_GRAPHICAL_INTERFACE, SHOW_TOPOLOGY, ENABLE_AUTORUN, ENABLE_AUTOEXIT")
-                    xlabel("and general simulation params:")
-                    */
                     xlabel("By default, the file will contain the next vars:")
                     xlabel("    celsius, v_init, tstop, dt, steps_per_ms")      // Keep in sync with ExportOptions.init
                     xcheckbox("Expose some other vars (I will select them)", &exportOptions.isExposeModelVars, "varsSelectorCheckBoxHandler(0, exportOptions.isExposeModelVars)")
                     xpanel()
                 }
-                closeDeck(deck3, exportOptions.isCreateParamsHoc, secondColWidth, slotHeight)
+                closeDeck(deck4, exportOptions.isCreateParamsHoc, secondColWidth, slotHeight)
             }
             hBox.intercept(0)
             hBox.map()
@@ -124,7 +146,7 @@ begintemplate ExportManagerMainWidget
                     xpanel()
                 }
                 closeDeck(deck, 0, firstColWidth, slotHeight)
-                deck4 = openDeck()
+                deck5 = openDeck()
                 {
                     createEmptyPanel()
                     xpanel("")
@@ -133,7 +155,7 @@ begintemplate ExportManagerMainWidget
                     xcheckbox("Repeat several times to collect stats (I will select how many)", &exportOptions.isRepeatForStats, "varsSelectorCheckBoxHandler(3, exportOptions.isRepeatForStats)")
                     xpanel()
                 }
-                closeDeck(deck4, exportOptions.isCreateRunnerHoc, secondColWidth, slotHeight)
+                closeDeck(deck5, exportOptions.isCreateRunnerHoc, secondColWidth, slotHeight)
             }
             hBox.intercept(0)
             hBox.map()
@@ -148,7 +170,7 @@ begintemplate ExportManagerMainWidget
                     xpanel()
                 }
                 closeDeck(deck, 0, firstColWidth, slotHeight)
-                deck5 = openDeck()
+                deck6 = openDeck()
                 {
                     createEmptyPanel()
                     xpanel("")
@@ -156,7 +178,7 @@ begintemplate ExportManagerMainWidget
                     xradiobutton("Build and copy a new DLL (it will contain only used mechs)", "copyDllRadioButtonHandler(1)", exportOptions.isNewOrExistingDll == 1)
                     xpanel()
                 }
-                closeDeck(deck5, exportOptions.isCopyDll, secondColWidth, slotHeight)
+                closeDeck(deck6, exportOptions.isCopyDll, secondColWidth, slotHeight)
             }
             hBox.intercept(0)
             hBox.map()
@@ -216,27 +238,34 @@ begintemplate ExportManagerMainWidget
         deck2.flip_to(exportOptions.isExportSyns)
     }
     
+    proc ECSsCheckBoxHandler() {
+        deck3.flip_to(exportOptions.isExportECSs)
+        if (exportOptions.isExportECSs) {
+            mwh.showNotImplementedWarning()     // !!!
+        }
+    }
+    
     proc createParamsHocCheckBoxHandler() {
         dismissChilds()
-        deck3.flip_to(exportOptions.isCreateParamsHoc)
+        deck4.flip_to(exportOptions.isCreateParamsHoc)
     }
     
     proc createRunnerHocCheckBoxHandler() {
         dismissChilds()
-        deck4.flip_to(exportOptions.isCreateRunnerHoc)
+        deck5.flip_to(exportOptions.isCreateRunnerHoc)
     }
     
-    proc varsSelectorCheckBoxHandler() { local clovWidIdx, isChecked
-        clovWidIdx = $1
+    proc varsSelectorCheckBoxHandler() { local childWidIdx, isChecked
+        childWidIdx = $1
         isChecked = $2
         dismissChilds()
         if (isChecked) {
-            clovWidgets[clovWidIdx].show()
+            childWidgets[childWidIdx].show()
         }
     }
     
     proc copyDllCheckBoxHandler() {
-        deck5.flip_to(exportOptions.isCopyDll)
+        deck6.flip_to(exportOptions.isCopyDll)
         if (exportOptions.isCopyDll && exportOptions.isNewOrExistingDll) {
             mwh.showNotImplementedWarning()
         }
@@ -266,13 +295,13 @@ begintemplate ExportManagerMainWidget
         unmapIfNotNil(mainBox)
     }
     
-    proc dismissChilds() { local clovWidIdx
-        for clovWidIdx = 0, numClovWidgets - 1 {
-            clovWidgets[clovWidIdx].dismissHandler()
+    proc dismissChilds() { local childWidIdx
+        for childWidIdx = 0, numChildWidgets - 1 {
+            childWidgets[childWidIdx].dismissHandler()
         }
     }
     
 endtemplate ExportManagerMainWidget
 
+
 objref exportManagerMainWidget
-exportManagerMainWidget = new ExportManagerMainWidget()

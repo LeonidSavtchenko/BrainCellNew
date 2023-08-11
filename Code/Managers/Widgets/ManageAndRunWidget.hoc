@@ -5,27 +5,27 @@ loadIfNotDeclared("AltRunControlWidget", "../../Core/Widgets/Exported/AltRunCont
 
 isScheduledRescanningOfDistMechs = 0
 
-objref exportManagerMainWidget
+objref ecsManagerMainWidget, exportManagerMainWidget
 
-begintemplate MechOrSynManagerBaseWidget
+begintemplate ManageAndRunWidget
 
-    public show, showMechManagerHandler, showSynManagerHandler, showAltRunControlHandler, onNanoReseedOrUpdateHandler, dismissHandler
+    public show, showBioManagerHandler, showSynManagerHandler, showECSManagerHandler, showAltRunControlHandler, onNanoReseedOrUpdateHandler, dismissHandler
     
-    external mechManagerMainWidget, synManagerMainWidget, exportManagerMainWidget
+    external mechManagerMainWidget, synManagerMainWidget, ecsManagerMainWidget, exportManagerMainWidget
     external mmAllComps, smAllSyns, synGroup
     external mwh
     external inhomAndStochLibrary
-    external dismissIfNotNil
+    external dismissIfNotNil, codeContractViolation
     external isScheduledRescanningOfDistMechs
     
     objref mainBox, this
     objref altRunControlWidget
     
-    isMechOrSyn = -1
+    enumBioSynECS = -1
     
     
     proc init() {
-        isMechOrSyn = $1
+        enumBioSynECS = $1
     }
     
     proc show() {
@@ -33,20 +33,24 @@ begintemplate MechOrSynManagerBaseWidget
         mainBox.intercept(1)
         {
             xpanel("")
-            if (isMechOrSyn) {
-                xbutton("Show biophys manager", "showMechManagerHandler()")
-            } else {
+            if (enumBioSynECS == 0) {
+                xbutton("Show biophys manager", "showBioManagerHandler()")
+            } else if (enumBioSynECS == 1) {
                 xbutton("Show synapse manager", "showSynManagerHandler()")
+            } else if (enumBioSynECS == 2) {
+                xbutton("Show ECS manager", "showECSManagerHandler()")
+            } else {
+                codeContractViolation()
             }
             xbutton("Show Alt Run Control", "showAltRunControlHandler()")
             xpanel()
         }
         mainBox.intercept(0)
         mainBox.dismiss_action("dismissHandler()")
-        mainBox.map("Base widget", 25, 575, -1, -1)
+        mainBox.map("Manage and Run", 25, 575, -1, -1)
     }
     
-    proc showMechManagerHandler() { localobj nil
+    proc showBioManagerHandler() { localobj nil
         dismissIfNotNil(exportManagerMainWidget)
         dismissIfNotNil(mechManagerMainWidget)
         
@@ -89,6 +93,17 @@ begintemplate MechOrSynManagerBaseWidget
         synManagerMainWidget.show(xMin, xMax)
     }
     
+    proc showECSManagerHandler() { localobj nil
+        dismissIfNotNil(exportManagerMainWidget)
+        dismissIfNotNil(ecsManagerMainWidget)
+        
+        if (ecsManagerMainWidget == nil) {
+            execute("ecsManagerMainWidget = new ExtracellularManagerMainWidget()", this)
+        }
+        
+        ecsManagerMainWidget.show()
+    }
+    
     proc showAltRunControlHandler() {
         dismissIfNotNil(altRunControlWidget)
         altRunControlWidget = new AltRunControlWidget()
@@ -127,6 +142,7 @@ begintemplate MechOrSynManagerBaseWidget
     proc dismissManagers() {
         dismissIfNotNil(mechManagerMainWidget)
         dismissIfNotNil(synManagerMainWidget)
+        dismissIfNotNil(ecsManagerMainWidget)
     }
     
-endtemplate MechOrSynManagerBaseWidget
+endtemplate ManageAndRunWidget

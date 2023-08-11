@@ -69,6 +69,7 @@ proc createReportFileWithNLMorphologyConverter() { local status
 // also, insert a default soma if missing
 // $s1 - Input file path and name
 // $2 - Soma size chosen by user (in um) or -1 if we won't insert a soma
+// Other input: pyObj (taken from the top level)
 // $s3 (Output) - The HOC file path and name
 proc convertFileToHocWithNLMorphologyConverter() { local somaDiamAndLenOrMinusOne, status
     strdef inFilePathName, appPathNameTempl, appPathName, outFilePathNameTempl, outFilePathName, extraArgTempl, extraArg, sysCommandTempl, sysCommand

@@ -17,6 +17,14 @@ MaxDimStalk = 0.1                               // um
 MinLenStalk = 0.1                               // um
 MaxLenStalk = 0.3                               // um
 
+addLengthUnits("MinDimLeaves")
+addLengthUnits("MaxDimLeaves")
+addLengthUnits("MinLenLeaves")
+addLengthUnits("MaxLenLeaves")
+addLengthUnits("MinDimStalk")
+addLengthUnits("MaxDimStalk")
+addLengthUnits("MinLenStalk")
+addLengthUnits("MaxLenStalk")
 
 // Keep this template in sync with its reduced counterpart at Export/OutHocFileStructures/Skeletons/MainHocFileSkeletonForAstrocyte.txt
 

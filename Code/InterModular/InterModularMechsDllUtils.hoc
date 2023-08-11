@@ -6,7 +6,7 @@ begintemplate MechsDllUtils
     
     external isAstrocyteOrNeuron
     external pyObj
-    external printMsgAndRaiseError
+    external checkIfFileMissing, printMsgAndRaiseError
     
     strdef startDir, loadedNanoHocFilePathName, loadedDllDirPath
     
@@ -17,12 +17,12 @@ begintemplate MechsDllUtils
     
     // This proc is called from the nanogeometry file when user loads it back into the main program
     proc ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType() { local isMissing
-        strdef pyCommand, dllDirPath, cellName, line2
+        strdef pyCommand, dllDirPath, dllFilePathName, cellName, line2
         
         sprint(pyCommand, "'%s'.rsplit('/', 1)[0]", loadedNanoHocFilePathName)
         dllDirPath = pyObj.ev(pyCommand)
-        sprint(pyCommand, "(exec('import os'), not os.path.exists('%s' + '/nrnmech.dll'))[1]", dllDirPath)
-        isMissing = pyObj.ev(pyCommand)
+        sprint(dllFilePathName, "%s/nrnmech.dll", dllDirPath)
+        isMissing = checkIfFileMissing(dllFilePathName)
         if (isMissing) {
             print "\n\n    Warning: There is no \"nrnmech.dll\" in the same folder with the loaded nanogeometry HOC file."
             _getCellName(cellName)
@@ -30,7 +30,7 @@ begintemplate MechsDllUtils
             print line2
             loadDefaultMechsDllDependingOnCellType()
         } else {
-            _loadThisMechsDll(dllDirPath)
+            _loadMechsDllFromThisFolder(dllDirPath)
         }
     }
     
@@ -38,27 +38,31 @@ begintemplate MechsDllUtils
         strdef subFolderName, dllDirPath
         _getCellName(subFolderName)
         sprint(dllDirPath, "%sMechanisms/%s", startDir, subFolderName)
-        _loadThisMechsDll(dllDirPath)
+        _loadMechsDllFromThisFolder(dllDirPath)
     }
     
     // All next staff is private
     
     
-    proc _loadThisMechsDll() { local status
-        strdef dllDirPath, pyCommand
+    proc _loadMechsDllFromThisFolder() { local status
+        strdef dllDirPath, pyCommand, dllFilePathName
+        
         dllDirPath = $s1
         
-        sprint(pyCommand, "'%s'.replace('/', '\\\\\\\\')", dllDirPath)
-        loadedDllDirPath = pyObj.ev(pyCommand)
+        // Just to make the path printed by "nrn_load_dll" consistent with the one
+        // printed when NEURON loads the DLL automatically from the current folder
+        sprint(pyCommand, "'%s'.replace('/', '\\\\')", dllDirPath)
+        dllDirPath = pyObj.ev(pyCommand)
         
-        sprint(pyCommand, "import neuron;neuron.load_mechanisms('%s')", loadedDllDirPath)
-        status = nrnpython(pyCommand)
+        sprint(dllFilePathName, "%s\\nrnmech.dll", dllDirPath)
+        // !! BUG: after execution of the next command, the console prompt "oc>" disappears
+        //         for unknown reason until user presses "Enter"
+        status = nrn_load_dll(dllFilePathName)
         if (!status) {
             printMsgAndRaiseError("Failed to load \"nrnmech.dll\"")
         }
         
-        sprint(pyCommand, "'%s'.replace('\\\\\\\\', '\\\\')", loadedDllDirPath)
-        loadedDllDirPath = pyObj.ev(pyCommand)
+        loadedDllDirPath = dllDirPath
     }
     
     proc _getCellName() {

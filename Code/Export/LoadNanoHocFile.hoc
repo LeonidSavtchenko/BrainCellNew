@@ -1,6 +1,7 @@
 
 // Load and validate nanogeometry HOC file
 // Returns: 0/1 flag indicating that the file was loaded successfully
+//          $s1 (optional) - a HOC command to show the warning box
 func loadNanoHocFile() { local isSelected, status
     
     isSelected = selectNanoHocFile("r", "Load", mechsDllUtils.loadedNanoHocFilePathName)
@@ -16,12 +17,14 @@ func loadNanoHocFile() { local isSelected, status
     }
     mwh.hidePleaseWaitBox()
     if (!status) {
-        mwh.showWarningBox("Failed to load the nanogeometry file")
+        $s1 = "mwh.showWarningBox(\"Failed to load the nanogeometry file\")"
+        deleteAllSections()
         return 0
     }
     
     if (!name_declared("ReducedBasicMath")) {   // Keep in sync with loadHocFile and py:GeneratorsForMainHocFile.getUtils
-        mwh.showWarningBox("Invalid Nano geometry file.", "Please make sure you don't load a Base geometry file this way.")
+        $s1 = "mwh.showWarningBox(\"Invalid Nano geometry file.\", \"Please make sure you don't load a Base geometry file this way.\")"
+        deleteAllSections()
         return 0
     }
     // !! maybe extend this validation to make sure the next vars were created:

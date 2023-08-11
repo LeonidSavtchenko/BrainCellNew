@@ -1,0 +1,18 @@
+
+// Std: celsius (degC)
+EXPOSED_VAR_1 = 34.0
+
+// Std: v_init (mV)
+EXPOSED_VAR_2 = -64.65
+
+// Std: tstop (ms)
+EXPOSED_VAR_3 = 100.0
+
+// Std: dt (ms)
+EXPOSED_VAR_4 = 0.1
+
+// Std: steps_per_ms
+EXPOSED_VAR_5 = 10
+
+// Bio: Soma \ kir4 \ PARAMETER \ gkir_kir4 (mS/cm2)
+EXPOSED_VAR_6 = 0.0

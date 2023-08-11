@@ -1,10 +1,11 @@
 
+// !! some code dupl. with ExtracellularManagerMainWidget
 begintemplate CreateListOfInputVarsWidget
 
     public show, onVarAddHandler, onVarCorrectHandler, onDefineVarGridOkHandler, dismissHandler
     
     external exportOptions
-    external enterVarExpression, isVarExprUnique, replaceItemInList, openDeck, closeDeck, unmapIfNotNil, codeContractViolation
+    external enterVarExpression, isVarExprUnique, replaceItemInList, deleteSelectedItemFromBrowsedList, openDeck, closeDeck, unmapIfNotNil, codeContractViolation
     external isAstrocyteOrNeuron
     
     objref mainBox, exprsList
@@ -75,6 +76,7 @@ begintemplate CreateListOfInputVarsWidget
                     if (exprsList.count() != 0) {
                         exprsList.select(0)
                     }
+                    exprsList.accept_action("correctVarHandler()")  // Double click
                 }
                 closeDeck(deck, 0, firstColWidth, slotHeight)
                 deck = openDeck()
@@ -227,26 +229,9 @@ begintemplate CreateListOfInputVarsWidget
         exprsList.select(varIdx)
     }
     
-    proc deleteVarHandler() { local selVarIdx, numVars
+    proc deleteVarHandler() {
         dismissChilds()
-        
-        selVarIdx = exprsList.selected()
-        if (selVarIdx == -1) {
-            // The list is empty
-            return
-        }
-        
-        exprsList.remove(selVarIdx)
-        
-        numVars = exprsList.count()
-        if (numVars == 0) {
-            return
-        }
-        selVarIdx -= 1
-        if (selVarIdx == -1) {
-            selVarIdx = 0
-        }
-        exprsList.select(selVarIdx)
+        deleteSelectedItemFromBrowsedList(exprsList)
     }
     
     proc defineVarGridHandler() { local selVarIdx localobj gridInfoOrNil, sweptVar

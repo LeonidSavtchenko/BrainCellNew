@@ -7,7 +7,7 @@ obfunc createAstrocyteNanoBranch() { codeContractViolation() }
 proc Neuron_AddSynapses_reseed() { codeContractViolation() }
 proc Neuron_AddSynapses_delete() { codeContractViolation() }
 
-objref msmBaseWidget
+objref manageAndRunWidget
 
 // !!
 isFirstReseeding = 1
@@ -38,7 +38,7 @@ begintemplate NanoBranchesManager
     external seededDendrite_ref, NumberNanoBranches
     external isAstrocyteOrNeuron, MinDistance, MaxDendriticLength, isFirstReseeding
     external mwh, rngUtils
-    external msmBaseWidget
+    external manageAndRunWidget
     
     external createAstrocyteNanoBranch, createNeuronNanoBranch, createRefsForNanoGeometry
     external spineNeckDiamCache, Neuron_AddSynapses_reseed, Neuron_AddSynapses_delete
@@ -82,8 +82,8 @@ begintemplate NanoBranchesManager
             lastUsedArg2OrMinus1 = -1
         }
         
-        if (msmBaseWidget != nil) {
-            msmBaseWidget.onNanoReseedOrUpdateHandler()
+        if (manageAndRunWidget != nil) {
+            manageAndRunWidget.onNanoReseedOrUpdateHandler()
         }
         
         mwh.showPleaseWaitBox("Reseeding nanostructures.")
@@ -153,8 +153,8 @@ begintemplate NanoBranchesManager
             arg2 = $2
         }
         
-        if (msmBaseWidget != nil) {
-            msmBaseWidget.onNanoReseedOrUpdateHandler()
+        if (manageAndRunWidget != nil) {
+            manageAndRunWidget.onNanoReseedOrUpdateHandler()
         }
         
         for branchIdx = 0, NumberNanoBranches - 1 {

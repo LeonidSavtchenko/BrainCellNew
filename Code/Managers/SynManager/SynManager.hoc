@@ -45,9 +45,9 @@ proc makeSureSynCompsCreatedOrImportedThenShowSynManagerBaseWidget() {
 
     makeSureSynCompsCreatedOrImported()
     
-    dismissIfNotNil(msmBaseWidget)
-    msmBaseWidget = new MechOrSynManagerBaseWidget(0)
-    msmBaseWidget.show()
-    msmBaseWidget.showSynManagerHandler()
-    msmBaseWidget.showAltRunControlHandler()
+    dismissIfNotNil(manageAndRunWidget)
+    manageAndRunWidget = new ManageAndRunWidget(1)
+    manageAndRunWidget.show()
+    manageAndRunWidget.showSynManagerHandler()
+    manageAndRunWidget.showAltRunControlHandler()
 }

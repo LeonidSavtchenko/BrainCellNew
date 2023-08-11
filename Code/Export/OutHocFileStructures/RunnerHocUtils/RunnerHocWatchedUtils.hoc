@@ -1,15 +1,27 @@
 
-objref pyObj
-
 strdef getTimestampPyCommand, timestamp
 { sprint(getTimestampPyCommand, "(exec('import datetime'), datetime.datetime.now().strftime('%s'))[1]", outFileNameTimestampFormat) }
 
 // in: oneValueFormat, pyObj (taken from the top level)
 proc oneValueToString() { local value
     value = $1
-    if (strcmp(oneValueFormat, "@py") != 0) {
+    if (!stringsEqual(oneValueFormat, "@py")) {
         sprint($s2, oneValueFormat, value)
     } else {
         $s2 = pyObj.str(value)
     }
+}
+
+// in: colSep (taken from the top level)
+proc writeOneLineToFile() { local colIdx localobj listOfStrs, outFile
+    strdef line
+    
+    listOfStrs = $o1
+    outFile = $o2
+    
+    line = listOfStrs.o(0).s
+    for colIdx = 1, listOfStrs.count() - 1 {
+        sprint(line, "%s%s%s", line, colSep, listOfStrs.o(colIdx).s)
+    }
+    outFile.printf("%s\n", line)
 }

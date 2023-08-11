@@ -1,0 +1,406 @@
+//////////////////// Table of contents ///////////////////////////////////
+/*
+    Line 16:            Output folder and file names
+    Line 26:            Watched vars and recorder settings
+    Line 56:            Utils prologue
+    Line 68:            Prerequisites
+    Line 89:            File infrastructure utils
+    Line 114:           Recording utils
+    Line 369:           Main part
+*/
+//////////////////////////////////////////////////////////////////////////
+
+strdef runnedHocFileName
+runnedHocFileName = "cell1.hoc"
+
+//////////////////// Start of output folder and file names ///////////////
+
+strdef outBaseFolder, outVarsFileNameFormat, outAPsFileNameFormat, outFileNameTimestampFormat
+outBaseFolder = "results"   // This can be either a folder name, an absolute path or a relative path (use "/" and avoid Unicode)
+outVarsFileNameFormat = "vars %s.txt"
+outAPsFileNameFormat = "aps %s.txt"
+outFileNameTimestampFormat = "%Y-%m-%d %H.%M.%S"
+
+//////////////////// End of output folder and file names /////////////////
+
+//////////////////// Start of watched vars and recorder settings /////////
+
+objref watchedVarNames
+watchedVarNames = new List()
+{ watchedVarNames.append(new String("s.v( 0.55 )")) }
+{ watchedVarNames.append(new String("s.v( 0.05 )")) }
+
+objref watchedVarUnits
+watchedVarUnits = new List()
+{ watchedVarUnits.append(new String("mV")) }
+{ watchedVarUnits.append(new String("mV")) }
+
+// Recording period (in model time, optional)
+DtOrMinus1 = 0.4    // (ms)
+
+strdef oneValueFormat, colSep
+
+// Format hints:
+//  "%g"     - mid precision, jagged columns (compact format)
+//  "%.15e"  - max precision, fixed column width (with exponent)
+//  "%-8.4g" - low precision, fixed column width (left alignment)
+//  "%8.4g"  - low precision, fixed column width (right alignment)
+//  "%.15g"  - max precision, jagged columns (compact format, without ".0")
+//  "@py"    - max precision, jagged columns (compact format, with ".0")
+oneValueFormat = "%-8.4g"
+
+colSep = "\t"   // Origin imports fine with ";" or "," as well
+
+//////////////////// End of watched vars and recorder settings ///////////
+
+//////////////////// Start of utils prologue /////////////////////////////
+
+// Print the message, print the call stack, raise the error
+// $s1 - The message
+proc printMsgAndRaiseError() {
+    strdef msg
+    sprint(msg, "\n\n    %s\n", $s1)
+    execerror(msg)
+}
+
+//////////////////// End of utils prologue ///////////////////////////////
+
+//////////////////// Start of prerequisites //////////////////////////////
+
+if (!nrnpython("")) {
+    printMsgAndRaiseError("Sorry, this HOC file requires Python for some operations. Please install Python.")
+}
+
+objref pyObj
+pyObj = new PythonObject()
+{ nrnpython("ev = lambda arg : eval(arg)") }
+
+proc checkCVodePrerequisites() { localobj pc
+    pc = new ParallelContext()
+    if ((pc.nhost() > 1 || pc.nthread() > 1) && cvode.use_local_dt()) {
+        printMsgAndRaiseError("This runner HOC file cannot be used given parallel context and CVode settings.")
+        // To support this, we'll have to update setUpVarVecsForRecording to use CVode.record instead of Vector.record assuming each watched var to have individual recordedTimeVec,
+        // but CVode.record seems not to work when we try to record a var from PP/AC or a top-level var
+    }
+}
+
+//////////////////// End of prerequisites ////////////////////////////////
+
+//////////////////// Start of file infrastructure utils //////////////////
+
+strdef tempFolderName, tempHocFilePathName
+
+strdef outFolderPathName
+
+// in: tempFolderName, runnedHocFileName, tempHocFilePathName, outFolderPathName (taken from the top level)
+proc createTempHocFileWithoutTemplatesAndOutputFolder() { local status
+    strdef isCreateTempHocFileWithoutTemplates, isCreateOrCleanUpOutFolder, pyCode
+    
+    isCreateTempHocFileWithoutTemplates = $s1
+    isCreateOrCleanUpOutFolder = $s2
+    
+    pyCode = "import os\nimport shutil\nisCreateTempHocFileWithoutTemplates = %s\nisCreateOrCleanUpOutFolder = %s\ntempFolderName = '%s'\nrunnedHocFileName = '%s'\ntempHocFilePathName = '%s'\noutFolderPathName = '%s'\ndef createOrCleanUpFolder(folderPathName):\n    if os.path.exists(folderPathName):\n        for itemName in os.listdir(folderPathName):\n            itemPathName = os.path.join(folderPathName, itemName)\n            if os.path.isfile(itemPathName):\n                os.remove(itemPathName)\n            elif os.path.isdir(itemPathName):\n                shutil.rmtree(itemPathName)\n    else:\n        os.mkdir(folderPathName)\ndef createTempHocFileWithoutTemplates():\n    with open(runnedHocFileName, 'r') as inFile, open(tempHocFilePathName, 'w') as outFile:\n        isSkipBlock = False\n        for line in inFile:\n            if line.startswith('begintemplate'):\n                isSkipBlock = True\n            elif line.startswith('endtemplate'):\n                isSkipBlock = False\n            elif not isSkipBlock:\n                outFile.write(line)\nif isCreateTempHocFileWithoutTemplates:\n    createOrCleanUpFolder(tempFolderName)\n    createTempHocFileWithoutTemplates()\nif isCreateOrCleanUpOutFolder:\n    createOrCleanUpFolder(outFolderPathName)"
+    
+    sprint(pyCode, pyCode, isCreateTempHocFileWithoutTemplates, isCreateOrCleanUpOutFolder, tempFolderName, runnedHocFileName, tempHocFilePathName, outFolderPathName)
+    
+    status = nrnpython(pyCode)
+    if (!status) {
+        printMsgAndRaiseError("Failed to create the temporary HOC file or the output folder")
+    }
+}
+
+//////////////////// End of file infrastructure utils ////////////////////
+
+//////////////////// Start of recording utils ////////////////////////////
+
+strdef getTimestampPyCommand, timestamp
+{ sprint(getTimestampPyCommand, "(exec('import datetime'), datetime.datetime.now().strftime('%s'))[1]", outFileNameTimestampFormat) }
+
+// in: oneValueFormat, pyObj (taken from the top level)
+proc oneValueToString() { local value
+    value = $1
+    if (!stringsEqual(oneValueFormat, "@py")) {
+        sprint($s2, oneValueFormat, value)
+    } else {
+        $s2 = pyObj.str(value)
+    }
+}
+
+// in: colSep (taken from the top level)
+proc writeOneLineToFile() { local colIdx localobj listOfStrs, outFile
+    strdef line
+    
+    listOfStrs = $o1
+    outFile = $o2
+    
+    line = listOfStrs.o(0).s
+    for colIdx = 1, listOfStrs.count() - 1 {
+        sprint(line, "%s%s%s", line, colSep, listOfStrs.o(colIdx).s)
+    }
+    outFile.printf("%s\n", line)
+}
+
+numSweptVars = 0
+
+numWatchedVars = watchedVarNames.count()
+objref recordedVarVecs[numWatchedVars]
+
+objref recordedTimeVec
+
+// in: DtOrMinus1, cvode, recordedVarVecs, recordedTimeVec, numWatchedVars, watchedVarNames (taken from the top level)
+proc setUpVarVecsForRecording() { local numRecsOr0, watchedVarIdx
+    strdef hocCommandTempl, hocCommand
+    
+    // Estimate the number of records taking into scope that both "dt" and "tstop" can be swept
+    if (DtOrMinus1 != -1) {
+        numRecsOr0 = int(tstop / DtOrMinus1 + 1) + 1
+    } else if (!cvode.active()) {
+        // Letting NEURON change "dt" now rather than on start of the simulation
+        setdt()
+        numRecsOr0 = int(tstop / dt + 1) + 1
+    } else {
+        numRecsOr0 = 0      // No estimate
+    }
+    
+    // This works fine for any vars from DMs, PPs/ACs, NetCon-s and top-level vars
+    if (DtOrMinus1 != -1) {
+        hocCommandTempl = "recordedVarVecs[%d].record(&%s, DtOrMinus1)"
+    } else {
+        hocCommandTempl = "recordedVarVecs[%d].record(&%s)"
+    }
+    
+    // But according to NEURON docs, in some cases it is preferable to use the following command
+    //  hocCommandTempl = "recordedVarVecs[%d].record(pointProcessObject, &%s, [DtOrMinus1])"
+    
+    if (cvode.active() && DtOrMinus1 == -1) {
+        recordedTimeVec = new Vector()
+        recordedTimeVec.record(&t)
+    }
+    
+    for watchedVarIdx = 0, numWatchedVars - 1 {
+        // This will be resized by NEURON to 0 size just after "run()", here we just allocate memory as they recommend
+        recordedVarVecs[watchedVarIdx] = new Vector(numRecsOr0)
+        
+        sprint(hocCommand, hocCommandTempl, watchedVarIdx, watchedVarNames.o(watchedVarIdx).s)
+        execute(hocCommand)
+    }
+}
+
+// in: outVarsFileNameFormat, timestamp, outFolderPathName, numSweptVars, pyObj, numWatchedVars, watchedVarNames, watchedVarUnits, colSep, recordedVarVecs, DtOrMinus1, recordedTimeVec (taken from the top level)
+proc saveRecordedVarVecs() { local watchedVarIdx, actNumRecs, recIdx, time localobj outFile, listOfStrs1, listOfStrs2, listOfStrs
+    strdef outFileName, outFilePathName, str
+    
+    sprint(outFileName, outVarsFileNameFormat, timestamp)
+    sprint(outFilePathName, "%s/%s", outFolderPathName, outFileName)
+    outFile = new File()
+    outFile.wopen(outFilePathName)
+    
+    if (numSweptVars != 0) {
+        // Invisible rows: the swept var names and values
+        dumpSweptVarsToFileHeader(outFile)      // This uses numSweptVars, pyObj
+    }
+    
+    listOfStrs1 = new List()
+    listOfStrs2 = new List()
+    
+    // "Long Name" row
+    listOfStrs1.append(new String("t"))
+    
+    // "Units" row
+    listOfStrs2.append(new String(units(&t)))
+    
+    for watchedVarIdx = 0, numWatchedVars - 1 {
+        // "Long Name" row
+        listOfStrs1.append(new String(watchedVarNames.o(watchedVarIdx).s))
+        
+        // "Units" row
+        listOfStrs2.append(new String(watchedVarUnits.o(watchedVarIdx).s))
+    }
+    
+    writeOneLineToFile(listOfStrs1, outFile)    // This uses colSep
+    writeOneLineToFile(listOfStrs2, outFile)
+    
+    // For fixed time step method, this will be < numRecs if user stopped the cycle
+    actNumRecs = recordedVarVecs[0].size()
+    
+    listOfStrs = new List()
+    
+    // Data rows: the time and watched var values
+    for recIdx = 0, actNumRecs - 1 {
+        if (cvode.active() && DtOrMinus1 == -1) {
+            time = recordedTimeVec.x(recIdx)
+        } else if (DtOrMinus1 != -1) {
+            time = recIdx * DtOrMinus1
+        } else {
+            time = recIdx * dt
+        }
+        
+        oneValueToString(time, str)
+        listOfStrs.append(new String(str))
+        
+        for watchedVarIdx = 0, numWatchedVars - 1 {
+            oneValueToString(recordedVarVecs[watchedVarIdx].x[recIdx], str)
+            listOfStrs.append(new String(str))
+        }
+        
+        writeOneLineToFile(listOfStrs, outFile)
+        
+        listOfStrs.remove_all()
+    }
+    
+    outFile.close()
+}
+
+// Just some declarations for binding in the proc-s below (will be defined before the first usage)
+numWatchedAPCounts = -1
+objref apcList, recordedVecsFromAPCounts[1]
+
+// in: numWatchedAPCounts, recordedVecsFromAPCounts (taken from the top level)
+proc setUpVecsForRecordingFromAPCounts() { local apcIdx localobj vec
+    for apcIdx = 0, numWatchedAPCounts - 1 {
+        vec = new Vector()
+        APCount[apcIdx].record(vec)
+        recordedVecsFromAPCounts[apcIdx] = vec
+    }
+}
+
+// in: outAPsFileNameFormat, timestamp, outFolderPathName, numSweptVars, pyObj, numWatchedAPCounts, colSep, recordedVecsFromAPCounts (taken from the top level)
+proc saveRecordedVecsFromAPCounts() { local apcIdx, maxNumRecs, n, recIdx localobj outFile, listOfStrs1, listOfStrs2, listOfStrs3, listOfStrs4, listOfStrs5, listOfStrs, vec
+    strdef outFileName, outFilePathName, unitsStr, str
+    
+    sprint(outFileName, outAPsFileNameFormat, timestamp)
+    sprint(outFilePathName, "%s/%s", outFolderPathName, outFileName)
+    outFile = new File()
+    outFile.wopen(outFilePathName)
+    
+    if (numSweptVars != 0) {
+        // Invisible rows: the swept var names and values
+        dumpSweptVarsToFileHeader(outFile)      // This uses numSweptVars, pyObj
+    }
+    
+    listOfStrs1 = new List()
+    listOfStrs2 = new List()
+    listOfStrs3 = new List()
+    listOfStrs4 = new List()
+    listOfStrs5 = new List()
+    
+    unitsStr = units(&APCount[0].time)
+    
+    for apcIdx = 0, numWatchedAPCounts - 1 {
+        // "Long Name" row
+        sprint(str, "APCount[%d].time", apcIdx)
+        listOfStrs1.append(new String(str))
+        
+        // "Units" row
+        listOfStrs2.append(new String(unitsStr))
+        
+        // "Comments" row: the locations of APCount-s
+        getAPCountLocationHint(apcIdx, str)
+        listOfStrs3.append(new String(str))
+        
+        // "Comments" row: the thresholds of APCount-s
+        getAPCountThresholdHint(apcIdx, str)
+        listOfStrs4.append(new String(str))
+        
+        // "Comments" row: the spike counters
+        getAPCountSpikeCounterHint(apcIdx, str)
+        listOfStrs5.append(new String(str))
+    }
+    
+    writeOneLineToFile(listOfStrs1, outFile)    // This uses colSep
+    writeOneLineToFile(listOfStrs2, outFile)
+    writeOneLineToFile(listOfStrs3, outFile)
+    writeOneLineToFile(listOfStrs4, outFile)
+    writeOneLineToFile(listOfStrs5, outFile)
+    
+    maxNumRecs = -1
+    for apcIdx = 0, numWatchedAPCounts - 1 {
+        n = APCount[apcIdx].n
+        if (n > maxNumRecs) {
+            maxNumRecs = n
+        }
+    }
+    
+    listOfStrs = new List()
+    
+    // Data rows: the spike times
+    for recIdx = 0, maxNumRecs - 1 {
+        for apcIdx = 0, numWatchedAPCounts - 1 {
+            vec = recordedVecsFromAPCounts[apcIdx]
+            if (recIdx < vec.size()) {
+                oneValueToString(vec.x(recIdx), str)
+            } else {
+                str = ""
+            }
+            listOfStrs.append(new String(str))
+        }
+        
+        writeOneLineToFile(listOfStrs, outFile)
+        
+        listOfStrs.remove_all()
+    }
+    
+    outFile.close()
+}
+
+// in: pyObj (taken from the top level)
+proc getAPCountLocationHint() { local apcIdx, x
+    apcIdx = $1
+    x = APCount[apcIdx].get_loc()
+    {
+        sprint($s2, "loc = %s( %s )", secname(), pyObj.str(x))
+    }
+    pop_section()
+}
+
+// in: pyObj (taken from the top level)
+proc getAPCountThresholdHint() { local apcIdx
+    apcIdx = $1
+    sprint($s2, "thresh = %s (%s)", pyObj.str(APCount[apcIdx].thresh), units(&APCount[0].thresh))
+}
+
+proc getAPCountSpikeCounterHint() { local apcIdx
+    apcIdx = $1
+    sprint($s2, "n = %d", APCount[apcIdx].n)
+}
+
+//////////////////// End of recording utils //////////////////////////////
+
+//////////////////// Start of main part //////////////////////////////////
+
+outFolderPathName = outBaseFolder
+createTempHocFileWithoutTemplatesAndOutputFolder("False", "True")
+
+nrncontrolmenu()
+
+{ printf("\nRunning simulation ...\n") }
+
+{ load_file(runnedHocFileName) }
+
+checkCVodePrerequisites()
+
+apcList = new List("APCount")
+numWatchedAPCounts = apcList.count()
+objref recordedVecsFromAPCounts[numWatchedAPCounts]
+
+setUpVarVecsForRecording()
+setUpVecsForRecordingFromAPCounts()
+
+run()
+
+timestamp = pyObj.ev(getTimestampPyCommand)
+
+saveRecordedVarVecs()
+saveRecordedVecsFromAPCounts()
+
+strdef word, getAbsPathPyCommand, outBaseFolderAbsPath
+if (stoprun) {
+    word = "Stopped"
+} else {
+    word = "Complete"
+}
+{ sprint(getAbsPathPyCommand, "(exec('import os'), os.path.abspath('%s'))[1]", outBaseFolder) }
+outBaseFolderAbsPath = pyObj.ev(getAbsPathPyCommand)
+{ printf("\n%s!\nThe results were saved to \"%s\"\n\n", word, outBaseFolderAbsPath) }
+
+//////////////////// End of main part ////////////////////////////////////

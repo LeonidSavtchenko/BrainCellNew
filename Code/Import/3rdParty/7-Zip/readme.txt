@@ -1,7 +1,7 @@
 7-Zip is a file archiver with a high compression ratio.
 
 Version
-22.01 (2022-07-15)
+23.01 (2023-06-20)
 
 Home Page
 https://www.7-zip.org/

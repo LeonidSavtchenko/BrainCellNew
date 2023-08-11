@@ -5,10 +5,12 @@
 { load_file("../Code/Managers/CommonLoads.hoc") }
 { load_file("../Code/Managers/MechManager/MechManager.hoc") }
 { load_file("../Code/Managers/SynManager/SynManager.hoc") }
+{ load_file("../Code/Extracellular/ExtracellularManager.hoc") }
 
 { load_file("../Code/Export/ExportCoreLoads.hoc") }
 { load_file("../Code/Export/Widgets/ExportWidgetsLoads.hoc") }
 
+exportManagerMainWidget = new ExportManagerMainWidget()
 { exportManagerMainWidget.show() }
 
 { chdir("..") }     // Without this, getcwd() will return different path compared to the start from "init.hoc"
