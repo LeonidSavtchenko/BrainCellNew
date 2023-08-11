@@ -183,9 +183,9 @@ func createDefaultAxonAndConnectToFirstSomaSection() { local isCancel
     }
     
     // Morphology
-    sprint(hocCommand, "%s[0] {nseg=5 diam=1 L=50}", chosenNameForAxon)
+    sprint(hocCommand, "%s[0] {nseg=5 diam=1 L=5}", chosenNameForAxon)
     execute(hocCommand)
-    sprint(hocCommand, "%s[1] {nseg=10 diam=0.7 L=250}", chosenNameForAxon)
+    sprint(hocCommand, "%s[1] {nseg=10 diam=0.7 L=5}", chosenNameForAxon)
     execute(hocCommand)
     
     $s2 = chosenNameForAxon
