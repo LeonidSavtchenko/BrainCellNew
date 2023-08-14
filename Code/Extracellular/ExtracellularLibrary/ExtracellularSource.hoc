@@ -2,7 +2,7 @@
 // !!! remove the underscore in name once we get rid of "create ExtracellularSource"
 begintemplate ExtracellularSource_
 
-    // !!! public species, enumPointBall, enumStaticSwitchSpike, x, y, z, radiusOrMinus1
+    public species, enumPointBall, enumStaticSwitchSpike, x, y, z, radiusOrMinus1
     public s
     
     external codeContractViolation
@@ -15,10 +15,13 @@ begintemplate ExtracellularSource_
     z = -1
     radiusOrMinus1 = -1     // For ball shape only
     
+    // !!! add speciesIdx, startTime, endTime, spikeTime, isSeries
+    
     strdef s
     
     
     proc init() { local numArg
+        
         numArg = numarg()
         if (numArg < 6 || numArg > 7) {
             codeContractViolation()

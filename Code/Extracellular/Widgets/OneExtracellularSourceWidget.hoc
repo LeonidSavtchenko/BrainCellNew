@@ -1,17 +1,36 @@
 
+begintemplate Species
+    public s, rangeVarName
+    strdef s, rangeVarName
+    proc init() {
+        s = $s1
+        rangeVarName = $s2
+    }
+endtemplate Species
+
+begintemplate Dynamics
+    public s, enumStaticSwitchSpike
+    strdef s
+    enumStaticSwitchSpike = -1
+    proc init() {
+        s = $s1
+        enumStaticSwitchSpike = $2
+    }
+endtemplate Dynamics
+
 begintemplate OneExtracellularSourceWidget
 
     public show, dismissHandler
     
+    external findItemInListByString, createEmptyPanel, codeContractViolation
     external mwh, math
+    external soma_ref
     
-    objref mainBox, plotShape
+    objref mainBox, deck1, deck2, deck3, plotShape
     objref parentWidget
     
     objref spcNamesList, srcShapesList, srcDynamicsList
     
-    // !!! maybe just use an instance of ExtracellularSource_ here
-    //     (then get rid of units and variable_domain staff in ctor below)
     radius = -1
     startTime = -1
     endTime = -1
@@ -25,14 +44,11 @@ begintemplate OneExtracellularSourceWidget
     y_soma = -1
     z_soma = -1
     
-    minRadius = -1
-    maxRadius = -1
-    screenToWorldFactor = -1
-    screenToMarkerFactor = -1
+    enumPointBall = -1
     
     create test_sec[1]
     
-    isCreateOrCorrect = -1
+    oldSrcIdxOrMinus1 = -1
     
     
     proc init() { local inf
@@ -41,37 +57,16 @@ begintemplate OneExtracellularSourceWidget
         parentWidget = $o1
         
         spcNamesList = new List()
-        spcNamesList.append(new String("K+"))       // !!! v just for test (the list will depend on user's MOD files)
-        spcNamesList.append(new String("Na+"))
-        spcNamesList.append(new String("Ca2+"))
-        spcNamesList.append(new String("Cl+"))      // !!! ^
+        spcNamesList.append(new Species("K+", "ko"))    // !!! v just for test (the list will depend on user's MOD files)
+        spcNamesList.append(new Species("Na+", "nao"))
+        spcNamesList.append(new Species("Ca2+", "cao"))
+        spcNamesList.append(new Species("Cl+", "clo"))  // !!! ^
         
         srcShapesList = new List()
         srcShapesList.append(new String("point"))
         srcShapesList.append(new String("ball"))
         
-        srcDynamicsList = new List()
-        srcDynamicsList.append(new String("static"))
-        srcDynamicsList.append(new String("on-off"))    // !!! need to hide this for point shape
-        srcDynamicsList.append(new String("spike"))
-        
-        isSeries = 0
-        
-        // !!! review the default values below taking them from the legacy code
-        
-        radius = 111.5  // um
-        
-        startTime = 2.3     // ms
-        endTime = 4.5       //
-        spikeTime = 1.1     //
-        
-        x = 456.5       // um
-        y = 123.5       //
-        z = 789.5       //
-        
-        x_soma = -1     // !!! v need to read from the soma
-        y_soma = -1
-        z_soma = -1     // !!! ^
+        srcDynamicsList = new List()    // Will be populated later
         
         unitsStr = units("L")
         units(&radius, unitsStr)
@@ -87,13 +82,8 @@ begintemplate OneExtracellularSourceWidget
         units(&endTime, unitsStr)
         units(&spikeTime, unitsStr)
         
-        initConstants()
-        
         inf = math.inf
-        
-        // !!! variable_domain(&radius, float_epsilon, inf)
-        variable_domain(&radius, minRadius, maxRadius)
-        
+        variable_domain(&radius, float_epsilon, inf)    // !!! keep the lower bound in sync with func capRadius
         variable_domain(&startTime, 0, inf)
         variable_domain(&endTime, 0, inf)
         variable_domain(&spikeTime, 0, inf)
@@ -103,31 +93,54 @@ begintemplate OneExtracellularSourceWidget
         test_sec[0] delete_section()
     }
     
-    proc initConstants() { local minMarkerSize, maxMarkerSize, totalFactor
-        // !!! these two constants are related to this line of code:
-        //         plotShape.mark(x_screen, y_screen, "o", marker_size)
-        //     which raises the error "Arg out of range in user function" when marker_size is too small or too big
-        minMarkerSize = 0.1
-        maxMarkerSize = 100
-        
-        // !!! this constant was chosen empirically so that the circle marker fits 3 orthogonal test sections
-        //     (but it depends on the widget size and PlotShape zoom)
-        //     maybe get rid of it at all or use in convertCoordsWorldToScreen and convertCoordsScreenToWorld
-        screenToWorldFactor = 1
-        
-        // !!! this constant was chosen empirically so that the circle sticks to the arrow tip when user resizes it holding "Shift"
-        //     (but it depends on the widget size and PlotShape zoom)
-        screenToMarkerFactor = 0.44
-        
-        totalFactor = screenToWorldFactor / screenToMarkerFactor
-        minRadius = minMarkerSize * totalFactor
-        maxRadius = maxMarkerSize * totalFactor
-    }
-    
-    proc show() { localobj hBox, vBox
+    proc show() { local numArg, speciesIdx, shapeIdx, enumStaticSwitchSpike localobj oldECS, hBox, vBox
         strdef menuToolName
         
-        isCreateOrCorrect = $1
+        numArg = numarg()
+        if (numArg > 2) {
+            codeContractViolation()
+        }
+        
+        if (numArg >= 1) {
+            oldECS = $o1
+            
+            // !!! make all names and their order below the same for ExtracellularSource_ and OneExtracellularSourceWidget
+            
+            speciesIdx = findItemInListByString(spcNamesList, oldECS.species)
+            shapeIdx = oldECS.enumPointBall
+            x = oldECS.x
+            y = oldECS.y
+            z = oldECS.z
+            radius = oldECS.radiusOrMinus1
+            enumStaticSwitchSpike = oldECS.enumStaticSwitchSpike
+            startTime = 2.3     // !!! take all these from oldECS
+            endTime = 4.5       //
+            spikeTime = 1.1     //
+            isSeries = 0        //
+        } else {
+            // !!! review the default values below taking them from the legacy code
+            speciesIdx = 0
+            shapeIdx = 1
+            x = 456.5           // um
+            y = 123.5           //
+            z = 789.5           //
+            radius = 111.5      //
+            enumStaticSwitchSpike = 1
+            startTime = 2.3     // ms
+            endTime = 4.5       //
+            spikeTime = 1.1     //
+            isSeries = 0
+        }
+        
+        if (numArg == 2) {
+            oldSrcIdxOrMinus1 = $2
+        } else {
+            oldSrcIdxOrMinus1 = -1
+        }
+        
+        populateSrcDynamicsList(0)
+        
+        getSomaCoords(&x_soma, &y_soma, &z_soma)
         
         mainBox = new VBox()
         mainBox.intercept(1)
@@ -157,9 +170,19 @@ begintemplate OneExtracellularSourceWidget
                     xpanel()
                     srcShapesList.browser("", "s")
                     srcShapesList.select_action("srcShapeSelectHandler(hoc_ac_)")
-                    xpanel("")
-                    xpvalue("Radius", &radius, 1, "ballRadiusChangedHandler()")
-                    xpanel()
+                    deck1 = new Deck()
+                    deck1.intercept(1)
+                    {
+                        createEmptyPanel()
+                        xpanel("")
+                        // !!! BUG: In parent widget, click "Correct" for "point" shape -> in this widget, switch to "ball" shape => you'll see Radius = -1 and, if just click "Apply", then catch "codeContractViolation" in ExtracellularSource_ ctor
+                        // (do not forget about similar problem for startTime, endTime and spikeTime)
+                        xpvalue("Radius", &radius, 1, "xyzOrRadiusChangedHandler()")
+                        xpanel()
+                    }
+                    deck1.intercept(0)
+                    deck1.map()
+                    // deck1.flip_to(*)     // Will be done below in makeSelectionsInLists
                 }
                 vBox.intercept(0)
                 vBox.map()
@@ -171,11 +194,32 @@ begintemplate OneExtracellularSourceWidget
                     xpanel()
                     srcDynamicsList.browser("", "s")
                     srcDynamicsList.select_action("srcDynamicsSelectHandler(hoc_ac_)")
-                    xpanel("")
-                    xpvalue("Start time", &startTime, 1)    // !!! add handlers to prevent startTime > endTime
-                    xpvalue("End time", &endTime, 1)        //
-                    xcheckbox("Make a series", &isSeries, "isSeriesChangedHandler()")
-                    xpanel()
+                    deck2 = new Deck()
+                    deck2.intercept(1)
+                    {
+                        createEmptyPanel()
+                        xpanel("")
+                        xpvalue("Start time", &startTime, 1)    // !!! add handlers to prevent startTime > endTime
+                        xpvalue("End time", &endTime, 1)        //
+                        xpanel()
+                        xpanel("")
+                        xpvalue("Spike time", &spikeTime, 1)
+                        xpanel()
+                    }
+                    deck2.intercept(0)
+                    deck2.map()
+                    // deck2.flip_to(*)     // Will be done below in makeSelectionsInLists
+                    deck3 = new Deck()
+                    deck3.intercept(1)
+                    {
+                        createEmptyPanel()
+                        xpanel("")
+                        xcheckbox("Make a series", &isSeries, "isSeriesChangedHandler()")
+                        xpanel()
+                    }
+                    deck3.intercept(0)
+                    deck3.map()
+                    // deck3.flip_to(*)     // Will be done below in makeSelectionsInLists
                 }
                 vBox.intercept(0)
                 vBox.map()
@@ -192,6 +236,7 @@ begintemplate OneExtracellularSourceWidget
                     xlabel("Source location:")  // !!! maybe get rid of this label
                     xpanel()
                     plotShape = new PlotShape()
+                    // !!! plotShape.exec_menu("Shape Plot")    // this affects performance while positioning the source
                     // !!! maybe remove unnecessary menu items
                     menuToolName = "Position extracellular source"
                     plotShape.menu_tool(menuToolName, "mouseEventsHandler")
@@ -202,9 +247,9 @@ begintemplate OneExtracellularSourceWidget
                 vBox.intercept(1)
                 {
                     xpanel("")
-                    xpvalue("x", &x, 1, "xyzChangedHandler()")
-                    xpvalue("y", &y, 1, "xyzChangedHandler()")
-                    xpvalue("z", &z, 1, "xyzChangedHandler()")
+                    xpvalue("x", &x, 1, "xyzOrRadiusChangedHandler()")
+                    xpvalue("y", &y, 1, "xyzOrRadiusChangedHandler()")
+                    xpvalue("z", &z, 1, "xyzOrRadiusChangedHandler()")
                     xlabel("")
                     xpvalue("x_soma", &x_soma, 1, "xyzSomaChangedHandler()")
                     xpvalue("y_soma", &y_soma, 1, "xyzSomaChangedHandler()")
@@ -225,19 +270,16 @@ begintemplate OneExtracellularSourceWidget
         }
         mainBox.intercept(0)
         mainBox.dismiss_action("dismissHandler()")
-        mainBox.map("One extracellular source", 460, 150, -1, -1)   // !!!
+        makeSelectionsInLists(speciesIdx, shapeIdx, enumStaticSwitchSpike)  // !!! doing it before mainBox.map to avoid blinking in List-s and Deck-s
+        mainBox.map("One extracellular source", 520, 75, -1, -1)   // !!!
         
         // This must be done only after mapping of the mainBox
         plotShape.exec_menu("View = plot")
         
         plotShape.exec_menu(menuToolName)   // !!!
-        
-        // This must be done only after "View = plot"
-        create test_sec[3]
-        xyzOrRadiusChangedHandler()
     }
     
-    proc dismissHandler() { local idx localobj nil
+    proc dismissHandler() { localobj nil
         if (mainBox == nil) {
             return
         }
@@ -245,39 +287,109 @@ begintemplate OneExtracellularSourceWidget
         mainBox.unmap()
         mainBox = nil
         
-        for idx = 0, 2 {
-            test_sec[idx] delete_section()
+        if (enumPointBall == 1) {
+            deleteTempSectionCross()
         }
     }
     
     // All next staff is private
     
     
-    proc spcNameSelectHandler() {
-        // !!! need to change the RANGE var shown on the PlotShape
-        mwh.showNotImplementedWarning()
+    proc makeSelectionsInLists() { local speciesIdx, shapeIdx, enumStaticSwitchSpike
+        speciesIdx = $1
+        shapeIdx = $2
+        enumStaticSwitchSpike = $3
+        
+        spcNamesList.select(speciesIdx)
+        spcNameSelectHandler(speciesIdx)
+        
+        srcShapesList.select(shapeIdx)
+        srcShapeSelectHandler(shapeIdx, 1)
+        
+        findItemInDynamicsListAndSelect(enumStaticSwitchSpike, 1)
+    }
+    
+    proc spcNameSelectHandler() { local spcNameIdx
+        spcNameIdx = $1
+        
+        // !!! no error here if the RANGE variable doesn't exist (e.g. "clo")
+        plotShape.variable(spcNamesList.o(spcNameIdx).rangeVarName)
+        
+        // !!! mwh.showNotImplementedWarning()
     }
     
     proc addNewSpeciesHandler() {
-        // !!! show another widget to select the species
+        // !!! show another widget to select the species; some ideas:
+        //     * SymChooser
+        //     * a new widget like AddOneInputVarWidget
+        //     * string_dialog + validation with name_declared or try-read-except in Python
         mwh.showNotImplementedWarning()
     }
     
-    proc srcShapeSelectHandler() {
-        // !!!
-        mwh.showNotImplementedWarning()
-    }
+    proc srcShapeSelectHandler() { local numArg, enumPointBall_new, isCalledFromShow, cardIdx
     
-    proc ballRadiusChangedHandler() {
-        xyzOrRadiusChangedHandler()
+        numArg = numarg()
+        if (numArg < 1 || numArg > 2) {
+            codeContractViolation()
+        }
         
-        // !!! update PlotShape here (everything must be in the visible area)
-        // mwh.showNotImplementedWarning()
+        enumPointBall_new = $1
+        
+        if (numArg == 2) {
+            isCalledFromShow = $2
+            if (!isCalledFromShow) {
+                codeContractViolation()
+            }
+        } else {
+            isCalledFromShow = 0
+        }
+        
+        if (!isCalledFromShow && enumPointBall_new == enumPointBall) {
+            return
+        }
+        
+        enumPointBall = enumPointBall_new
+        
+        cardIdx = enumPointBall
+        deck1.flip_to(cardIdx)
+        
+        populateSrcDynamicsList(1)  // -> srcDynamicsSelectHandler
+        
+        if (enumPointBall == 0) {
+            if (!isCalledFromShow) {
+                deleteTempSectionCross()
+            }
+        } else if (enumPointBall == 1) {
+            createTempSectionCross()
+        } else {
+            codeContractViolation()
+        }
+        
+        xyzOrRadiusChangedHandler()
     }
     
-    proc srcDynamicsSelectHandler() {
-        // !!!
-        mwh.showNotImplementedWarning()
+    proc xyzOrRadiusChangedHandler() { local x_screen, y_screen
+        // !!! no need to convert each time user changes the source shape or the ball radius (just cache it)
+        convertCoordsWorldToScreen(x, y, z, &x_screen, &y_screen)
+        updateSrcMark(x_screen, y_screen)
+    }
+    
+    proc srcDynamicsSelectHandler() { local selItemIdx, cardIdx, enumStaticSwitchSpike
+        selItemIdx = $1
+        
+        if (selItemIdx == -1) {
+            // Called from srcDynamicsList.remove_all() or in case when there is no selection
+            cardIdx = 0
+            deck2.flip_to(cardIdx)
+            deck3.flip_to(cardIdx)
+            return
+        }
+        
+        enumStaticSwitchSpike = srcDynamicsList.o(selItemIdx).enumStaticSwitchSpike
+        cardIdx = enumStaticSwitchSpike
+        deck2.flip_to(cardIdx)
+        cardIdx = (enumStaticSwitchSpike > 0)
+        deck3.flip_to(cardIdx)
     }
     
     proc isSeriesChangedHandler() {
@@ -294,50 +406,87 @@ begintemplate OneExtracellularSourceWidget
         keystate = $4
         
         // !!!
-        print "eventType: ", eventType, "\tx_screen: ", x_screen, "\ty_screen: ", y_screen, "\tkeystate: ", keystate
+        // print "eventType: ", eventType, "\tx_screen: ", x_screen, "\ty_screen: ", y_screen, "\tkeystate: ", keystate
         
         isMoveOrResize = (keystate != 2)    // 2: Shift
         if (isMoveOrResize) {
-            updateBallMark(x_screen, y_screen)
+            updateSrcMark(x_screen, y_screen)
             convertCoordsScreenToWorld(x_screen, y_screen, &x, &y, &z)
         } else {
-            // !!! if point rather than ball, then simply return from the proc
+            if (enumPointBall == 0) {
+                return
+            }
             
             convertCoordsWorldToScreen(x, y, z, &xc_screen, &yc_screen)
-            
-            // !!! maybe this is wrong
-            radius_screen = sqrt((x_screen - xc_screen) ^ 2 + (y_screen - yc_screen) ^ 2)
-            
+            radius_screen = sqrt((x_screen - xc_screen) ^ 2 + (y_screen - yc_screen) ^ 2)   // !!! maybe this is wrong after "3D Rotate"
             radius = convertRadiusScreenToWorld(radius_screen)
+            
+            plotShape.erase()
             updateBallMark(xc_screen, yc_screen)
         }
-        
-        // !!! this causes error "Didn't close the previous panel"
-        // mwh.showNotImplementedWarning()
     }
     
-    proc xyzChangedHandler() {
-        xyzOrRadiusChangedHandler()
+    proc xyzSomaChangedHandler() { local x_soma_old, y_soma_old, z_soma_old, n, idx, delta_x, delta_y, delta_z localobj x_vec, y_vec, z_vec, diam_vec
+    
+        // !!! would it make sense to cache them rather than calculate each time?
+        getSomaCoords(&x_soma_old, &y_soma_old, &z_soma_old)
         
-        // !!! update PlotShape here (everything must be in the visible area)
-        // mwh.showNotImplementedWarning()
+        soma_ref.o(0).sec {
+            n = n3d()
+            
+            x_vec = new Vector(n)
+            y_vec = new Vector(n)
+            z_vec = new Vector(n)
+            diam_vec = new Vector(n)
+            
+            for idx = 0, n - 1 {
+                x_vec.x(idx) = x3d(idx)
+                y_vec.x(idx) = y3d(idx)
+                z_vec.x(idx) = z3d(idx)
+                diam_vec.x(idx) = diam3d(idx)
+            }
+            
+            delta_x = x_soma - x_soma_old
+            delta_y = y_soma - y_soma_old
+            delta_z = z_soma - z_soma_old
+            
+            pt3dclear()
+            for idx = 0, n - 1 {
+                pt3dadd(x_vec.x(idx) + delta_x, y_vec.x(idx) + delta_y, z_vec.x(idx) + delta_z, diam_vec.x(idx))
+            }
+            
+            // !!! is there any better way to move the cell in NEURON or, at least,
+            //     can I use "pt3dchange" instead of "pt3dclear" + "pt3dadd"?
+            //     to improve the current approach a bit, I can find the section with the minimum number of 3D points
+            //     and use it instead of soma_ref.o(0).sec
+        }
     }
     
-    proc xyzSomaChangedHandler() {
-        // !!! update PlotShape here (everything must be in the visible area)
-        mwh.showNotImplementedWarning()
-    }
-    
-    proc applyHandler() { local oldSrcIdx, isUnique localobj newItem, nil
-    
-        // !!!
-        oldSrcIdx = -1
-        newItem = nil
+    proc applyHandler() { local speciesIdx, dynamicsIdx, enumStaticSwitchSpike, isUnique localobj newECS
+        strdef species
         
-        if (isCreateOrCorrect) {
-            isUnique = parentWidget.onCreateHandler(newItem)
+        speciesIdx = spcNamesList.selected()
+        species = spcNamesList.o(speciesIdx).s
+        
+        dynamicsIdx = srcDynamicsList.selected()
+        if (dynamicsIdx == -1) {
+            mwh.showWarningBox("Please select a dynamics model.")
+            return
+        }
+        enumStaticSwitchSpike = srcDynamicsList.o(dynamicsIdx).enumStaticSwitchSpike
+        
+        if (enumPointBall == 0) {
+            newECS = new ExtracellularSource_(species, 0, enumStaticSwitchSpike, x, y, z)
+        } else if (enumPointBall == 1) {
+            newECS = new ExtracellularSource_(species, 1, enumStaticSwitchSpike, x, y, z, radius)
         } else {
-            isUnique = parentWidget.onCorrectHandler(newItem, oldSrcIdx)
+            codeContractViolation()
+        }
+        
+        if (oldSrcIdxOrMinus1 == -1) {
+            isUnique = parentWidget.onCreateHandler(newECS)
+        } else {
+            isUnique = parentWidget.onCorrectHandler(newECS, oldSrcIdxOrMinus1)
         }
         
         if (!isUnique) {
@@ -347,27 +496,137 @@ begintemplate OneExtracellularSourceWidget
         dismissHandler()
     }
     
-    proc xyzOrRadiusChangedHandler() { local x_screen, y_screen
-        convertCoordsWorldToScreen(x, y, z, &x_screen, &y_screen)   // !!! no need to do this each time user changes the ball radius
-        updateBallMark(x_screen, y_screen)
+    // !!! BUG: despite this capper, user can make radius_world exactly equal 0 using "Shift" + mouse
+    func capRadius() { local radius_world
+        radius_world = $1
+        
+        if (radius_world < float_epsilon) {     // !!! keep the lower bound in sync with proc init
+            radius_world = float_epsilon
+        }
+        
+        return radius_world
     }
     
-    proc updateBallMark() { local x_screen, y_screen, radius_screen, marker_size, test_diam
+    // This proc can be implemented in different ways depending on what we consider to be the "soma coordinates".
+    // In alternative implementations, we can:
+    //  * analyze all the points in soma_ref.o(0).sec
+    //  * analyze all the sections in soma_ref
+    //  * take only one middle point
+    // etc.
+    proc getSomaCoords() { local n
+        soma_ref.o(0).sec {
+            n = n3d()
+            $&1 = (x3d(0) + x3d(n - 1)) / 2
+            $&2 = (y3d(0) + y3d(n - 1)) / 2
+            $&3 = (z3d(0) + z3d(n - 1)) / 2
+        }
+    }
+    
+    proc populateSrcDynamicsList() { local isPreserveSelection, selItemIdxOrMinus1_old, enumStaticSwitchSpike_old
+        
+        isPreserveSelection = $1
+        
+        if (isPreserveSelection) {
+            selItemIdxOrMinus1_old = srcDynamicsList.selected()
+            if (selItemIdxOrMinus1_old != -1) {
+                enumStaticSwitchSpike_old = srcDynamicsList.o(selItemIdxOrMinus1_old).enumStaticSwitchSpike
+            }
+        }
+        
+        srcDynamicsList.remove_all()    // As a side effect, this calls srcDynamicsSelectHandler(-1)
+        
+        srcDynamicsList.append(new Dynamics("static", 0))
+        if (enumPointBall == 1) {
+            srcDynamicsList.append(new Dynamics("on-off", 1))
+        }
+        srcDynamicsList.append(new Dynamics("spike", 2))
+        
+        if (isPreserveSelection) {
+            if (selItemIdxOrMinus1_old != -1) {
+                findItemInDynamicsListAndSelect(enumStaticSwitchSpike_old, 0)
+            } else {
+                srcDynamicsList.select(-1)
+            }
+        }
+    }
+    
+    proc findItemInDynamicsListAndSelect() { local enumStaticSwitchSpike, isErrorIfNotFound, dynamicsIdx, idx
+        enumStaticSwitchSpike = $1
+        isErrorIfNotFound = $2
+        
+        dynamicsIdx = -1
+        for idx = 0, srcDynamicsList.count() - 1 {
+            if (srcDynamicsList.o(idx).enumStaticSwitchSpike == enumStaticSwitchSpike) {
+                dynamicsIdx = idx
+                break
+            }
+        }
+        
+        if (dynamicsIdx == -1 && isErrorIfNotFound) {
+            codeContractViolation()
+        }
+        
+        srcDynamicsList.select(dynamicsIdx)
+        srcDynamicsSelectHandler(dynamicsIdx)
+    }
+    
+    proc updateSrcMark() { local x_screen, y_screen
         x_screen = $1
         y_screen = $2
         
         plotShape.erase()
         
+        if (enumPointBall == 0) {
+            updatePointMark(x_screen, y_screen)
+        } else if (enumPointBall == 1) {
+            updateBallMark(x_screen, y_screen)
+        } else {
+            codeContractViolation()
+        }
+    }
+    
+    proc updatePointMark() { local x_screen, y_screen, marker_size
+        x_screen = $1
+        y_screen = $2
+        
+        marker_size = 10    // !!! hardcode
+        plotShape.mark(x_screen, y_screen, "o", marker_size)
+    }
+    
+    proc updateBallMark() { local x_screen, y_screen, radius_screen, numPts, delta_angle, idx, angle
+        x_screen = $1
+        y_screen = $2
+        
         // !!!
         radius_screen = convertRadiusWorldToScreen(radius)  // !!! no need to do this on each mouseEventsHandler
         
-        // !!! "Arg out of range in user function" if marker_size < 0.1 or > 100
-        // !!! the marker is not visible if marker_size < 0.9 until we maximize the widget
-        marker_size = radius_screen * screenToMarkerFactor
-        plotShape.mark(x_screen, y_screen, "o", marker_size)
+        numPts = 200    // !!! hardcode, maybe make it linear to radius_screen
+        delta_angle = 2 * PI / numPts
+        plotShape.beginline()
+        for idx = 0, numPts {
+            angle = delta_angle * idx
+            plotShape.line(x_screen + radius_screen * cos(angle), y_screen + radius_screen * sin(angle))
+        }
         
-        // !!! some test construction just to choose screenToWorldFactor const
+        // An alternative approach
+        //     plotShape.mark(x_screen, y_screen, "o", marker_size)
+        // looks simpler, but in fact has a restriction ("Arg out of range in user function" if marker_size < 0.1 or > 100)
+        // and requires calculation of marker_size which is linear to radius_screen, but also has an unclear dependency on PlotShape zoom, widget size etc.
+        
+        updateTempSectionCross()
+    }
+    
+    proc createTempSectionCross() {
+        create test_sec[3]
+        xyzOrRadiusChangedHandler()
+    }
+    
+    // !!! 3D cross made of temporary sections just to test the 2D circle marker positioning
+    proc updateTempSectionCross() { local test_diam
+
+        // !!! hardcode
         test_diam = 1   // um
+        
         test_sec[0] {
             pt3dclear()
             pt3dadd(x - radius, y, z, test_diam)
@@ -385,23 +644,25 @@ begintemplate OneExtracellularSourceWidget
         }
     }
     
+    proc deleteTempSectionCross() { local idx
+        for idx = 0, 2 {
+            test_sec[idx] delete_section()
+        }
+    }
+    
     // !!! maybe move the next 4 converters to other place
     
     func convertRadiusWorldToScreen() { local radius_world
         radius_world = $1
-        return radius_world / screenToWorldFactor   // !!! very wrong
+        return radius_world     // !!! very wrong
     }
     
     func convertRadiusScreenToWorld() { local radius_screen, radius_world
         radius_screen = $1
         
-        radius_world = radius_screen * screenToWorldFactor  // !!! very wrong
+        radius_world = radius_screen    // !!! very wrong
         
-        if (radius_world < minRadius) {
-            radius_world = minRadius
-        } else if (radius_world > maxRadius) {
-            radius_world = maxRadius
-        }
+        radius_world = capRadius(radius_world)
         
         return radius_world
     }
@@ -415,10 +676,18 @@ begintemplate OneExtracellularSourceWidget
         
         // !!! need to perform the coords transformation based on the view direction
         //     some ideas to get the view direction:
-        //     1. read it from PlotShape somehow using Python
-        //     2. save_session
-        //     3. custom implementation of "3D Rotate" (as a new PlotShape menu item or 2 sliders) which tracks the view direction and relies on PlotShape.rotate()
-        //     4. disallow scene rotation at all and propose user to work with 3 orthogonal projections of the scene
+        //         1. read it from PlotShape somehow using Python
+        //         2. save_session and then look for strings "save_window_.size(..." or "{save_window_.view(..."
+        //         3. custom implementation of "3D Rotate" (as a new PlotShape menu item or 2 sliders) which tracks the view direction and relies on PlotShape.rotate()
+        //         4. disallow scene rotation at all and propose user to work with 3 orthogonal projections of the scene
+        //         5. create a temp section and add a temp PP on it using the coordinates where I want to show the marker,
+        //            then call Shape.point_mark(pp, ...) (but try to delete the temp section before or after calling it)
+        //     alternative ideas:
+        //         1. instead of "3D Rotate", add 3 menu items switching the view to 3 projections (after switching, we need to "click" "Position extracellular source" menu item programmatically once again)
+        //         2. when user clicks on PlotShape, we show 2 more PlotShapes (one right and one below) with corresponding projections, so user can interact with them the same way (all 3 will update synchronously); when user closes the widget, they are closed as well
+        //         3. instead of plotShape.line(), show a sphere wireframe made of sections like we do for 3D cross now (but we won't be able to use different colours for different species anymore)
+        //         4. use Shape instead of PlotShape
+        //         5. instead of PlotShape, show a new window made with Python using some 3D graphics library
     }
     
     proc convertCoordsScreenToWorld() { local x_screen, y_screen
@@ -426,7 +695,7 @@ begintemplate OneExtracellularSourceWidget
         y_screen = $2
         $&3 = x_screen  // !!! very wrong
         $&4 = y_screen  //
-        $&5 = 0         //
+        // $&5 = 0      //
         
         // !!! see the comment in convertCoordsWorldToScreen
     }

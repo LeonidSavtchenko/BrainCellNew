@@ -71,14 +71,22 @@ begintemplate ExtracellularManagerMainWidget
         mainBox.map("Manager of extracellular sources", 110, 150, -1, -1)
     }
     
-    func onCreateHandler() {
+    func onCreateHandler() { localobj newECS
+        newECS = $o1
+        
         // !!!
         mwh.showNotImplementedWarning()
         
         return 0
     }
     
-    func onCorrectHandler() {
+    func onCorrectHandler() { local oldSelIdx localobj newECS
+        newECS = $o1
+        
+        // !!! maybe don't pass oldSelIdx here and just rely on the current selection
+        //     (but need to close the child widget if user selects other src in this widget)
+        oldSelIdx = $2
+        
         // !!!
         mwh.showNotImplementedWarning()
         
@@ -95,26 +103,25 @@ begintemplate ExtracellularManagerMainWidget
     
     proc createNewHandler() {
         dismissChild()
-        oneECSWidget.show(0)    // --> onCreateHandler
-        
-        // !!!
-        mwh.showNotImplementedWarning()
+        oneECSWidget.show()     // --> onCreateHandler
     }
     
-    proc copyAndEditHandler() {
-        dismissChild()
-        oneECSWidget.show(0)    // --> onCreateHandler
+    proc copyAndEditHandler() { local selIdxOrMinus1 localobj oldECS
+        selIdxOrMinus1 = prologue4Show4NotNew(oldECS)
+        if (selIdxOrMinus1 == -1) {
+            return
+        }
         
-        // !!!
-        mwh.showNotImplementedWarning()
+        oneECSWidget.show(oldECS)   // --> onCreateHandler
     }
     
-    proc correctHandler() {
-        dismissChild()
-        oneECSWidget.show(1)    // --> onCorrectHandler
+    proc correctHandler() { local selIdxOrMinus1 localobj oldECS
+        selIdxOrMinus1 = prologue4Show4NotNew(oldECS)
+        if (selIdxOrMinus1 == -1) {
+            return
+        }
         
-        // !!!
-        mwh.showNotImplementedWarning()
+        oneECSWidget.show(oldECS, selIdxOrMinus1)   // --> onCorrectHandler
     }
     
     proc deleteHandler() {
@@ -128,6 +135,18 @@ begintemplate ExtracellularManagerMainWidget
     
     proc dismissChild() {
         oneECSWidget.dismissHandler()
+    }
+    
+    func prologue4Show4NotNew() { local selIdx
+        dismissChild()
+        
+        selIdx = ecsList.selected()
+        if (selIdx == -1) {
+            return -1
+        }
+        
+        $o1 = ecsList.o(selIdx)
+        return selIdx
     }
     
 endtemplate ExtracellularManagerMainWidget
