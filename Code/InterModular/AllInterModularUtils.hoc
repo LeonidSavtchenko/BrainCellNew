@@ -14,6 +14,7 @@ objref usedNamesForDendrites, nanoBranchesManager, seededDendrites_ref
 objref mmAllComps
 iterator findSecArrayOrObjectIterator() { codeContractViolation() }
 { load_file("InterModularUniqueNameUtils.hoc") }
+{ load_file("InterModularUniqueListItemUtils.hoc") }
 { load_file("InterModularRNGUtils.hoc") }
 objref smAllComps
 { load_file("InterModularCompUtils.hoc") }

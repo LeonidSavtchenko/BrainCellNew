@@ -5,7 +5,7 @@ begintemplate CreateListOfInputVarsWidget
     public show, onVarAddHandler, onVarCorrectHandler, onDefineVarGridOkHandler, dismissHandler
     
     external exportOptions
-    external enterVarExpression, isVarExprUnique, replaceItemInList, deleteSelectedItemFromBrowsedList, openDeck, closeDeck, unmapIfNotNil, codeContractViolation
+    external enterVarExpression, isVarExprUnique, replaceItemInBrowsedListThenSelect, deleteSelectedItemFromBrowsedList, openDeck, closeDeck, unmapIfNotNil, codeContractViolation
     external isAstrocyteOrNeuron
     
     objref mainBox, exprsList
@@ -132,7 +132,7 @@ begintemplate CreateListOfInputVarsWidget
             return 0
         }
         
-        replaceAndSelect(newItem, varIdx)
+        replaceItemInBrowsedListThenSelect(exprsList, newItem, varIdx)
         
         return 1
     }
@@ -146,7 +146,7 @@ begintemplate CreateListOfInputVarsWidget
         thisItem.prepareShownStrings()
         
         // Without this, the old string will be shown in UI until user closes the widget and opens it again
-        replaceAndSelect(thisItem, varIdx)
+        replaceItemInBrowsedListThenSelect(exprsList, thisItem, varIdx)
     }
     
     proc dismissHandler() {
@@ -220,13 +220,6 @@ begintemplate CreateListOfInputVarsWidget
         } else {
             codeContractViolation()
         }
-    }
-    
-    proc replaceAndSelect() { local varIdx localobj newItem
-        newItem = $o1
-        varIdx = $2
-        replaceItemInList(exprsList, newItem, varIdx)
-        exprsList.select(varIdx)
     }
     
     proc deleteVarHandler() {

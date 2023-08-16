@@ -1,4 +1,7 @@
 
+{ load_file("ExtracellularLibrary/ECSSpatialInfo.hoc") }
+{ load_file("ExtracellularLibrary/ECSTemporalInfo.hoc") }
+{ load_file("ExtracellularLibrary/ECSCapacityInfo.hoc") }
 { load_file("ExtracellularLibrary/ExtracellularSource.hoc") }
 { load_file("ExtracellularLibrary/ExtracellularLibrary.hoc") }
 { load_file("Widgets/OneExtracellularSourceWidget.hoc") }

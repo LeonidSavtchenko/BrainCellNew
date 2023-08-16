@@ -4,8 +4,8 @@ begintemplate ExtracellularManagerMainWidget
 
     public show, onCreateHandler, onCorrectHandler, dismissHandler
     
-    external mwh, ecsLibrary
-    external deleteSelectedItemFromBrowsedList, openDeck, closeDeck, unmapIfNotNil
+    external ecsLibrary
+    external isECSUnique, replaceItemInBrowsedListThenSelect, deleteSelectedItemFromBrowsedList, openDeck, closeDeck, unmapIfNotNil
     
     objref mainBox, ecsList
     objref oneECSWidget
@@ -20,7 +20,7 @@ begintemplate ExtracellularManagerMainWidget
         ecsList = ecsLibrary.ecsList
         
         // !!!
-        firstColWidth = 325
+        firstColWidth = 345
         secondColWidth = 105
         slotHeight = 190
         
@@ -51,7 +51,7 @@ begintemplate ExtracellularManagerMainWidget
                 deck = openDeck()
                 {
                     xpanel("")
-                    xbutton("Create new", "createNewHandler()")
+                    xbutton("Create new (default)", "createNewHandler()")
                     xbutton("Copy and edit", "copyAndEditHandler()")
                     xlabel("")
                     xbutton("Correct", "correctHandler()")
@@ -71,26 +71,33 @@ begintemplate ExtracellularManagerMainWidget
         mainBox.map("Manager of extracellular sources", 110, 150, -1, -1)
     }
     
-    func onCreateHandler() { localobj newECS
+    func onCreateHandler() { local numECSs localobj newECS
         newECS = $o1
         
-        // !!!
-        mwh.showNotImplementedWarning()
+        if (!isECSUnique(newECS, ecsList)) {
+            return 0
+        }
         
-        return 0
+        ecsList.append(newECS)
+        numECSs = ecsList.count()
+        ecsList.select(numECSs - 1)
+        
+        return 1
     }
     
     func onCorrectHandler() { local oldSelIdx localobj newECS
         newECS = $o1
-        
         // !!! maybe don't pass oldSelIdx here and just rely on the current selection
         //     (but need to close the child widget if user selects other src in this widget)
         oldSelIdx = $2
         
-        // !!!
-        mwh.showNotImplementedWarning()
+        if (!isECSUnique(newECS, ecsList)) {
+            return 0
+        }
         
-        return 0
+        replaceItemInBrowsedListThenSelect(ecsList, newECS, oldSelIdx)
+        
+        return 1
     }
     
     proc dismissHandler() {

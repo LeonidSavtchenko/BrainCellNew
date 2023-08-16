@@ -113,25 +113,6 @@ func chooseUniqueNameForCompartmentForMechManager() { local isSplitOrRename, hin
     return 0
 }
 
-func isVarExprUnique() { local isUnique localobj exprsList, oldExpr
-    strdef newExpr
-    
-    newExpr = $s1
-    exprsList = $o2
-    
-    isUnique = 1
-    
-    for eachItemInList(oldExpr, exprsList) {
-        if (stringsEqual(newExpr, oldExpr.s)) {
-            mwh.showWarningBox("This var has already been added to the list.")
-            isUnique = 0    // Don't replace with "return 0" because iterator-s cannot return
-            break           //
-        }
-    }
-    
-    return isUnique
-}
-
 func enterVarExpression() { local numArg, isCancel, isOK, type localobj exprsList
     strdef var, hint, custVar
     
