@@ -4,7 +4,7 @@ begintemplate InhomEditorSubWidget
     public show, updateCurves, dismissHandler
     
     external varsEditorSubWidget, synManagerMainWidget
-    external mwh, math, mth, mmmowb, mcu, dfc, compUtils, inhomAndStochLibrary, synGroup, seh
+    external mwh, math, mth, mmmowb, mcu, dfc, compUtils, inhomAndStochLibrary, synGroup, seh, graphUtils
     external getDistMechVarRangeOutside, getDistMechVarRangeInside, createEmptyPanel, createElasticSpacer, oneZeroToYesNo, codeContractViolation
     external eachPointInGrid
     
@@ -485,9 +485,9 @@ begintemplate InhomEditorSubWidget
         
         // This works fine only after mapping of the mainBox
         deck6.flip_to(2)
-        initShape(shape1)
+        initShape(shape1, 1)
         deck6.flip_to(3)
-        initShape(shape2)
+        initShape(shape2, 2)
         
         updateColormaps()
         
@@ -514,6 +514,7 @@ begintemplate InhomEditorSubWidget
         if (mainBox.ismapped()) {
             mainBox.unmap()
         }
+        // !!!! graphUtils.unregister(1, 2)
     }
     
     // All next staff is private
@@ -535,16 +536,27 @@ begintemplate InhomEditorSubWidget
         sprint(isInhomVarLabel, "Inhomogeneous: %s", yesNo)
     }
     
-    proc initShape() { localobj shape
+    proc initShape() { local slotIdx localobj shape
         shape = $o1
+        slotIdx = $2
+        
         shape.exec_menu("Shape Plot")
         shape.exec_menu("View = plot")
-        if (isMechOrSynEditor) {
-            // !! BUG: Colormap looks uniform when we try to watch an array element, e.g. "ca_cadifus[0]"
-            //         Maybe it's NEURON restriction because user cannot do it even manually
-            //         clicking on colormap corner and then "Plot What?"
-            shape.variable(varNameWithIndex)
+        
+        if (!isMechOrSynEditor) {
+            return
         }
+        
+        // !! BUG: Colormap looks uniform when we try to watch an array element, e.g. "ca_cadifus[0]"
+        //         Maybe it's NEURON restriction because user cannot do it even manually
+        //         clicking on colormap corner and then "Plot What?"
+        shape.variable(varNameWithIndex)
+        
+        // !!! when selecting a watched point on the cell for the new Graph in "Show all compartments" mode,
+        //     user can click on a (grey) section not in this compartment
+        //     and face an error like "cadifus mechanism not inserted in section axon[1]",
+        //     but this error looks for good, so let's keep it
+        graphUtils.addPlotDynamicsMenuItem(shape, slotIdx, varTypeName, varNameWithIndex, 0)
     }
     
     proc segmentationModeChangedHandler() { local segmentationMode, nsegDeckCardIdx

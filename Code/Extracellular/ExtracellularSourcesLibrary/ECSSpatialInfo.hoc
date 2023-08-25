@@ -1,0 +1,74 @@
+
+begintemplate ECSSpatialInfo
+
+    public isEqual, prepareShownString, packToVec
+    public enumPointBall, x, y, z, radiusOrMinus1
+    
+    external codeContractViolation
+    
+    enumPointBall = -1
+    x = -1
+    y = -1
+    z = -1
+    radiusOrMinus1 = -1     // For "ball" shape only
+    
+    
+    proc init() { local numArg
+        
+        numArg = numarg()
+        if (numArg < 4 || numArg > 5) {
+            codeContractViolation()
+        }
+        
+        enumPointBall = $1
+        x = $2
+        y = $3
+        z = $4
+        
+        if (numArg == 5) {
+            radiusOrMinus1 = $5
+        } else {
+            radiusOrMinus1 = -1
+        }
+        
+        if (enumPointBall == (radiusOrMinus1 == -1)) {
+            codeContractViolation()
+        }
+    }
+    
+    func isEqual() { localobj other
+        other = $o1
+        
+        return (enumPointBall == other.enumPointBall && x == other.x && y == other.y && z == other.z && radiusOrMinus1 == other.radiusOrMinus1)
+    }
+    
+    proc prepareShownString() {
+        strdef species, dynamicsName, lengthUnits
+        
+        species = $s1
+        dynamicsName = $s2
+        
+        lengthUnits = units("L")
+        
+        if (enumPointBall == 0) {
+            // !!! think about showing "pointCapacityRadius"
+            sprint($s3, "%s: point / %s / c={%g, %g, %g} %s", species, dynamicsName, x, y, z, lengthUnits)
+        } else if (enumPointBall == 1) {
+            sprint($s3, "%s: ball / %s / c={%g, %g, %g} %s, r=%g %s", species, dynamicsName, x, y, z, lengthUnits, radiusOrMinus1, lengthUnits)
+        } else {
+            codeContractViolation()
+        }
+    }
+    
+    // !!! this will be called from both Extracellular and Export modules
+    obfunc packToVec() { localobj vec
+        vec = new Vector(5)
+        vec.x(0) = enumPointBall
+        vec.x(1) = x
+        vec.x(2) = y
+        vec.x(3) = z
+        vec.x(4) = radiusOrMinus1
+        return vec
+    }
+    
+endtemplate ECSSpatialInfo

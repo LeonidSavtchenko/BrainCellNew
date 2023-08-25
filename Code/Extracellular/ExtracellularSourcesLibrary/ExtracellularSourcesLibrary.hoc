@@ -1,0 +1,53 @@
+
+begintemplate ExtracellularSourcesLibrary
+
+    public checkForUnsupportedIons, getNumECSs, packToVec
+    public ecsList
+    
+    external mwh
+    external eachItemInList
+    
+    objref ecsList
+    
+    
+    proc init() {
+        // !!! some sources just for test (we'll leave only one default ECS based on the legacy code)
+        ecsList = new List()
+        ecsList.append(new ExtracellularSource_("K+", new ECSSpatialInfo(1, 175, 350, 75, 125), new ECSTemporalInfo(1, 0.5, 1.5, 0), new ECSCapacityInfo(1, 2)))
+        ecsList.append(new ExtracellularSource_("K+", new ECSSpatialInfo(0, 140, 30, 60), new ECSTemporalInfo(2, 0.5, 0), new ECSCapacityInfo(0, 2, 1e8)))
+        ecsList.append(new ExtracellularSource_("Ca2+", new ECSSpatialInfo(0, 115, 350, -30), new ECSTemporalInfo(0), new ECSCapacityInfo(0, 0, 5, 25)))
+        ecsList.append(new ExtracellularSource_("Ca2+", new ECSSpatialInfo(1, -75, -190, -75, 150), new ECSTemporalInfo(0), new ECSCapacityInfo(1, 3)))
+        ecsList.append(new ExtracellularSource_("Ca2+", new ECSSpatialInfo(1, 40, 140, -75, 100), new ECSTemporalInfo(2, 2, 0), new ECSCapacityInfo(1, 2.5)))
+        
+        // !!! BUG: Correct 1st, then close, then Correct 2nd => the cross is shown
+    }
+    
+    func checkForUnsupportedIons() { local isAnyUnsupported localobj ecs
+        isAnyUnsupported = 0
+        mwh.startIntercepting()
+        {
+            for eachItemInList(ecs, ecsList) {
+                isAnyUnsupported = ecs.checkForUnsupportedIon() || isAnyUnsupported
+            }
+        }
+        mwh.endIntercepting()   // !!! BUG: this shows many copies of the same warning
+        return isAnyUnsupported
+    }
+    
+    func getNumECSs() {
+        return ecsList.count()
+    }
+    
+    // !!! this will be called from Extracellular module, but Export module will call other one
+    obfunc packToVec() { localobj vec, ecs
+        vec = new Vector()
+        vec.append(getNumECSs())
+        for eachItemInList(ecs, ecsList) {
+            vec.append(ecs.packToVec())
+        }
+        return vec
+    }
+    
+endtemplate ExtracellularSourcesLibrary
+
+ecsLibrary = new ExtracellularSourcesLibrary()  // !!! make sure it's imported when we start with nano

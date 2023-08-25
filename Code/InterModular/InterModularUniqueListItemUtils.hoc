@@ -1,0 +1,36 @@
+
+func isVarExprUnique() { local isUnique localobj exprsList, oldExpr
+    strdef newExpr
+    
+    newExpr = $s1
+    exprsList = $o2
+    
+    isUnique = 1
+    
+    for eachItemInList(oldExpr, exprsList) {
+        if (stringsEqual(newExpr, oldExpr.s)) {
+            mwh.showWarningBox("This var has already been added to the list.")
+            isUnique = 0    // Don't replace with "return 0" because iterator-s cannot return
+            break           //
+        }
+    }
+    
+    return isUnique
+}
+
+func isECSUnique() { local isUnique localobj newECS, ecsList, oldECS
+    newECS = $o1
+    ecsList = $o2
+    
+    isUnique = 1
+    
+    for eachItemInList(oldECS, ecsList) {
+        if (newECS.isEqual(oldECS)) {
+            mwh.showWarningBox("Exactly the same ECS has already been added to the list.", "Please make at least 1 parameter different.")
+            isUnique = 0    // Don't replace with "return 0" because iterator-s cannot return
+            break           //
+        }
+    }
+    
+    return isUnique
+}

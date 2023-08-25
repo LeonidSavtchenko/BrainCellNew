@@ -127,6 +127,8 @@ begintemplate NanoBranchesManager
         
         isFirstReseeding = 0
         NumberNanoBranches = nanoBranches_flat.count()
+        
+        print "NumberNanoBranches: ", NumberNanoBranches    // !!!!
     }
     
     // Reseed dendrites with nanobranches using the same arguments as the last time

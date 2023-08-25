@@ -5,7 +5,7 @@ begintemplate CreateListOfInputVarsWidget
     public show, onVarAddHandler, onVarCorrectHandler, onDefineVarGridOkHandler, dismissHandler
     
     external exportOptions
-    external enterVarExpression, isVarExprUnique, replaceItemInList, deleteSelectedItemFromBrowsedList, openDeck, closeDeck, unmapIfNotNil, codeContractViolation
+    external enterVarExpression, isVarExprUnique, replaceItemInBrowsedListThenSelect, deleteSelectedItemFromBrowsedList, openDeck, closeDeck, unmapIfNotNil, codeContractViolation
     external isAstrocyteOrNeuron
     
     objref mainBox, exprsList
@@ -46,7 +46,7 @@ begintemplate CreateListOfInputVarsWidget
         slotHeight = 190
     }
     
-    proc show() { localobj hBox, deck
+    proc show() { local numSpacers, spacerIdx localobj hBox, deck
         strdef label, title, field
         
         if (isExposedOrSwept) {
@@ -89,12 +89,15 @@ begintemplate CreateListOfInputVarsWidget
                     xbutton("Add custom var", "addCustomVarHandler()")
                     xlabel("")
                     xbutton("Correct var", "correctVarHandler()")
-                    xbutton("Delete var", "deleteVarHandler()")
-                    
                     if (!isExposedOrSwept) {
                         xlabel("")
                         xbutton("Define var grid", "defineVarGridHandler()")
                     }
+                    numSpacers = 1 + 2 * isExposedOrSwept + isAstrocyteOrNeuron
+                    for spacerIdx = 1, numSpacers {
+                        xlabel("")
+                    }
+                    xbutton("Delete var", "deleteVarHandler()")
                     xpanel()
                 }
                 closeDeck(deck, 0, secondColWidth, slotHeight)
@@ -132,7 +135,7 @@ begintemplate CreateListOfInputVarsWidget
             return 0
         }
         
-        replaceAndSelect(newItem, varIdx)
+        replaceItemInBrowsedListThenSelect(exprsList, newItem, varIdx)
         
         return 1
     }
@@ -146,7 +149,7 @@ begintemplate CreateListOfInputVarsWidget
         thisItem.prepareShownStrings()
         
         // Without this, the old string will be shown in UI until user closes the widget and opens it again
-        replaceAndSelect(thisItem, varIdx)
+        replaceItemInBrowsedListThenSelect(exprsList, thisItem, varIdx)
     }
     
     proc dismissHandler() {
@@ -222,18 +225,6 @@ begintemplate CreateListOfInputVarsWidget
         }
     }
     
-    proc replaceAndSelect() { local varIdx localobj newItem
-        newItem = $o1
-        varIdx = $2
-        replaceItemInList(exprsList, newItem, varIdx)
-        exprsList.select(varIdx)
-    }
-    
-    proc deleteVarHandler() {
-        dismissChilds()
-        deleteSelectedItemFromBrowsedList(exprsList)
-    }
-    
     proc defineVarGridHandler() { local selVarIdx localobj gridInfoOrNil, sweptVar
         dismissChilds()
         
@@ -246,6 +237,11 @@ begintemplate CreateListOfInputVarsWidget
         gridInfoOrNil = exprsList.o(selVarIdx).gridInfoOrNil
         sweptVar = exprsList.o(selVarIdx)
         dg4ivWidget.show(gridInfoOrNil, selVarIdx, sweptVar)    // --> onDefineVarGridOkHandler
+    }
+    
+    proc deleteVarHandler() {
+        dismissChilds()
+        deleteSelectedItemFromBrowsedList(exprsList)
     }
     
     proc okHandler() {

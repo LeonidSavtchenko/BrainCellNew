@@ -9,5 +9,5 @@ proc printNotImplementedMsgAndRaiseError() {
 
 // Report the bug, print the call stack, raise the error
 proc codeContractViolation() {
-    execerror("\n\n    Bug in Cell program: Code contract violation", "\n    Please report this problem to the developer along with the call stack shown below\n")
+    execerror("\n\n    Bug in BrainCell program: Code contract violation", "\n    Please report this problem to the developer along with the call stack shown below\n")
 }

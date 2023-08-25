@@ -1,18 +1,21 @@
+
 // Sets ip3i to soma and dendrites.
-proc advance() { local i
+proc advance() {
     fadvance()
-
+    
     if ((t > TimeDelayCaWave) && (t < TimeDelayCaWave+15000)) {
-        for i = 1, NumberDendrites {
-            dendrite_ref.o(i).sec.ip3i = InitIp3
-        }
-
-        soma_ref.o(0).sec.ip3i = InitIp3
+        setIp3ToSomaAndDendrites(InitIp3)
     } else {
-        for i = 1, NumberDendrites {
-      //      dendrite_ref.o(i).sec.ip3i = 0.0000001
-        }
+        // setIp3ToSomaAndDendrites(0.0000001)
+    }
+}
 
-    //    soma_ref.o(0).sec.ip3i = 0.0000001
+proc setIp3ToSomaAndDendrites() { local ip3Value localobj sec_ref
+    ip3Value = $1
+    
+    soma_ref.o(0).sec.ip3i = ip3Value
+    
+    for eachItemInList(sec_ref, dendrite_ref) {
+        sec_ref.sec.ip3i = ip3Value
     }
 }

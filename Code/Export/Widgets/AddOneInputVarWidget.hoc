@@ -92,6 +92,7 @@ begintemplate AddOneInputVarWidget
                 showOneList(mechText, mechList, "mechSelectHandler")
                 showOneList("Variable type", varTypeList, "varTypeSelectHandler")
                 showOneList("Variable", varNameWithIndexList, "varNameWithIndexSelectHandler")
+                varNameWithIndexList.accept_action("selectHandler()")   // Double click
             }
             hBox.intercept(0)
             hBox.map()

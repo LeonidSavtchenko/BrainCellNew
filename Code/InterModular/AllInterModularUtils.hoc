@@ -1,4 +1,6 @@
 
+objref soma_ref
+
 { load_file("InterModularSectionUtils.hoc") }
 
 objref usedNamesForDendrites, nanoBranchesManager, seededDendrites_ref
@@ -14,11 +16,13 @@ objref usedNamesForDendrites, nanoBranchesManager, seededDendrites_ref
 objref mmAllComps
 iterator findSecArrayOrObjectIterator() { codeContractViolation() }
 { load_file("InterModularUniqueNameUtils.hoc") }
+{ load_file("InterModularUniqueListItemUtils.hoc") }
 { load_file("InterModularRNGUtils.hoc") }
 objref smAllComps
 { load_file("InterModularCompUtils.hoc") }
-{ load_file("InterModularWidgetUtils.hoc") }
 { load_file("InterModularUnitsUtils.hoc") }
+{ load_file("InterModularGraphUtils.hoc") }
+{ load_file("InterModularWidgetUtils.hoc") }
 { load_file("InterModularOtherUtils.hoc") }
 objref mmcoWidget
 { load_file("../Core/PluginsForCompSelectionWidget.hoc") }

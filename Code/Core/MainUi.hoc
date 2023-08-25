@@ -159,6 +159,7 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
             plotShapeMainV.exec_menu("Shape Plot")
             plotShapeMainV.exec_menu("View = plot")
             plotShapeMainV.variable("v")
+            graphUtils.addPlotDynamicsMenuItem(plotShapeMainV, 0, "Voltage", "v", 1)
             plotShapeMainV.show(0)
             if (isAstrocyteOrNeuron) {
                 minV1 = -85
@@ -187,16 +188,16 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
         vBoxRightPanel.intercept(1)
         {
             xpanel("")
+            xbutton("Edit biophysics", "startMechManager()")
+            if (!isAstrocyteOrNeuron) {
+                xbutton("Edit synapses", "startSynManager()")
+            }
             if (isBaseOrNanoStart && !isAstrocyteOrNeuron) {
                 xbutton("Edit extra potassium (deprecated)", "showExtraPotassiumControlPanels()")   // !!!
             }
             xbutton("Edit extracellular sources (in development)", "startECSManager()")             // !!!
             if (isBaseOrNanoStart && !isAstrocyteOrNeuron) {
                 xbutton("Insert electrode", "insertElectrode()")
-            }
-            xbutton("Edit biophysics", "startMechManager()")
-            if (!isAstrocyteOrNeuron) {
-                xbutton("Edit synapses", "startSynManager()")
             }
             xbutton("Export cell", "startExportManager()")
             xpanel()

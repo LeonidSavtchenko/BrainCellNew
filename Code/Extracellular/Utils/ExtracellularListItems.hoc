@@ -1,0 +1,20 @@
+
+begintemplate SpeciesListItem
+    public s, rangeVarName, ionMechNameOrEmpty
+    strdef s, rangeVarName, ionMechNameOrEmpty
+    proc init() {
+        s = $s1
+        rangeVarName = $s2
+        ionMechNameOrEmpty = $s3    // !!! empty ion mech name means "shown in the list, but not supported"
+    }
+endtemplate SpeciesListItem
+
+begintemplate DynamicsListItem
+    public s, enumStaticSwitchSpike
+    strdef s
+    enumStaticSwitchSpike = -1
+    proc init() {
+        s = $s1
+        enumStaticSwitchSpike = $2
+    }
+endtemplate DynamicsListItem

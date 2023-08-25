@@ -207,7 +207,7 @@ begintemplate MechTypeHelper
     objref _pointProcess
     strdef _unitsStr
     
-    // See also: InterModularOtherUtils.hoc -> getWatchedVarUnits
+    // See also: InterModularUnitsUtils.hoc and py:UnitsUtils (in Export module)
     proc getVarUnits() { local enumDmPpNc, mechIdx localobj nil
         strdef varName, varNameWithIndex, mechName, hocCommand
         
@@ -279,6 +279,9 @@ begintemplate MechTypeHelper
         
         getMechName(0, mechIdx, mechName)
         if (stringEndsWith(mechName, ionSuffix) && varType == 2) {
+            // !!! BUG: we hit this, when create an extracellular source of "point" shape, apply it, then go to
+            //     "Manager of biophysics" -> "Review inhomogen vars" and try to apply any other inhomogeneity model
+            //     instead of "Verbatim data" (or even reapply the same model)
             codeContractViolation()
         }
         

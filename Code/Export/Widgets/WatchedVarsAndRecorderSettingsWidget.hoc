@@ -45,6 +45,8 @@ begintemplate WatchedVarsAndRecorderSettingsWidget
             graph.menu_remove("Erase")
             graph.menu_remove("Move Text")
             graph.menu_remove("Change Text")
+            // !!! in addition to this Graph, think about showing a PlotShape
+            //     with the special menu item added with graphUtils.addPlotDynamicsMenuItem
             xpanel("")
             xlabel("")
             xpvalue("Recording period, Dt", &exportOptions.DtOrMinus1, 1, "DtChangedHandler()")

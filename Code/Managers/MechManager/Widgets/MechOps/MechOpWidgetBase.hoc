@@ -381,7 +381,7 @@ begintemplate MechOpWidgetBase
         allItemsHeight = numInsertedItems * itemHeight
         
         if (allItemsHeight < rowBodyHeight) {
-            // We insert these spacers to make the panel background cyan rather than gray
+            // We insert these spacers to make the panel background cyan rather than grey
             insertSpacersCore(allItemsHeight, rowBodyHeight)
         } else if (allItemsHeight < sliderMinHeight) {
             // We insert these spacers as a workaround for strange NEURON behviour

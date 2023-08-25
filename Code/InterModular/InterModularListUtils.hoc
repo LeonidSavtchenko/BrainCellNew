@@ -12,20 +12,20 @@ proc concatenateTwoLists() { localobj list1, list2, item2
     }
 }
 
-// As a side effect, the replaced item will not be selected anymore
-proc replaceItemInList() { local idx localobj list, item
+proc replaceItemInBrowsedListThenSelect() { local idx localobj list, item
     list = $o1
     item = $o2
     idx = $3
     // list.o(idx) = item       // Error
-    list.remove(idx)
+    list.remove(idx)            // As a side effect, the item won't be selected anymore
     list.insrt(idx, item)
+    list.select(idx)
 }
 
 // $o1 (in/out) - The list to analyze which must contain objects with public "s" field
 // $s2 - The string to find
-// Returns: The index
-func findItemInListByStringAndSelect() { local idx localobj list
+// Returns: The index or -1 if not found
+func findItemInListByString() { local idx localobj list
     strdef strToFind
     
     list = $o1
@@ -33,12 +33,31 @@ func findItemInListByStringAndSelect() { local idx localobj list
     
     for idx = 0, list.count() - 1 {
         if (stringsEqual(list.o(idx).s, strToFind)) {
-            list.select(idx)
             return idx
         }
     }
     
-    codeContractViolation()
+    return -1
+}
+
+// $o1 (in/out) - The list to analyze which must contain objects with public "s" field
+// $s2 - The string to find
+// Returns: The index
+// Raises: codeContractViolation if not found
+func findItemInListByStringAndSelect() { local idxOrMinus1 localobj list
+    strdef strToFind
+    
+    list = $o1
+    strToFind = $s2
+    
+    idxOrMinus1 = findItemInListByString(list, strToFind)
+    if (idxOrMinus1 == -1) {
+        codeContractViolation()
+    }
+    
+    list.select(idxOrMinus1)
+    
+    return idxOrMinus1
 }
 
 proc deleteSelectedItemFromBrowsedList() { local selItemIdx localobj list

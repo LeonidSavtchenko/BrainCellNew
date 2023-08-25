@@ -26,6 +26,7 @@ proc analyzeSectsAndCreateComps() { local compIdx localobj endFoot_ref, ecSource
             mmAllComps.append(new MechComp("Spine Neck", nanoProximal_ref))
             mmAllComps.append(new MechComp("Spine Head", nanoDistal_ref))
             
+            // !!! get rid of this here and in the exported file
             ecSource_ref = createListOfSectionRefs("ExtracellularSource", 0)
             mmAllComps.append(new MechComp("Extracellular Source", ecSource_ref))
         }
