@@ -1,0 +1,78 @@
+
+begintemplate ECSTemporalInfo
+
+    public isEqual, getDynamicsName
+    public enumStaticSwitchSpike, startTimeOrMinus1, endTimeOrMinus1, spikeTimeOrMinus1, isSeriesOrMinus1
+    
+    external codeContractViolation
+    
+    enumStaticSwitchSpike = -1
+    startTimeOrMinus1 = -1  // For "switch" dynamics only
+    endTimeOrMinus1 = -1    // For "switch" dynamics only
+    spikeTimeOrMinus1 = -1  // For "spike" dynamics only
+    isSeriesOrMinus1 = -1   // For "switch" or "spike" dynamics only
+    
+    // !!! add the series info here
+    
+    
+    proc init() { local numArg
+    
+        numArg = numarg()
+        if (numArg < 1 || numArg > 4) {
+            codeContractViolation()
+        }
+        
+        enumStaticSwitchSpike = $1
+        
+        startTimeOrMinus1 = -1
+        endTimeOrMinus1 = -1
+        spikeTimeOrMinus1 = -1
+        isSeriesOrMinus1 = -1
+        
+        if (enumStaticSwitchSpike == 0) {
+            if (numArg != 1) {
+                codeContractViolation()
+            }
+        } else if (enumStaticSwitchSpike == 1) {
+            if (numArg != 4) {
+                codeContractViolation()
+            }
+            startTimeOrMinus1 = $2
+            endTimeOrMinus1 = $3
+            isSeriesOrMinus1 = $4
+            if (startTimeOrMinus1 == -1 || endTimeOrMinus1 == -1 || isSeriesOrMinus1 == -1) {
+                codeContractViolation()
+            }
+        } else if (enumStaticSwitchSpike == 2) {
+            if (numArg != 3) {
+                codeContractViolation()
+            }
+            spikeTimeOrMinus1 = $2
+            isSeriesOrMinus1 = $3
+            if (spikeTimeOrMinus1 == -1 || isSeriesOrMinus1 == -1) {
+                codeContractViolation()
+            }
+        } else {
+            codeContractViolation()
+        }
+    }
+    
+    func isEqual() { localobj other
+        other = $o1
+        
+        return (enumStaticSwitchSpike == other.enumStaticSwitchSpike && startTimeOrMinus1 == other.startTimeOrMinus1 && endTimeOrMinus1 == other.endTimeOrMinus1 && spikeTimeOrMinus1 == other.spikeTimeOrMinus1 && isSeriesOrMinus1 == other.isSeriesOrMinus1)
+    }
+    
+    proc getDynamicsName() {
+        if (enumStaticSwitchSpike == 0) {
+            $s1 = "static"
+        } else if (enumStaticSwitchSpike == 1) {
+            $s1 = "on-off"
+        } else if (enumStaticSwitchSpike == 2) {
+            $s1 = "spike"
+        } else {
+            codeContractViolation()
+        }
+    }
+    
+endtemplate ECSTemporalInfo
