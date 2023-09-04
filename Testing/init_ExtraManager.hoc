@@ -2,16 +2,18 @@
 // Load some test nanogeometry file
 { load_file("CommonPrologueForTests.hoc") }
 
-obfunc createTestPlotShape() { local y, slotIdx localobj plotShape
+obfunc createTestPlotShape() { local y, slotIdx, min_scale, max_scale localobj plotShape
     strdef varName
     
     varName = $s1
     y = $2
     slotIdx = $3
+    min_scale = $4
+    max_scale = $5
     
     plotShape = new PlotShape(0)
     plotShape.variable(varName)
-    plotShape.scale(2, 5)
+    plotShape.scale(min_scale, max_scale)
     graphUtils.addPlotDynamicsMenuItem(plotShape, slotIdx, "Extracellular Concentration", varName, 1)
     plotShape.view(-300, -180, 770, 770, 745, y, 200, 200)
     plotShape.exec_menu("Shape Plot")
@@ -21,30 +23,36 @@ obfunc createTestPlotShape() { local y, slotIdx localobj plotShape
     return plotShape
 }
 
-obfunc createTestGraph() { local y localobj graph
+obfunc createTestGraph() { local y, min_scale, max_scale localobj graph
     strdef varName1, varName2
     
     varName1 = $s1
     varName2 = $s2
     y = $3
+    min_scale = $4
+    max_scale = $5
     
     graph = new Graph(0)
     graph.addvar(varName1, 2, 0)
     graph.addvar(varName2, 3, 0)
-    graph.size(0, tstop, 2, 5)
-    graph.view(0, 2, tstop, 5, 1030, y, 300, 200)
+    graph.size(0, tstop, min_scale, max_scale)
+    graph.view(0, min_scale, tstop, max_scale - min_scale, 1030, y, 300, 200)
     graphList[0].append(graph)
     
     return graph
 }
 
-y1 = 150
-y2 = 500
+y1 = 50
+y2 = 250
+y3 = 450
 
 // !!! without this, the PlotShape-s will show the next sections in grey rather than in colour:
 //     ExtracellularSource (testPlotShape1 and testPlotShape2), nanogeometry (testPlotShape2)
+// !!! NOT BUG (just a test feature): start this test and click "Init & Run" (in AltRunControl or RunControl) => codeContractViolation
+//     but no error after clicking "Apply" in "Manager of extracellular sources";
+//     the root cause is that ECDCalcAndConsHelper, if inserted, must be initialized properly
 forall {
-    insert ExtracellularDiffusionHelper
+    insert ECDCalcAndConsHelper
     
     // !!! just an alternative way to fix the grey sections problem
     // insert k_ion
@@ -52,16 +60,18 @@ forall {
 }
 
 // Watch extracellular concentration in space
-objref testPlotShape1, testPlotShape2
-testPlotShape1 = createTestPlotShape("ko", y1, 3)
-testPlotShape2 = createTestPlotShape("cao", y2, 4)
+objref testPlotShape1, testPlotShape2, testPlotShape3
+testPlotShape1 = createTestPlotShape("ko", y1, 3, 2, 5)
+testPlotShape2 = createTestPlotShape("cao", y2, 4, 2, 5)
+testPlotShape3 = createTestPlotShape("nao", y3, 5, 139, 145)
 
-tstop = 4
+tstop = 40
 
 // Watch extracellular concentration in time
-objref testGraph1, testGraph2
-testGraph1 = createTestGraph("s.ko(0.5)", "dendA5_01111111111111111.ko(0.5)", y1)
-testGraph2 = createTestGraph("s.cao(0.5)", "dendA5_0111110.cao(0.5)", y2)
+objref testGraph1, testGraph2, testGraph3
+testGraph1 = createTestGraph("s.ko(0.5)", "dendA5_01111111111111111.ko(0.5)", y1, 2, 5)
+testGraph2 = createTestGraph("s.cao(0.5)", "dendA5_0111110.cao(0.5)", y2, 2, 5)
+testGraph3 = createTestGraph("s.nao(0.5)", "dendA5_01111111111111111.nao(0.5)", y3, 139, 145)
 
 { load_file("../Code/Managers/CommonLoads.hoc") }   // !!! no need to load everything from this file
 { load_file("../Code/Extracellular/ExtracellularManager.hoc") }
