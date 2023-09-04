@@ -1,49 +1,76 @@
 
-objref cached_spcLibPackedToVec, cached_ecSrcLibPackedToVec, cached_segm3DSpecificDataMatrix
-
 // !!! keeping this proc on the top level rather than inside a template just because we need to use "farall"
 // !!! (maybe not "forall", but only a subset of sections)
-proc applyExtracellularSources() { local isInsertOrUninsert, segmIdx_global, u localobj spcLibPackedToVec, ecSrcLibPackedToVec, segm3DSpecificDataMatrix, nil
+proc applyExtracellularSources() { local numECSs, isInsertOrUninsert, maxNumImpsPerECS, segmIdx_global, u localobj spcLibPackedToVec, ecSrcLibPackedToVec, segm3DSpecificDataMatrix, numImpsSoFarDataVec, impTimesDataMatrix
 
-    isInsertOrUninsert = (ecsLibrary.ecsList.count() != 0)
+    numECSs = ecsLibrary.getNumECSs()
+    isInsertOrUninsert = (numECSs != 0)
     
     if (isInsertOrUninsert) {
         // GLOBAL-s
         speciesLibrary.copyGlobalVarsToModParams()
         
-        // !!! set NumSpecies_ExtracellularDiffusionHelper
+        maxNumImpsPerECS = ecsLibrary.getMaxNumImpsPerECS()
+        maxNumImpsPerECS_ECDCalcAndConsHelper = maxNumImpsPerECS
+        
+        
+        // POINTER-s
         
         spcLibPackedToVec = speciesLibrary.packToVec()
         ecSrcLibPackedToVec = ecsLibrary.packToVec()
         segm3DSpecificDataMatrix = _prepareSegm3DSpecificDataMatrix()
         
+        numImpsSoFarDataVec = new Vector(numECSs)
+        
+        if (maxNumImpsPerECS == 0) {
+            // Just a workaround because NEURON considers the next commands illegal:
+            //  impTimesDataMatrix = new Matrix(numECSs, 0)
+            //  setpointer ptr_impTimesDataMatrix_ECDCalcAndConsHelper(u), nil
+            maxNumImpsPerECS = 1
+        }
+        impTimesDataMatrix = new Matrix(numECSs, maxNumImpsPerECS)
+        
+        ecsLibrary.deployAllSeriesChains(numImpsSoFarDataVec, impTimesDataMatrix)   // --> eclDeploymentCache
+        
         segmIdx_global = 0
         forall {
-            // !!! maybe only if (!ismembrane(mechName))
-            insert ExtracellularDiffusionHelper
+            // No problem here if already inserted
+            insert ECDCalcAndConsHelper
             
             // !!! the last command inserts all required ions automatically,
             //     so, I need to schedule "Rescan" in biophys manager
             
             for (u, 0) {
-                // !!! it would be better to make these two "GLOBAL POINTER"-s somehow rather than "RANGE POINTER"-s
-                setpointer ptr_spcLibDataVec_ExtracellularDiffusionHelper(u), spcLibPackedToVec.x(0)
-                setpointer ptr_ecSrcLibDataVec_ExtracellularDiffusionHelper(u), ecSrcLibPackedToVec.x(0)
+                // !!! all the pointers below are initialized as "RANGE POINTER"-s,
+                //     but actually only ptr_segm3DSpecificDataMatRow_ECDCalcAndConsHelper needs to be a "RANGE POINTER"
+                //     and all others should be "GLOBAL POINTER"-s
+                //     but how can we do this with NEURON? it considers illegal even when we try to remove "(u)" below
                 
-                setpointer ptr_segm3DSpecificDataMatRow_ExtracellularDiffusionHelper(u), segm3DSpecificDataMatrix.x[segmIdx_global][0]
+                setpointer ptr_spcLibDataVec_ECDCalcAndConsHelper(u), spcLibPackedToVec.x(0)
+                setpointer ptr_ecSrcLibDataVec_ECDCalcAndConsHelper(u), ecSrcLibPackedToVec.x(0)
+                
+                setpointer ptr_segm3DSpecificDataMatRow_ECDCalcAndConsHelper(u), segm3DSpecificDataMatrix.x[segmIdx_global][0]
+                
+                setpointer ptr_numImpsSoFarDataVec_ECDCalcAndConsHelper(u), numImpsSoFarDataVec.x(0)
+                setpointer ptr_impTimesDataMatrix_ECDCalcAndConsHelper(u), impTimesDataMatrix.x[0][0]
                 
                 segmIdx_global += 1
             }
         }
+        
+        eclDeploymentCache.spcLibPackedToVec = spcLibPackedToVec
+        eclDeploymentCache.ecSrcLibPackedToVec = ecSrcLibPackedToVec
+        eclDeploymentCache.segm3DSpecificDataMatrix = segm3DSpecificDataMatrix
+        eclDeploymentCache.numImpsSoFarDataVec = numImpsSoFarDataVec
+        eclDeploymentCache.impTimesDataMatrix = impTimesDataMatrix
+        
     } else {
         forall {
-            // !!! maybe only if (ismembrane(mechName))
-            uninsert ExtracellularDiffusionHelper
+            // No problem here if already uninserted
+            uninsert ECDCalcAndConsHelper
         }
         
-        spcLibPackedToVec = nil
-        ecSrcLibPackedToVec = nil
-        segm3DSpecificDataMatrix = nil
+        eclDeploymentCache.removeAll()
     }
     
     // !!! ??
@@ -59,10 +86,9 @@ proc applyExtracellularSources() { local isInsertOrUninsert, segmIdx_global, u l
     if (name_declared("testPlotShape2")) {
         execute("testPlotShape2.flush()")
     }
-    
-    cached_spcLibPackedToVec = spcLibPackedToVec
-    cached_ecSrcLibPackedToVec = ecSrcLibPackedToVec
-    cached_segm3DSpecificDataMatrix = segm3DSpecificDataMatrix
+    if (name_declared("testPlotShape3")) {
+        execute("testPlotShape3.flush()")
+    }
 }
 
 // !!! test this

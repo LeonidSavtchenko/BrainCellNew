@@ -21,7 +21,7 @@ begintemplate ExtracellularManagerMainWidget
         ecsList = ecsLibrary.ecsList
         
         // !!!
-        firstColWidth = 345
+        firstColWidth = 345     // !!! need to make it wider (test on "FRAP" series)
         secondColWidth = 115
         slotHeight = 190
         
@@ -153,6 +153,7 @@ begintemplate ExtracellularManagerMainWidget
             return
         }
         
+        // !!!! think about FInitializeHandler
         applyExtracellularSources()
         
         line1 = "All the changes were applied."

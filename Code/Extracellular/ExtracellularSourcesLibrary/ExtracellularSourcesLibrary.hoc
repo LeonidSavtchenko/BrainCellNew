@@ -1,10 +1,10 @@
 
 begintemplate ExtracellularSourcesLibrary
 
-    public checkForUnsupportedIons, getNumECSs, packToVec
+    public checkForUnsupportedIons, getNumECSs, getMaxNumImpsPerECS, packToVec, deployAllSeriesChains
     public ecsList
     
-    external mwh
+    external mwh, math, eclDeploymentCache
     external eachItemInList
     
     objref ecsList
@@ -13,11 +13,21 @@ begintemplate ExtracellularSourcesLibrary
     proc init() {
         // !!! some sources just for test (we'll leave only one default ECS based on the legacy code)
         ecsList = new List()
+        
         ecsList.append(new ExtracellularSource_("K+", new ECSSpatialInfo(1, 175, 350, 75, 125), new ECSTemporalInfo(1, 0.5, 1.5, 0), new ECSCapacityInfo(1, 2)))
         ecsList.append(new ExtracellularSource_("K+", new ECSSpatialInfo(0, 140, 30, 60), new ECSTemporalInfo(2, 0.5, 0), new ECSCapacityInfo(0, 2, 1e8)))
+        
         ecsList.append(new ExtracellularSource_("Ca2+", new ECSSpatialInfo(0, 115, 350, -30), new ECSTemporalInfo(0), new ECSCapacityInfo(0, 0, 5, 25)))
         ecsList.append(new ExtracellularSource_("Ca2+", new ECSSpatialInfo(1, -75, -190, -75, 150), new ECSTemporalInfo(0), new ECSCapacityInfo(1, 3)))
         ecsList.append(new ExtracellularSource_("Ca2+", new ECSSpatialInfo(1, 40, 140, -75, 100), new ECSTemporalInfo(2, 2, 0), new ECSCapacityInfo(1, 2.5)))
+        
+        ecsList.append(new ExtracellularSource_("Na+", new ECSSpatialInfo(0, 140, 30, 60), new ECSTemporalInfo(2, 0.5, 1), new ECSCapacityInfo(0, 2, 1e8), new ECSSeriesInfo(10, 3, 1, 0)))
+        ecsList.append(new ExtracellularSource_("Na+", new ECSSpatialInfo(1, 40, 140, -75, 100), new ECSTemporalInfo(2, 2, 1), new ECSCapacityInfo(1, 2.5), new ECSSeriesInfo(1, 4, 1, 1)))
+        ecsList.append(new ExtracellularSource_("Na+", new ECSSpatialInfo(1, 175, 350, 75, 125), new ECSTemporalInfo(1, 0.5, 5.5, 1), new ECSCapacityInfo(1, 2), new ECSSeriesInfo(5, 5, 0, 1)))
+        
+        // !!! BUG: Unhandled Exception. This usually means a bad memory
+        //     the problem is fixed if I use new ECSSeriesInfo(10, 3, 0, 1)
+        // ecsList.append(new ExtracellularSource_("Na+", new ECSSpatialInfo(0, 140, 30, 60), new ECSTemporalInfo(2, 0.5, 1), new ECSCapacityInfo(0, 2, 1e8), new ECSSeriesInfo(10, 3, 0, 0)))
         
         // !!! BUG: Correct 1st, then close, then Correct 2nd => the cross is shown
     }
@@ -38,6 +48,16 @@ begintemplate ExtracellularSourcesLibrary
         return ecsList.count()
     }
     
+    func getMaxNumImpsPerECS() { local maxNumImpsPerECS localobj ecs
+        maxNumImpsPerECS = 0
+        for eachItemInList(ecs, ecsList) {
+            if (ecs.temporalInfo.isSeriesOrMinus1 == 1) {
+                maxNumImpsPerECS = math.max(ecs.seriesInfoOrNil.getNumImps(), maxNumImpsPerECS)
+            }
+        }
+        return maxNumImpsPerECS
+    }
+    
     // !!! this will be called from Extracellular module, but Export module will call other one
     obfunc packToVec() { localobj vec, ecs
         vec = new Vector()
@@ -46,6 +66,20 @@ begintemplate ExtracellularSourcesLibrary
             vec.append(ecs.packToVec())
         }
         return vec
+    }
+    
+    proc deployAllSeriesChains() { local ecsIdx localobj numImpsSoFarDataVec, impTimesDataMatrix, ecs
+        numImpsSoFarDataVec = $o1
+        impTimesDataMatrix = $o2
+        
+        eclDeploymentCache.removeAllSeriesChains()
+        
+        for ecsIdx = 0, ecsList.count() - 1 {
+            ecs = ecsList.o(ecsIdx)
+            if (ecs.temporalInfo.isSeriesOrMinus1 == 1) {
+                eclDeploymentCache.deployOneSeriesChain(ecs.seriesInfoOrNil.mechStd, &numImpsSoFarDataVec.x[ecsIdx], &impTimesDataMatrix.x[ecsIdx][0])
+            }
+        }
     }
     
 endtemplate ExtracellularSourcesLibrary

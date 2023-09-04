@@ -1,6 +1,8 @@
 
 objref speciesLibrary
 
+{ load_file("ExtracellularSourcesLibrary/ECLDeploymentCache.hoc") }
+
 { load_file("Utils/ExtracellularListItems.hoc") }
 { load_file("Utils/ExtracellularApplicatorUtils.hoc") }
 
@@ -10,8 +12,10 @@ objref speciesLibrary
 { load_file("ExtracellularSourcesLibrary/ECSSpatialInfo.hoc") }
 { load_file("ExtracellularSourcesLibrary/ECSTemporalInfo.hoc") }
 { load_file("ExtracellularSourcesLibrary/ECSCapacityInfo.hoc") }
+{ load_file("ExtracellularSourcesLibrary/ECSSeriesInfo.hoc") }
 { load_file("ExtracellularSourcesLibrary/ExtracellularSource.hoc") }
 { load_file("ExtracellularSourcesLibrary/ExtracellularSourcesLibrary.hoc") }
 
+{ load_file("Widgets/NetStimParamsWidget.hoc") }
 { load_file("Widgets/OneExtracellularSourceWidget.hoc") }
 { load_file("Widgets/ExtracellularManagerMainWidget.hoc") }
