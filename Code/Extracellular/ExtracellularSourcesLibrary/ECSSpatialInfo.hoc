@@ -42,27 +42,19 @@ begintemplate ECSSpatialInfo
         return (enumPointBall == other.enumPointBall && x == other.x && y == other.y && z == other.z && radiusOrMinus1 == other.radiusOrMinus1)
     }
     
-    proc prepareShownString() { local isSeriesOrMinus1 localobj seriesInfoOrNil
-        strdef species, dynamicsName, lengthUnits, seriesIndication
+    proc prepareShownString() {
+        strdef species, dynamicsName, lengthUnits
         
         species = $s1
         dynamicsName = $s2
-        isSeriesOrMinus1 = $3
-        seriesInfoOrNil = $o4
         
         lengthUnits = units("L")
         
-        if (isSeriesOrMinus1 == 1) {
-            sprint(seriesIndication, " (series of %d)", seriesInfoOrNil.getNumImps())
-        } else {
-            seriesIndication = ""
-        }
-        
         if (enumPointBall == 0) {
             // !!! think about showing "pointCapacityRadius"
-            sprint($s5, "%s: point / %s%s / c={%g, %g, %g} %s", species, dynamicsName, seriesIndication, x, y, z, lengthUnits)
+            sprint($s3, "%s: point / %s / c={%g, %g, %g} %s", species, dynamicsName, x, y, z, lengthUnits)
         } else if (enumPointBall == 1) {
-            sprint($s5, "%s: ball / %s%s / c={%g, %g, %g} %s, r=%g %s", species, dynamicsName, seriesIndication, x, y, z, lengthUnits, radiusOrMinus1, lengthUnits)
+            sprint($s3, "%s: ball / %s / c={%g, %g, %g} %s, r=%g %s", species, dynamicsName, x, y, z, lengthUnits, radiusOrMinus1, lengthUnits)
         } else {
             codeContractViolation()
         }

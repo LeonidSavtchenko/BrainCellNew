@@ -544,7 +544,6 @@ begintemplate InhomEditorSubWidget
         shape.exec_menu("View = plot")
         
         if (!isMechOrSynEditor) {
-            // !!!! it would make sense to have graphUtils.addPlotDynamicsMenuItem for the vars in PPs/ACs as well
             return
         }
         
@@ -557,7 +556,6 @@ begintemplate InhomEditorSubWidget
         //     user can click on a (grey) section not in this compartment
         //     and face an error like "cadifus mechanism not inserted in section axon[1]",
         //     but this error looks for good, so let's keep it
-        // !!!! it would make more sense to have such a tool in StochEditorSubWidget rather than here
         graphUtils.addPlotDynamicsMenuItem(shape, slotIdx, varTypeName, varNameWithIndex, 0)
     }
     

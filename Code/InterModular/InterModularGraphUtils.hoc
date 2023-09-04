@@ -23,7 +23,7 @@ proc addVarToGraph() { local numArg, colourIdx localobj graph
 
 begintemplate GraphUtils
 
-    public addPlotDynamicsMenuItem, mouseEventsHandler0, mouseEventsHandler1, mouseEventsHandler2, mouseEventsHandler3, mouseEventsHandler4, mouseEventsHandler5
+    public addPlotDynamicsMenuItem, mouseEventsHandler0, mouseEventsHandler1, mouseEventsHandler2, mouseEventsHandler3, mouseEventsHandler4
     public varNamesWithIndex
     
     external mwh
@@ -36,12 +36,10 @@ begintemplate GraphUtils
     
     // 0: MainUi
     // 1, 2: InhomEditorSubWidget
-    // 3, 4, 5: Testing\init_ExtraManager.hoc
-    objref registeredPlotShapes[6], varNamesWithIndex[6]
+    // 3, 4: Testing\init_ExtraManager.hoc
+    objref registeredPlotShapes[5], varNamesWithIndex[5]
     
     
-    // !!! BUG: if user changes the var name with "Plot What?" after calling this proc,
-    //          we still use the old var name when creating the Graph-s
     proc addPlotDynamicsMenuItem() { local slotIdx, isDynamicColormap localobj plotShape
         strdef varNameForMenu, varNameWithIndexOrEmpty, menuItemNameAndMsgBoxTitle, mouseHandlerName, selectHandlerCall
         
@@ -51,19 +49,12 @@ begintemplate GraphUtils
         varNameWithIndexOrEmpty = $s4   // Empty means "will be set dynamically (later)"
         isDynamicColormap = $5
         
-        if (slotIdx > 5) {
-            codeContractViolation()
-        }
-        
         sprint(menuItemNameAndMsgBoxTitle, "%s Dynamics Graph", varNameForMenu)
         sprint(mouseHandlerName, "mouseEventsHandler%d", slotIdx)
         sprint(selectHandlerCall, "selectHandler(%d, \"%s\", %d)", slotIdx, menuItemNameAndMsgBoxTitle, isDynamicColormap)
         
         plotShape.menu_tool(menuItemNameAndMsgBoxTitle, mouseHandlerName, selectHandlerCall)
-        // !!!! think about 2 more menu items:
-        //      * first click creates a new Graph, each next adds a new var to it
-        //      * first click creates a new widget, each next adds a new Graph to it
-        //      also, I can show a mini widget to manage all the Graphs/widgets created this way
+        
         registeredPlotShapes[slotIdx] = plotShape
         varNamesWithIndex[slotIdx] = new String(varNameWithIndexOrEmpty)
     }
@@ -86,10 +77,6 @@ begintemplate GraphUtils
     
     proc mouseEventsHandler4() {
         mouseEventsHandler($1, $2, $3, $4, 4)
-    }
-    
-    proc mouseEventsHandler5() {
-        mouseEventsHandler($1, $2, $3, $4, 5)
     }
     
     // All next staff is private
@@ -135,7 +122,7 @@ begintemplate GraphUtils
         
         // Make the nearest section currently accessed
         d = plotShape.nearest(x, y)
-        if (d > 25) {       // !!! hardcode (we can use, say, 10% of "cell size")
+        if (d > 25) {       // !!! hardcode
             return
         }
         

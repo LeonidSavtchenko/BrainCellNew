@@ -1,76 +1,12 @@
 
-// !!! can I merge this template with SpeciesInfo?
 begintemplate SpeciesListItem
-
-    public s, rangeVarName, ionMechName
-    
-    external stringsEqual, codeContractViolation
-    
-    strdef s, rangeVarName, ionMechName
-    
-    
-    proc init() { local charge, absCharge, len localobj strFunc
-        strdef ionSuffix, userFriendlyIonName, absChargeOrEmptyStr, chargeSignOrEmptyStr
-        
-        ionMechName = $s1
-        
-        ionSuffix = "_ion"  // !!! the same in MechTypeHelper and SpeciesLibrary - move to a common place
-        
-        strFunc = new StringFunctions()
-        
-        // Prepare the shown name "s"
-        getUserFriendlyIonName(userFriendlyIonName)
-        charge = ion_charge(ionMechName)        // !!! it looks like fractional or zero charge is OK for NEURON, so we are ready as well
-        /* !!!
-        if (charge == -10000) {
-            // No VALENCE specified in the MOD file
-            codeContractViolation()
-        }
-        */
-        absCharge = abs(charge)
-        if (absCharge != 1 && absCharge != 0) {
-            sprint(absChargeOrEmptyStr, "%g", absCharge)
-        } else {
-            absChargeOrEmptyStr = ""
-        }
-        if (charge > 0) {
-            chargeSignOrEmptyStr = "+"
-        } else if (charge < 0) {
-            chargeSignOrEmptyStr = "-"
-        } else {
-            chargeSignOrEmptyStr = ""
-        }
-        sprint(s, "%s%s%s", userFriendlyIonName, absChargeOrEmptyStr, chargeSignOrEmptyStr)
-        
-        // Prepare the outer concentration var name "rangeVarName"
-        len = strFunc.len(ionMechName) - strFunc.len(ionSuffix)
-        sprint(rangeVarName, "%s", ionMechName)
-        strFunc.left(rangeVarName, len)
-        sprint(rangeVarName, "%so", rangeVarName)
+    public s, rangeVarName, ionMechNameOrEmpty
+    strdef s, rangeVarName, ionMechNameOrEmpty
+    proc init() {
+        s = $s1
+        rangeVarName = $s2
+        ionMechNameOrEmpty = $s3    // !!! empty ion mech name means "shown in the list, but not supported"
     }
-    
-    // All next staff is private
-    
-    
-    // !!! ### Edit here when changing the species list ###
-    // !!!! just a temp solution (must be taken from JSON together with Diff)
-    // !!!! double check that I can't get it from MechanismType or MechanismStandard
-    proc getUserFriendlyIonName() {
-        if (stringsEqual(ionMechName, "na_ion")) {
-            $s1 = "Na"
-        } else if (stringsEqual(ionMechName, "k_ion")) {
-            $s1 = "K"
-        } else if (stringsEqual(ionMechName, "ca_ion")) {
-            $s1 = "Ca"
-        } else if (stringsEqual(ionMechName, "frapion_ion")) {
-            $s1 = "FRAP"
-        } else if (stringsEqual(ionMechName, "ip3_ion")) {
-            $s1 = "IP3"         // !!! problem here: "3+" looks like the charge
-        } else {
-            codeContractViolation()
-        }
-    }
-    
 endtemplate SpeciesListItem
 
 begintemplate DynamicsListItem

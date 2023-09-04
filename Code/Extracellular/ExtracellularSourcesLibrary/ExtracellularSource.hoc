@@ -3,7 +3,7 @@
 begintemplate ExtracellularSource_
 
     public isEqual, checkForUnsupportedIon, packToVec
-    public species, spatialInfo, temporalInfo, capacityInfo, seriesInfoOrNil
+    public species, spatialInfo, temporalInfo, capacityInfo
     public s
     
     external mwh, speciesLibrary
@@ -12,55 +12,35 @@ begintemplate ExtracellularSource_
     strdef species
     // !!! think about storing speciesIdx here
     
-    objref spatialInfo, temporalInfo, capacityInfo, seriesInfoOrNil
+    objref spatialInfo, temporalInfo, capacityInfo
     
     strdef s
     
     
-    proc init() { local numArg localobj nil
-        numArg = numarg()
-        
-        if (numArg < 4 || numArg > 5) {
-            codeContractViolation()
-        }
-        
+    proc init() {
         species = $s1
         spatialInfo = $o2
         temporalInfo = $o3
         capacityInfo = $o4
-        if (numArg == 5) {
-            seriesInfoOrNil = $o5
-        }
         
         if (spatialInfo.enumPointBall == 0 && temporalInfo.enumStaticSwitchSpike == 1) {
             codeContractViolation()
         }
         // !!! add similar check for enumPointBall+enumStaticSwitchSpike+capacityInfo
         
-        if ((temporalInfo.isSeriesOrMinus1 != 1 && seriesInfoOrNil != nil) || (temporalInfo.isSeriesOrMinus1 == 1 && seriesInfoOrNil == nil)) {
-            codeContractViolation()
-        }
-        
         prepareShownString()
     }
     
-    func isEqual() { local cond localobj other
+    func isEqual() { localobj other
         other = $o1
         
         // !!! BUG: it must be illegal to create two sources with the same species, spatialInfo and temporalInfo independently on capacityInfo,
-        //     to achieve this, we need to remove the last predicate in "cond" below,
+        //     to achieve this, we need to remove the last predicate below,
         //     but after doing this, we will face other problem: user cannot click "Correct", change only capacityInfo, then click "Apply"
         
-        // !!! maybe it must be illegal to create two sources with the only difference in either startTime, endTime, spikeTime or seriesInfoOrNil
+        // !!! maybe it must be illegal to create two sources with the only difference in either startTime, endTime or spikeTime
         
-        cond = stringsEqual(species, other.species) && spatialInfo.isEqual(other.spatialInfo) && temporalInfo.isEqual(other.temporalInfo) && capacityInfo.isEqual(other.capacityInfo)
-        if (!cond) {
-            return 0
-        }
-        if (temporalInfo.isSeriesOrMinus1 != 1) {
-            return 1
-        }
-        return seriesInfoOrNil.isEqual(other.seriesInfoOrNil)
+        return stringsEqual(species, other.species) && spatialInfo.isEqual(other.spatialInfo) && temporalInfo.isEqual(other.temporalInfo) && capacityInfo.isEqual(other.capacityInfo)
     }
     
     // !!! a temp solution (the list won't show any unsupported ions)
@@ -69,7 +49,7 @@ begintemplate ExtracellularSource_
         speciesIdxOrMinus1 = speciesLibrary.getSpeciesIdxOrMinus1(species)
         isUnsupported = (speciesIdxOrMinus1 == -1)
         if (isUnsupported) {
-            sprint(msg, "\"%s\" species.", species)
+            sprint(msg, "\"%s\" species", species)
             mwh.showNotImplementedWarning(msg)
         }
         return isUnsupported
@@ -84,7 +64,6 @@ begintemplate ExtracellularSource_
         
         vec = new Vector()
         vec.append(speciesIdxOrMinus1, spatialInfo.packToVec(), temporalInfo.packToVec(), capacityInfo.packToVec())
-        // !!!! no seriesInfoOrNil.packToVec() here by design
         return vec
     }
     
@@ -95,7 +74,7 @@ begintemplate ExtracellularSource_
     proc prepareShownString() {
         strdef dynamicsName
         temporalInfo.getDynamicsName(dynamicsName)
-        spatialInfo.prepareShownString(species, dynamicsName, temporalInfo.isSeriesOrMinus1, seriesInfoOrNil, s)
+        spatialInfo.prepareShownString(species, dynamicsName, s)
     }
     
 endtemplate ExtracellularSource_
