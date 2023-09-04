@@ -6,8 +6,6 @@ isAstrocyteOrNeuron = -1    // 1 - astrocyte, 0 - neuron
 currentMechanismSetup = 0       // 0 - Electric mechanisms, 1 - Glutamate mechanisms
 DensityGluTransporters = 1e12   // 1/um2
 
-objref soma_ref
-
 { load_file("Code/InterModular/AllInterModularUtils.hoc") }
 
 objref mechsDllUtils
@@ -19,11 +17,16 @@ proc prologueCompleteHandler() {
 }
 
 proc roadmapChosenHandler() { local isLoaded localobj plotShape
-
+    strdef showWarningBoxHocCommand
+    
     if (!isBaseOrNanoStart) {
-        isLoaded = loadNanoHocFile()
+        showWarningBoxHocCommand = ""
+        isLoaded = loadNanoHocFile(showWarningBoxHocCommand)
         if (!isLoaded) {
             showRoadmapWidget()
+            if (!stringEmpty(showWarningBoxHocCommand)) {
+                execute(showWarningBoxHocCommand)
+            }
             return
         }
     }
