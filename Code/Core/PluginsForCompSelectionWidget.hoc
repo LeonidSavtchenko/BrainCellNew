@@ -80,7 +80,7 @@ begintemplate PluginForCSW_FromMM
     }
     
     proc dismissHandler() {
-        // !! maybe nothing here
+        // !! maybe empty by design
     }
     
 endtemplate PluginForCSW_FromMM

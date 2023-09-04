@@ -3,6 +3,7 @@ from neuron import h
 from Utils.OtherUtils import hocObj
 
 
+# See also: InterModularUnitsUtils.hoc and hoc:MechTypeHelper.getVarUnits
 class UnitsUtils:
     
     # e.g. 'mV'

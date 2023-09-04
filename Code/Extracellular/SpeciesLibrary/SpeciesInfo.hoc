@@ -1,0 +1,30 @@
+
+begintemplate SpeciesInfo
+
+    public packToVec
+    public suffix, diff
+    
+    external math
+    
+    strdef suffix
+    diff = -1       // For "point" shape and "spike" dynamics only
+    
+    
+    proc init() { local inf
+        suffix = $s1
+        diff = $2
+        
+        units(&diff, "um2/ms")
+        
+        inf = math.inf
+        variable_domain(&diff, 0, inf)
+    }
+    
+    // !!! this will be called from both Extracellular and Export modules
+    obfunc packToVec() { localobj vec
+        vec = new Vector(1)
+        vec.x(0) = diff
+        return vec
+    }
+    
+endtemplate SpeciesInfo

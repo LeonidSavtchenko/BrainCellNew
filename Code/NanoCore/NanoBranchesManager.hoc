@@ -35,9 +35,11 @@ begintemplate NanoBranchesManager
     // and then double clicks on any nanogeometry section in the list.
     public nanoBranches_flat
     
+    public MaxNumberBranchesPerDendrite
+    
     external seededDendrite_ref, NumberNanoBranches
     external isAstrocyteOrNeuron, MinDistance, MaxDendriticLength, isFirstReseeding
-    external mwh, rngUtils
+    external mwh, rngUtils, math
     external manageAndRunWidget
     
     external createAstrocyteNanoBranch, createNeuronNanoBranch, createRefsForNanoGeometry
@@ -52,12 +54,16 @@ begintemplate NanoBranchesManager
     lastUsedArg1 = -1
     lastUsedArg2OrMinus1 = -1
     
+    
     // Initialization of this singleton template
-    proc init() {
+    proc init() { local inf
         MaxNumberBranchesPerDendrite = $1
         
         nanoBranches_flat = new List()
         randomBranchSeeder = rngUtils.getFor_branchSeeder()
+        
+        inf = math.inf
+        variable_domain(&MaxNumberBranchesPerDendrite, 0, inf)
     }
     
     // Reseed dendrites with nanobranches
@@ -127,6 +133,8 @@ begintemplate NanoBranchesManager
         
         isFirstReseeding = 0
         NumberNanoBranches = nanoBranches_flat.count()
+        
+        print "NumberNanoBranches: ", NumberNanoBranches    // !!!!
     }
     
     // Reseed dendrites with nanobranches using the same arguments as the last time

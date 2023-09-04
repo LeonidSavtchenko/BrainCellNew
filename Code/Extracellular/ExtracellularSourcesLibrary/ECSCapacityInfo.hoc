@@ -1,0 +1,82 @@
+
+begintemplate ECSCapacityInfo
+
+    public isEqual, packToVec
+    public ssOrMinus1, pointCapacityRadiusOrMinus1, numMoleculesOrMinus1, delta_oOrMinus1
+    
+    external codeContractViolation
+    
+    ssOrMinus1 = -1                     // For "point" shape and "static" dynamics only
+    pointCapacityRadiusOrMinus1 = -1    // For "point" shape and "static" dynamics only
+    numMoleculesOrMinus1 = -1           // For "point" shape and "spike" dynamics only
+    delta_oOrMinus1 = -1                // For "ball" shape only
+    
+    
+    proc init() { local numArg, enumPointBall, enumStaticSwitchSpike
+        
+        numArg = numarg()
+        if (numArg < 2 || numArg > 4) {
+            codeContractViolation()
+        }
+        
+        enumPointBall = $1
+        
+        ssOrMinus1 = -1
+        pointCapacityRadiusOrMinus1 = -1
+        numMoleculesOrMinus1 = -1
+        delta_oOrMinus1 = -1
+        
+        if (enumPointBall == 0) {
+            enumStaticSwitchSpike = $2
+            
+            if (enumStaticSwitchSpike == 0) {
+                if (numArg != 4) {
+                    codeContractViolation()
+                }
+                ssOrMinus1 = $3
+                pointCapacityRadiusOrMinus1 = $4
+                if (ssOrMinus1 == -1 || pointCapacityRadiusOrMinus1 == -1) {
+                    codeContractViolation()
+                }
+            } else if (enumStaticSwitchSpike == 2) {
+                if (numArg != 3) {
+                    codeContractViolation()
+                }
+                numMoleculesOrMinus1 = $3
+                if (numMoleculesOrMinus1 == -1) {
+                    codeContractViolation()
+                }
+            } else {
+                codeContractViolation()
+            }
+        } else if (enumPointBall == 1) {
+            if (numArg != 2) {
+                codeContractViolation()
+            }
+            delta_oOrMinus1 = $2
+            if (delta_oOrMinus1 == -1) {
+                codeContractViolation()
+            }
+        } else {
+            codeContractViolation()
+        }
+    }
+    
+    // !!! do I need this func?
+    func isEqual() { localobj other
+        other = $o1
+        
+        return (ssOrMinus1 == other.ssOrMinus1 && pointCapacityRadiusOrMinus1 == other.pointCapacityRadiusOrMinus1 && numMoleculesOrMinus1 == other.numMoleculesOrMinus1 && delta_oOrMinus1 == other.delta_oOrMinus1)
+    }
+    
+    // !!! this will be called from both Extracellular and Export modules
+    obfunc packToVec() { localobj vec
+        vec = new Vector(4)
+        vec.x(0) = ssOrMinus1
+        vec.x(1) = pointCapacityRadiusOrMinus1
+        vec.x(2) = numMoleculesOrMinus1
+        vec.x(3) = delta_oOrMinus1
+        return vec
+    }
+    
+endtemplate ECSCapacityInfo

@@ -1,0 +1,64 @@
+
+begintemplate ECLDeploymentCache
+
+    public deployOneSeriesChain, removeAllSeriesChains, removeAll
+    
+    public spcLibPackedToVec, ecSrcLibPackedToVec
+    public segm3DSpecificDataMatrix
+    public numImpsSoFarDataVec, impTimesDataMatrix
+    public seriesNetStimList, seriesNetConList, seriesECDHelperList     // !!!! maybe raname the last one to "ecsSeriesHelperList" here and in MOD
+    
+    objref spcLibPackedToVec, ecSrcLibPackedToVec
+    objref segm3DSpecificDataMatrix
+    objref numImpsSoFarDataVec, impTimesDataMatrix
+    objref seriesNetStimList, seriesNetConList, seriesECDHelperList
+    
+    
+    proc init() {
+        seriesNetStimList = new List()
+        seriesNetConList = new List()
+        seriesECDHelperList = new List()
+    }
+    
+    proc deployOneSeriesChain() { localobj mechStd, netStim, ecdSeriesHelper, netCon
+        mechStd = $o1
+        
+        netStim = new NetStim()
+        mechStd.out(netStim)
+        
+        ecdSeriesHelper = new ECDSeriesHelper()
+        setpointer ecdSeriesHelper.ptr_numImpsSoFarVecElem, $&2
+        setpointer ecdSeriesHelper.ptr_impTimesDataMatRow, $&3
+        
+        // !!!! this sets the delay=1 ms by default
+        netCon = new NetCon(netStim, ecdSeriesHelper)
+        netCon.delay = 0    // !!!! how about other params?
+        
+        seriesNetStimList.append(netStim)
+        seriesECDHelperList.append(ecdSeriesHelper)
+        seriesNetConList.append(netCon)
+    }
+    
+    proc removeAllSeriesChains() {
+        seriesNetConList.remove_all()   // Removing NetCon-s first
+        seriesNetStimList.remove_all()
+        seriesECDHelperList.remove_all()
+    }
+    
+    proc removeAll() { localobj nil
+        
+        removeAllSeriesChains()
+        
+        spcLibPackedToVec = nil
+        ecSrcLibPackedToVec = nil
+        
+        segm3DSpecificDataMatrix = nil
+        
+        numImpsSoFarDataVec = nil
+        impTimesDataMatrix = nil
+    }
+    
+endtemplate ECLDeploymentCache
+
+objref eclDeploymentCache
+eclDeploymentCache = new ECLDeploymentCache()

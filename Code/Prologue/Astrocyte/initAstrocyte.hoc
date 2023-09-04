@@ -49,9 +49,9 @@ objref vBoxSelectGeometry, plotShapeGeometry, vBoxSelectGeometryReal
 
 // Shows geometry.
 proc showSelectedGeometry() {
-    removeIfExists(fast_flush_list, plotShapeGeometry)
+    removeIfExists(fast_flush_list, plotShapeGeometry)      // !!! maybe not needed
     plotShapeGeometry = new PlotShape(0)
-    fast_flush_list.append(plotShapeGeometry)
+    fast_flush_list.append(plotShapeGeometry)               // !!!
     plotShapeGeometry.size(-40,40,-37.0217,37.0217)
     plotShapeGeometry.variable("v")
     plotShapeGeometry.view(-40, -37.0217, 80, 74.0433, 850, 300, 433.8, 401.5)

@@ -712,7 +712,8 @@ begintemplate SynManagerMainWidget
             }
             
             mth.getMechName(1, mechIdx, mechName)
-            nrnglobalmechmenu(mechName)
+            varsEditorSubWidget = new GlobalsEditorWidget()
+            varsEditorSubWidget.show(mechName, 435, 100)
         }
     }
     
@@ -800,6 +801,7 @@ begintemplate SynManagerMainWidget
         if (!isCondIgnoreVarsEditorWidget) {
             dismissIfNotNil(varsEditorSubWidget)
         } else if (varsEditorSubWidget != nil) {
+            // !!!! BUG: error here: "compIdx not a public member of GlobalsEditorWidget"
             if (varsEditorSubWidget.compIdx == synCompIdx) {
                 varsEditorSubWidget.dismissHandler()
             }

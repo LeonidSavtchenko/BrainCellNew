@@ -18,9 +18,9 @@ proc removeIfExists_importer() { local itemIndex
 
 // Shows geometry.
 proc showImportedGeometry_importer() {
-    removeIfExists_importer(fast_flush_list, plotShapeGeometry_importer)
+    removeIfExists_importer(fast_flush_list, plotShapeGeometry_importer)    // !!! maybe not needed
     plotShapeGeometry_importer = new PlotShape(0)
-    fast_flush_list.append(plotShapeGeometry_importer)
+    fast_flush_list.append(plotShapeGeometry_importer)                      // !!!
     plotShapeGeometry_importer.size(-40,40,-37.0217,37.0217)
     plotShapeGeometry_importer.variable("v")
     plotShapeGeometry_importer.view(-40, -37.0217, 80, 74.0433, 850, 300, 433.8, 401.5)

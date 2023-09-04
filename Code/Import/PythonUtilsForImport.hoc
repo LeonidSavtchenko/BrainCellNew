@@ -1,4 +1,31 @@
 
+// Unzip the archive and rename the input SWC file
+// $s1 - Input ZIP file path and name
+// $s2 - Output folder path and name
+// $s3 (Output) - The SWC file path and name
+proc unzipArchiveAndRenameInputFile() { local status
+    strdef inZipFilePathName, outFolderPathName, pyCommandTempl, pyCommand, outSwcFileName, outSwcFilePathName
+    
+    inZipFilePathName = $s1
+    outFolderPathName = $s2
+    
+    // Unzip the archive and save to the temporary folder as a flat file list
+    pyCommandTempl = "import zipfile\nimport os\nwith zipfile.ZipFile('%s', 'r') as inZipFile:\n    for membPathName in inZipFile.namelist():\n        membName = os.path.basename(membPathName)\n        if not membName:\n            continue\n        dstFilePathName = os.path.join('%s', membName)\n        with inZipFile.open(membPathName) as srcMembFile, open(dstFilePathName, 'wb') as dstFile:\n            dstFile.write(srcMembFile.read())"
+    sprint(pyCommand, pyCommandTempl, inZipFilePathName, outFolderPathName)
+    
+    status = runSysOrPyCommandWithWaitBox(pyCommand, 0, "Unzipping")
+    if (!status) {
+        printImportFailedMsgAndRaiseError("Cannot unzip the archive")
+    }
+    
+    // Create a copy of the first "*.CNG.swc" file in just unzipped folder giving it fixed name
+    outSwcFileName = "input_file.swc"
+    copyAndRenameFirstSwcFile(outFolderPathName, outSwcFileName)
+    
+    sprint(outSwcFilePathName, "%s/%s", outFolderPathName, outSwcFileName)
+    $s3 = outSwcFilePathName
+}
+
 // Create a copy of the first "*.CNG.swc" file in just unzipped folder giving it fixed name
 // $s1 - The unzipped folder path and name
 // $s2 - The destination file name

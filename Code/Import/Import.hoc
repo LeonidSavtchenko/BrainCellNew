@@ -4,7 +4,6 @@
 { load_file("../InterModular/InterModularPythonUtils.hoc") }    // stringToLowerCase, checkIfFileMissing, pyObj
 { load_file("ErrWarnUtils.hoc") }
 { load_file("ListCopyUtils.hoc") }
-{ load_file("PythonUtilsForImport.hoc") }
 { load_file("BatchUtils.hoc") }
 { load_file("CheckUtils.hoc") }
 { load_file("DefaultSelectionUtils.hoc") }
@@ -13,6 +12,7 @@
 { load_file("SectionRefUtils.hoc") }
 { load_file("PreviewUtils.hoc") }
 { load_file("OtherUtils.hoc") }
+{ load_file("PythonUtilsForImport.hoc") }
 { load_file("Widgets_layer2.hoc") }
 { load_file("Import_layer2.hoc") }
 { load_file("Widgets_layer1.hoc") }

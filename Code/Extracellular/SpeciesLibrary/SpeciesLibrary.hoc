@@ -1,0 +1,83 @@
+
+// The idea behind this file is to collect in one place all HOC staff that you need to modify in case you want to
+// add new species to (or delete old ones from) the list of species supported by (and shown in) the module of extracellular diffusion.
+// When editing, look for the lines marked as "### Edit here when changing the species list ###"
+// in this file and in "ExtracellularListItems.hoc".
+// Any changes to this HOC file must be done synchronously with the changes to the special MOD files responsible for the extracellular diffusion
+// !!! (now we have one for astrocytes and one for neurons, but in the future we want to keep only one shared MOD file).
+
+begintemplate SpeciesLibrary
+
+    public copyGlobalVarsToModParams, packToVec, getSpeciesIdxOrMinus1
+    public spcNamesList, spcInfoList
+    
+    external stringsEqual, stringEndsWith
+    external eachItemInList
+    
+    // !!! maybe rename spcNamesList to smth more clear
+    objref spcNamesList, spcInfoList
+    
+    
+    proc init() { local mechIdx localobj mechType
+        strdef ionSuffix, mechName
+        
+        ionSuffix = "_ion"  // !!! the same in MechTypeHelper and SpeciesListItem - move to a common place
+        
+        // !!!! see ion_charge(), ion_register(), ion_style()
+        
+        // "Na+" and "K+" are standard to NEURON, but others will depend on user's MOD files
+        spcNamesList = new List()
+        mechType = new MechanismType(0)     // 0: "Distributed Membrane Mechanisms"
+        for mechIdx = 0, mechType.count - 1 {
+            mechType.select(mechIdx)
+            mechType.selected(mechName)
+            if (stringEndsWith(mechName, ionSuffix)) {
+                spcNamesList.append(new SpeciesListItem(mechName))
+            }
+        }
+        
+        // !!!! read these from JSON
+        spcInfoList = new List()
+        // !!! review the constants below
+        // !!! ### Edit here when changing the species list ###
+        spcInfoList.append(new SpeciesInfo("na", 1400))
+        spcInfoList.append(new SpeciesInfo("k", 1500))      // !!! was: 0.5 (PotassiumDiffusion.mod)
+        spcInfoList.append(new SpeciesInfo("ca", 1600))
+        spcInfoList.append(new SpeciesInfo("frapion", 1700))
+        spcInfoList.append(new SpeciesInfo("ip3", 1800))
+    }
+    
+    proc copyGlobalVarsToModParams() {
+        // !!! ### Edit here when changing the species list ###
+        // !!!! this can be automated
+        naoinit_ECDCalcAndConsHelper = nao0_na_ion
+        koinit_ECDCalcAndConsHelper = ko0_k_ion
+        caoinit_ECDCalcAndConsHelper = cao0_ca_ion
+        frapionoinit_ECDCalcAndConsHelper = frapiono0_frapion_ion
+        ip3oinit_ECDCalcAndConsHelper = ip3o0_ip3_ion
+    }
+    
+    // !!! this will be called from Extracellular module, but Export module will call other one
+    obfunc packToVec() { localobj vec, speciesInfo
+        vec = new Vector()
+        vec.append(spcInfoList.count())
+        for eachItemInList(speciesInfo, spcInfoList) {
+            vec.append(speciesInfo.packToVec())
+        }
+        return vec
+    }
+    
+    func getSpeciesIdxOrMinus1() { local spcIdx
+        strdef species
+        species = $s1
+        for spcIdx = 0, spcNamesList.count() - 1 {
+            if (stringsEqual(species, spcNamesList.o(spcIdx).s)) {
+                return spcIdx
+            }
+        }
+        return -1
+    }
+    
+endtemplate SpeciesLibrary
+
+speciesLibrary = new SpeciesLibrary()   // !!! make sure it's imported when we start with nano

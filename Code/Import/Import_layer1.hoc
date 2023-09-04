@@ -10,23 +10,27 @@ proc importSwcFileFromZipArchive_layer1() {
     outFolderRelPathName = "Code/Import/temp_folder/last_unzipped"
     createOrCleanUpTempFolder(outFolderRelPathName)
     
-    // Unzip the archive with 7-Zip and rename the input SWC file
+    // Unzip the archive and rename the input SWC file
     outFolderPathNameTempl = "%s%s"
     sprint(outFolderPathName, outFolderPathNameTempl, getcwd(), outFolderRelPathName)
-    unzipArchiveWith7ZipAndRenameInputFile(inZipFilePathName, outFolderPathName, swcFilePathName)
+    unzipArchiveAndRenameInputFile(inZipFilePathName, outFolderPathName, swcFilePathName)
     
     importSwcOrOtherFile_layer1(swcFilePathName)
 }
 
 // Import SWC or any other file supported by NLMorphologyConverter
 // $s1 - Input file path and name
-proc importSwcOrOtherFile_layer1() { local isSomaMissing, isAxonMissing, somaDiamAndLenOrMinusOne, isAxonMissingAndRequired
+proc importSwcOrOtherFile_layer1() { local isSomaMissing, isDendriteMissing, isAxonMissing, somaDiamAndLenOrMinusOne, isAxonMissingAndRequired
     strdef inFilePathName, hocFilePathName
     
     inFilePathName = $s1
     
     // Check if this geometry file does not define soma and/or axon
-    checkIfSomaAndOrAxonAreMissingInThisGeometryFile(inFilePathName, &isSomaMissing, &isAxonMissing)
+    checkIfSomaDendriteOrAxonIsMissingInThisGeometryFile(inFilePathName, &isSomaMissing, &isDendriteMissing, &isAxonMissing)
+    
+    if (isDendriteMissing) {
+        printImportFailedMsgAndRaiseError("The imported file doesn't define any dendrites")
+    }
     
     if (isSomaMissing) {
         somaDiamAndLenOrMinusOne = ic.getDefaultSomaDiamAndLen()
@@ -79,7 +83,7 @@ proc importHocFile_layer1() { local isCalledAfterConversion, isSomaInsertedDurin
         allNames = getAllSectionNames()
         
         if (allNames.count() == 0) {
-            printImportFailedMsgAndRaiseError("The imported HOC file did not create any section")
+            printImportFailedMsgAndRaiseError("The imported HOC file didn't create any section")
         }
         
         if (!isCalledAfterConversion) {

@@ -1,0 +1,39 @@
+
+// Basically, a wrapper of "nrnglobalmechmenu(mechName)" fixing 3 problems:
+//  * the panel appears too far from the clicked button/checkbox
+//  * many instances of the same panel can be created
+//  * not closed automatically with the parent widget (or after a certain operation in the parent widget)
+begintemplate GlobalsEditorWidget
+
+    public show, dismissHandler
+    
+    external unmapIfNotNil
+    
+    objref mainBox
+    
+    
+    proc show() { local x, y
+        strdef mechName, title
+        
+        mechName = $s1
+        x = $2
+        y = $3
+        
+        dismissHandler()
+        
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            nrnglobalmechmenu(mechName)
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        sprint(title, "%s (Globals)", mechName)     // The same as for "nrnglobalmechmenu(mechName)" without the VBox
+        mainBox.map(title, x, y, -1, -1)
+    }
+    
+    proc dismissHandler() {
+        unmapIfNotNil(mainBox)
+    }
+    
+endtemplate GlobalsEditorWidget

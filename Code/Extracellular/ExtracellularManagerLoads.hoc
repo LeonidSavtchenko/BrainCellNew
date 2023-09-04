@@ -1,8 +1,21 @@
 
-{ load_file("ExtracellularLibrary/ECSSpatialInfo.hoc") }
-{ load_file("ExtracellularLibrary/ECSTemporalInfo.hoc") }
-{ load_file("ExtracellularLibrary/ECSCapacityInfo.hoc") }
-{ load_file("ExtracellularLibrary/ExtracellularSource.hoc") }
-{ load_file("ExtracellularLibrary/ExtracellularLibrary.hoc") }
+objref speciesLibrary
+
+{ load_file("ExtracellularSourcesLibrary/ECLDeploymentCache.hoc") }
+
+{ load_file("Utils/ExtracellularListItems.hoc") }
+{ load_file("Utils/ExtracellularApplicatorUtils.hoc") }
+
+{ load_file("SpeciesLibrary/SpeciesInfo.hoc") }
+{ load_file("SpeciesLibrary/SpeciesLibrary.hoc") }
+
+{ load_file("ExtracellularSourcesLibrary/ECSSpatialInfo.hoc") }
+{ load_file("ExtracellularSourcesLibrary/ECSTemporalInfo.hoc") }
+{ load_file("ExtracellularSourcesLibrary/ECSCapacityInfo.hoc") }
+{ load_file("ExtracellularSourcesLibrary/ECSSeriesInfo.hoc") }
+{ load_file("ExtracellularSourcesLibrary/ExtracellularSource.hoc") }
+{ load_file("ExtracellularSourcesLibrary/ExtracellularSourcesLibrary.hoc") }
+
+{ load_file("Widgets/NetStimParamsWidget.hoc") }
 { load_file("Widgets/OneExtracellularSourceWidget.hoc") }
 { load_file("Widgets/ExtracellularManagerMainWidget.hoc") }

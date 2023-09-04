@@ -32,6 +32,28 @@ proc getFileExtLowerCase() { localobj strFunc
     stringToLowerCase(fileExt, $s2)
 }
 
+func runSysOrPyCommandWithWaitBox() { local isSysOrPy, status
+    strdef sysOrPyCommand, hint, line1
+    
+    sysOrPyCommand = $s1
+    isSysOrPy = $2
+    hint = $s3
+    
+    sprint(line1, "%s geometry file.", hint)
+    
+    mwh.showPleaseWaitBox(line1)
+    {
+        if (isSysOrPy) {
+            status = system(sysOrPyCommand)
+        } else {
+            status = nrnpython(sysOrPyCommand)
+        }
+    }
+    mwh.hidePleaseWaitBox()
+    
+    return status
+}
+
 // Try to load the HOC file with "load_file" and print some clues if failed
 // $s1 - Input HOC file path and name
 // Output: All new top-level declarations from the file

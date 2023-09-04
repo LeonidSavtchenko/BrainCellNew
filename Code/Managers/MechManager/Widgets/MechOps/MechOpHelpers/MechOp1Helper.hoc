@@ -5,11 +5,10 @@ begintemplate MechOp1Helper
 
     public getHeader, isSkipBlock, insertBlock, dismissChilds
     public title, isRequireApply, itemTypeIdx
-    public codeContractViolation
     
     external mmAllComps
     external mth, mwh
-    external getGlobalVarsHint, stringEndsWith, dismissIfNotNil
+    external getGlobalVarsHint, stringEndsWith, dismissIfNotNil, codeContractViolation
     external varsEditorSubWidget
     
     strdef title
@@ -138,6 +137,7 @@ begintemplate MechOp1Helper
             // !! it turns out that ions can change names of their ASSIGNED vars as a result of insertion,
             //    but mechStd.out() doesn't work if the names changed between mechStd.in() and mechStd.out()
             //    to handle the case properly, we'll have to re-init all affected MechanismStandard objects at comp.mechStds[mechIdx][2]
+            // !!!! what if user just wants to use "* Dynamics Graph" menu item in PlotShape to create a Graph?
             mwh.showNotImplementedWarning("Cannot edit ASSIGNED vars for ions.")
             return
         }
@@ -151,7 +151,12 @@ begintemplate MechOp1Helper
             mechStd = comp.mechStds[mechIdx][varTypeIdx]
             
             if (mechStd.count() == 0) {
-                codeContractViolation()
+                // !!!! BUG: for a neuron, we hit this trying to edit k_ion\PARAMETER in Axon, Spine Neck and Spine Head,
+                //      but no problem in Soma and Dendrites and no problem for an astrocyte
+                // codeContractViolation()
+                
+                // !!!! a temp solution
+                return
             }
             
             // Deprecated editor
@@ -166,7 +171,8 @@ begintemplate MechOp1Helper
                 codeContractViolation()
             }
             
-            nrnglobalmechmenu(mechName)
+            varsEditorSubWidget = new GlobalsEditorWidget()
+            varsEditorSubWidget.show(mechName, 435, 100)
         }
     }
     

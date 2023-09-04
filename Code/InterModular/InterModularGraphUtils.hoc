@@ -1,0 +1,187 @@
+
+// Keeping this proc on the top level rather than in a template because otherwise
+// Graph.addvar would fail due to missing access to the section
+proc addVarToGraph() { local numArg, colourIdx localobj graph
+    strdef varStr
+    
+    numArg = numarg()
+    if (numArg < 2 || numArg > 3) {
+        codeContractViolation()
+    }
+    
+    graph = $o1
+    varStr = $s2
+    
+    if (numArg == 2) {
+        graph.addvar(varStr)
+    } else {
+        colourIdx = $3
+        graph.addvar(varStr, colourIdx, 0)
+    }
+}
+
+
+begintemplate GraphUtils
+
+    public addPlotDynamicsMenuItem, mouseEventsHandler0, mouseEventsHandler1, mouseEventsHandler2, mouseEventsHandler3, mouseEventsHandler4, mouseEventsHandler5
+    public varNamesWithIndex
+    
+    external mwh
+    external addVarToGraph
+    external getGraphedVarUnits, stringEmpty, codeContractViolation
+    external soma_ref
+    // !!! external pyObj
+    external graphList
+    external tstop
+    
+    // 0: MainUi
+    // 1, 2: InhomEditorSubWidget
+    // 3, 4, 5: Testing\init_ExtraManager.hoc
+    objref registeredPlotShapes[6], varNamesWithIndex[6]
+    
+    
+    // !!! BUG: if user changes the var name with "Plot What?" after calling this proc,
+    //          we still use the old var name when creating the Graph-s
+    proc addPlotDynamicsMenuItem() { local slotIdx, isDynamicColormap localobj plotShape
+        strdef varNameForMenu, varNameWithIndexOrEmpty, menuItemNameAndMsgBoxTitle, mouseHandlerName, selectHandlerCall
+        
+        plotShape = $o1
+        slotIdx = $2
+        varNameForMenu = $s3            // !!! if !isDynamicColormap, maybe just use varNameWithIndexOrEmpty instead of varNameForMenu
+        varNameWithIndexOrEmpty = $s4   // Empty means "will be set dynamically (later)"
+        isDynamicColormap = $5
+        
+        if (slotIdx > 5) {
+            codeContractViolation()
+        }
+        
+        sprint(menuItemNameAndMsgBoxTitle, "%s Dynamics Graph", varNameForMenu)
+        sprint(mouseHandlerName, "mouseEventsHandler%d", slotIdx)
+        sprint(selectHandlerCall, "selectHandler(%d, \"%s\", %d)", slotIdx, menuItemNameAndMsgBoxTitle, isDynamicColormap)
+        
+        plotShape.menu_tool(menuItemNameAndMsgBoxTitle, mouseHandlerName, selectHandlerCall)
+        // !!!! think about 2 more menu items:
+        //      * first click creates a new Graph, each next adds a new var to it
+        //      * first click creates a new widget, each next adds a new Graph to it
+        //      also, I can show a mini widget to manage all the Graphs/widgets created this way
+        registeredPlotShapes[slotIdx] = plotShape
+        varNamesWithIndex[slotIdx] = new String(varNameWithIndexOrEmpty)
+    }
+    
+    proc mouseEventsHandler0() {
+        mouseEventsHandler($1, $2, $3, $4, 0)
+    }
+    
+    proc mouseEventsHandler1() {
+        mouseEventsHandler($1, $2, $3, $4, 1)
+    }
+    
+    proc mouseEventsHandler2() {
+        mouseEventsHandler($1, $2, $3, $4, 2)
+    }
+    
+    proc mouseEventsHandler3() {
+        mouseEventsHandler($1, $2, $3, $4, 3)
+    }
+    
+    proc mouseEventsHandler4() {
+        mouseEventsHandler($1, $2, $3, $4, 4)
+    }
+    
+    proc mouseEventsHandler5() {
+        mouseEventsHandler($1, $2, $3, $4, 5)
+    }
+    
+    // All next staff is private
+    
+    
+    proc selectHandler() { local slotIdx, isDynamicColormap
+        strdef title, varNameWithIndex, line1, line2
+        
+        slotIdx = $1
+        title = $s2
+        isDynamicColormap = $3
+        
+        varNameWithIndex = varNamesWithIndex[slotIdx].s
+        if (stringEmpty(varNameWithIndex)) {
+            codeContractViolation()
+        }
+        
+        sprint(line1, "Click on the cell to select the segment(s) where to plot \"%s\" vs time.", varNameWithIndex)
+        if (!isDynamicColormap) {
+            mwh.showMessageBox(line1, title)
+        } else {
+            sprint(line2, "Do not forget to switch back to \"Shape Plot\" if you want to see how \"%s\" 3D colormap evolves in time.", varNameWithIndex)
+            mwh.showMessageBox(line1, line2, title)
+        }
+    }
+    
+    // !!! maybe extract some common utils used here and in CompSubsetWidget and SeededDendritesSelectionWidget
+    proc mouseEventsHandler() { local eventType, x, y, keystate, slotIdx, d, arc, wtop localobj plotShape, graph
+        strdef varNameWithIndex, varStr1, varStr2, unitsStr, xLabel, yLabel
+        
+        eventType = $1
+        x = $2
+        y = $3
+        keystate = $4
+        
+        slotIdx = $5
+        
+        if (eventType != 2) {   // LMB press
+            return
+        }
+        
+        plotShape = registeredPlotShapes[slotIdx]
+        
+        // Make the nearest section currently accessed
+        d = plotShape.nearest(x, y)
+        if (d > 25) {       // !!! hardcode (we can use, say, 10% of "cell size")
+            return
+        }
+        
+        varNameWithIndex = varNamesWithIndex[slotIdx].s
+        if (stringEmpty(varNameWithIndex)) {
+            codeContractViolation()
+        }
+        
+        // !!! maybe replace inaccurate "0.5" with the actual cordinate of the centre of the middle segment
+        soma_ref.o(0).sec sprint(varStr1, "%s.%s(0.5)", secname(), varNameWithIndex)
+        
+        arc = plotShape.push_selected()
+        {
+            // !!! it looks like "arc" has "float" precision rather than "double" because we can see some garbage digits in the end
+            //     (e.g. "0.6500000357627869") when printing it with the max. precision using pyObj.str(arc)
+            sprint(varStr2, "%s.%s(%g)", secname(), varNameWithIndex, arc)
+            
+            // !!! that's strange that we can set nseg=1 in axon[1] and then select 3 arc points: 0, 0.5, 1
+            //     (but all of them show the same dynamics on the Graph-s)
+        }
+        pop_section()
+        
+        getGraphedVarUnits(varNameWithIndex, unitsStr)
+        
+        sprint(xLabel, "Time (%s)", units("t"))
+        sprint(yLabel, "%s (%s)", varNameWithIndex, unitsStr)
+        
+        graph = new Graph(0)
+        addVarToGraph(graph, varStr1, 2)
+        addVarToGraph(graph, varStr2, 3)
+        graph.size(0, tstop, -20, 20)
+        wtop = 100 + 100 * slotIdx       // !!! hardcode
+        graph.view(0, -20, tstop, 40, 1250, wtop, 400, 250)
+        graph.label(0.5, 0.09, xLabel, 2, 1, 0, 1, 1)
+        graph.label(0.1, 0.9, yLabel, 2, 1, 0, 1, 1)
+        
+        // !!! BUG: when user creates a Graph for "Na+" in Manager of extracellular sources, there is a problem with the vertical range:
+        //          the line is out of the bounds by default, and clicking "View..." -> "View = plot" doesn't help,
+        //          so user has to use "View..." -> "Set View"
+        
+        graphList[0].append(graph)
+        // !!! ideally, we need to remove it from the list when user closes the Graph
+        //     think about wrapping the Graph into a VBox which has custom "dismiss_action"
+    }
+
+endtemplate GraphUtils
+
+objref graphUtils
+graphUtils = new GraphUtils()

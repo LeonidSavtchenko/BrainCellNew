@@ -2,22 +2,22 @@
 /*
     Line 26:            Params
     Line 36:            Utils
-    Line 158:           Prerequisites
-    Line 198:           Sections
-    Line 217:           Imported section names
-    Line 390:           Section references
-    Line 622:           Topology
-    Line 3750:          Geometry, nseg, Ra
-    Line 38497:         Distance centre
-    Line 38506:         Importability measures
-    Line 40064:         Inhom and stoch library
-    Line 40495:         Biophys compartments
-    Line 40780:         Homogen biophysics
-    Line 41453:         Proto synapses
-    Line 41578:         Synaptic compartments
-    Line 42356:         Homogen synaptic vars
-    Line 42402:         Synapses epilogue
-    Line 42409:         APCount-s
+    Line 185:           Prerequisites
+    Line 225:           Sections
+    Line 244:           Imported section names
+    Line 417:           Section references
+    Line 617:           Topology
+    Line 3745:          Geometry, nseg, Ra
+    Line 38492:         Distance centre
+    Line 38501:         Importability measures
+    Line 40059:         Inhom and stoch library
+    Line 40499:         Biophys compartments
+    Line 40784:         Homogen biophysics
+    Line 41457:         Proto synapses
+    Line 41582:         Synaptic compartments
+    Line 42205:         Homogen synaptic vars
+    Line 42251:         Synapses epilogue
+    Line 42258:         APCount-s
 */
 //////////////////////////////////////////////////////////////////////////
 
@@ -29,7 +29,7 @@ celsius = 34.0    // (degC)
 v_init = -64.65    // (mV)
 tstop = 100.0    // (ms)
 dt = 0.1    // (ms)
-steps_per_ms = 10.0
+steps_per_ms = 10
 
 //////////////////// End of params ///////////////////////////////////////
 
@@ -55,7 +55,7 @@ proc printNotImplementedMsgAndRaiseError() {
 
 // Report the bug, print the call stack, raise the error
 proc codeContractViolation() {
-    execerror("\n\n    Bug in Cell program: Code contract violation", "\n    Please report this problem to the developer along with the call stack shown below\n")
+    execerror("\n\n    Bug in BrainCell program: Code contract violation", "\n    Please report this problem to the developer along with the call stack shown below\n")
 }
 
 // An iterator to simplify looping over all elements of the List a bit.
@@ -98,6 +98,33 @@ iterator eachItemInList() { local numArg, firstIdx, idx localobj list
 // Returns 0/1 flag
 func stringsEqual() {
     return strcmp($s1, $s2) == 0
+}
+
+// Create a List of SectionRef-s containing references to all the sections given name or regex
+// $s1 - The name or regex
+// $2 - 0/1 flag indicating whether to look for top-level sections or the sections owned by objects (template instances)
+// Returns: The List of SectionRef-s
+obfunc createListOfSectionRefs() { local isOwnedByObjects localobj list_ref
+    strdef secNameOrRegex
+    
+    secNameOrRegex = $s1
+    isOwnedByObjects = $2
+    
+    if (isOwnedByObjects) {
+        sprint(secNameOrRegex, ".*].%s", secNameOrRegex)
+        // !! the format string ".*]\\.%s" looks more correct (using "verbatim" dot instead of "any char" dot), but doesn't work for unknown reason
+        //    the format string ".*]\.%s" doesn't look correct even though works fine (perhaps the unknown escape sequence "\." is interpreted as ".")
+    }
+    
+    list_ref = new List()
+    
+    // forsec secNameOrRegex {                  // - These two don't require that match must start at the beginning of the string
+    // forall ifsec secNameOrRegex {            // /
+    forall if (issection(secNameOrRegex)) {     // - This does
+        list_ref.append(new SectionRef())
+    }
+    
+    return list_ref
 }
 
 func makeSureDeclared() { local numArg, isCustomDeclaration, i localobj hocCommandTempls
@@ -560,37 +587,8 @@ for idx = 0, 1 {
 
 // Nanogeometry
 
-// !! would it make sense put this code into NanoBranchesManager.hoc?
-
 // Two List-s of SectionRef containing references to all the sections of nano geometry
 objref nanoProximal_ref, nanoDistal_ref
-
-// This one won't be used anywhere outside this file
-objref _secRef
-
-
-// Create List of SectionRef-s containing references to all the sections given name
-// $s1 - The name
-// Returns: The List of SectionRef-s
-obfunc createListOfSectionRef() { localobj list_ref
-    strdef findSecRegexEnd, findSecRegex, hocCommand
-    findSecRegexEnd = $s1
-    
-    list_ref = new List()
-    
-    sprint(findSecRegex, ".*]\.%s", findSecRegexEnd)   // !!
-    
-    // forsec findSecRegex {                // - These two don't require that match must start at the beginning of the string
-    // forall ifsec findSecRegex {          // /
-    // !! test how it works after encapsulation sections into templates
-    forall if (issection(findSecRegex)) {   // - This does
-        sprint(hocCommand, "%s _secRef = new SectionRef()", secname())
-        execute(hocCommand)
-        list_ref.append(_secRef)
-    }
-    
-    return list_ref
-}
 
 // Create two List-s of SectionRef containing references to all the sections of nano geometry
 // Input: isAstrocyteOrNeuron (taken from the top level)
@@ -599,20 +597,17 @@ proc createRefsForNanoGeometry() { localobj nil
     nanoProximal_ref = new List()
     nanoDistal_ref = new List()
     if (isAstrocyteOrNeuron) {
-        nanoProximal_ref = createListOfSectionRef("SmallGlia[.*")
-        nanoDistal_ref = createListOfSectionRef("LargeGlia[.*")
+        nanoProximal_ref = createListOfSectionRefs("SmallGlia[.*", 1)
+        nanoDistal_ref = createListOfSectionRefs("LargeGlia[.*", 1)
     } else {
-        nanoProximal_ref = createListOfSectionRef("spine_neck")
-        nanoDistal_ref = createListOfSectionRef("spine_head")
+        nanoProximal_ref = createListOfSectionRefs("spine_neck", 1)
+        nanoDistal_ref = createListOfSectionRefs("spine_head", 1)
     }
     
     SizeTotal = nanoProximal_ref.count()
     if (nanoDistal_ref.count() != SizeTotal) {
         codeContractViolation()
     }
-    
-    // Some cleanup on top level
-    _secRef = nil
 }
 
 createRefsForNanoGeometry()
@@ -38496,7 +38491,7 @@ ExtracellularSource {
 
 //////////////////// Start of distance centre ////////////////////////////
 
-// !!! BUG: hardcoded rather than exported
+// !! BUG: hardcoded rather than exported
 
 // The distance centre
 soma_ref.o(0).sec distance()
@@ -38514,11 +38509,11 @@ if (isLoadedFromMainProgram) {
     mechsDllUtils.ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType()
 } else {
     mechType = new MechanismType(0)    // 0: "Distributed Membrane Mechanisms"
-    if (mechType.count() != 30) {
+    if (mechType.count() != 31) {
         printMsgAndRaiseError("Please make sure the correct file \"nrnmech.dll\" is present in the same folder with this HOC file.")
     }
     mechType = new MechanismType(1)    // 1: "Point Processes"
-    if (mechType.count() != 23) {
+    if (mechType.count() != 24) {
         printMsgAndRaiseError("Please make sure the correct file \"nrnmech.dll\" is present in the same folder with this HOC file.")
     }
 }
@@ -40401,7 +40396,7 @@ endtemplate ReducedInhomAndStochTarget
 
 begintemplate ReducedInhomAndStochLibrary
 
-    public onInhomCreate, onStochApply, applyAllBiophysInhomModels, applyAllSynInhomModels, isAnyStochVarsForSyns
+    public onInhomCreate, onStochApply, applyAllBiophysInhomModels, applyAllSynInhomModels, isAnyStochVarsForSyns, isAnyStochVars
     public activeSpecVars
     
     external eachItemInList
@@ -40457,6 +40452,15 @@ begintemplate ReducedInhomAndStochLibrary
             }
         }
         return isFound
+    }
+    
+    func isAnyStochVars() { local idx
+        for idx = 0, activeSpecVars.count() - 1 {
+            if (activeSpecVars.o(idx).isStoch) {
+                return 1
+            }
+        }
+        return 0
     }
     
     // All next staff is private
@@ -40792,12 +40796,12 @@ proc addHomogenBiophysInfoToSomaComp() { localobj comp, mechStd
     comp.isMechInserted[11] = 1    // FRAP
     comp.isMechInserted[14] = 1    // IKa
     comp.isMechInserted[16] = 1    // kir4
-    comp.isMechInserted[17] = 1    // ip3_ion
-    comp.isMechInserted[18] = 1    // cadifus
-    comp.isMechInserted[20] = 1    // hd
-    comp.isMechInserted[22] = 1    // kap
-    comp.isMechInserted[23] = 1    // kdr
-    comp.isMechInserted[26] = 1    // na3
+    comp.isMechInserted[18] = 1    // ip3_ion
+    comp.isMechInserted[19] = 1    // cadifus
+    comp.isMechInserted[21] = 1    // hd
+    comp.isMechInserted[23] = 1    // kap
+    comp.isMechInserted[24] = 1    // kdr
+    comp.isMechInserted[27] = 1    // na3
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
     mechStd.set("diam", 20.0)    // (um)
@@ -40862,7 +40866,7 @@ proc addHomogenBiophysInfoToSomaComp() { localobj comp, mechStd
     mechStd.set("eip3", 280.4732022630253)    // (mV)
     mechStd.set("ip3i", 1.0)    // (mM)
     mechStd.set("ip3o", 1.0)    // (mM)
-    comp.mechStds[17][1] = mechStd
+    comp.mechStds[18][1] = mechStd
     
     mechStd = new MechanismStandard("cadifus", 3)    // STATE
     mechStd.set("ca_cadifus", 5e-05, 0)    // (mM)
@@ -40893,48 +40897,48 @@ proc addHomogenBiophysInfoToSomaComp() { localobj comp, mechStd
     mechStd.set("ho_cadifus", 0.8, 1)
     mechStd.set("ho_cadifus", 0.8, 2)
     mechStd.set("ho_cadifus", 0.8, 3)
-    comp.mechStds[18][2] = mechStd
+    comp.mechStds[19][2] = mechStd
     
     mechStd = new MechanismStandard("hd", 1)    // PARAMETER
     mechStd.set("ghdbar_hd", 0.0)    // (mho/cm2)
     mechStd.set("vhalfl_hd", -73.0)    // (mV)
-    comp.mechStds[20][0] = mechStd
+    comp.mechStds[21][0] = mechStd
     
     mechStd = new MechanismStandard("hd", 3)    // STATE
     mechStd.set("l_hd", 0.260427077240639)
-    comp.mechStds[20][2] = mechStd
+    comp.mechStds[21][2] = mechStd
     
     mechStd = new MechanismStandard("kap", 1)    // PARAMETER
     mechStd.set("gkabar_kap", 0.0)    // (mho/cm2)
-    comp.mechStds[22][0] = mechStd
+    comp.mechStds[23][0] = mechStd
     
     mechStd = new MechanismStandard("kap", 3)    // STATE
     mechStd.set("n_kap", 0.0008050579247877802)
     mechStd.set("l_kap", 0.7271626972454425)
-    comp.mechStds[22][2] = mechStd
+    comp.mechStds[23][2] = mechStd
     
     mechStd = new MechanismStandard("kdr", 1)    // PARAMETER
     mechStd.set("gkdrbar_kdr", 0.01)    // (mho/cm2)
-    comp.mechStds[23][0] = mechStd
+    comp.mechStds[24][0] = mechStd
     
     mechStd = new MechanismStandard("kdr", 2)    // ASSIGNED
     mechStd.set("gkdr_kdr", 1.5073959648897888e-06)
-    comp.mechStds[23][1] = mechStd
+    comp.mechStds[24][1] = mechStd
     
     mechStd = new MechanismStandard("kdr", 3)    // STATE
     mechStd.set("n_kdr", 0.00015073959648897886)
-    comp.mechStds[23][2] = mechStd
+    comp.mechStds[24][2] = mechStd
     
     mechStd = new MechanismStandard("na3", 1)    // PARAMETER
     mechStd.set("sh_na3", 0.0)    // (mV)
     mechStd.set("gbar_na3", 0.032)    // (mho/cm2)
-    comp.mechStds[26][0] = mechStd
+    comp.mechStds[27][0] = mechStd
     
     mechStd = new MechanismStandard("na3", 3)    // STATE
     mechStd.set("m_na3", 0.02554798027071559)
     mechStd.set("h_na3", 0.974974109321821)
     mechStd.set("s_na3", 1.0)
-    comp.mechStds[26][2] = mechStd
+    comp.mechStds[27][2] = mechStd
 }
 
 proc addHomogenBiophysInfoToDendritesComp() { localobj comp, mechStd
@@ -40951,12 +40955,12 @@ proc addHomogenBiophysInfoToDendritesComp() { localobj comp, mechStd
     comp.isMechInserted[11] = 1    // FRAP
     comp.isMechInserted[14] = 1    // IKa
     comp.isMechInserted[16] = 1    // kir4
-    comp.isMechInserted[17] = 1    // ip3_ion
-    comp.isMechInserted[18] = 1    // cadifus
-    comp.isMechInserted[21] = 1    // kad
-    comp.isMechInserted[22] = 1    // kap
-    comp.isMechInserted[23] = 1    // kdr
-    comp.isMechInserted[26] = 1    // na3
+    comp.isMechInserted[18] = 1    // ip3_ion
+    comp.isMechInserted[19] = 1    // cadifus
+    comp.isMechInserted[22] = 1    // kad
+    comp.isMechInserted[23] = 1    // kap
+    comp.isMechInserted[24] = 1    // kdr
+    comp.isMechInserted[27] = 1    // na3
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
     mechStd.set("diam", math.nan)
@@ -41025,7 +41029,7 @@ proc addHomogenBiophysInfoToDendritesComp() { localobj comp, mechStd
     mechStd.set("eip3", 280.4732022630253)    // (mV)
     mechStd.set("ip3i", 1.0)    // (mM)
     mechStd.set("ip3o", 1.0)    // (mM)
-    comp.mechStds[17][1] = mechStd
+    comp.mechStds[18][1] = mechStd
     
     mechStd = new MechanismStandard("cadifus", 3)    // STATE
     mechStd.set("ca_cadifus", 5e-05, 0)    // (mM)
@@ -41056,48 +41060,48 @@ proc addHomogenBiophysInfoToDendritesComp() { localobj comp, mechStd
     mechStd.set("ho_cadifus", 0.8, 1)
     mechStd.set("ho_cadifus", 0.8, 2)
     mechStd.set("ho_cadifus", 0.8, 3)
-    comp.mechStds[18][2] = mechStd
+    comp.mechStds[19][2] = mechStd
     
     mechStd = new MechanismStandard("kad", 1)    // PARAMETER
     mechStd.set("gkabar_kad", 0.0)    // (mho/cm2)
-    comp.mechStds[21][0] = mechStd
+    comp.mechStds[22][0] = mechStd
     
     mechStd = new MechanismStandard("kad", 3)    // STATE
     mechStd.set("n_kad", 0.0012109949203691257)
     mechStd.set("l_kad", 0.7271626972454425)
-    comp.mechStds[21][2] = mechStd
+    comp.mechStds[22][2] = mechStd
     
     mechStd = new MechanismStandard("kap", 1)    // PARAMETER
     mechStd.set("gkabar_kap", 0.0)    // (mho/cm2)
-    comp.mechStds[22][0] = mechStd
+    comp.mechStds[23][0] = mechStd
     
     mechStd = new MechanismStandard("kap", 3)    // STATE
     mechStd.set("n_kap", 0.0008050579247877802)
     mechStd.set("l_kap", 0.7271626972454425)
-    comp.mechStds[22][2] = mechStd
+    comp.mechStds[23][2] = mechStd
     
     mechStd = new MechanismStandard("kdr", 1)    // PARAMETER
     mechStd.set("gkdrbar_kdr", 0.01)    // (mho/cm2)
-    comp.mechStds[23][0] = mechStd
+    comp.mechStds[24][0] = mechStd
     
     mechStd = new MechanismStandard("kdr", 2)    // ASSIGNED
     mechStd.set("gkdr_kdr", 1.5073959648897888e-06)
-    comp.mechStds[23][1] = mechStd
+    comp.mechStds[24][1] = mechStd
     
     mechStd = new MechanismStandard("kdr", 3)    // STATE
     mechStd.set("n_kdr", 0.00015073959648897886)
-    comp.mechStds[23][2] = mechStd
+    comp.mechStds[24][2] = mechStd
     
     mechStd = new MechanismStandard("na3", 1)    // PARAMETER
     mechStd.set("sh_na3", 0.0)    // (mV)
     mechStd.set("gbar_na3", 0.032)    // (mho/cm2)
-    comp.mechStds[26][0] = mechStd
+    comp.mechStds[27][0] = mechStd
     
     mechStd = new MechanismStandard("na3", 3)    // STATE
     mechStd.set("m_na3", 0.02554798027071559)
     mechStd.set("h_na3", 0.974974109321821)
     mechStd.set("s_na3", 1.0)
-    comp.mechStds[26][2] = mechStd
+    comp.mechStds[27][2] = mechStd
 }
 
 proc addHomogenBiophysInfoToAxonComp() { localobj comp, mechStd
@@ -41109,10 +41113,10 @@ proc addHomogenBiophysInfoToAxonComp() { localobj comp, mechStd
     comp.isMechInserted[5] = 1    // na_ion
     comp.isMechInserted[6] = 1    // k_ion
     comp.isMechInserted[14] = 1    // IKa
-    comp.isMechInserted[21] = 1    // kad
-    comp.isMechInserted[22] = 1    // kap
-    comp.isMechInserted[23] = 1    // kdr
-    comp.isMechInserted[26] = 1    // na3
+    comp.isMechInserted[22] = 1    // kad
+    comp.isMechInserted[23] = 1    // kap
+    comp.isMechInserted[24] = 1    // kdr
+    comp.isMechInserted[27] = 1    // na3
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
     mechStd.set("diam", math.nan)
@@ -41152,44 +41156,44 @@ proc addHomogenBiophysInfoToAxonComp() { localobj comp, mechStd
     
     mechStd = new MechanismStandard("kad", 1)    // PARAMETER
     mechStd.set("gkabar_kad", 0.0)    // (mho/cm2)
-    comp.mechStds[21][0] = mechStd
+    comp.mechStds[22][0] = mechStd
     
     mechStd = new MechanismStandard("kad", 3)    // STATE
     mechStd.set("n_kad", 0.0012109949203691257)
     mechStd.set("l_kad", 0.7271626972454425)
-    comp.mechStds[21][2] = mechStd
+    comp.mechStds[22][2] = mechStd
     
     mechStd = new MechanismStandard("kap", 1)    // PARAMETER
     mechStd.set("gkabar_kap", 0.0)    // (mho/cm2)
-    comp.mechStds[22][0] = mechStd
+    comp.mechStds[23][0] = mechStd
     
     mechStd = new MechanismStandard("kap", 3)    // STATE
     mechStd.set("n_kap", 0.0008050579247877802)
     mechStd.set("l_kap", 0.7271626972454425)
-    comp.mechStds[22][2] = mechStd
+    comp.mechStds[23][2] = mechStd
     
     mechStd = new MechanismStandard("kdr", 1)    // PARAMETER
     mechStd.set("gkdrbar_kdr", 0.01)    // (mho/cm2)
-    comp.mechStds[23][0] = mechStd
+    comp.mechStds[24][0] = mechStd
     
     mechStd = new MechanismStandard("kdr", 2)    // ASSIGNED
     mechStd.set("gkdr_kdr", 1.5073959648897888e-06)
-    comp.mechStds[23][1] = mechStd
+    comp.mechStds[24][1] = mechStd
     
     mechStd = new MechanismStandard("kdr", 3)    // STATE
     mechStd.set("n_kdr", 0.00015073959648897886)
-    comp.mechStds[23][2] = mechStd
+    comp.mechStds[24][2] = mechStd
     
     mechStd = new MechanismStandard("na3", 1)    // PARAMETER
     mechStd.set("sh_na3", 0.0)    // (mV)
     mechStd.set("gbar_na3", 0.032)    // (mho/cm2)
-    comp.mechStds[26][0] = mechStd
+    comp.mechStds[27][0] = mechStd
     
     mechStd = new MechanismStandard("na3", 3)    // STATE
     mechStd.set("m_na3", 0.02554798027071559)
     mechStd.set("h_na3", 0.974974109321821)
     mechStd.set("s_na3", 1.0)
-    comp.mechStds[26][2] = mechStd
+    comp.mechStds[27][2] = mechStd
 }
 
 proc addHomogenBiophysInfoToSpineNeckComp() { localobj comp, mechStd
@@ -41203,10 +41207,10 @@ proc addHomogenBiophysInfoToSpineNeckComp() { localobj comp, mechStd
     comp.isMechInserted[10] = 1    // frapion_ion
     comp.isMechInserted[11] = 1    // FRAP
     comp.isMechInserted[14] = 1    // IKa
-    comp.isMechInserted[21] = 1    // kad
-    comp.isMechInserted[22] = 1    // kap
-    comp.isMechInserted[23] = 1    // kdr
-    comp.isMechInserted[26] = 1    // na3
+    comp.isMechInserted[22] = 1    // kad
+    comp.isMechInserted[23] = 1    // kap
+    comp.isMechInserted[24] = 1    // kdr
+    comp.isMechInserted[27] = 1    // na3
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
     mechStd.set("diam", math.nan)
@@ -41259,44 +41263,44 @@ proc addHomogenBiophysInfoToSpineNeckComp() { localobj comp, mechStd
     
     mechStd = new MechanismStandard("kad", 1)    // PARAMETER
     mechStd.set("gkabar_kad", 0.0)    // (mho/cm2)
-    comp.mechStds[21][0] = mechStd
+    comp.mechStds[22][0] = mechStd
     
     mechStd = new MechanismStandard("kad", 3)    // STATE
     mechStd.set("n_kad", 0.0012109949203691257)
     mechStd.set("l_kad", 0.7271626972454425)
-    comp.mechStds[21][2] = mechStd
+    comp.mechStds[22][2] = mechStd
     
     mechStd = new MechanismStandard("kap", 1)    // PARAMETER
     mechStd.set("gkabar_kap", 0.0)    // (mho/cm2)
-    comp.mechStds[22][0] = mechStd
+    comp.mechStds[23][0] = mechStd
     
     mechStd = new MechanismStandard("kap", 3)    // STATE
     mechStd.set("n_kap", 0.0008050579247877802)
     mechStd.set("l_kap", 0.7271626972454425)
-    comp.mechStds[22][2] = mechStd
+    comp.mechStds[23][2] = mechStd
     
     mechStd = new MechanismStandard("kdr", 1)    // PARAMETER
     mechStd.set("gkdrbar_kdr", 0.01)    // (mho/cm2)
-    comp.mechStds[23][0] = mechStd
+    comp.mechStds[24][0] = mechStd
     
     mechStd = new MechanismStandard("kdr", 2)    // ASSIGNED
     mechStd.set("gkdr_kdr", 1.5073959648897888e-06)
-    comp.mechStds[23][1] = mechStd
+    comp.mechStds[24][1] = mechStd
     
     mechStd = new MechanismStandard("kdr", 3)    // STATE
     mechStd.set("n_kdr", 0.00015073959648897886)
-    comp.mechStds[23][2] = mechStd
+    comp.mechStds[24][2] = mechStd
     
     mechStd = new MechanismStandard("na3", 1)    // PARAMETER
     mechStd.set("sh_na3", 0.0)    // (mV)
     mechStd.set("gbar_na3", 0.032)    // (mho/cm2)
-    comp.mechStds[26][0] = mechStd
+    comp.mechStds[27][0] = mechStd
     
     mechStd = new MechanismStandard("na3", 3)    // STATE
     mechStd.set("m_na3", 0.02554798027071559)
     mechStd.set("h_na3", 0.974974109321821)
     mechStd.set("s_na3", 1.0)
-    comp.mechStds[26][2] = mechStd
+    comp.mechStds[27][2] = mechStd
 }
 
 proc addHomogenBiophysInfoToSpineHeadComp() { localobj comp, mechStd
@@ -41310,10 +41314,10 @@ proc addHomogenBiophysInfoToSpineHeadComp() { localobj comp, mechStd
     comp.isMechInserted[10] = 1    // frapion_ion
     comp.isMechInserted[11] = 1    // FRAP
     comp.isMechInserted[14] = 1    // IKa
-    comp.isMechInserted[21] = 1    // kad
-    comp.isMechInserted[22] = 1    // kap
-    comp.isMechInserted[23] = 1    // kdr
-    comp.isMechInserted[26] = 1    // na3
+    comp.isMechInserted[22] = 1    // kad
+    comp.isMechInserted[23] = 1    // kap
+    comp.isMechInserted[24] = 1    // kdr
+    comp.isMechInserted[27] = 1    // na3
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
     mechStd.set("diam", math.nan)
@@ -41366,44 +41370,44 @@ proc addHomogenBiophysInfoToSpineHeadComp() { localobj comp, mechStd
     
     mechStd = new MechanismStandard("kad", 1)    // PARAMETER
     mechStd.set("gkabar_kad", 0.0)    // (mho/cm2)
-    comp.mechStds[21][0] = mechStd
+    comp.mechStds[22][0] = mechStd
     
     mechStd = new MechanismStandard("kad", 3)    // STATE
     mechStd.set("n_kad", 0.0012109949203691257)
     mechStd.set("l_kad", 0.7271626972454425)
-    comp.mechStds[21][2] = mechStd
+    comp.mechStds[22][2] = mechStd
     
     mechStd = new MechanismStandard("kap", 1)    // PARAMETER
     mechStd.set("gkabar_kap", 0.0)    // (mho/cm2)
-    comp.mechStds[22][0] = mechStd
+    comp.mechStds[23][0] = mechStd
     
     mechStd = new MechanismStandard("kap", 3)    // STATE
     mechStd.set("n_kap", 0.0008050579247877802)
     mechStd.set("l_kap", 0.7271626972454425)
-    comp.mechStds[22][2] = mechStd
+    comp.mechStds[23][2] = mechStd
     
     mechStd = new MechanismStandard("kdr", 1)    // PARAMETER
     mechStd.set("gkdrbar_kdr", 0.01)    // (mho/cm2)
-    comp.mechStds[23][0] = mechStd
+    comp.mechStds[24][0] = mechStd
     
     mechStd = new MechanismStandard("kdr", 2)    // ASSIGNED
     mechStd.set("gkdr_kdr", 1.5073959648897888e-06)
-    comp.mechStds[23][1] = mechStd
+    comp.mechStds[24][1] = mechStd
     
     mechStd = new MechanismStandard("kdr", 3)    // STATE
     mechStd.set("n_kdr", 0.00015073959648897886)
-    comp.mechStds[23][2] = mechStd
+    comp.mechStds[24][2] = mechStd
     
     mechStd = new MechanismStandard("na3", 1)    // PARAMETER
     mechStd.set("sh_na3", 0.0)    // (mV)
     mechStd.set("gbar_na3", 0.032)    // (mho/cm2)
-    comp.mechStds[26][0] = mechStd
+    comp.mechStds[27][0] = mechStd
     
     mechStd = new MechanismStandard("na3", 3)    // STATE
     mechStd.set("m_na3", 0.02554798027071559)
     mechStd.set("h_na3", 0.974974109321821)
     mechStd.set("s_na3", 1.0)
-    comp.mechStds[26][2] = mechStd
+    comp.mechStds[27][2] = mechStd
 }
 
 proc addHomogenBiophysInfoToExtracellularSourceComp() { localobj comp, mechStd
@@ -42003,66 +42007,38 @@ endtemplate FakeMechanismStandardForNetCon
 
 begintemplate ReducedSynGroup
 
-    public applyChangesToStrucIfNeeded, applyChangesToAllHomogenVars, applyInhomogeneityIter
+    public createSynStruc, initAllHomogenVars, applyInhomogeneityIter
     
     external smAllSyns, smAllComps
     external seh, rngUtils
-    external stringsEqual, codeContractViolation
     external eachItemInList
     external enumSynCompIdxs
-    
-    objref mechType
     
     objref this
     
     
-    proc init() {
-        mechType = new MechanismType(1)     // 1: "Point Processes"
-    }
-    
     // Keep in sync with SynGroup.applyChangesToStrucIfNeeded
-    func applyChangesToStrucIfNeeded() { local is3Or1PartInSynStruc_new, srcMechIdx, trgMechIdx, sngMechIdx, isForceNewTrgOrSng, is3Or1PartInSynStruc_old, enumTrgOrSngPpRole_old, isSefwEnabled, isSrcMechNameUnchanged, isSefwPresenceUnchanged, isTrgMechNameUnchanged, seed localobj syn, srcPp, trgPp, netCon, sefwPp, sefwNetCon, oldPp, sngPp
-        strdef srcMechName, trgMechName, sngMechName, trgOrSngMechName_old, srcMechName_old, trgMechName_old, sngMechName_old
+    proc createSynStruc() { local is3Or1PartInSynStruc, srcMechIdx, isSefwEnabled, seed localobj syn, srcPp, trgPp, netCon, sefwPp, sefwNetCon, sngPp
+        strdef srcMechName, trgMechName, sngMechName
         
-        is3Or1PartInSynStruc_new = $1
+        is3Or1PartInSynStruc = $1
         srcMechIdx = $2
-        trgMechIdx = $3
-        sngMechIdx = $4
-        srcMechName = $s5
-        trgMechName = $s6
-        sngMechName = $s7
-        isForceNewTrgOrSng = $8
+        srcMechName = $s3
+        trgMechName = $s4
+        sngMechName = $s5
         
-        is3Or1PartInSynStruc_old = is3Or1PartInSynStruc()
-        
-        if (is3Or1PartInSynStruc_old) {
-            enumTrgOrSngPpRole_old = 1
-        } else {
-            enumTrgOrSngPpRole_old = 2
-        }
-        getPpNameOrEmpty(0, srcMechName_old)
-        getPpNameOrEmpty(1, trgMechName_old)
-        getPpNameOrEmpty(2, sngMechName_old)
-        getPpNameOrEmpty(enumTrgOrSngPpRole_old, trgOrSngMechName_old)
-        
-        if (is3Or1PartInSynStruc_new) {
+        if (is3Or1PartInSynStruc) {
             isSefwEnabled = seh.isSefwEnabled()
-            isSrcMechNameUnchanged = stringsEqual(srcMechName, srcMechName_old)
-            isSefwPresenceUnchanged = (isSefwEnabled == isSefwPresentInSynStruc())
-            isTrgMechNameUnchanged = stringsEqual(trgMechName, trgMechName_old)
-            if (!isForceNewTrgOrSng && isSrcMechNameUnchanged && isSefwPresenceUnchanged && isTrgMechNameUnchanged) {
-                return 0
-            }
             
             for eachItemInList(syn, smAllSyns) {
-                srcPp = createNewSrcPpButTryToInherit(syn, srcMechIdx, srcMechName, isSrcMechNameUnchanged)
-                trgPp = createNewTrgOrSngPpButTryToInherit(syn, trgMechIdx, trgMechName, isForceNewTrgOrSng, enumSynCompIdxs.trgPp, enumTrgOrSngPpRole_old, trgOrSngMechName_old)
+                srcPp = createNewSrcPp(syn, srcMechIdx, srcMechName)
+                trgPp = createNewPpAttachedToSection(trgMechName, syn.sec_ref, syn.connectionPoint)
                 if (!isSefwEnabled) {
-                    netCon = createNewNetConButTryToInherit(syn, srcPp, trgPp, is3Or1PartInSynStruc_old)
+                    netCon = new NetCon(srcPp, trgPp)
                     syn.changeStructure(srcPp, netCon, trgPp)
                 } else {
-                    seh.createNewSynEventsFilterWatcherButTryToInherit(syn, isSefwPresenceUnchanged, is3Or1PartInSynStruc_old, trgPp, sefwPp, sefwNetCon)
-                    netCon = createNewNetConButTryToInherit(syn, srcPp, sefwPp, is3Or1PartInSynStruc_old)
+                    seh.createNewSynEventsFilterWatcherButTryToInherit(syn, 0, 0, trgPp, sefwPp, sefwNetCon)
+                    netCon = new NetCon(srcPp, sefwPp)
                     syn.changeStructure(srcPp, netCon, sefwPp, sefwNetCon, trgPp)
                 }
             }
@@ -42072,29 +42048,25 @@ begintemplate ReducedSynGroup
                 sefwPp.setSeed(seed)
             }
         } else {
-            if (!isForceNewTrgOrSng && stringsEqual(sngMechName, sngMechName_old)) {
-                return 0
-            }
             for eachItemInList(syn, smAllSyns) {
-                sngPp = createNewTrgOrSngPpButTryToInherit(syn, sngMechIdx, sngMechName, isForceNewTrgOrSng, enumSynCompIdxs.sngPp, enumTrgOrSngPpRole_old, trgOrSngMechName_old)
+                sngPp = createNewPpAttachedToSection(sngMechName, syn.sec_ref, syn.connectionPoint)
                 syn.changeStructure(sngPp)
             }
         }
-        
-        return 1
     }
     
     // Keep in sync with SynGroup.applyChangesToDirtyHomogenVars
-    proc applyChangesToAllHomogenVars() { local srcMechIdx, trgMechIdx, sngMechIdx
-        srcMechIdx = $1
-        trgMechIdx = $2
-        sngMechIdx = $3
-        if (is3Or1PartInSynStruc()) {
-            applyHomogenChanges(enumSynCompIdxs.srcPp, srcMechIdx, 0)
-            applyHomogenChanges(enumSynCompIdxs.netCon, 0, -1)
-            applyHomogenChanges(enumSynCompIdxs.trgPp, trgMechIdx, 1)
+    proc initAllHomogenVars() { local is3Or1PartInSynStruc, srcMechIdx, trgMechIdx, sngMechIdx
+        is3Or1PartInSynStruc = $1
+        srcMechIdx = $2
+        trgMechIdx = $3
+        sngMechIdx = $4
+        if (is3Or1PartInSynStruc) {
+            initHomogenVars(enumSynCompIdxs.srcPp, srcMechIdx, 0)
+            initHomogenVars(enumSynCompIdxs.netCon, 0, -1)
+            initHomogenVars(enumSynCompIdxs.trgPp, trgMechIdx, 1)
         } else {
-            applyHomogenChanges(enumSynCompIdxs.sngPp, sngMechIdx, 2)
+            initHomogenVars(enumSynCompIdxs.sngPp, sngMechIdx, 2)
         }
     }
     
@@ -42121,173 +42093,50 @@ begintemplate ReducedSynGroup
     // All next staff is private
     
     
-    // Keep in sync with SynGroup.getPpNameOrEmpty
-    proc getPpNameOrEmpty() { local enumPpRole, idx localobj pp, nil, strFunc
-        strdef ppNameWithBrackets, ppName
-        
-        enumPpRole = $1     // 0: "Source PP", 1: "Target PP", 2: "Single PP"
-        
-        // It's a code contract that all the syns have the same structure
-        pp = smAllSyns.o(0).getPointProcess(enumPpRole)
-        if (pp == nil) {
-            $s2 = ""
-            return
-        }
-        
-        // !! maybe this can be optimized significantly (e.g. with Python) or at least we can extract and call a shared util
-        sprint(ppNameWithBrackets, "%s", pp)
-        strFunc = new StringFunctions()
-        idx = strFunc.head(ppNameWithBrackets, "\\[", ppName)
-        if (idx == -1) {
-            codeContractViolation()
-        }
-        
-        $s2 = ppName
-    }
-    
     // Keep in sync with SynGroup.createNewSrcPpButTryToInherit
-    obfunc createNewSrcPpButTryToInherit() { local mechIdx, isSrcMechNameUnchanged, doesSrcPpRequireSection, synCompIdx localobj syn, outPp
+    obfunc createNewSrcPp() { local mechIdx, doesSrcPpRequireSection localobj syn, mechType, pp
         strdef mechName
         
         syn = $o1
         mechIdx = $2
         mechName = $s3
-        isSrcMechNameUnchanged = $4
         
-        if (isSrcMechNameUnchanged) {
-            return syn.srcPp
-        }
+        mechType = new MechanismType(1)     // 1: "Point Processes"
         
         doesSrcPpRequireSection = !mechType.is_artificial(mechIdx)
-        synCompIdx = enumSynCompIdxs.srcPp
         
         if (!doesSrcPpRequireSection) {
             mechType.select(mechName)
-            mechType.make(outPp)    // Not located in any section
-            setDefaultVars(synCompIdx, mechIdx, outPp)
-            return outPp
+            mechType.make(pp)   // Not located in any section
+            return pp
         } else {
-            return createNewPpAttachedToSectionButTryToInherit(syn.srcPp, synCompIdx, mechIdx, mechName, syn.sec_ref, syn.connectionPoint, 0)
+            return createNewPpAttachedToSection(mechName, syn.sec_ref, syn.connectionPoint)
         }
-    }
-    
-    // Keep in sync with SynGroup.createNewTrgOrSngPpButTryToInherit
-    obfunc createNewTrgOrSngPpButTryToInherit() { local mechIdx, isForceNew, synCompIdx, enumPpRole_old, isMechNameUnchanged localobj syn, pp_old
-        strdef mechName, mechName_old
-        
-        syn = $o1
-        mechIdx = $2
-        mechName = $s3
-        isForceNew = $4
-        synCompIdx = $5
-        enumPpRole_old = $6
-        mechName_old = $s7
-        
-        pp_old = syn.getPointProcess(enumPpRole_old)
-        isMechNameUnchanged = stringsEqual(mechName, mechName_old)
-        if (!isForceNew && isMechNameUnchanged) {
-            return pp_old
-        } else {
-            return createNewPpAttachedToSectionButTryToInherit(pp_old, synCompIdx, mechIdx, mechName, syn.sec_ref, syn.connectionPoint, isMechNameUnchanged)
-        }
-    }
-    
-    objref _tempFms4nc
-    
-    // Keep in sync with SynGroup.createNewNetConButTryToInherit
-    obfunc createNewNetConButTryToInherit() { local is3Or1PartInSynStruc_old localobj syn, srcPp, nextPp, netCon, nil
-        syn = $o1
-        srcPp = $o2
-        nextPp = $o3
-        is3Or1PartInSynStruc_old = $4
-        
-        netCon = new NetCon(srcPp, nextPp)
-        if (is3Or1PartInSynStruc_old) {
-            execute("_tempFms4nc = new FakeMechanismStandardForNetCon()", this)     // The template is not exported if !is3Or1PartInSynStruc_old
-            _tempFms4nc.in(syn.netCon)
-            _tempFms4nc.out(netCon)
-            _tempFms4nc = nil
-        } else {
-            setDefaultVars(enumSynCompIdxs.netCon, 0, netCon)
-        }
-        
-        return netCon
     }
     
     objref _tempPp
     
     // Keep in sync with SynGroup.createNewPpAttachedToSectionButTryToInherit
-    obfunc createNewPpAttachedToSectionButTryToInherit() { local synCompIdx, mechIdx, x, isMechNameUnchanged localobj pp_old, sec_ref, pp_new, nil, mechStd
+    obfunc createNewPpAttachedToSection() { local x localobj sec_ref, pp, nil
         strdef mechName, hocCommand
         
-        pp_old = $o1
-        synCompIdx = $2
-        mechIdx = $3
-        mechName = $s4
-        sec_ref = $o5
-        x = $6
-        isMechNameUnchanged = $7
+        mechName = $s1
+        sec_ref = $o2
+        x = $3
         
         sprint(hocCommand, "_tempPp = new %s(%.15e)", mechName, x)
         sec_ref.sec {
             execute(hocCommand, this)
         }
         
-        pp_new = _tempPp
+        pp = _tempPp
         _tempPp = nil
         
-        if (isMechNameUnchanged) {
-            mechStd = new MechanismStandard(mechName)
-            mechStd.in(pp_old)
-            mechStd.out(pp_new)
-        } else {
-            setDefaultVars(synCompIdx, mechIdx, pp_new)
-        }
-        
-        return pp_new
-    }
-    
-    // Keep in sync with SynGroup.setDefaultVars
-    proc setDefaultVars() { local synCompIdx, mechIdx, numVarTypes, varTypeIdx localobj pp, comp, mechStd, nil
-        synCompIdx = $1
-        mechIdx = $2
-        pp = $o3
-        
-        comp = smAllComps.o(synCompIdx)
-        
-        if (comp.enumDmPpNc == 1) {
-            numVarTypes = 3     // "PARAMETER", "ASSIGNED", "STATE"
-        } else if (comp.enumDmPpNc == 2) {
-            numVarTypes = 1
-        } else {
-            codeContractViolation()
-        }
-        
-        for varTypeIdx = 0, numVarTypes - 1 {   // 0: "PARAMETER", 1: "ASSIGNED", 2: "STATE"
-            mechStd = comp.mechStds[mechIdx][varTypeIdx]
-            if (mechStd == nil) {
-                continue
-            }
-            // This inserts NaN-s for inhomogen vars,
-            // but we'll restore all inhomogeneities shortly downstream calling inhomAndStochLibrary.onSynStrucChange
-            mechStd.out(pp)
-        }
-    }
-    
-    // Keep in sync with SynGroup.is3Or1PartInSynStruc
-    func is3Or1PartInSynStruc() { localobj nil
-        // It's a code contract that all the syns have the same structure
-        return (smAllSyns.o(0).netCon != nil)
-    }
-    
-    // Keep in sync with SynGroup.isSefwPresentInSynStruc
-    func isSefwPresentInSynStruc() { localobj nil
-        // It's a code contract that all the syns have the same structure
-        return (smAllSyns.o(0).sefwPp != nil)
+        return pp
     }
     
     // Keep in sync with SynGroup.ifMechDirtyThenApplyHomogenChanges
-    proc applyHomogenChanges() { local compIdx, mechIdx, enumPpRole, isPPorNC, maxVarType, varType, varTypeIdx localobj comp, syn, nil, sefwPpOrNil, sefwNetConOrNil, ppOrNetCon, compMechStd
+    proc initHomogenVars() { local compIdx, mechIdx, enumPpRole, isPPorNC, maxVarType, varType, varTypeIdx localobj comp, syn, nil, sefwPpOrNil, sefwNetConOrNil, ppOrNetCon, compMechStd
         
         compIdx = $1
         mechIdx = $2
@@ -42401,8 +42250,8 @@ addHomogenVarsInfoToSinglePPSynComp(comp)
 
 //////////////////// Start of synapses epilogue //////////////////////////
 
-{ synGroup.applyChangesToStrucIfNeeded(1, 8, 3, -1, "NetStim", "Exp2Syn", "", 1) }
-{ synGroup.applyChangesToAllHomogenVars(8, 3, -1) }
+{ synGroup.createSynStruc(1, 8, "NetStim", "Exp2Syn", "") }
+{ synGroup.initAllHomogenVars(1, 8, 3, -1) }
 
 //////////////////// End of synapses epilogue ////////////////////////////
 

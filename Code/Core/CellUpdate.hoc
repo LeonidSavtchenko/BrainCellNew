@@ -79,7 +79,7 @@ proc insertGapJunc() { local i
 
 proc CaGapFlux() { local ControlParameter
     ControlParameter=$2
-    print "Contr=", ControlParameter, "jd=", jd
+    // !! print "Contr=", ControlParameter, "jd=", jd
     if (ControlParameter < 0.5) {
        // for i = 0, SizeTotal-2 {
         //LargeGlia[i] {

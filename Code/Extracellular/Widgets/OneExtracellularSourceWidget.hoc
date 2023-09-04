@@ -1,37 +1,25 @@
 
-// !!! BUG: Click "Create new (default)", move the source to a random position with mouse, click "Apply", then click "Correct", click "Apply" => no warning that such ECS already exists + the centre coordinates shown in the list will be truncated a bit. The same effect for radius (if we don't move the source, but change it's radius with mouse). UPD: This truncation happens when we expose the variable with "xpvalue". Idea: Try to call "doNotify" in "applyHandler".
+// !!! maybe add a label in "Source capacity" panel showing the equation we'll use to calculate the concentration
 
-begintemplate SpeciesListItem
-    public s, rangeVarName
-    strdef s, rangeVarName
-    proc init() {
-        s = $s1
-        rangeVarName = $s2
-    }
-endtemplate SpeciesListItem
+// !!! BUG: Click "Create new (default)", move the source to a random position with mouse, click "Save", then click "Correct", click "Save" => no warning that such ECS already exists + the centre coordinates shown in the list will be truncated a bit. The same effect for radius (if we don't move the source, but change it's radius with mouse). UPD: This truncation happens when we expose the variable with "xpvalue". Idea 1: Try to call "doNotify" in "saveHandler". Idea 2: Try to play with "ivoc_style" (e.g. set max accuracy, show the widget, set old accuracy again)
 
-begintemplate DynamicsListItem
-    public s, enumStaticSwitchSpike
-    strdef s
-    enumStaticSwitchSpike = -1
-    proc init() {
-        s = $s1
-        enumStaticSwitchSpike = $2
-    }
-endtemplate DynamicsListItem
+// !!! BUG: For any astrocyte, if we created it with End Foot, then any changes to "x_soma", "y_soma" or "z_soma" in this widget just don't work
 
 begintemplate OneExtracellularSourceWidget
 
     public show, dismissHandler
     
-    external stringsEqual, findItemInListByString, createEmptyPanel, codeContractViolation
-    external mwh, math, ecsLibrary
+    external stringsEqual, findItemInListByString, getGlobalVarsHint, createEmptyPanel, codeContractViolation
+    external mwh, math, ecsLibrary, speciesLibrary, graphUtils
+    external eachItemInList
     external soma_ref
     
-    objref mainBox, deck1, deck2, deck3, deck4, plotShape
-    objref parentWidget
+    objref mainBox, deck1, deck2, deck3, deck4, deck5, plotShape
+    objref parentWidget, ionGlobalsWidget, netStimParamsWidget
     
     objref spcNamesList, srcShapesList, srcDynamicsList
+    
+    objref seriesInfo
     
     
     enumPointBall = -1
@@ -45,13 +33,10 @@ begintemplate OneExtracellularSourceWidget
     spikeTime = -1
     isSeries = -1
     
-    _ss = -1
-    oinit = -1
+    ss = -1
+    pointCapacityRadius = -1    // !!! maybe use the same UI as for "radius": show below "shapes" list and edit with mouse
     numMolecules = -1
-    diff = -1
-    d = -1
-    i0 = -1
-    iextra = -1
+    delta_o = -1
     
     x_soma = -1
     y_soma = -1
@@ -62,7 +47,9 @@ begintemplate OneExtracellularSourceWidget
     
     oldSrcIdxOrMinus1 = -1
     
-    create test_sec[1]
+    // !!!! create test_sec[1]
+    
+    slotIdx4GraphUtils = -1
     
     
     proc init() { local inf
@@ -70,11 +57,7 @@ begintemplate OneExtracellularSourceWidget
         
         parentWidget = $o1
         
-        spcNamesList = new List()
-        spcNamesList.append(new SpeciesListItem("K+", "ko"))    // !!! v just for test (the list will depend on user's MOD files)
-        spcNamesList.append(new SpeciesListItem("Na+", "nao"))
-        spcNamesList.append(new SpeciesListItem("Ca2+", "cao"))
-        spcNamesList.append(new SpeciesListItem("Cl+", "clo"))  // !!! ^
+        spcNamesList = speciesLibrary.spcNamesList
         
         srcShapesList = new List()
         srcShapesList.append(new String("point"))
@@ -99,32 +82,31 @@ begintemplate OneExtracellularSourceWidget
         units(&endTime, unitsStr)
         units(&spikeTime, unitsStr)
         
-        units(&_ss, "mM")
-        units(&oinit, "mM")
-        units(&diff, "um2/ms")
-        units(&d, "um2/ms")
-        units(&i0, "mM")
-        units(&iextra, "mA/cm2")
+        units(&ss, "mM")
+        units(&pointCapacityRadius, "um")
+        units(&delta_o, "mM")
         
         inf = math.inf
         variable_domain(&radius, float_epsilon, inf)    // !!! keep the lower bound in sync with func capRadius
         variable_domain(&startTime, 0, inf)
         variable_domain(&endTime, 0, inf)
         variable_domain(&spikeTime, 0, inf)
-        variable_domain(&_ss, 0, inf)
-        variable_domain(&oinit, 0, inf)
+        variable_domain(&ss, 0, inf)
+        variable_domain(&pointCapacityRadius, 0, inf)
         variable_domain(&numMolecules, 0, inf)
-        variable_domain(&diff, 0, inf)
-        variable_domain(&d, 0, inf)
-        variable_domain(&i0, 0, inf)
-        variable_domain(&iextra, 0, inf)
+        variable_domain(&delta_o, 0, inf)
         
         // Doing this, we achive that the name remains declared, so we can create and delete 3 sections dynamically later
-        test_sec[0] delete_section()
+        // !!!! test_sec[0] delete_section()
+        
+        ionGlobalsWidget = new GlobalsEditorWidget()
+        netStimParamsWidget = new NetStimParamsWidget()
+        
+        slotIdx4GraphUtils = 1
     }
     
-    proc show() { local numArg, speciesIdx, shapeIdx, enumStaticSwitchSpike localobj oldECS, oldSpatialInfo, oldTemporalInfo, oldCapacityInfo, hBox, vBox, hBox2
-        strdef menuToolName
+    proc show() { local numArg, speciesIdx, shapeIdx, enumStaticSwitchSpike localobj oldECS, oldSpatialInfo, oldTemporalInfo, oldCapacityInfo, speciesInfo, hBox, vBox, hBox2
+        strdef text, diffVarName, pesMenuToolName
         
         numArg = numarg()
         if (numArg > 2) {
@@ -148,17 +130,14 @@ begintemplate OneExtracellularSourceWidget
         isSeries = 0
         
         // !!! PotassiumDiffusion.mod ("point" shape, "static" dynamics)
-        _ss = 2.5           // mM
-        oinit = 2.5         // mM
+        ss = 2.5                    // mM
+        pointCapacityRadius = 25    // um           !!! was: 1
         
         // !!! PotassiumDiffusion.mod ("point" shape, "spike" dynamics)
-        numMolecules = 10000
-        diff = 0.5          // um2/ms
+        numMolecules = 1e8          //              !!! was: 10000
         
-        // !!! potassiumd.mod ("ball" shape)
-        d = 0.6             // um2/ms
-        i0 = 110            // mM
-        iextra = 1          // mA/cm2
+        // !!! (No MOD-file) ("ball" shape)
+        delta_o = 2.3               // mM
         
         if (numArg >= 1) {
             oldECS = $o1
@@ -193,20 +172,23 @@ begintemplate OneExtracellularSourceWidget
             oldCapacityInfo = oldECS.capacityInfo
             if (shapeIdx == 0) {
                 if (enumStaticSwitchSpike == 0) {
-                    _ss = oldCapacityInfo._ssOrMinus1
+                    ss = oldCapacityInfo.ssOrMinus1
+                    pointCapacityRadius = oldCapacityInfo.pointCapacityRadiusOrMinus1
                 } else if (enumStaticSwitchSpike == 2) {
                     numMolecules = oldCapacityInfo.numMoleculesOrMinus1
-                    diff = oldCapacityInfo.diffOrMinus1
                 } else {
                     codeContractViolation()
                 }
-                oinit = oldCapacityInfo.oinitOrMinus1
             } else if (shapeIdx == 1) {
-                d = oldCapacityInfo.dOrMinus1
-                i0 = oldCapacityInfo.i0OrMinus1
-                iextra = oldCapacityInfo.iextraOrMinus1
+                delta_o = oldCapacityInfo.delta_oOrMinus1
             } else {
                 codeContractViolation()
+            }
+            
+            if (!isSeries) {
+                seriesInfo = new ECSSeriesInfo()
+            } else {
+                seriesInfo = new ECSSeriesInfo(oldECS.seriesInfoOrNil)
             }
         }
         
@@ -223,6 +205,11 @@ begintemplate OneExtracellularSourceWidget
         mainBox = new VBox()
         mainBox.intercept(1)
         {
+            xpanel("")
+            xlabel("No changes will be saved until you click the \"Save\" button.")
+            getGlobalVarsHint(text)
+            xlabel(text)
+            xpanel()
             hBox = new HBox()
             hBox.intercept(1)
             {
@@ -235,7 +222,9 @@ begintemplate OneExtracellularSourceWidget
                     spcNamesList.browser("", "s")
                     spcNamesList.select_action("spcNameSelectHandler(hoc_ac_)")
                     xpanel("")
+                    // !!! xbutton("Edit species", "editSpeciesHandler()")
                     xbutton("Add new species", "addNewSpeciesHandler()")
+                    // !!!! some ideas: ion_register(), make_mechanism()
                     xpanel()
                 }
                 vBox.intercept(0)
@@ -275,13 +264,17 @@ begintemplate OneExtracellularSourceWidget
                     {
                         createEmptyPanel()
                         xpanel("")
-                        // !!! add handlers to prevent startTime > endTime OR show a warning box in "applyHandler" and then return
+                        // !!! add handlers to prevent startTime > endTime OR show a warning box in "saveHandler" and then return
+                        // !!!! for series, this var is a dup. for the one in the NetStim panel
                         xpvalue("Start time", &startTime, 1)
                         xpvalue("End time", &endTime, 1)
                         xpanel()
                         xpanel("")
+                        // !!!! for series, this var is a dup. for the one in the NetStim panel
                         xpvalue("Spike time", &spikeTime, 1)
                         xpanel()
+                        
+                        // !!!! for series, when "noise" = 1, "start" is not 1st impulse time
                     }
                     deck2.intercept(0)
                     deck2.map()
@@ -303,37 +296,57 @@ begintemplate OneExtracellularSourceWidget
                 vBox = new VBox()
                 vBox.intercept(1)
                 {
+                    // !!! think about moving this "Species GLOBAL-s" panel to a better place:
+                    //     * in this widget below "Species name"
+                    //     * to a new widget shown when user clicks "Edit species" button (commented above)
+                    //     * to the parent widget (which will also contain the list of species and "Add new species" button)
+                    // !!! the inconsistency: any changes in "Species GLOBAL-s" are applied immediately (without clicking "Save")
+                    //     at least, we need to create a hint label to notify user about this behaviour
                     xpanel("")
-                    xlabel("Source capacity:")
+                    xlabel("Species GLOBAL-s:")
                     xpanel()
                     deck4 = new Deck()
                     deck4.intercept(1)
                     {
+                        xpanel("")
+                        createEditBaseConcButtonAndHint()
+                        xpanel()
+                        for eachItemInList(speciesInfo, speciesLibrary.spcInfoList) {
+                            xpanel("")
+                            createEditBaseConcButtonAndHint()
+                            sprint(diffVarName, "Diff_%s", speciesInfo.suffix)
+                            xpvalue(diffVarName, &speciesInfo.diff, 1)
+                            xpanel()
+                        }
+                    }
+                    deck4.intercept(0)
+                    deck4.map()
+                    // deck4.flip_to(*)     // Will be done below in updateDeck4
+                    xpanel("")
+                    xlabel("Source capacity:")
+                    xpanel()
+                    deck5 = new Deck()
+                    deck5.intercept(1)
+                    {
                         createEmptyPanel()
-                        // !!! maybe some different vars below can be merged into the same var (see the units)
-                        //                                         !!! was: name in UI, var in HOC, var in MOD
                         xpanel("")
                         // !!! PotassiumDiffusion.mod ("point" shape, "static" dynamics)
-                        xpvalue("{species}_ss", &_ss, 1)            // was: -, -, k_ss_PotassiumDiffucion
-                        xpvalue("{species}oinit", &oinit, 1)        // was: -, -, koinit_PotassiumDiffucion
+                        xpvalue("ss", &ss, 1)
+                        xpvalue("Radius", &pointCapacityRadius, 1)
                         xpanel()
                         xpanel("")
                         // !!! PotassiumDiffusion.mod ("point" shape, "spike" dynamics)
                         // !!! maybe add a handler to make it integer after each change
-                        xpvalue("Num. molecules", &numMolecules, 1) // was: "NumberMolecules", NumberMolecules, Q_PotassiumDiffucion
-                        xpvalue("Diff", &diff, 1)                   // was: -,                 -,               Diff_PotassiumDiffucion
-                        xpvalue("{species}oinit", &oinit, 1)        // was: -,                 -,               koinit_PotassiumDiffucion
+                        xpvalue("Num. molecules", &numMolecules, 1)
                         xpanel()
                         xpanel("")
-                        // !!! potassiumd.mod ("ball" shape)
-                        xpvalue("Diffusion coefficient", &d, 1)     // was: "Diffusion coefficient (um2/ms)", DCoef,    Dk_kdifl (micron2/ms)
-                        xpvalue("{species}i0", &i0, 1)              // was: -,                                -,        ki0_kdifl
-                        xpvalue("Peak current", &iextra, 1)         // was: "Peak K+ current (mA/cm2)",       KCurrent, iextra_kdifl (milliamp/cm2)
+                        // !!! (no MOD-file) ("ball" shape)
+                        xpvalue("Delta of concentration", &delta_o, 1)
                         xpanel()
                     }
-                    deck4.intercept(0)
-                    deck4.map()
-                    // deck4.flip_to(*)     // Will be done below in srcDynamicsSelectHandler
+                    deck5.intercept(0)
+                    deck5.map()
+                    // deck5.flip_to(*)     // Will be done below in srcDynamicsSelectHandler
                 }
                 vBox.intercept(0)
                 vBox.map()
@@ -367,28 +380,42 @@ begintemplate OneExtracellularSourceWidget
                     hBox2.map()
                     plotShape = new PlotShape()
                     // !!! plotShape.exec_menu("Shape Plot")    // this affects performance while positioning the source
-                    // !!! maybe remove unnecessary menu items (e.g. "3D Rotate") - make a common proc with WatchedVarsAndRecorderSettingsWidget
-                    menuToolName = "Position extracellular source"
-                    plotShape.menu_tool(menuToolName, "mouseEventsHandler")
+                    
+                    // !!!! plotShape.menu_remove("3D Rotate")       // !!!! error here: menu_remove not a public member of PlotShape
+                    
+                    // !!!! maybe add a hint label: "Please don't use \"3D Rotate\""
+                    
+                    pesMenuToolName = "Position Extracellular Source"
+                    plotShape.menu_tool(pesMenuToolName, "mouseEventsHandler")
+                    graphUtils.addPlotDynamicsMenuItem(plotShape, slotIdx4GraphUtils, "Extracellular Concentration", "", 0)
                 }
                 vBox.intercept(0)
                 vBox.map()
                 vBox = new VBox()
                 vBox.intercept(1)
                 {
+                    hBox2 = new HBox()
+                    hBox2.intercept(1)
+                    {
+                        xpanel("")
+                        xpvalue("x", &x, 1, "updatePlotShape()")
+                        xpvalue("y", &y, 1, "updatePlotShape()")
+                        xpvalue("z", &z, 1, "updatePlotShape()")
+                        xpanel()
+                        xpanel("")
+                        xpvalue("x_soma", &x_soma, 1, "xyzSomaChangedHandler()")
+                        xpvalue("y_soma", &y_soma, 1, "xyzSomaChangedHandler()")
+                        xpvalue("z_soma", &z_soma, 1, "xyzSomaChangedHandler()")
+                        xpanel()
+                    }
+                    hBox2.intercept(0)
+                    hBox2.map()
                     xpanel("")
-                    xpvalue("x", &x, 1, "updatePlotShape()")
-                    xpvalue("y", &y, 1, "updatePlotShape()")
-                    xpvalue("z", &z, 1, "updatePlotShape()")
-                    xlabel("")
-                    xpvalue("x_soma", &x_soma, 1, "xyzSomaChangedHandler()")
-                    xpvalue("y_soma", &y_soma, 1, "xyzSomaChangedHandler()")
-                    xpvalue("z_soma", &z_soma, 1, "xyzSomaChangedHandler()")
-                    xlabel("")
                     xbutton("Calculate the overlapping area/volume and other stats", "calcStatsHandler()")
                     xlabel("")
-                    xlabel("Hints: Click on PlotShape to move the source,")
-                    xlabel("           hold \"Shift\" to resize the ball.")
+                    xlabel("Hints: Click on the PlotShape to move the source,")
+                    xlabel("           hold \"Shift\" to resize the ball;")
+                    xlabel("           don't use \"3D Rotate\" when positioning sources (toggle \"XY/ZY/XZ projection\" instead).")
                     xpanel()
                 }
                 vBox.intercept(0)
@@ -397,19 +424,23 @@ begintemplate OneExtracellularSourceWidget
             hBox.intercept(0)
             hBox.map()
             xpanel("")
-            xbutton("Apply", "applyHandler()")
+            xbutton("Save", "saveHandler()")
             xpanel()
         }
         mainBox.intercept(0)
         mainBox.dismiss_action("dismissHandler()")
         makeSelectionsInLists(speciesIdx, shapeIdx, enumStaticSwitchSpike)  // !!! doing it before mainBox.map to avoid blinking in List-s and Deck-s
         viewDirectionChangedHandler(viewDirIdx, 1)                          //
-        mainBox.map("One extracellular source", 540, 75, -1, -1)   // !!!
+        mainBox.map("One extracellular source", 540, 35, -1, -1)   // !!!
         
         // This must be done only after mapping of the mainBox
         recenterAndRescalePlotShape()
         
-        plotShape.exec_menu(menuToolName)   // !!!
+        plotShape.exec_menu(pesMenuToolName)    // !!!
+        
+        if (isSeries) {
+            netStimParamsWidget.show(seriesInfo.mechStd)
+        }
     }
     
     proc dismissHandler() { localobj nil
@@ -417,12 +448,16 @@ begintemplate OneExtracellularSourceWidget
             return
         }
         
+        dismissChilds()
+        
         mainBox.unmap()
         mainBox = nil
         
         if (enumPointBall == 1) {
-            deleteTempSectionCross()
+            // !!!! deleteTempSectionCross()
         }
+        
+        // !!!! graphUtils.unregister(slotIdx4GraphUtils)
     }
     
     // All next staff is private
@@ -443,21 +478,42 @@ begintemplate OneExtracellularSourceWidget
     }
     
     proc spcNameSelectHandler() { local spcNameIdx
+        strdef rangeVarName
+        
         spcNameIdx = $1
         
+        ionGlobalsWidget.dismissHandler()
+        
+        updateDeck4()
+        
+        rangeVarName = spcNamesList.o(spcNameIdx).rangeVarName
+        
         // !!! no error here if the RANGE variable doesn't exist (e.g. "clo")
-        plotShape.variable(spcNamesList.o(spcNameIdx).rangeVarName)
+        plotShape.variable(rangeVarName)
         
         updatePlotShape()
         
-        // !!! mwh.showNotImplementedWarning()
+        // !!! if the RANGE variable doesn't exist, a click on the cell causes the error, e.g.: "Cannot find the symbol for  clo",
+        //     but this error looks for good, so let's keep it
+        graphUtils.varNamesWithIndex[slotIdx4GraphUtils] = new String(rangeVarName)
     }
     
     proc addNewSpeciesHandler() {
-        // !!! show another widget to select the species; some ideas:
-        //     * SymChooser
-        //     * a new widget like AddOneInputVarWidget
+        // !!! show another widget to select the species
+        
+        // !!! some ideas:
+        //     * (discussed and declined) SymChooser
+        //     * (discussed and declined) a new widget like AddOneInputVarWidget
         //     * string_dialog + validation with name_declared or try-read-except in Python
+        
+        // !!! other ideas:
+        //     * use make_mechanism() to create a HOC-based mechanism on the fly
+        //       (or at least a variadic part to be used from the fixed MOD-based mechanism)
+        //     * just show user the instructions: what MOD file to open, what lines to correct/add, how to recompile
+        //       (for convenience, we can extract these lines into a separate include-file and even open it with the default text editor)
+        
+        // !!! updateDeck4()
+        
         mwh.showNotImplementedWarning()
     }
     
@@ -490,12 +546,14 @@ begintemplate OneExtracellularSourceWidget
         
         populateSrcDynamicsList(1)  // -> srcDynamicsSelectHandler
         
+        // updateDeck4()    // !!! called from srcDynamicsSelectHandler
+        
         if (enumPointBall == 0) {
             if (!isCalledFromShow) {
-                deleteTempSectionCross()
+                // !!!! deleteTempSectionCross()
             }
         } else if (enumPointBall == 1) {
-            // Nothing here (updatePlotShape below will call createOrUpdateTempSectionCross)
+            // Empty by design (updatePlotShape below will call createOrUpdateTempSectionCross)
         } else {
             codeContractViolation()
         }
@@ -517,7 +575,9 @@ begintemplate OneExtracellularSourceWidget
             cardIdx = 0
             deck2.flip_to(cardIdx)
             deck3.flip_to(cardIdx)
+            netStimParamsWidget.dismissHandler()
             deck4.flip_to(cardIdx)
+            deck5.flip_to(cardIdx)
             return
         }
         
@@ -527,6 +587,11 @@ begintemplate OneExtracellularSourceWidget
         
         cardIdx = (enumStaticSwitchSpike > 0)
         deck3.flip_to(cardIdx)
+        if (cardIdx == 0) {
+            netStimParamsWidget.dismissHandler()
+        }
+        
+        updateDeck4()
         
         if (enumPointBall == 0) {
             cardIdx = 1 + math.min(enumStaticSwitchSpike, 1)
@@ -535,14 +600,27 @@ begintemplate OneExtracellularSourceWidget
         } else {
             codeContractViolation()
         }
-        deck4.flip_to(cardIdx)
+        deck5.flip_to(cardIdx)
     }
     
     proc isSeriesChangedHandler() {
         if (isSeries) {
-            // !!! show another widget to define the series
-            mwh.showNotImplementedWarning()
+            netStimParamsWidget.show(seriesInfo.mechStd)
+            // !!! maybe set MechanismStandard.action() to check if "number" is too high and show the warning
+        } else {
+            netStimParamsWidget.dismissHandler()
         }
+    }
+    
+    proc editBaseConcHandler() { local spcNameIdx
+        strdef ionMechName
+        
+        spcNameIdx = spcNamesList.selected()
+        ionMechName = spcNamesList.o(spcNameIdx).ionMechName
+        
+        // !!!! a problem with the shown widget: unnecessary "i0" var is exposed (the base concentration inside the cell);
+        //      would it be better just to add an "xpvalue" in this widget instead of showing the whole new one?
+        ionGlobalsWidget.show(ionMechName, 1200, 250)
     }
     
     proc viewDirectionChangedHandler() { local numArg, isCalledFromShow
@@ -564,7 +642,7 @@ begintemplate OneExtracellularSourceWidget
         plotShape.rotate()                              // XY
         
         if (viewDirIdx == 0) {
-            // Nothing here
+            // Empty by design
         } else if (viewDirIdx == 1) {
             plotShape.rotate(0, 0, 0, 0, PI / 2, 0)     // ZY
         } else if (viewDirIdx == 2) {
@@ -649,13 +727,30 @@ begintemplate OneExtracellularSourceWidget
         mwh.showNotImplementedWarning()
     }
     
-    proc applyHandler() { local dynamicsIdx, enumStaticSwitchSpike, isUnique localobj newSpatialInfo, newTemporalInfo, newCapacityInfo, newECS
-        strdef species
+    proc saveHandler() { local dynamicsIdx, maxNumImps, enumStaticSwitchSpike, isUnique localobj newSpatialInfo, newTemporalInfo, newCapacityInfo, newECS
+        strdef line1, line2, line3, line4, species
         
         dynamicsIdx = srcDynamicsList.selected()
         if (dynamicsIdx == -1) {
             mwh.showWarningBox("Please select a dynamics model.")
             return
+        }
+        
+        if (isSeries) {
+            // !!!! hardcode: maybe 100 is enough to impact the performance significantly (need to test)
+            maxNumImps = 100
+            if (seriesInfo.getNumImps() > maxNumImps) {
+                sprint(line1, "For the series, you specified \"number\" > %d.", maxNumImps)
+                line2 = "That's quite a high value which will result in low performance on late iterations."
+                line3 = "For so many impulses, much better performance can be achieved with numerical integration"
+                line4 = "of the diffusion PDE rather than summation of the closed-form solutions (for \"point+spike\" at least)."
+                
+                // !!!! for "ball+switch", when all pulses have the same duration, we can implement a technique
+                //      based on the "memory horizon" that would allow us to avoid growing cycles in MOD,
+                //      but for "point+spike" we cannot just "forget" about the old pulses because they have quite heavy tails
+                
+                mwh.showNotImplementedWarning(line1, line2, line3, line4, "")
+            }
         }
         
         getSelectedSpeciesName(species)
@@ -681,24 +776,28 @@ begintemplate OneExtracellularSourceWidget
         
         if (enumPointBall == 0) {
             if (enumStaticSwitchSpike == 0) {
-                newCapacityInfo = new ECSCapacityInfo(0, _ss, oinit)
+                newCapacityInfo = new ECSCapacityInfo(0, 0, ss, pointCapacityRadius)
             } else if (enumStaticSwitchSpike == 2) {
-                newCapacityInfo = new ECSCapacityInfo(0, numMolecules, diff, oinit)
+                newCapacityInfo = new ECSCapacityInfo(0, 2, numMolecules)
             } else {
                 codeContractViolation()
             }
         } else if (enumPointBall == 1) {
-            newCapacityInfo = new ECSCapacityInfo(1, d, i0, iextra)
+            newCapacityInfo = new ECSCapacityInfo(1, delta_o)
         } else {
             codeContractViolation()
         }
         
-        newECS = new ExtracellularSource_(species, newSpatialInfo, newTemporalInfo, newCapacityInfo)
+        if (!isSeries) {
+            newECS = new ExtracellularSource_(species, newSpatialInfo, newTemporalInfo, newCapacityInfo)
+        } else {
+            newECS = new ExtracellularSource_(species, newSpatialInfo, newTemporalInfo, newCapacityInfo, seriesInfo)
+        }
         
         if (oldSrcIdxOrMinus1 == -1) {
             isUnique = parentWidget.onCreateHandler(newECS)
         } else {
-            isUnique = parentWidget.onCorrectHandler(newECS, oldSrcIdxOrMinus1)
+            isUnique = parentWidget.onEditHandler(newECS, oldSrcIdxOrMinus1)
         }
         
         if (!isUnique) {
@@ -783,6 +882,37 @@ begintemplate OneExtracellularSourceWidget
         srcDynamicsSelectHandler(dynamicsIdx)
     }
     
+    proc createEditBaseConcButtonAndHint() {
+        xbutton("* Edit base concentration", "editBaseConcHandler()")
+        // !!! maybe move this label to the child widget, then remove "* " above
+        xlabel("* Hint: We'll read \"o0\" and ignore \"i0\" var")
+    }
+    
+    proc updateDeck4() { local dynamicsIdx, enumStaticSwitchSpike, spcNameIdx, spcIdx, cardIdx
+        strdef species
+        
+        dynamicsIdx = srcDynamicsList.selected()
+        if (dynamicsIdx == -1) {
+            deck4.flip_to(0)
+            return
+        }
+        
+        enumStaticSwitchSpike = srcDynamicsList.o(dynamicsIdx).enumStaticSwitchSpike
+        if (srcShapesList.selected() != 0 || enumStaticSwitchSpike != 2) {
+            deck4.flip_to(0)
+            return
+        }
+        
+        spcNameIdx = spcNamesList.selected()
+        species = spcNamesList.o(spcNameIdx).s
+        spcIdx = speciesLibrary.getSpeciesIdxOrMinus1(species)
+        if (spcIdx == -1) {
+            codeContractViolation()
+        }
+        cardIdx = 1 + spcIdx
+        deck4.flip_to(cardIdx)
+    }
+    
     proc updateSrcMark() { local x_screen, y_screen
         x_screen = $1
         y_screen = $2
@@ -832,12 +962,12 @@ begintemplate OneExtracellularSourceWidget
         // looks simpler, but in fact has a restriction ("Arg out of range in user function" if marker_size < 0.1 or > 100)
         // and requires calculation of marker_size which is linear to radius_screen, but also has an unclear dependency on PlotShape zoom, widget size etc.
         
-        createOrUpdateTempSectionCross()
+        // !!!! createOrUpdateTempSectionCross()
     }
     
     proc createAllOtherMarks() {
         if (whatToShowIdx == 0) {
-            // Nothing here
+            // Empty by design
         } else if (whatToShowIdx == 1) {
             createAllOtherMarksCore(1)
         } else if (whatToShowIdx == 2) {
@@ -870,7 +1000,7 @@ begintemplate OneExtracellularSourceWidget
     
     // !!!!!!!!!! vvvvvvvvvv just a quick prototype to start with
     
-    // !!! think about making all next proc-s members of "ExtracellularSource_" or "ExtracellularLibrary"
+    // !!! think about making all next proc-s members of "ExtracellularSource_" or "ExtracellularSourcesLibrary"
     //     (I will have to store one "ExtracellularSource_" inside "OneExtracellularSourceWidget")
     
     // !!! similar to updatePlotShape
@@ -958,6 +1088,7 @@ begintemplate OneExtracellularSourceWidget
     
     
     
+    /* !!!!
     // !!! 3D cross made of temporary sections just to test the 2D circle marker positioning.
     //     Once I test that 2D circle and 3D cross are always synced, comment out all the code for the cross
     //     because it affects performance when user interacts with the PlotShape, especially for astrocyte.
@@ -991,6 +1122,7 @@ begintemplate OneExtracellularSourceWidget
             test_sec[idx] delete_section()
         }
     }
+    */
     
     // !!! BUG: for colourIdx > 9, we have 2 bad colours and then repetition: 10 - white, 11 - black, 12 - red etc.
     //     but we can install more colours (up to 100):
@@ -1060,6 +1192,11 @@ begintemplate OneExtracellularSourceWidget
         } else {
             codeContractViolation()
         }
+    }
+    
+    proc dismissChilds() {
+        ionGlobalsWidget.dismissHandler()
+        netStimParamsWidget.dismissHandler()
     }
     
 endtemplate OneExtracellularSourceWidget

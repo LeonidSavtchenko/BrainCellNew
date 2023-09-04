@@ -10,7 +10,6 @@ proc addLengthUnits() {
 
 // Keeping this proc on the top level rather than in a template because otherwise
 // "units" would fail due to missing access to the section
-// See also: MechTypeHelper.getVarUnits
 proc getWatchedVarUnits() {
     strdef watchedVarName, unitsStr, hocCommand
     watchedVarName = $s1
@@ -23,3 +22,16 @@ proc getWatchedVarUnits() {
     
     $s2 = unitsStr
 }
+
+proc getGraphedVarUnits() {
+    strdef varNameWithIndex, pyCommand, varName
+    varNameWithIndex = $s1
+    
+    sprint(pyCommand, "'%s'.split('[', 1)[0]", varNameWithIndex)
+    varName = pyObj.ev(pyCommand)
+    
+    $s2 = units(varName)
+}
+
+
+// See also: MechTypeHelper.getVarUnits and py:UnitsUtils (in Export module)

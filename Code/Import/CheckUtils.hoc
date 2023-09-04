@@ -32,12 +32,13 @@ func checkIfThisHocFileIsOfAstroOldStyle() { local isOfOldStyle, len localobj in
     return isOfOldStyle
 }
 
-// Check if this geometry file does not define soma and/or axon
+// Check if this geometry file does not define soma, dendrite or axon
 // $s1 - Input file path and name
 // $&2 - (Output) 0/1 flag indicating whether soma is missing
-// $&3 - (Output) 0/1 flag indicating whether axon is missing
-proc checkIfSomaAndOrAxonAreMissingInThisGeometryFile() { local len, idx, numAxons, numSomas localobj inFile, strFunc
-    strdef inFilePathName, outFilePathNameTempl, outFilePathName, inLine, numAxonsStr, numSomasStr
+// $&3 - (Output) 0/1 flag indicating whether dendrite is missing
+// $&4 - (Output) 0/1 flag indicating whether axon is missing
+proc checkIfSomaDendriteOrAxonIsMissingInThisGeometryFile() { local len, idx, numAxons, numDends, numSomas localobj inFile, strFunc
+    strdef inFilePathName, outFilePathNameTempl, outFilePathName, inLine, numAxonsStr, numDendsStr, numSomasStr
     
     inFilePathName = $s1
     
@@ -60,7 +61,13 @@ proc checkIfSomaAndOrAxonAreMissingInThisGeometryFile() { local len, idx, numAxo
         idx = strFunc.tail(inLine, "Number of Axons:", numAxonsStr)
         if (idx != -1) {
             sscanf(numAxonsStr, "%d", &numAxons)
-            $&3 = (numAxons == 0)
+            $&4 = (numAxons == 0)
+            continue
+        }
+        idx = strFunc.tail(inLine, "Number of Dends:", numDendsStr)
+        if (idx != -1) {
+            sscanf(numDendsStr, "%d", &numDends)
+            $&3 = (numDends == 0)
             continue
         }
         idx = strFunc.tail(inLine, "Number of Somas:", numSomasStr)

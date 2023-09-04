@@ -16,34 +16,6 @@ proc createOrCleanUpTempFolder() { local status
     }
 }
 
-// Unzip the archive with 7-Zip and rename the input SWC file
-// $s1 - Input ZIP file path and name
-// $s2 - Output folder path and name
-// $s3 (Output) - The SWC file path and name
-proc unzipArchiveWith7ZipAndRenameInputFile() { local status
-    strdef inZipFilePathName, outFolderPathName, appPathNameTempl, appPathName, sysCommandTempl, sysCommand, outSwcFileName, outSwcFilePathName
-    
-    inZipFilePathName = $s1
-    outFolderPathName = $s2
-    
-    // Unzip the selected archive with 7-Zip and save to the temporary folder
-    appPathNameTempl = "%sCode/Import/3rdParty/7-Zip/7z.exe"
-    sprint(appPathName, appPathNameTempl, getcwd())
-    sysCommandTempl = "call \"%s\" e \"%s\" -o\"%s\" > NUL 2> NUL"
-    sprint(sysCommand, sysCommandTempl, appPathName, inZipFilePathName, outFolderPathName)
-    status = system(sysCommand)
-    if (status) {
-        printImportFailedMsgAndRaiseError("Cannot unzip the archive with 7-Zip")
-    }
-    
-    // Create a copy of the first "*.CNG.swc" file in just unzipped folder giving it fixed name
-    outSwcFileName = "input_file.swc"
-    copyAndRenameFirstSwcFile(outFolderPathName, outSwcFileName)
-    
-    sprint(outSwcFilePathName, "%s/%s", outFolderPathName, outSwcFileName)
-    $s3 = outSwcFilePathName
-}
-
 // Test the selected file with NLMorphologyConverter
 // $s1 - Input file path and name
 // $s2 - Output report file path and name
@@ -58,7 +30,7 @@ proc createReportFileWithNLMorphologyConverter() { local status
     sysCommandTempl = "call \"%s\" \"%s\" --report \"%s\""
     sprint(sysCommand, sysCommandTempl, appPathName, inFilePathName, outFilePathName)
     
-    status = system(sysCommand)
+    status = runSysOrPyCommandWithWaitBox(sysCommand, 1, "Analyzing")
     if (status) {
         // Just for sanity. Actually, NLMorphologyConverter does not return error codes, but rather prints a message
         printImportFailedMsgAndRaiseError("Cannot test the file with NLMorphologyConverter")
@@ -92,7 +64,7 @@ proc convertFileToHocWithNLMorphologyConverter() { local somaDiamAndLenOrMinusOn
     sysCommandTempl = "call \"%s\" \"%s\" \"%s\" NeuronHOC %s"
     sprint(sysCommand, sysCommandTempl, appPathName, inFilePathName, outFilePathName, extraArg)
     
-    status = system(sysCommand)
+    status = runSysOrPyCommandWithWaitBox(sysCommand, 1, "Converting")
     if (status) {
         // Just for sanity. Actually, NLMorphologyConverter does not return error codes, but rather prints a message and creates a minimal output file
         printImportFailedMsgAndRaiseError("Cannot convert the file to HOC format with NLMorphologyConverter")

@@ -159,6 +159,7 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
             plotShapeMainV.exec_menu("Shape Plot")
             plotShapeMainV.exec_menu("View = plot")
             plotShapeMainV.variable("v")
+            graphUtils.addPlotDynamicsMenuItem(plotShapeMainV, 0, "Voltage", "v", 1)
             plotShapeMainV.show(0)
             if (isAstrocyteOrNeuron) {
                 minV1 = -85
@@ -187,16 +188,18 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
         vBoxRightPanel.intercept(1)
         {
             xpanel("")
-            if (isBaseOrNanoStart && !isAstrocyteOrNeuron) {
-                xbutton("Edit extra potassium (deprecated)", "showExtraPotassiumControlPanels()")   // !!!
-            }
-            xbutton("Edit extracellular sources (in development)", "startECSManager()")             // !!!
-            if (isBaseOrNanoStart && !isAstrocyteOrNeuron) {
-                xbutton("Insert electrode", "insertElectrode()")
-            }
             xbutton("Edit biophysics", "startMechManager()")
             if (!isAstrocyteOrNeuron) {
                 xbutton("Edit synapses", "startSynManager()")
+            }
+            /* !!!
+            if (isBaseOrNanoStart && !isAstrocyteOrNeuron) {
+                xbutton("Edit extra potassium (deprecated)", "showExtraPotassiumControlPanels()")
+            }
+            */
+            xbutton("Edit extracellular sources (in development)", "startECSManager()")             // !!!
+            if (isBaseOrNanoStart && !isAstrocyteOrNeuron) {
+                xbutton("Insert electrode", "insertElectrode()")
             }
             xbutton("Export cell", "startExportManager()")
             xpanel()
@@ -254,29 +257,38 @@ proc createReseedingDeck() {
         xradiobutton("All dendrites", "isAllOrSomeDendritesSeeded = 1", isAllOrSomeDendritesSeeded == 1)
         xradiobutton("Some dendrites (I will select them)", "isAllOrSomeDendritesSeeded = 0", isAllOrSomeDendritesSeeded == 0)
         xbutton("Reseed", "seededDendritesChangedHandler()")
+        xlabel("")
         if (isAstrocyteOrNeuron) {
+            // !!!! dup. with initAstrocyte.hoc
+            xpvalue("Max number of stalks per dendrite", &nanoBranchesManager.MaxNumberBranchesPerDendrite, 1, "addLeaves(MinDistance)")
+            // !!!! commented just because it's not about "Where to Seed the Nanostructures"
+            // xpvalue("Number of leaves per stalk", &NumberLeavesPerStalk, 1, "addLeaves(MinDistance)")
+            
+            /* !!!!
             xlabel("Initial min. distance between stalks is limit value that cannot be reduced using panel.")
             xlabel("To decrease this value, increase value - MaxNumberStalksPerDendrite")
-            xvalue("Min distribution over branches","MinDistance", 1, "addLeaves(MinDistance)", 0, 1)
+            */
+            xpvalue("Min distribution over branches", &MinDistance, 1, "addLeaves(MinDistance)")
         } else {
+            // !!!! dup. with initNeuron.hoc
+            xpvalue("Max number of spines per dendrite", &nanoBranchesManager.MaxNumberBranchesPerDendrite, 1, "ReseedSpines()")
+            
+            /* !!!!
             xlabel("Initial min. distance between spines is limit value that cannot be reduced using panel.")
             xlabel("To decrease this value, increase value - MaxNumberSpinesPerDendrite")
-            xvalue("Min distribution over branches","MinDistance", 1, "ReseedSpines()", 0, 1)
+            */
+            xpvalue("Min distribution over branches", &MinDistance, 1, "ReseedSpines()")
         }
         xpanel()
         xpanel("")
         xlabel("=============== Where to Seed the Nanostructures ===============")
         xlabel("")
-        text = "Not available after the first interaction with %s"
-        if (isAstrocyteOrNeuron) {
-            sprint(text, text, "Manager of Biophysics")
-            xlabel(text)
-        } else {
-            sprint(text, text, "any of these widgets:")
-            xlabel(text)
-            xlabel("    * Manager of Biophysics")
+        xlabel("Not available after the first interaction with any of these widgets:")
+        xlabel("    * Manager of Biophysics")
+        if (!isAstrocyteOrNeuron) {
             xlabel("    * Manager of Synapses")
         }
+        xlabel("    * Manager of Extracellular Sources")
         xpanel()
     }
     deckReseeding.intercept(0)
@@ -324,7 +336,12 @@ proc startSynManager() { local isCancel
     makeSureSynCompsCreatedOrImportedThenShowSynManagerBaseWidget()
 }
 
-proc startECSManager() {
+proc startECSManager() { local isCancel
+    isCancel = makeSureReseedingLocked()
+    if (isCancel) {
+        return
+    }
+    
     showExtracellularManagerBaseWidget()
 }
 

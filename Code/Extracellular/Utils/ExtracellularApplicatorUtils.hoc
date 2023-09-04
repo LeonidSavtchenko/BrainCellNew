@@ -1,0 +1,198 @@
+
+// !!! keeping this proc on the top level rather than inside a template just because we need to use "farall"
+// !!! (maybe not "forall", but only a subset of sections)
+proc applyExtracellularSources() { local numECSs, isInsertOrUninsert, maxNumImpsPerECS, segmIdx_global, u localobj spcLibPackedToVec, ecSrcLibPackedToVec, segm3DSpecificDataMatrix, numImpsSoFarDataVec, impTimesDataMatrix
+
+    numECSs = ecsLibrary.getNumECSs()
+    isInsertOrUninsert = (numECSs != 0)
+    
+    if (isInsertOrUninsert) {
+        // GLOBAL-s
+        speciesLibrary.copyGlobalVarsToModParams()
+        
+        maxNumImpsPerECS = ecsLibrary.getMaxNumImpsPerECS()
+        maxNumImpsPerECS_ECDCalcAndConsHelper = maxNumImpsPerECS
+        
+        
+        // POINTER-s
+        
+        spcLibPackedToVec = speciesLibrary.packToVec()
+        ecSrcLibPackedToVec = ecsLibrary.packToVec()
+        segm3DSpecificDataMatrix = _prepareSegm3DSpecificDataMatrix()
+        
+        numImpsSoFarDataVec = new Vector(numECSs)
+        
+        if (maxNumImpsPerECS == 0) {
+            // Just a workaround because NEURON considers the next commands illegal:
+            //  impTimesDataMatrix = new Matrix(numECSs, 0)
+            //  setpointer ptr_impTimesDataMatrix_ECDCalcAndConsHelper(u), nil
+            maxNumImpsPerECS = 1
+        }
+        impTimesDataMatrix = new Matrix(numECSs, maxNumImpsPerECS)
+        
+        ecsLibrary.deployAllSeriesChains(numImpsSoFarDataVec, impTimesDataMatrix)   // --> eclDeploymentCache
+        
+        segmIdx_global = 0
+        forall {
+            // No problem here if already inserted
+            insert ECDCalcAndConsHelper
+            
+            // !!! the last command inserts all required ions automatically,
+            //     so, I need to schedule "Rescan" in biophys manager
+            
+            for (u, 0) {
+                // !!! all the pointers below are initialized as "RANGE POINTER"-s,
+                //     but actually only ptr_segm3DSpecificDataMatRow_ECDCalcAndConsHelper needs to be a "RANGE POINTER"
+                //     and all others should be "GLOBAL POINTER"-s
+                //     but how can we do this with NEURON? it considers illegal even when we try to remove "(u)" below
+                
+                setpointer ptr_spcLibDataVec_ECDCalcAndConsHelper(u), spcLibPackedToVec.x(0)
+                setpointer ptr_ecSrcLibDataVec_ECDCalcAndConsHelper(u), ecSrcLibPackedToVec.x(0)
+                
+                setpointer ptr_segm3DSpecificDataMatRow_ECDCalcAndConsHelper(u), segm3DSpecificDataMatrix.x[segmIdx_global][0]
+                
+                setpointer ptr_numImpsSoFarDataVec_ECDCalcAndConsHelper(u), numImpsSoFarDataVec.x(0)
+                setpointer ptr_impTimesDataMatrix_ECDCalcAndConsHelper(u), impTimesDataMatrix.x[0][0]
+                
+                segmIdx_global += 1
+            }
+        }
+        
+        eclDeploymentCache.spcLibPackedToVec = spcLibPackedToVec
+        eclDeploymentCache.ecSrcLibPackedToVec = ecSrcLibPackedToVec
+        eclDeploymentCache.segm3DSpecificDataMatrix = segm3DSpecificDataMatrix
+        eclDeploymentCache.numImpsSoFarDataVec = numImpsSoFarDataVec
+        eclDeploymentCache.impTimesDataMatrix = impTimesDataMatrix
+        
+    } else {
+        forall {
+            // No problem here if already uninserted
+            uninsert ECDCalcAndConsHelper
+        }
+        
+        eclDeploymentCache.removeAll()
+    }
+    
+    // !!! ??
+    // !!! if (isInsertOrUninsert) ??
+    init()
+    // !!! (after this, I need to schedule "Rescan" in biophys manager)
+    
+    // !!! just for test
+    // !!! why doesn't init() above updates the PlotShape created in the test init_ECSManager?
+    if (name_declared("testPlotShape1")) {
+        execute("testPlotShape1.flush()")   // !!! .fastflush() works as well
+    }
+    if (name_declared("testPlotShape2")) {
+        execute("testPlotShape2.flush()")
+    }
+    if (name_declared("testPlotShape3")) {
+        execute("testPlotShape3.flush()")
+    }
+}
+
+// !!! test this
+obfunc _prepareSegm3DSpecificDataMatrix() { local numSegms_global, numECSs, segmIdx_global, segmIdx_local, u, xSegm, ySegm, zSegm, ecsIdx, dist, value localobj segm3DSpecificDataMatrix, xSegm_vec, ySegm_vec, zSegm_vec, spatialInfo
+
+    numSegms_global = 0
+    forall {
+        numSegms_global += nseg
+    }
+    
+    numECSs = ecsLibrary.getNumECSs()
+    
+    // A matrix such that given global segment index "segmIdx_global" and extracellular source index "ecsIdx",
+    // the value "segm3DSpecificDataMatrix[segmIdx_global][ecsIdx]" has different meaning depending on the source shape:
+    //   * "point" - distance from the 3D point to the segment centre
+    //   * "ball"  - 0/1 flag indicating whether the segment centre is inside the ball
+    // !!! for performance, we can add the 3rd case when the value has the meaning of "distanceToPoint ^ 2"
+    segm3DSpecificDataMatrix = new Matrix(numSegms_global, numECSs)
+    
+    xSegm_vec = new Vector()
+    ySegm_vec = new Vector()
+    zSegm_vec = new Vector()
+    
+    segmIdx_global = 0
+    forall {
+    
+        _interpEachSegmCentreCoordsFromSec3DPointCoords(xSegm_vec, ySegm_vec, zSegm_vec)
+        
+        segmIdx_local = 0
+        for (u, 0) {
+        
+            xSegm = xSegm_vec.x(segmIdx_local)
+            ySegm = ySegm_vec.x(segmIdx_local)
+            zSegm = zSegm_vec.x(segmIdx_local)
+            
+            for ecsIdx = 0, numECSs - 1 {
+                
+                spatialInfo = ecsLibrary.ecsList.o(ecsIdx).spatialInfo
+                
+                dist = _getDistBetweenTwo3DPoints(xSegm, ySegm, zSegm, spatialInfo.x, spatialInfo.y, spatialInfo.z)
+                
+                if (spatialInfo.enumPointBall == 0) {
+                    value = dist
+                } else if (spatialInfo.enumPointBall == 1) {
+                    value = (dist <= spatialInfo.radiusOrMinus1)    // !!! or < ?
+                } else {
+                    codeContractViolation()
+                }
+                
+                segm3DSpecificDataMatrix.x[segmIdx_global][ecsIdx] = value
+            }
+            
+            segmIdx_local += 1
+            segmIdx_global += 1
+        }
+    }
+    
+    return segm3DSpecificDataMatrix
+}
+
+proc _interpEachSegmCentreCoordsFromSec3DPointCoords() { local numPts, ptIdx, du, u_start, segmIdx_local localobj xSegm_vec, ySegm_vec, zSegm_vec, x3d_vec, y3d_vec, z3d_vec, u3d_vec, uSegm_vec
+
+    xSegm_vec = $o1
+    ySegm_vec = $o2
+    zSegm_vec = $o3
+    
+    numPts = n3d()
+    
+    x3d_vec = new Vector(numPts)
+    y3d_vec = new Vector(numPts)
+    z3d_vec = new Vector(numPts)
+    u3d_vec = new Vector(numPts)
+    
+    for ptIdx = 0, numPts - 1 {
+        x3d_vec.x(ptIdx) = x3d(ptIdx)
+        y3d_vec.x(ptIdx) = y3d(ptIdx)
+        z3d_vec.x(ptIdx) = z3d(ptIdx)
+        
+        if (ptIdx == 0) {
+            u3d_vec.x(ptIdx) = 0
+        } else if (ptIdx == numPts - 1) {
+            u3d_vec.x(ptIdx) = 1
+            
+            // !!! testing that the last point that would be calculated by 3rd IF branch is close enough to 1
+            //     print u3d_vec.x(ptIdx - 1) + _getDistBetweenTwo3DPoints(x3d_vec.x(ptIdx - 1), y3d_vec.x(ptIdx - 1), z3d_vec.x(ptIdx - 1), x3d_vec.x(ptIdx), y3d_vec.x(ptIdx), z3d_vec.x(ptIdx)) / L - 1
+            // !!! strange: many 0s, many 1e-16, but sporadic 1e-8
+        } else {
+            u3d_vec.x(ptIdx) = u3d_vec.x(ptIdx - 1) + _getDistBetweenTwo3DPoints(x3d_vec.x(ptIdx - 1), y3d_vec.x(ptIdx - 1), z3d_vec.x(ptIdx - 1), x3d_vec.x(ptIdx), y3d_vec.x(ptIdx), z3d_vec.x(ptIdx)) / L
+        }
+    }
+    
+    uSegm_vec = new Vector(nseg)
+    
+    du = 1 / nseg
+    u_start = du / 2
+    for segmIdx_local = 0, nseg - 1 {
+        uSegm_vec.x(segmIdx_local) = u_start + du * segmIdx_local
+    }
+    
+    xSegm_vec.interpolate(uSegm_vec, u3d_vec, x3d_vec)
+    ySegm_vec.interpolate(uSegm_vec, u3d_vec, y3d_vec)
+    zSegm_vec.interpolate(uSegm_vec, u3d_vec, z3d_vec)
+}
+
+func _getDistBetweenTwo3DPoints() {
+    return sqrt(($1 - $4) ^ 2 + ($2 - $5) ^ 2 + ($3 - $6) ^ 2)
+}
