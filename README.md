@@ -1,7 +1,9 @@
 # BRAINCELL 1.0 - Modeling and Simulating Brain Cells
 *Explore the Wonders of the Brain*
 
-![Brain Cell](https://github.com/LeonidSavtchenko/BrainCellNew/blob/main/2696937247-astrocyte.jpg)
+<p align="center">
+<img src="https://github.com/LeonidSavtchenko/BrainCellNew/blob/main/2696937247-astrocyte.jpg" alt="Brain Cell" width=200 height=200 style="display:block; margin:auto;"/>
+</p>
 
 Welcome to **BRAINCELL 1.0**, your gateway to understanding the intricate world of brain cells. This cutting-edge software empowers researchers, neuroscientists, and medical professionals to explore the brain's inner workings, reactions to stimuli, and responses to treatments. With **BRAINCELL 1.0**, you can create lifelike simulations of neurons and astrocytes with nano-geometry precision, faithfully replicating the brain's complex dynamics.
 
