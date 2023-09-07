@@ -25,7 +25,7 @@ When building a realistic cell model, consider the following essential elements:
 
 ## Installation
 **BRAINCELL** requires the following:
-- Basic languages: C++, MATLAB (not older than 2013), and Neuron 7.0.
+- Basic languages: C++, PYTHON (not older than 2013), and Neuron 7.0.
 - Platform: Linux or Windows.
 - Operation type: Sequential and parallel (MPI) computing.
 
