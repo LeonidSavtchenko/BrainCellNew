@@ -10,6 +10,13 @@
 <img src="https://github.com/LeonidSavtchenko/BrainCellNew/blob/main/2696937247-astrocyte.jpg" alt="Brain Cell" width=200 height=200 style="display:block; margin:auto;"/>
 </p>
 
+<p align="justify" >
+BRAINCELL: The ultimate software for modeling and simulating brain cells.
+
+With BRAINCELL, you can create realistic and interactive models of neurons, synapses, and networks. You can explore the dynamics of brain activity, test hypotheses, and discover new insights. Whether you are a researcher, a student, or a curious mind, Brainiac is the software for you.
+
+BRAINCELL: The software that makes your brain cells work smarter
+</p>
 ## Version 1.0
 
 <p align="justify" >
