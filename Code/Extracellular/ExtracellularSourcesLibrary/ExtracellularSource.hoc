@@ -3,12 +3,13 @@
 begintemplate ExtracellularSource_
 
     public isEqual, checkForUnsupportedIon, packToVec
-    public species, spatialInfo, temporalInfo, capacityInfo, seriesInfoOrNil
+    public spcCatIdx, species, spatialInfo, temporalInfo, capacityInfo, seriesInfoOrNil
     public s
     
     external mwh, speciesLibrary
     external stringsEqual, codeContractViolation
     
+    spcCatIdx = -1
     strdef species
     // !!! think about storing speciesIdx here
     
@@ -20,22 +21,23 @@ begintemplate ExtracellularSource_
     proc init() { local numArg localobj nil
         numArg = numarg()
         
-        if (numArg < 4 || numArg > 5) {
+        if (numArg < 5 || numArg > 6) {
             codeContractViolation()
         }
         
-        species = $s1
-        spatialInfo = $o2
-        temporalInfo = $o3
-        capacityInfo = $o4
-        if (numArg == 5) {
-            seriesInfoOrNil = $o5
+        spcCatIdx = $1      // !!! do I need this?
+        species = $s2
+        spatialInfo = $o3
+        temporalInfo = $o4
+        capacityInfo = $o5
+        if (numArg == 6) {
+            seriesInfoOrNil = $o6
         }
         
-        if (spatialInfo.enumPointBall == 0 && temporalInfo.enumStaticSwitchSpike == 1) {
+        if (spatialInfo.enumPointSphere == 0 && temporalInfo.enumStaticSwitchSpike == 1) {
             codeContractViolation()
         }
-        // !!! add similar check for enumPointBall+enumStaticSwitchSpike+capacityInfo
+        // !!! add similar check for enumPointSphere+enumStaticSwitchSpike+capacityInfo
         
         if ((temporalInfo.isSeriesOrMinus1 != 1 && seriesInfoOrNil != nil) || (temporalInfo.isSeriesOrMinus1 == 1 && seriesInfoOrNil == nil)) {
             codeContractViolation()
@@ -51,9 +53,9 @@ begintemplate ExtracellularSource_
         //     to achieve this, we need to remove the last predicate in "cond" below,
         //     but after doing this, we will face other problem: user cannot click "Correct", change only capacityInfo, then click "Apply"
         
-        // !!! maybe it must be illegal to create two sources with the only difference in either startTime, endTime, spikeTime or seriesInfoOrNil
+        // !!! maybe it must be illegal to create two sources with the only difference in either offsetTime, duration or seriesInfoOrNil
         
-        cond = stringsEqual(species, other.species) && spatialInfo.isEqual(other.spatialInfo) && temporalInfo.isEqual(other.temporalInfo) && capacityInfo.isEqual(other.capacityInfo)
+        cond = (spcCatIdx == other.spcCatIdx) && stringsEqual(species, other.species) && spatialInfo.isEqual(other.spatialInfo) && temporalInfo.isEqual(other.temporalInfo) && capacityInfo.isEqual(other.capacityInfo)
         if (!cond) {
             return 0
         }
@@ -63,11 +65,12 @@ begintemplate ExtracellularSource_
         return seriesInfoOrNil.isEqual(other.seriesInfoOrNil)
     }
     
-    // !!! a temp solution (the list won't show any unsupported ions)
-    func checkForUnsupportedIon() { local speciesIdxOrMinus1, isUnsupported
+    // !!!! review when we call it and what it does, maybe use speciesLibrary.getSpeciesFlatIdx
+    func checkForUnsupportedIon() { local spcFlatIdxOrMinus1, isUnsupported
         strdef msg
-        speciesIdxOrMinus1 = speciesLibrary.getSpeciesIdxOrMinus1(species)
-        isUnsupported = (speciesIdxOrMinus1 == -1)
+        // !!! maybe it would be enough to check spcCatIdx only
+        spcFlatIdxOrMinus1 = speciesLibrary.getSpeciesFlatIdxOrMinus1(spcCatIdx, species)
+        isUnsupported = (spcFlatIdxOrMinus1 == -1)
         if (isUnsupported) {
             sprint(msg, "\"%s\" species.", species)
             mwh.showNotImplementedWarning(msg)
@@ -76,14 +79,16 @@ begintemplate ExtracellularSource_
     }
     
     // !!! this will be called from Extracellular module, but Export module will call other one
-    obfunc packToVec() { local speciesIdxOrMinus1 localobj vec
-        speciesIdxOrMinus1 = speciesLibrary.getSpeciesIdxOrMinus1(species)
-        if (speciesIdxOrMinus1 == -1) {
-            codeContractViolation()
+    obfunc packToVec() { local spcFlatIdxOrMinus1 localobj vec
+        spcFlatIdxOrMinus1 = speciesLibrary.getSpeciesFlatIdxOrMinus1(spcCatIdx, species)
+        // !!!! we need to skip the species present in JSON, but missing in MOD
+        //      maybe use speciesLibrary.getSpeciesFlatIdx
+        if (spcFlatIdxOrMinus1 == -1) {
+            codeContractViolation()     // !!! maybe just skip this species
         }
         
         vec = new Vector()
-        vec.append(speciesIdxOrMinus1, spatialInfo.packToVec(), temporalInfo.packToVec(), capacityInfo.packToVec())
+        vec.append(spcFlatIdxOrMinus1, spatialInfo.packToVec(), temporalInfo.packToVec(), capacityInfo.packToVec())
         // !!!! no seriesInfoOrNil.packToVec() here by design
         return vec
     }
@@ -91,7 +96,7 @@ begintemplate ExtracellularSource_
     // All next staff is private
     
     
-    // !!! think about showing the temporal info and the capacity info (maybe indicate the capacity just after the species name)
+    // !!! think about showing the spc cat (BI/NT/SP/EI/UN), the temporal info and the capacity info (maybe indicate the capacity just after the species name)
     proc prepareShownString() {
         strdef dynamicsName
         temporalInfo.getDynamicsName(dynamicsName)

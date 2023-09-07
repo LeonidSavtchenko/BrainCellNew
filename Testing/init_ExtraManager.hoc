@@ -62,7 +62,7 @@ forall {
 // Watch extracellular concentration in space
 objref testPlotShape1, testPlotShape2, testPlotShape3
 testPlotShape1 = createTestPlotShape("ko", y1, 3, 2, 5)
-testPlotShape2 = createTestPlotShape("cao", y2, 4, 2, 5)
+testPlotShape2 = createTestPlotShape("cao", y2, 4, 0, 5)
 testPlotShape3 = createTestPlotShape("nao", y3, 5, 139, 145)
 
 tstop = 40
@@ -70,7 +70,7 @@ tstop = 40
 // Watch extracellular concentration in time
 objref testGraph1, testGraph2, testGraph3
 testGraph1 = createTestGraph("s.ko(0.5)", "dendA5_01111111111111111.ko(0.5)", y1, 2, 5)
-testGraph2 = createTestGraph("s.cao(0.5)", "dendA5_0111110.cao(0.5)", y2, 2, 5)
+testGraph2 = createTestGraph("s.cao(0.5)", "dendA5_0111110.cao(0.5)", y2, 0, 5)
 testGraph3 = createTestGraph("s.nao(0.5)", "dendA5_01111111111111111.nao(0.5)", y3, 139, 145)
 
 { load_file("../Code/Managers/CommonLoads.hoc") }   // !!! no need to load everything from this file

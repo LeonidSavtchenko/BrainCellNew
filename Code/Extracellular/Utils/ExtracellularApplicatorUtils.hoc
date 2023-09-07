@@ -103,8 +103,8 @@ obfunc _prepareSegm3DSpecificDataMatrix() { local numSegms_global, numECSs, segm
     
     // A matrix such that given global segment index "segmIdx_global" and extracellular source index "ecsIdx",
     // the value "segm3DSpecificDataMatrix[segmIdx_global][ecsIdx]" has different meaning depending on the source shape:
-    //   * "point" - distance from the 3D point to the segment centre
-    //   * "ball"  - 0/1 flag indicating whether the segment centre is inside the ball
+    //   * "point"  - distance from the 3D point to the segment centre
+    //   * "sphere" - 0/1 flag indicating whether the segment centre is inside the sphere
     // !!! for performance, we can add the 3rd case when the value has the meaning of "distanceToPoint ^ 2"
     segm3DSpecificDataMatrix = new Matrix(numSegms_global, numECSs)
     
@@ -130,9 +130,9 @@ obfunc _prepareSegm3DSpecificDataMatrix() { local numSegms_global, numECSs, segm
                 
                 dist = _getDistBetweenTwo3DPoints(xSegm, ySegm, zSegm, spatialInfo.x, spatialInfo.y, spatialInfo.z)
                 
-                if (spatialInfo.enumPointBall == 0) {
+                if (spatialInfo.enumPointSphere == 0) {
                     value = dist
-                } else if (spatialInfo.enumPointBall == 1) {
+                } else if (spatialInfo.enumPointSphere == 1) {
                     value = (dist <= spatialInfo.radiusOrMinus1)    // !!! or < ?
                 } else {
                     codeContractViolation()

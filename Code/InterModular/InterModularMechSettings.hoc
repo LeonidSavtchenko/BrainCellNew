@@ -1,0 +1,101 @@
+
+begintemplate MechSettings
+
+    public isHideStochButton, getAllSpcCatNames, getTotalNumExpIons, getUserFriendlyIonNameOrEmpty, getActIonNameAndDiffIter, getUnrecExpIonNameIter
+    public unrecSpcCatName, ionSuffix
+    
+    external pyObj
+    external findItemInListByString, printMsgAndRaiseError
+    
+    strdef unrecSpcCatName, ionSuffix
+    
+    
+    proc init() { local status
+        strdef pyCommand
+        
+        pyCommand = "import sys\nimport os\nsys.path.append(os.getcwd() + '\\PythonCode')\nfrom MechSettings import *"
+        
+        status = nrnpython(pyCommand)
+        if (!status) {
+            printMsgAndRaiseError("Exception raised in Python code (caught in MechSettings ctor)")
+        }
+        
+        // !!! need to check that JSON file doesn't contain such a category
+        unrecSpcCatName = "Unrecognized"
+        
+        // !!! maybe need to check that JSON file doesn't contain the same ion in 2+ categories
+        
+        ionSuffix = "_ion"  // !!! find a better template for this string
+    }
+    
+    func isHideStochButton() {
+        strdef mechName, varNameWithIndex
+        mechName = $s1
+        varNameWithIndex = $s2
+        return pyObj.ms_isHideStochButton(mechName, varNameWithIndex)
+    }
+    
+    obfunc getAllSpcCatNames() {
+        return convertPyListOfStrsToHocListOfStrObjs(pyObj.ms_getAllSpcCatNames())
+    }
+    
+    func getTotalNumExpIons() {
+        return pyObj.ms_getTotalNumExpIons()
+    }
+    
+    proc getUserFriendlyIonNameOrEmpty() {
+        strdef ionMechName
+        ionMechName = $s1
+        $s2 = pyObj.ms_getUserFriendlyIonNameOrEmpty(ionMechName)
+    }
+    
+    iterator getActIonNameAndDiffIter() { local actIonIdx localobj actIonNames
+        strdef spcCatName, actIonName
+        
+        spcCatName = $s1
+        actIonNames = $o2
+        
+        for actIonIdx = 0, actIonNames.count() - 1 {
+            actIonName = actIonNames.o(actIonIdx).s
+            if (pyObj.ms_isActIonInThisCat(actIonName, spcCatName)) {
+                $s3 = actIonName
+                $&4 = pyObj.ms_getDiff(spcCatName, actIonName)
+                iterator_statement
+            }
+        }
+    }
+    
+    iterator getUnrecExpIonNameIter() { local actIonIdx localobj actIonNames, expIonNames
+        strdef actIonName
+        
+        actIonNames = $o1
+        
+        expIonNames = convertPyListOfStrsToHocListOfStrObjs(pyObj.ms_getAllExpIonNames())
+        
+        for actIonIdx = 0, actIonNames.count() - 1 {
+            actIonName = actIonNames.o(actIonIdx).s
+            if (findItemInListByString(expIonNames, actIonName) == -1) {
+                $s2 = actIonName
+                iterator_statement
+            }
+        }
+    }
+    
+    // All next staff is private
+    
+    
+    // !!! maybe move to some higher-level intermodular utils (Python/List/String)
+    obfunc convertPyListOfStrsToHocListOfStrObjs() { local strIdx localobj pyList, hocList
+        pyList = $o1
+        hocList = new List()
+        for strIdx = 0, pyObj.len(pyList) - 1 {
+            // hocList.append(new String(pyList.__getitem__(strIdx)))   // TypeError: list indices must be integers or slices, not float
+            hocList.append(new String(pyObj.ms_getPyListItem(pyList, strIdx)))
+        }
+        return hocList
+    }
+    
+endtemplate MechSettings
+
+objref mechSettings
+mechSettings = new MechSettings()

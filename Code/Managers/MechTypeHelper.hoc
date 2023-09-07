@@ -14,7 +14,7 @@ begintemplate MechTypeHelper
     public morphologyMechIdx, diamVarType, diamVarName
     public extracellularMechName, ionSuffix
     
-    external mwh
+    external mwh, mechSettings
     external stringsEqual, stringEndsWith, stringEmpty, codeContractViolation
     external fakeMechType4NC, utils4FakeMech4NC
     external isAstrocyteOrNeuron
@@ -80,7 +80,7 @@ begintemplate MechTypeHelper
         // These mechs are not inserted by default, but once inserted, cannot be uninserted anymore
         extracellularMechIdx = 3
         extracellularMechName = "extracellular"
-        ionSuffix = "_ion"
+        ionSuffix = mechSettings.ionSuffix      // !!! not the best solution
         
         // This variable from "morphology" cannot be made inhomogeneous in the same way like others (NEURON restriction)
         diamVarType = 1     // PARAMETER

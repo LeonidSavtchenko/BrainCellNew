@@ -1,81 +1,176 @@
 
-// The idea behind this file is to collect in one place all HOC staff that you need to modify in case you want to
-// add new species to (or delete old ones from) the list of species supported by (and shown in) the module of extracellular diffusion.
-// When editing, look for the lines marked as "### Edit here when changing the species list ###"
-// in this file and in "ExtracellularListItems.hoc".
-// Any changes to this HOC file must be done synchronously with the changes to the special MOD files responsible for the extracellular diffusion
-// !!! (now we have one for astrocytes and one for neurons, but in the future we want to keep only one shared MOD file).
-
 begintemplate SpeciesLibrary
 
-    public copyGlobalVarsToModParams, packToVec, getSpeciesIdxOrMinus1
-    public spcNamesList, spcInfoList
+    public validateAndWarnUser, copyGlobalVarsToModParams, packToVec, getSpeciesFlatIdxOrMinus1, getSpeciesFlatIdx, getSpeciesInsideCatIdx
+    public spcCatsList
     
-    external stringsEqual, stringEndsWith
+    external mwh, mechSettings
+    external stringsEqual, stringEndsWith, codeContractViolation
     external eachItemInList
     
+    objref spcCatsList
+    
+    iterator eachSpcInfoInLibExceptUnrecCat() { codeContractViolation() }
+    
+    
     // !!! maybe rename spcNamesList to smth more clear
-    objref spcNamesList, spcInfoList
-    
-    
-    proc init() { local mechIdx localobj mechType
-        strdef ionSuffix, mechName
+    proc init() { local mechIdx, spcCatIdx, diff localobj mechType, actIonNames, spcCatNames, spcNamesList, spcInfoList
+        strdef mechName, spcCatName, actIonName, expIonName
         
-        ionSuffix = "_ion"  // !!! the same in MechTypeHelper and SpeciesListItem - move to a common place
-        
-        // !!!! see ion_charge(), ion_register(), ion_style()
+        // !!!! see also: ion_charge(), ion_register(), ion_style()
         
         // "Na+" and "K+" are standard to NEURON, but others will depend on user's MOD files
-        spcNamesList = new List()
+        actIonNames = new List()
         mechType = new MechanismType(0)     // 0: "Distributed Membrane Mechanisms"
         for mechIdx = 0, mechType.count - 1 {
             mechType.select(mechIdx)
             mechType.selected(mechName)
-            if (stringEndsWith(mechName, ionSuffix)) {
-                spcNamesList.append(new SpeciesListItem(mechName))
+            if (stringEndsWith(mechName, mechSettings.ionSuffix)) {
+                actIonNames.append(new String(mechName))
             }
         }
         
-        // !!!! read these from JSON
+        spcCatsList = new List()
+        spcCatNames = mechSettings.getAllSpcCatNames()
+        for spcCatIdx = 0, spcCatNames.count() - 1 {
+            spcNamesList = new List()
+            spcInfoList = new List()
+            spcCatName = spcCatNames.o(spcCatIdx).s
+            for mechSettings.getActIonNameAndDiffIter(spcCatName, actIonNames, actIonName, &diff) {
+                spcNamesList.append(new SpeciesListItem(actIonName))
+                spcInfoList.append(new SpeciesInfo(actIonName, diff))
+            }
+            spcCatsList.append(new SpeciesCategory(spcCatName, spcNamesList, spcInfoList))
+        }
+        spcNamesList = new List()
         spcInfoList = new List()
-        // !!! review the constants below
-        // !!! ### Edit here when changing the species list ###
-        spcInfoList.append(new SpeciesInfo("na", 1400))
-        spcInfoList.append(new SpeciesInfo("k", 1500))      // !!! was: 0.5 (PotassiumDiffusion.mod)
-        spcInfoList.append(new SpeciesInfo("ca", 1600))
-        spcInfoList.append(new SpeciesInfo("frapion", 1700))
-        spcInfoList.append(new SpeciesInfo("ip3", 1800))
+        for mechSettings.getUnrecExpIonNameIter(actIonNames, expIonName) {
+            spcNamesList.append(new SpeciesListItem(expIonName))
+            spcInfoList.append(new SpeciesInfo(expIonName, -1))     // !!!! this "-1" will be cropped immediately by "variable_domain". UPD: actually, no
+        }
+        if (spcNamesList.count() != 0) {
+            spcCatsList.append(new SpeciesCategory(mechSettings.unrecSpcCatName, spcNamesList, spcInfoList))
+        }
+        // !!!! do I need one more category for the ions, present in JSON, but missing in MOD?
     }
     
-    proc copyGlobalVarsToModParams() {
-        // !!! ### Edit here when changing the species list ###
-        // !!!! this can be automated
-        naoinit_ECDCalcAndConsHelper = nao0_na_ion
-        koinit_ECDCalcAndConsHelper = ko0_k_ion
-        caoinit_ECDCalcAndConsHelper = cao0_ca_ion
-        frapionoinit_ECDCalcAndConsHelper = frapiono0_frapion_ion
-        ip3oinit_ECDCalcAndConsHelper = ip3o0_ip3_ion
+    proc validateAndWarnUser() { localobj spcCat
+        strdef line1, line2, line3, line4
+        
+        for eachItemInList(spcCat, spcCatsList) {
+            if (!spcCat.isUnrecSpcCat) {
+                continue
+            }
+            
+            // !!! it would be better to show the list of these ions in this warning
+            line1 = "There is some ion(s) present in the MOD file(s), but missing in our mini-database."
+            sprint(line2, "Such ion(s) will be shown under \"%s\" species category.", mechSettings.unrecSpcCatName)
+            // !!! it would be better to add a button to reload this JSON file rather than recommend restarting the program
+            line3 = "It's recommended to enlist them in file \"Mechanisms\\Settings\\diffusible_species.json\" and restart the program."
+            line4 = "Otherwise, don't forget to set the \"Species GLOBAL-s\" in UI."
+            mwh.showWarningBox(line1, line2, line3, line4)
+            
+            break   // Cannot use "return" inside iterator
+        }
+    }
+    
+    proc copyGlobalVarsToModParams() { localobj spcInfo
+        strdef hocCommandTempl, suffix, hocCommand
+        hocCommandTempl = "%soinit_ECDCalcAndConsHelper = %so0_%s_ion"
+        // !!! BUG: the species can be in "Unrecognized" category (i.e. missing in JSON), but still supported by our ECDCalcAndConsHelper
+        for eachSpcInfoInLibExceptUnrecCat(spcInfo) {
+            suffix = spcInfo.suffix
+            sprint(hocCommand, hocCommandTempl, suffix, suffix, suffix)
+            execute(hocCommand)
+        }
     }
     
     // !!! this will be called from Extracellular module, but Export module will call other one
-    obfunc packToVec() { localobj vec, speciesInfo
+    obfunc packToVec() { localobj vec, spcInfo
         vec = new Vector()
-        vec.append(spcInfoList.count())
-        for eachItemInList(speciesInfo, spcInfoList) {
-            vec.append(speciesInfo.packToVec())
+        vec.append(mechSettings.getTotalNumExpIons())
+        // !!! BUG: the species can be in "Unrecognized" category (i.e. missing in JSON), but still supported by our ECDCalcAndConsHelper
+        for eachSpcInfoInLibExceptUnrecCat(spcInfo) {
+            vec.append(spcInfo.packToVec())
         }
         return vec
     }
     
-    func getSpeciesIdxOrMinus1() { local spcIdx
+    // !!! unify with the next func
+    func getSpeciesFlatIdxOrMinus1() { local spcCatIdx, spcFlatIdx, thisSpcCatIdx, spcIdx localobj spcCat, spcNamesList
         strdef species
-        species = $s1
+        
+        spcCatIdx = $1
+        species = $s2
+        
+        spcCat = spcCatsList.o(spcCatIdx)
+        if (spcCat.isUnrecSpcCat) {
+            return -1
+        }
+        
+        spcFlatIdx = 0
+        for thisSpcCatIdx = 0, spcCatIdx - 1 {
+            spcFlatIdx += spcCatsList.o(thisSpcCatIdx).spcNamesList.count()
+        }
+        
+        spcNamesList = spcCat.spcNamesList
         for spcIdx = 0, spcNamesList.count() - 1 {
             if (stringsEqual(species, spcNamesList.o(spcIdx).s)) {
-                return spcIdx
+                return spcFlatIdx + spcIdx
             }
         }
+        
         return -1
+    }
+    
+    // !!! unify with the prev func
+    func getSpeciesFlatIdx() { local spcCatIdx, spcNameIdx, spcFlatIdx, thisSpcCatIdx
+        spcCatIdx = $1
+        spcNameIdx = $2
+        
+        spcFlatIdx = 0
+        for thisSpcCatIdx = 0, spcCatIdx - 1 {
+            spcFlatIdx += spcCatsList.o(thisSpcCatIdx).spcNamesList.count()
+        }
+        spcFlatIdx += spcNameIdx
+        
+        return spcFlatIdx
+    }
+    
+    // !!! unify with the prev 2 funcs
+    // !!! think about moving it to SpeciesCategory or storing spcIdx inside SpeciesListItem
+    func getSpeciesInsideCatIdx() { local spcCatIdx, spcIdx localobj spcNamesList
+        strdef species
+        
+        species = $s1
+        
+        for spcCatIdx = 0, spcCatsList.count() - 1 {
+            spcNamesList = spcCatsList.o(spcCatIdx).spcNamesList
+            for spcIdx = 0, spcNamesList.count() - 1 {
+                if (stringsEqual(species, spcNamesList.o(spcIdx).s)) {
+                    return spcIdx
+                }
+            }
+        }
+        
+        codeContractViolation()
+    }
+    
+    // All next staff is private
+    
+    
+    iterator eachSpcInfoInLibExceptUnrecCat() { local spcCatIdx, spcIdx localobj spcCat, spcInfoList
+        for spcCatIdx = 0, spcCatsList.count() - 1 {
+            spcCat = spcCatsList.o(spcCatIdx)
+            if (spcCat.isUnrecSpcCat) {
+                continue
+            }
+            spcInfoList = spcCat.spcInfoList
+            for spcIdx = 0, spcInfoList.count() - 1 {
+                $o1 = spcInfoList.o(spcIdx)
+                iterator_statement
+            }
+        }
     }
     
 endtemplate SpeciesLibrary

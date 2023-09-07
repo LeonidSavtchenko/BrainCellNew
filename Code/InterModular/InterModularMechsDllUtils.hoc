@@ -1,18 +1,24 @@
 
 begintemplate MechsDllUtils
 
-    public ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType, loadDefaultMechsDllDependingOnCellType
+    public ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType, loadDefaultMechsDllDependingOnCellType, isThisMechForIntUseOnly
     public loadedNanoHocFilePathName, loadedDllDirPath
     
     external isAstrocyteOrNeuron
     external pyObj
-    external checkIfFileMissing, printMsgAndRaiseError
+    external checkIfFileMissing, findItemInListByString, printMsgAndRaiseError
     
     strdef startDir, loadedNanoHocFilePathName, loadedDllDirPath
+    objref mechsForIntUseOnly
     
     
     proc init() {
         startDir = $s1
+        
+        mechsForIntUseOnly = new List()
+        mechsForIntUseOnly.append(new String("SynEventsFilterWatcher"))
+        mechsForIntUseOnly.append(new String("ECDCalcAndConsHelper"))
+        mechsForIntUseOnly.append(new String("ECDSeriesHelper"))
     }
     
     // This proc is called from the nanogeometry file when user loads it back into the main program
@@ -41,6 +47,13 @@ begintemplate MechsDllUtils
         _loadMechsDllFromThisFolder(dllDirPath)
     }
     
+    func isThisMechForIntUseOnly() { local idxOrMinus1
+        strdef mechName
+        mechName = $s1
+        idxOrMinus1 = findItemInListByString(mechsForIntUseOnly, mechName)
+        return (idxOrMinus1 != -1)
+    }
+    
     // All next staff is private
     
     
@@ -63,6 +76,11 @@ begintemplate MechsDllUtils
         }
         
         loadedDllDirPath = dllDirPath
+        
+        // !!!! maybe not the best place for this
+        // !!!! do we need this in "start with nano" mode?
+        // !!!! make sure we don't rewrite any GLOBAL-s later (in the legacy code)
+        pyObj.ms_setIonGlobalVars()
     }
     
     proc _getCellName() {

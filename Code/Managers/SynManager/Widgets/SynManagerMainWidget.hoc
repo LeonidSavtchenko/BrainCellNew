@@ -5,7 +5,7 @@ begintemplate SynManagerMainWidget
     
     external smAllSyns, synGroup, smAllComps
     external slw, smlfw
-    external mwh, mth, seh, inhomAndStochLibrary
+    external mwh, mth, inhomAndStochLibrary, mechsDllUtils
     external createEmptyPanel, createElasticSpacer, getGlobalVarsHint, stringEmpty, stringsEqual, stringToLowerCase, containsSubstring, dismissIfNotNil, codeContractViolation
     external enumSynCompIdxs
     external varsEditorSubWidget
@@ -300,7 +300,7 @@ begintemplate SynManagerMainWidget
             
             stringToLowerCase(mechName, mechNameLower)
             
-            isForIntUseOnly = stringsEqual(mechName, seh.realMechName)
+            isForIntUseOnly = mechsDllUtils.isThisMechForIntUseOnly(mechName)
             isAccNCSrc = mth.isPointProcessAcceptableNetConSource(mechIdx)
             isAccNCTrg = mth.isPointProcessAcceptableNetConTarget(mechIdx)
             doesReqSec = mth.doesPointProcessRequireSection(mechIdx)

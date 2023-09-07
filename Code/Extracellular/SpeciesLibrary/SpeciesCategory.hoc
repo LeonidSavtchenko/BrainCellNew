@@ -1,0 +1,26 @@
+
+begintemplate SpeciesCategory
+
+    public spcCatName, spcNamesList, spcInfoList
+    public isUnrecSpcCat
+    
+    external stringsEqual
+    external mechSettings
+    
+    strdef spcCatName
+    
+    // !!! try to merge these two into one
+    objref spcNamesList, spcInfoList
+    
+    isUnrecSpcCat = -1
+    
+    
+    proc init() {
+        spcCatName = $s1
+        spcNamesList = $o2
+        spcInfoList = $o3
+        
+        isUnrecSpcCat = stringsEqual(spcCatName, mechSettings.unrecSpcCatName)
+    }
+    
+endtemplate SpeciesCategory

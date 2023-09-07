@@ -7,6 +7,7 @@ objref speciesLibrary
 { load_file("Utils/ExtracellularApplicatorUtils.hoc") }
 
 { load_file("SpeciesLibrary/SpeciesInfo.hoc") }
+{ load_file("SpeciesLibrary/SpeciesCategory.hoc") }
 { load_file("SpeciesLibrary/SpeciesLibrary.hoc") }
 
 { load_file("ExtracellularSourcesLibrary/ECSSpatialInfo.hoc") }

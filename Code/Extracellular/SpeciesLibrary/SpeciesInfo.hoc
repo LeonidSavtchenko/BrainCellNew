@@ -4,15 +4,20 @@ begintemplate SpeciesInfo
     public packToVec
     public suffix, diff
     
-    external math
+    external pyObj, math
     
     strdef suffix
     diff = -1       // For "point" shape and "spike" dynamics only
     
     
     proc init() { local inf
-        suffix = $s1
+        strdef ionMechName
+        
+        ionMechName = $s1
         diff = $2
+        
+        // !!! move this util to a better place
+        suffix = pyObj.ms_ionMechNameToSuffix(ionMechName)
         
         units(&diff, "um2/ms")
         

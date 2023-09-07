@@ -7,7 +7,7 @@ begintemplate VarsEditorWidget
     public show, onApplyInInhomEditor, onApplyOrDisableInStochEditor, dismissHandler
     public compIdx
     
-    external mwh, math, mth, mcu, compUtils, sbh4ve, inhomAndStochLibrary, seh
+    external mwh, math, mth, mcu, compUtils, mechSettings, inhomAndStochLibrary, seh
     external createElasticSpacer, createEmptyPanel, createMetaVarHint, dismissIfNotNil, codeContractViolation
     
     objref mainBox
@@ -120,7 +120,7 @@ begintemplate VarsEditorWidget
                         vBox3 = new VBox()
                         vBox3.intercept(1)
                         {
-                            if (!sbh4ve.isHideStochButton(mechName, varNameWithIndex)) {
+                            if (!mechSettings.isHideStochButton(mechName, varNameWithIndex)) {
                                 xpanel("")
                                 sprint(handlerHocCommand, "defineStochFuncHandler(%d, %d)", varIdx, arrayIndex)
                                 xstatebutton("Define stoch model", &isMechVarStoch.o(varIdx).x(arrayIndex), handlerHocCommand)

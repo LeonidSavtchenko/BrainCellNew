@@ -3,7 +3,7 @@
 begintemplate MechOpWidgetBase
 
     external mmAllComps
-    external mwh, mth, mcu
+    external mwh, mth, mcu, mechsDllUtils
     external stringEmpty
     external eachItemInList
     
@@ -314,11 +314,15 @@ begintemplate MechOpWidgetBase
                 xpanel("")          // Panel with slider
                 numInsertedItems = 0
                 for mechIdx = 0, mth.getNumMechs(0) - 1 {
+                    mth.getMechName(0, mechIdx, mechName)
+                    isSkipItem = mechsDllUtils.isThisMechForIntUseOnly(mechName)
+                    if (isSkipItem) {
+                        continue
+                    }
                     isSkipItem = mechOpHelper.isSkipBlock(compIdx, mechIdx)
                     if (isSkipItem) {
                         continue
                     }
-                    mth.getMechName(0, mechIdx, mechName)
                     numInsertedItems += mechOpHelper.insertBlock(compIdx, mechIdx, mechName)
                 }
                 insertSpacers(numInsertedItems, mechOpHelper)
@@ -416,7 +420,9 @@ begintemplate MechOpWidgetBase
         mmAllComps.o(compIdx).list_ref.o(0).sec psection()
     }
     
-    func isSkipAllItems() { local panIdx, compIdx, mechIdx, isSkipItem localobj mechOpHelper
+    func isSkipAllItems() { local panIdx, compIdx, mechIdx, isSkipItem, isSkipAll localobj mechOpHelper
+        strdef mechName
+        
         mechOpHelper = $o1
         isCompOrMechCentricView = $2
         panIdx = $3
@@ -431,6 +437,11 @@ begintemplate MechOpWidgetBase
             }
         } else {
             mechIdx = panIdx
+            mth.getMechName(0, mechIdx, mechName)
+            isSkipAll = mechsDllUtils.isThisMechForIntUseOnly(mechName)
+            if (isSkipAll) {
+                return 1
+            }
             for compIdx = 0, mmAllComps.count() - 1 {
                 isSkipItem = mechOpHelper.isSkipBlock(compIdx, mechIdx)
                 if (!isSkipItem) {

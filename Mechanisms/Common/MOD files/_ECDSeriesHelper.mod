@@ -6,9 +6,7 @@ COMMENT
     !!!! it is used in the chain NetStim -> NetCon -> ECDSeriesHelper
 ENDCOMMENT
 
-: !!!! test that code from this MOD file is executed before the code from _ECDCalcAndConsHelper.mod
-
-: !!! think about moving this file to a common folder for both Astrocyte and Neuron, compile separately, and load individually with nrn_load_dll
+: !!!! test that code from this MOD file is executed before the code from _ECDCalcAndConsHelper.mod UPD: no
 
 : !!! need to move this mechanism into "for internal use only" category in our Manager of Synapses
 
@@ -53,7 +51,9 @@ INITIAL {
 }
 
 NET_RECEIVE (w) {
-    printf("AC-NET_RECEIVE: t=%g\n", t) : //!!!!
+
+    : //!!!! printf("AC-NET_RECEIVE: t=%g\n", t)
+    
     assignPointers()
     VERBATIM
         // !!!! if (numImpsSoFar > maxNumImpsPerECS) then codeContractViolation
@@ -61,7 +61,7 @@ NET_RECEIVE (w) {
         *ptr_sc_numImpsSoFar += 1.0;
     ENDVERBATIM
     
-    : !!!! BUG: for fixed dt, for "ball+spike", when NET_RECEIVE is called on t being multiple of dt,
+    : !!!! BUG: for fixed dt, for "sphere+spike", when NET_RECEIVE is called on t being multiple of dt,
     :           it is called AFTER the breakpoint in ECDCalcAndConsHelper => this results in missing reaction on this impulse in ECDCalcAndConsHelper
     :           try to connect this AC to some test section (and ideally delete this section) - maybe this will change the order of calls
     

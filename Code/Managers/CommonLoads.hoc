@@ -51,7 +51,6 @@ loadIfNotDeclared("ColourizationHelper", "Widgets/Stochasticity/Exported/Colouri
 loadIfNotDeclared("BoundingHelper", "Widgets/Stochasticity/Exported/BoundingHelper.hoc")
 { load_file("Widgets/Stochasticity/StochEditorSubWidget.hoc") }
 
-{ load_file("Widgets/StochButtonHiderForVarsEditor.hoc") }
 { load_file("Widgets/VarsEditorWidget.hoc") }
 
 { load_file("Widgets/ManageAndRunWidget.hoc") }

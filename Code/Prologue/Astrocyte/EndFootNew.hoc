@@ -4,7 +4,7 @@
 create EndFoot[4]
 
 
-EndFoot[0] connect soma_ref.o(0).sec(1), 0
+soma_ref.o(0).sec connect EndFoot[0](0), 1
 //connect EndFoot[0](1), EndFoot[1](0)
 //connect EndFoot[0](1), EndFoot[2](0)
 
