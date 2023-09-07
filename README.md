@@ -50,5 +50,6 @@ Documentation and API details can be found [here](https://github.com/LeonidSavtc
 - **Prof. Dmitri Rusakov**
 - Visit us at:
   [Department of Clinical and Experimental Epilepsy](http://www.ucl.ac.uk/ion/departments/epilepsy/themes/synaptic-imaging)
-  Institute of Neurology
-  University College London, UK
+  
+-  Institute of Neurology
+-  University College London, UK
