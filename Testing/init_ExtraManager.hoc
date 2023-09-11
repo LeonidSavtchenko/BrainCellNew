@@ -46,8 +46,7 @@ y1 = 50
 y2 = 250
 y3 = 450
 
-// !!! without this, the PlotShape-s will show the next sections in grey rather than in colour:
-//     ExtracellularSource (testPlotShape1 and testPlotShape2), nanogeometry (testPlotShape2)
+// !!! without this, testPlotShape2 will show the nanogeometry sections in grey rather than in colour
 // !!! NOT BUG (just a test feature): start this test and click "Init & Run" (in AltRunControl or RunControl) => codeContractViolation
 //     but no error after clicking "Apply" in "Manager of extracellular sources";
 //     the root cause is that ECDCalcAndConsHelper, if inserted, must be initialized properly

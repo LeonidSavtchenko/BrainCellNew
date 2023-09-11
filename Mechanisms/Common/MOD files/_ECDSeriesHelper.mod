@@ -8,8 +8,6 @@ ENDCOMMENT
 
 : !!!! test that code from this MOD file is executed before the code from _ECDCalcAndConsHelper.mod UPD: no
 
-: !!! need to move this mechanism into "for internal use only" category in our Manager of Synapses
-
 : !!! when variable time step is used (and not only), test that the code from _ECDSeriesHelper.mod and _ECDCalcAndConsHelper.mod is executed immediately on each NetStim spike
 
 NEURON {

@@ -5,7 +5,7 @@ begintemplate SpeciesLibrary
     public spcCatsList
     
     external mwh, mechSettings
-    external stringsEqual, stringEndsWith, codeContractViolation
+    external stringsEqual, codeContractViolation
     external eachItemInList
     
     objref spcCatsList
@@ -17,15 +17,13 @@ begintemplate SpeciesLibrary
     proc init() { local mechIdx, spcCatIdx, diff localobj mechType, actIonNames, spcCatNames, spcNamesList, spcInfoList
         strdef mechName, spcCatName, actIonName, expIonName
         
-        // !!!! see also: ion_charge(), ion_register(), ion_style()
-        
         // "Na+" and "K+" are standard to NEURON, but others will depend on user's MOD files
         actIonNames = new List()
         mechType = new MechanismType(0)     // 0: "Distributed Membrane Mechanisms"
         for mechIdx = 0, mechType.count - 1 {
             mechType.select(mechIdx)
             mechType.selected(mechName)
-            if (stringEndsWith(mechName, mechSettings.ionSuffix)) {
+            if (mechSettings.isIon(mechName)) {
                 actIonNames.append(new String(mechName))
             }
         }

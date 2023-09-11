@@ -25,10 +25,12 @@ ENDCOMMENT
 
 NEURON {
     SUFFIX  GluTrans
+	 USEION glu READ gluo, glui VALENCE 0
+	 USEION na READ nao, nai
+    USEION k READ ko, ki
     RANGE part, C1, C2, C3, C4, C5, C6
-    GLOBAL k12, k21, k23, k32, k34, k43, k45, k54, k56, k65, k16, k61
-    GLOBAL Nain, Naout, Kin, Kout, Gluin, charge 
-    RANGE  itrans, Gluout, density, itransLog
+    GLOBAL k12, k21, k23, k32, k34, k43, k45, k54, k56, k65, k16, k61, charge 
+    RANGE  itrans, density
     NONSPECIFIC_CURRENT itrans
 }
 
@@ -61,12 +63,12 @@ PARAMETER {
     k16 = 0.0016          (l /mM /ms)
     k61 =  2e-4        (l /mM /ms)
 
-    Nain = 15        (mM/l)
-    Naout = 150   (mM/l)
-    Kin = 120       (mM/l)
-    Kout = 3        (mM/l)
-    Gluin = 0.3      (mM/l)
-    Gluout = 20e-6	(mM/l)
+    :Nain = 15        (mM/l)
+    :Naout = 150   (mM/l)
+    :Kin = 120       (mM/l)
+    :Kout = 3        (mM/l)
+    :Gluin = 0.3      (mM/l)
+    :Gluout = 20e-6	(mM/l)
 
     density =1e12  : (/cm2) : 10000 per um2
     charge = 1.6e-19 (coulombs)
@@ -74,11 +76,17 @@ PARAMETER {
 
 ASSIGNED {
     v	   (mV)		:  voltage
+	gluo   (mM) 
+	nao   (mM)
+	ko   (mM)
+	glui   (mM) 
+	nai   (mM)
+	ki   (mM)
     itrans (mA/cm2)            : 
     surf   (cm2)
     volin  (liter)
     volout (liter)
-    itransLog
+    
 }
 
 STATE {
@@ -107,23 +115,23 @@ INITIAL {
 BREAKPOINT {
     SOLVE kstates METHOD sparse
     
-    itrans=-charge*density*(1e+006)*(0.6*(C1*k16*Kout*u(v,0.6)-C6*k61*Kin) -0.1*(C1*k12*Gluout*u(v,-0.1)-C2*k21)+0.5*(C2*k23*Naout*u(v,0.5)-C3*k32)+0.4*( C3*k34*u(v,0.4)-C4*k43)+0.6*(C5*k56*u(v,0.6)-C6*k65*Nain) )
+    itrans=-charge*density*(1e+006)*(0.6*(C1*k16*ko*u(v,0.6)-C6*k61*ki) -0.1*(C1*k12*gluo*u(v,-0.1)-C2*k21)+0.5*(C2*k23*nao*u(v,0.5)-C3*k32)+0.4*( C3*k34*u(v,0.4)-C4*k43)+0.6*(C5*k56*u(v,0.6)-C6*k65*nai) )
     : itransLog=log(-itrans*(1e+006))
 
-    :itrans=-charge*density*(1e+006)*(0.6*(C1*k16*Kout*u(v,0.6)-C6*k61*Kin) +0.4*( C3*k34-C4*k43)+0.6*(C5*k56*u(v,0.6)-C6*k65*Nain) )	  
+    :itrans=-charge*density*(1e+006)*(0.6*(C1*k16*ko*u(v,0.6)-C6*k61*ki) +0.4*( C3*k34-C4*k43)+0.6*(C5*k56*u(v,0.6)-C6*k65*nai) )	  
 }
 
 KINETIC kstates {
-            COMPARTMENT volin { Nain Kin Gluin}
-            COMPARTMENT volout { Naout Kout Gluout}
+            COMPARTMENT volin { nai ki glui}
+            COMPARTMENT volout { nao ko gluo}
             : COMPARTMENT surf { C1 C2 C3 C4 C5 C6}
         : surf=1 : !!!!!!!
-        ~ C1   <-> C2      (Gluout*k12*u(v,-0.1), k21)
-        ~ C2  <-> C3       (Naout*k23*u(v,0.5),k32)
+        ~ C1   <-> C2      (gluo*k12*u(v,-0.1), k21)
+        ~ C2  <-> C3       (nao*k23*u(v,0.5),k32)
         ~ C3 <-> C4	       (k34*u(v,0.4),k43)
-        ~ C4 <-> C5 	   (k45,k54*Gluin)
-        ~ C5 <-> C6	       (k56*u(v,0.6),k65*Nain)
-        ~ C6  <-> C1       (Kin*k61, k16*u(v,0.6)*Kout)
+        ~ C4 <-> C5 	   (k45,k54*glui)
+        ~ C5 <-> C6	       (k56*u(v,0.6),k65*nai)
+        ~ C6  <-> C1       (ki*k61, k16*u(v,0.6)*ko)
         
     CONSERVE C1+C2+C3+C4+C5+C6= 1
 }

@@ -14,7 +14,7 @@ begintemplate SpeciesInfo
         strdef ionMechName
         
         ionMechName = $s1
-        diff = $2
+        diff = $2               // !!! was: 1 (Deff in legacy Diffusion3D.hoc)
         
         // !!! move this util to a better place
         suffix = pyObj.ms_ionMechNameToSuffix(ionMechName)

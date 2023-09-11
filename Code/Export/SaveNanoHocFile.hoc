@@ -55,16 +55,14 @@ proc _exportCellToHocFile() { local cond
     {
         line1 = "Here is what we don't export at the moment (the list is incomplete):"
         line2 = "    * GLOBAL vars of biophys mechs%s"
-        line3 = "    * %sPPs/ACs%s, e.g. gap junctions in Soma and Dendrites%s (but APCount-s are exported)"
-        line4 = "    * custom \"proc advance() { ... }\"%s"
+        line3 = "    * %sPPs/ACs%s, e.g. gap junctions in Soma and Dendrites (but APCount-s are exported)"
+        line4 = "    * custom \"proc advance() { ... }\", e.g. the ones used in the \"Simulations\""
         if (isAstrocyteOrNeuron) {
             sprint(line2, line2, "")
-            sprint(line3, line3, "", "", "")
-            sprint(line4, line4, "")
+            sprint(line3, line3, "", "")
         } else {
             sprint(line2, line2, " and synaptic PPs/ACs")
-            sprint(line3, line3, "custom ", " (outside synapses)", " and Point3DRelease in Extracellular Source")   // !!!
-            sprint(line4, line4, ", e.g. the one updating Extracellular Potassium")     // !!!
+            sprint(line3, line3, "custom ", " (outside synapses)")
         }
         line5 = "    * the distance centre location (if you change it)"
         line6 = "    * the extracellular sources"   // !!!

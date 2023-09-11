@@ -9,18 +9,20 @@ access soma_ref.o(0).sec    // !! is that needed?
 { load_file("Biophys.hoc") }
 
 { load_file("AddSynapses.hoc") }
-{ load_file("Diffusion3D.hoc") }
+{ load_file("Diffusion3D.hoc") }        // !!!!
 
 { finitialize() }   // !! Already moved to NanoBranchesManager.hoc
 
 
+/// !!!!
 proc advance() {
     
     fadvance()
     //f1.printf("%-6.3g", apc.n)
     
     
-    ExtracellularPotassium(x,y,z, DelayInter1, input1.Distance) // Diffusion3D.hoc 
+    // !!!!
+    ExtracellularPotassium() // Diffusion3D.hoc 
 }
 
 

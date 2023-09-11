@@ -8,8 +8,6 @@ COMMENT
     Any changes to the lines must be done synchronously with the changes to the file "diffusible_species.json".
 ENDCOMMENT
 
-: !!! need to hide this mechanism in our Manager of Biophysics
-
 : !!! when variable time step is used, it's important to schedule calls of our code in this MOD file on each "on-off" event and each "spike" event of each extracellular source
 
 NEURON {

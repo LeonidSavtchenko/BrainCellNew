@@ -36,7 +36,7 @@ KMULT =  0.0
 KMULTP = 0.0
 
 
-BasicK=2.5  // !! Defined the same in Diffusion3D.hoc
+BasicK=2.5  // !!!! Defined the same in Diffusion3D.hoc
 
 
 // !! this proc is also called for neuron nanogeometry after reseeding
@@ -54,8 +54,8 @@ proc Neuron_Biophysics_init() {
     gkabar_kad=0
         sh_na3=nash
         ar_na3=1
-    //insert IKa
-    //ko_IKa=BasicK
+    // !!!! insert IKa
+    // !!!! ko_IKa=BasicK
 }
 
 

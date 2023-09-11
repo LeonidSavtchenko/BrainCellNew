@@ -9,7 +9,7 @@ begintemplate MechComp
     external mmAllComps
     external mwh, math, mth, mmmowb, mcu, dfc
     external inhomAndStochLibrary
-    external stringsEqual, stringEndsWith, stringEmpty, joinStrings, concatenateTwoLists, codeContractViolation, printMsgAndRaiseError
+    external stringsEqual, stringEmpty, joinStrings, concatenateTwoLists, codeContractViolation, printMsgAndRaiseError
     external eachItemInList
     
     strdef name
@@ -229,7 +229,7 @@ begintemplate MechComp
             for mechIdx = 0, numMechs - 1 {
                 mth.getMechName(0, mechIdx, mechName)
                 if (!isMechInserted[mechIdx] && ismembrane(mechName)) {
-                    if (!stringEndsWith(mechName, mth.ionSuffix)) {
+                    if (!mth.isIon(mechName)) {
                         codeContractViolation()
                     }
                     joinStrings(autoAddedIons, mechName, ", ")

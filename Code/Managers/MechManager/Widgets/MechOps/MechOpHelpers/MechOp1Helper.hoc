@@ -8,7 +8,7 @@ begintemplate MechOp1Helper
     
     external mmAllComps
     external mth, mwh
-    external getGlobalVarsHint, stringEndsWith, dismissIfNotNil, codeContractViolation
+    external getGlobalVarsHint, dismissIfNotNil, codeContractViolation
     external varsEditorSubWidget
     
     strdef title
@@ -133,7 +133,7 @@ begintemplate MechOp1Helper
         }
         
         mth.getMechName(0, mechIdx, mechName)
-        if (stringEndsWith(mechName, mth.ionSuffix) && varType == 2) {
+        if (mth.isIon(mechName) && varType == 2) {
             // !! it turns out that ions can change names of their ASSIGNED vars as a result of insertion,
             //    but mechStd.out() doesn't work if the names changed between mechStd.in() and mechStd.out()
             //    to handle the case properly, we'll have to re-init all affected MechanismStandard objects at comp.mechStds[mechIdx][2]

@@ -25,6 +25,7 @@ begintemplate MechOpWidgetBase
     numRows = -1
     colWidth = -1
     rowHeight = -1
+    fh = -1
     
     double itemTypeHeights[3]
     spacerHeight = -1
@@ -35,6 +36,8 @@ begintemplate MechOpWidgetBase
     objref mainBox, mainBoxForCCW, mainBoxForMCW
     objref mechOpHelpers[4]
     
+    isHideIons = -1
+    
     
     proc init() {
         numCols = 4         // !! think about exposing these two in UI
@@ -42,10 +45,12 @@ begintemplate MechOpWidgetBase
         colWidth = 180
         rowHeight = 210
         
+        fh = 55
+        
         x = 520
         y = 0
         w = numCols * colWidth + 32     // + slider
-        h = numRows * rowHeight + 135   // + header and footer
+        h = numRows * rowHeight + 165   // + header and footer
         
         isCompOrMechCentricView = 1
         
@@ -62,6 +67,8 @@ begintemplate MechOpWidgetBase
         spacerHeight = 18           // Label
         rowBodyHeight = rowHeight - 26  // Minus header
         sliderMinHeight = rowBodyHeight * 1.6   // Empirical multiplier
+        
+        isHideIons = 1
     }
     
     proc switchToOtherMechOpViewHandler() { local mechOpIdx, wasDirty
@@ -133,6 +140,15 @@ begintemplate MechOpWidgetBase
         dismissCore()
         
         showHelper(mechOpIdx, isCompOrMechCentricView)
+    }
+    
+    proc hideIonsCheckBoxHandler() { local mechOpIdx localobj mainBoxCopy
+        mechOpIdx = $1
+        
+        // !!! not sure why this temporary copy is needed, but without it we'll catch Segmentation Violation
+        mainBoxCopy = mainBox
+        
+        switchBetweenCompAndMechCentricViewsHandler(mechOpIdx, isCompOrMechCentricView)
     }
     
     // The iterator for constructing a mech operation view including header, grid of panels and footer
@@ -247,24 +263,33 @@ begintemplate MechOpWidgetBase
             
             // Footer
             
-            isSwitchToCompOrMechCentricView = 1 - isCompOrMechCentricView
-            
-            if (isSwitchToCompOrMechCentricView) {
-                switchToKeyword = "compartment"
-            } else {
-                switchToKeyword = "mechanism"
-            }
-            
-            sprint(buttonText, "Switch to the %s-centric view instead", switchToKeyword)
-            sprint(buttonHocCommand, "switchBetweenCompAndMechCentricViewsHandler(%d, %d)", mechOpIdx, isSwitchToCompOrMechCentricView)
-            
-            xpanel("")
             if (isRequireApply) {
+                xpanel("")
                 xbutton("Apply", "applyHandler()")
                 xlabel("")
+                xpanel()
             }
-            xbutton(buttonText, buttonHocCommand)
-            xpanel()
+            hBox = new HBox()
+            hBox.intercept(1)
+            {
+                xpanel("")
+                isSwitchToCompOrMechCentricView = 1 - isCompOrMechCentricView
+                if (isSwitchToCompOrMechCentricView) {
+                    switchToKeyword = "compartment"
+                } else {
+                    switchToKeyword = "mechanism"
+                }
+                sprint(buttonText, "Switch to the %s-centric view instead", switchToKeyword)
+                sprint(buttonHocCommand, "switchBetweenCompAndMechCentricViewsHandler(%d, %d)", mechOpIdx, isSwitchToCompOrMechCentricView)
+                xbutton(buttonText, buttonHocCommand)
+                xpanel()
+                xpanel("")
+                sprint(buttonHocCommand, "hideIonsCheckBoxHandler(%d)", mechOpIdx)
+                xcheckbox("Hide all ions", &isHideIons, buttonHocCommand)
+                xpanel()
+            }
+            hBox.intercept(0)
+            hBox.map("", 0, 0, w, fh)
         }
         mainBox.intercept(0)
         mainBox.dismiss_action("dismissHandler()")
@@ -315,7 +340,7 @@ begintemplate MechOpWidgetBase
                 numInsertedItems = 0
                 for mechIdx = 0, mth.getNumMechs(0) - 1 {
                     mth.getMechName(0, mechIdx, mechName)
-                    isSkipItem = mechsDllUtils.isThisMechForIntUseOnly(mechName)
+                    isSkipItem = isSkipThisMech(mechName)
                     if (isSkipItem) {
                         continue
                     }
@@ -438,7 +463,7 @@ begintemplate MechOpWidgetBase
         } else {
             mechIdx = panIdx
             mth.getMechName(0, mechIdx, mechName)
-            isSkipAll = mechsDllUtils.isThisMechForIntUseOnly(mechName)
+            isSkipAll = isSkipThisMech(mechName)
             if (isSkipAll) {
                 return 1
             }
@@ -451,6 +476,20 @@ begintemplate MechOpWidgetBase
         }
         
         return 1
+    }
+    
+    func isSkipThisMech() { local isSkip
+        strdef mechName
+        mechName = $s1
+        isSkip = mechsDllUtils.isThisMechForIntUseOnly(mechName)
+        if (isSkip) {
+            return 1
+        }
+        isSkip = isHideIons && mth.isIon(mechName)
+        if (isSkip) {
+            return 1
+        }
+        return 0
     }
     
     proc applyHandler() {

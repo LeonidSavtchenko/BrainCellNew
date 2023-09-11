@@ -1,11 +1,11 @@
 
 begintemplate MechSettings
 
-    public isHideStochButton, getAllSpcCatNames, getTotalNumExpIons, getUserFriendlyIonNameOrEmpty, getActIonNameAndDiffIter, getUnrecExpIonNameIter
+    public isHideStochButton, getAllSpcCatNames, getTotalNumExpIons, getUserFriendlyIonNameOrEmpty, getActIonNameAndDiffIter, getUnrecExpIonNameIter, isIon
     public unrecSpcCatName, ionSuffix
     
     external pyObj
-    external findItemInListByString, printMsgAndRaiseError
+    external findItemInListByString, stringEndsWith, printMsgAndRaiseError
     
     strdef unrecSpcCatName, ionSuffix
     
@@ -79,6 +79,13 @@ begintemplate MechSettings
                 iterator_statement
             }
         }
+    }
+    
+    func isIon() {
+        strdef mechName
+        mechName = $s1
+        // !! it looks like checking for "_ion" suffix is not what NEURON does internally
+        return stringEndsWith(mechName, ionSuffix)
     }
     
     // All next staff is private

@@ -9,13 +9,13 @@ if (isAstrocyteOrNeuron) {
 
 begintemplate MechTypeHelper
 
-    public getMechType, getNumMechs, getMechName, getMechIdx, getNumVarTypes, getNumMechVars, doesMechHaveGlobalVars, doesMechHaveNotGlobalVars, getVarNameAndArraySize, getVarTypeName, getVarNameWithIndex, getVarUnits, getVarNameWithIndexAndUnits, isDistMechSticky, checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar, isDiamDistMechVar, isWeightNetConVar, convertVarTypeToVarTypeIdx, doesPointProcessRequireSection, isPointProcessAcceptableNetConSource, isPointProcessAcceptableNetConTarget
+    public getMechType, getNumMechs, getMechName, getMechIdx, getNumVarTypes, getNumMechVars, doesMechHaveGlobalVars, doesMechHaveNotGlobalVars, getVarNameAndArraySize, getVarTypeName, getVarNameWithIndex, getVarUnits, getVarNameWithIndexAndUnits, isDistMechSticky, isIon, checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar, isDiamDistMechVar, isWeightNetConVar, convertVarTypeToVarTypeIdx, doesPointProcessRequireSection, isPointProcessAcceptableNetConSource, isPointProcessAcceptableNetConTarget
     
     public morphologyMechIdx, diamVarType, diamVarName
     public extracellularMechName, ionSuffix
     
     external mwh, mechSettings
-    external stringsEqual, stringEndsWith, stringEmpty, codeContractViolation
+    external stringsEqual, stringEmpty, codeContractViolation
     external fakeMechType4NC, utils4FakeMech4NC
     external isAstrocyteOrNeuron
     
@@ -127,8 +127,13 @@ begintemplate MechTypeHelper
         strdef mechName
         mechIdx = $1
         getMechName(0, mechIdx, mechName)
-        // !! it looks like checking for "_ion" suffix is not what NEURON does internally
-        return mechIdx == extracellularMechIdx || stringEndsWith(mechName, ionSuffix)
+        return mechIdx == extracellularMechIdx || isIon(mechName)
+    }
+    
+    func isIon() {
+        strdef mechName
+        mechName = $s1
+        return mechSettings.isIon(mechName)
     }
     
     // Next proc-s are "static"
@@ -278,7 +283,7 @@ begintemplate MechTypeHelper
         varName = $s3
         
         getMechName(0, mechIdx, mechName)
-        if (stringEndsWith(mechName, ionSuffix) && varType == 2) {
+        if (isIon(mechName) && varType == 2) {
             // !!! BUG: we hit this, when create an extracellular source of "point" shape, apply it, then go to
             //     "Manager of biophysics" -> "Review inhomogen vars" and try to apply any other inhomogeneity model
             //     instead of "Verbatim data" (or even reapply the same model)

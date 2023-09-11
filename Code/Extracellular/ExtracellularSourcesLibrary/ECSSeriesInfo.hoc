@@ -22,10 +22,11 @@ begintemplate ECSSeriesInfo
             mechStd.in(other.mechStd)
         } else if (numArg == 4) {
             // !!!! this branch is used only for testing
-            mechStd.set("interval", $1)
-            mechStd.set("number", $2)
-            mechStd.set("start", $3)
-            mechStd.set("noise", $4)
+                                            // !!! was (in legacy Diffusion3D.hoc):
+            mechStd.set("interval", $1)     //      100 (IntervalRelease1)
+            mechStd.set("number", $2)       //      1 (SwtichOn1)
+            mechStd.set("start", $3)        //      1 (DelayInter1)
+            mechStd.set("noise", $4)        //      0
         }
     }
     

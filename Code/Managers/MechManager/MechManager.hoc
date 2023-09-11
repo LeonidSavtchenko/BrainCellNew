@@ -2,7 +2,7 @@
 { load_file("MechManagerLoads.hoc") }
 
 
-proc analyzeSectsAndCreateComps() { local compIdx localobj endFoot_ref, ecSource_ref, other_ref, comp
+proc analyzeSectsAndCreateComps() { local compIdx localobj endFoot_ref, other_ref, comp
     
     // !! maybe I will have to delete everything from inhomAndStochLibrary (showing YES/NO dialog for confirmation)
     
@@ -25,10 +25,6 @@ proc analyzeSectsAndCreateComps() { local compIdx localobj endFoot_ref, ecSource
             
             mmAllComps.append(new MechComp("Spine Neck", nanoProximal_ref))
             mmAllComps.append(new MechComp("Spine Head", nanoDistal_ref))
-            
-            // !!! get rid of this here and in the exported file
-            ecSource_ref = createListOfSectionRefs("ExtracellularSource", 0)
-            mmAllComps.append(new MechComp("Extracellular Source", ecSource_ref))
         }
         
         other_ref = _findAllRemainingSects()

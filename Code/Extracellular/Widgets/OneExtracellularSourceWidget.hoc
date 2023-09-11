@@ -6,6 +6,9 @@
 // !!! BUG: the markers for different species are shown in the same colour (because it depends only on the species index within its category)
 //          think about different marker styles for different species categories (e.g. dash circle, "+" marker, "x" marker etc.)
 
+
+// !!!!! BUG: point + spike + series (start=0, noise=0) => "Unhandled Exception. This usually means a bad memory" OR "NaN" value in the conentration on the first iteration
+
 begintemplate OneExtracellularSourceWidget
 
     public show, dismissHandler
@@ -119,10 +122,11 @@ begintemplate OneExtracellularSourceWidget
         speciesIdx = 0
         
         shapeIdx = 1
-        x = 456.5           // um
-        y = 123.5           //
-        z = 0               //
-        radius = 111.5      //
+                            //          !!! was (in legacy Diffusion3D.hoc):
+        x = 456.5           // um       !!!  -30
+        y = 123.5           //          !!!  20
+        z = 0               //          !!!  0
+        radius = 111.5      //          !!!  10 (ReleaseRadius)
         
         enumStaticSwitchSpike = 1
         offsetTime = 2.3    // ms
@@ -138,6 +142,11 @@ begintemplate OneExtracellularSourceWidget
         
         // !!! (No MOD-file) ("sphere" shape)
         delta_o = 2.3               // mM
+        
+        seriesInfo = new ECSSeriesInfo()
+        
+        // !!!!
+        spcNamesList = spcCatsList.o(spcCatIdx).spcNamesList
         
         if (numArg >= 1) {
             oldECS = $o1
@@ -185,14 +194,9 @@ begintemplate OneExtracellularSourceWidget
                 codeContractViolation()
             }
             
-            if (!isSeries) {
-                seriesInfo = new ECSSeriesInfo()
-            } else {
+            if (isSeries) {
                 seriesInfo = new ECSSeriesInfo(oldECS.seriesInfoOrNil)
             }
-        } else {
-            // !!!!
-            spcNamesList = spcCatsList.o(spcCatIdx).spcNamesList
         }
         
         if (numArg == 2) {
@@ -203,7 +207,7 @@ begintemplate OneExtracellularSourceWidget
         
         populateSrcDynamicsList(0)
         
-        getSomaCoords(&x_soma, &y_soma, &z_soma)
+        getSomaCoords(&x_soma, &y_soma, &z_soma)    // !!! was: 0, 0, 0 (in legacy Diffusion3D.hoc)
         
         mainBox = new VBox()
         mainBox.intercept(1)
@@ -243,7 +247,6 @@ begintemplate OneExtracellularSourceWidget
                     xpanel("")
                     // !!! xbutton("Edit species", "editSpeciesHandler()")
                     xbutton("Add new species", "addNewSpeciesHandler()")
-                    // !!!! some ideas: ion_register(), make_mechanism()
                     xpanel()
                 }
                 vBox.intercept(0)
@@ -567,24 +570,25 @@ begintemplate OneExtracellularSourceWidget
     }
     
     proc addNewSpeciesHandler() {
-        strdef line1, line2, line3, line4, line5, line6, line7, line8, line9, line10, line11, line12, line13
+        strdef line1, line2, line3, line4, line5, line6, line7, line8, line9, line10, line11, line12, line13, line14
         
-        sprint(line1, "Adding a new species to be used in the \"%s\" requires several steps:", parentWidget.title)
+        sprint(line1, "Adding a new species to use in the \"%s\" requires several steps:", parentWidget.title)
         line2 = "1. Close the BrainCell program."
-        line3 = "2. (Optional) Add a new MOD file or edit existing one under \"Mechanisms\\*\\MOD files\" to declare the new ion and define its behaviour."
-        line4 = "3. Edit one special MOD file \"Mechanisms\\Common\\MOD files\\_ECDCalcAndConsHelper.mod\" following the instructions inside."
-        line5 = "4. Launch the BAT script \"Mechanisms\\Common\\build_astrocyte&neuron_mechs.bat\" and make sure that it's finished without any errors."
-        line6 = "5. (Optional, but recommended) Add a new record to the JSON file \"Mechanisms\\Settings\\diffusible_species.json\" following the Legend inside."
-        line7 = "6. Start the BrainCell program."
-        line8 = "Notes:"
-        line9 = "The point 2 above can be skipped if:"
-        line10 = "    * you just want to declare the new ion without implementing any custom behaviour (in this case, doing the point 3 is enough);"
-        line11 = "    * you create a HOC-based ion (using \"make_mechanism()\" and \"ion_register()\") rather than a MOD-based ion"
-        line12 = "       (however, we didn't test this workflow)."  // !!! test this
-        sprint(line13, "The point 5 above is just for making some presets for the new ion to be used in the \"%s\".", parentWidget.title)
-        mwh.showMessageBox(line1, "", line2, line3, line4, line5, line6, line7, "", line8, line9, line10, line11, line12, line13, "", "Instructions")
+        line3 = "2. Edit the special MOD file \"Mechanisms\\Common\\MOD files\\_ECDCalcAndConsHelper.mod\" following the instructions inside."
+        line4 = "3. (Optional) Add a new MOD file or edit an old one under \"Mechanisms\\<cell_type>\\MOD files\" to define custom behaviour for the new ion;"
+        line5 = "     here \"<cell_type>\" can be either \"Astrocyte\", \"Neuron\" or \"Common\" depending on the target cell type."
+        line6 = "4. Launch the BAT script \"Mechanisms\\Common\\build_astrocyte&neuron_mechs.bat\" and make sure it finishes without the errors."
+        line7 = "5. (Optional, but recommended) Add a new record to the JSON file \"Mechanisms\\Settings\\diffusible_species.json\" following the Legend inside."
+        line8 = "6. Start the BrainCell program."
+        line9 = "Notes:"
+        line10 = "The point 3 above can be skipped if:"
+        line11 = "    * you just want to declare the new ion without implementing any custom behaviour (in this case, doing the point 2 is enough);"
+        line12 = "    * you create a HOC-based ion (using \"make_mechanism()\" and \"ion_register()\") rather than a MOD-based ion"
+        line13 = "       (however, we didn't test this workflow)."  // !!! test this; see also: ion_style()
+        sprint(line14, "The point 5 above is just for making some presets for the new ion to use in the \"%s\".", parentWidget.title)
+        mwh.showMessageBox(line1, "", line2, line3, line4, line5, line6, line7, line8, "", line9, line10, line11, line12, line13, line14, "", "Instructions")
         
-        // !!! in the future, we can automate all the points above except the point 2
+        // !!! in the future, we can automate all the points above except the point 3
         //     (the point 5 will require some new widget where user can make the presets)
     }
     
@@ -660,6 +664,8 @@ begintemplate OneExtracellularSourceWidget
         deck4.flip_to(cardIdx)
         if (cardIdx == 0) {
             netStimParamsWidget.dismissHandler()
+        } else if (isSeries) {
+            netStimParamsWidget.show(seriesInfo.mechStd)
         }
         
         updateDecks56()
@@ -863,9 +869,9 @@ begintemplate OneExtracellularSourceWidget
         }
         
         if (!isSeries) {
-            newECS = new ExtracellularSource_(spcCatIdx, species, newSpatialInfo, newTemporalInfo, newCapacityInfo)
+            newECS = new ExtracellularSource(spcCatIdx, species, newSpatialInfo, newTemporalInfo, newCapacityInfo)
         } else {
-            newECS = new ExtracellularSource_(spcCatIdx, species, newSpatialInfo, newTemporalInfo, newCapacityInfo, seriesInfo)
+            newECS = new ExtracellularSource(spcCatIdx, species, newSpatialInfo, newTemporalInfo, newCapacityInfo, seriesInfo)
         }
         
         if (oldSrcIdxOrMinus1 == -1) {
@@ -1073,8 +1079,8 @@ begintemplate OneExtracellularSourceWidget
     
     // !!!!!!!!!! vvvvvvvvvv just a quick prototype to start with
     
-    // !!! think about making all next proc-s members of "ExtracellularSource_" or "ExtracellularSourcesLibrary"
-    //     (I will have to store one "ExtracellularSource_" inside "OneExtracellularSourceWidget")
+    // !!! think about making all next proc-s members of "ExtracellularSource" or "ExtracellularSourcesLibrary"
+    //     (I will have to store one "ExtracellularSource" inside "OneExtracellularSourceWidget")
     
     // !!! similar to updatePlotShape
     proc showThisSrc() { local x_screen, y_screen localobj otherSpatialInfo

@@ -1,6 +1,5 @@
 
-// !!! remove the underscore in name once we get rid of "create ExtracellularSource"
-begintemplate ExtracellularSource_
+begintemplate ExtracellularSource
 
     public isEqual, checkForUnsupportedIon, packToVec
     public spcCatIdx, species, spatialInfo, temporalInfo, capacityInfo, seriesInfoOrNil
@@ -103,4 +102,4 @@ begintemplate ExtracellularSource_
         spatialInfo.prepareShownString(species, dynamicsName, temporalInfo.isSeriesOrMinus1, seriesInfoOrNil, s)
     }
     
-endtemplate ExtracellularSource_
+endtemplate ExtracellularSource
