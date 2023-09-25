@@ -1,0 +1,82 @@
+
+// Basically, a wrapper of "mechStd.panel()" fixing 4 problems:
+//  * the panel appears too far from the clicked button/checkbox
+//  * many instances of the same panel can be created
+//  * not closed automatically with the parent widget (or after a certain operation in the parent widget)
+//  * issues in NEURON when user sets start=0 (just a workaround, see the comment in "actionHandler" below)
+begintemplate NetStimParamsWidget
+
+    public show, dismissHandler
+    
+    external math
+    external unmapIfNotNil
+    
+    objref mainBox
+    objref mechStd_lastUsed
+    
+    startVarIdx = -1
+    strdef startVarName
+    startVarMinValue = -1
+    
+    
+    proc init() {
+        startVarIdx = 2
+        startVarName = "start"
+        startVarMinValue = float_epsilon
+    }
+    
+    proc show() { localobj mechStd
+        mechStd = $o1
+        
+        dismissHandler()
+        
+        mechStd_lastUsed = mechStd
+        
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            mechStd.action("actionHandler(hoc_ac_)")    // Must be done only before mechStd.panel()
+            mechStd.panel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("MechanismStandard", 950, 450, -1, -1)  // The title is the same as for "mechStd.panel()" without the VBox
+    }
+    
+    proc dismissHandler() { localobj nil
+        unmapIfNotNil(mainBox)
+        mechStd_lastUsed = nil
+    }
+    
+    // All next staff is private
+    
+    
+    // This proc is a workaround for some issues in NEURON when user sets start=0
+    // and has a PlotShape or a Graph on the screen with auto-update enabled for it:
+    //  fast_flush_list.append(plotShape)
+    //  graphList[0].append(graph)
+    // case 1: PlotShape on the screen => "Unhandled Exception. This usually means a bad memory"
+    // case 2: Graph on the screen => no error in console, but the Graph indicates "NaN" value
+    //         on the first iteration which makes the entire curve "invisible"
+    // The problem is reproduced stably for "point + spike + series" with start=0 and noise=0
+    proc actionHandler() { local varIdx, startVarValue, isLess
+        varIdx = $1
+        
+        if (varIdx != startVarIdx) {
+            return
+        }
+        
+        startVarValue = mechStd_lastUsed.get(startVarName)
+        
+        math.disableGreedyComparison()
+        {
+            isLess = (startVarValue < startVarMinValue)
+        }
+        math.restoreGreedyComparison()
+        
+        if (isLess) {
+            mechStd_lastUsed.set(startVarName, startVarMinValue)
+        }
+    }
+    
+endtemplate NetStimParamsWidget

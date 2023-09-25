@@ -4,43 +4,63 @@ COMMENT
     
     This membrane mechanism plays the next roles: ... !!!!
     
-    In case you want to add new species (or delete old ones), look for the lines below marked as "### Edit here when changing the species list ###".
-    Any changes to the lines must be done synchronously with the changes to the file "diffusible_species.json".
+    In case you want to add new species (or delete old ones), look for 7 blocks of code below marked as "Edit here when changing the species list"
+    Warning: Any changes to the blocks must be done synchronously with the changes to the file "diffusible_species.json".
+             The lists of species in this MOD file and the JSON file must always be in sync (including the total number of species, their order and "ionMechName").
 ENDCOMMENT
 
 : !!! when variable time step is used, it's important to schedule calls of our code in this MOD file on each "on-off" event and each "spike" event of each extracellular source
 
+: !!! investigate whether enlisting all available ions here causes significant performance or memory penalties compared to the case when we enlist only the used ones
+:     if it does, then consider creation of individual MOD file for each ion OR generation of this single MOD file from Python, then compile it and load dynamically
+
+: !!! we could add READ for all the ions, but we already WRITE, so an attempt to use the read value of the concentration like "*oinit"
+:     would lead to cumulative effect of summation (unless we integrate the diffusion PDE step by step rather than calculate the closed-form solution)
+
 NEURON {
     SUFFIX ECDCalcAndConsHelper
     
-    : !!! investigate whether enlisting all available ions here causes significant performance or memory penalties compared to the case when we enlist only the used ones
-    :     if it does, then consider creation of individual MOD file for each ion OR generation of this single MOD file from Python, then compile it and load dynamically
-    : !!! do I need to add READ and VALENCE as well?
-    :     UPD 1: maybe no need to add READ because we already WRITE, so an attempt to use the read value like "oinit"
-    :          would lead to cumulative effect of summation (unless we integrate the diffusion PDE step by step rather than calculate the closed-form solution)
-    :     UPD 2: for the unused ions, specifying VALENCE looks reasonable
-    : !!! ### Edit here when changing the species list ###
+    : !!!
+    : Warning: Be cautious specifying VALENCE below because it's easy to introduce a regression that will mainfest itself
+    :          sometimes as a clear error message in NEURON (best case), but sometimes as a hanging of NEURON without any error messages (worst case) *
+    :
+    :          To do everything right, make sure that:
+    :          1. Each ion has VALENCE specified in this file or some other MOD file. The only three ions for which NEURON already "knows" the valence are:
+    :             Na+, K+ and Ca2+ (even though the last one is not "visible" to NEURON without a custom MOD file).
+    :             You don't need to specify the valence for these three ions explicitly, but for all other ions specifying VALENCE somewhere is a must.
+    :          2. The valence of a given ion doesn't have different values in different MOD files.
+    :             If an ion used in 2+ MOD files, it's OK to specify VALENCE in only one MOD file and omit it in all other files.
+    :
+    :          * The hanging takes place when NEURON tries to load "nrnmech.dll" automatically from the current folder at start
+    :            (e.g. when you export with "Export manager" and then run the exported HOC file in the standalone mode).
+    :            The clear error message is printed when the DLL is loaded from a custom folder with "proc nrn_load_dll" (which corresponds to the common BrainCell workflow).
+    :
+    : Be aware: If an ion has no VALENCE specified anywhere, then no error in BrainCell program, but silent hanging in the exported file.
+    
+    : vvvvvvvvvv Edit here when changing the species list vvvvvvvvvv
     : Basic ions
     USEION na WRITE nao
     USEION k WRITE ko
     USEION ca WRITE cao
     USEION cl WRITE clo VALENCE -1
     : Neurotransmitters
-    USEION ach WRITE acho VALENCE 0
-    USEION glu WRITE gluo VALENCE 0
+    USEION ach WRITE acho VALENCE 1
+    USEION glu WRITE gluo
     USEION gaba WRITE gabao VALENCE 0
     : Specific
     USEION frapion WRITE frapiono
     USEION ip3 WRITE ip3o
     : User-defined
-    USEION extra1 WRITE extra1o
-    USEION extra2 WRITE extra2o
+    USEION extra1 WRITE extra1o VALENCE 1
+    USEION extra2 WRITE extra2o VALENCE -1
+    : ^^^^^^^^^^ Edit here when changing the species list ^^^^^^^^^^
     
-    : !!!! just for test of the "Unrecognized" species category (don't forget to change numSpeciesInMOD)
+    : !!!! just for test of the "Unrecognized" species category (don't forget to change NUM_SPECIES_IN_MOD)
     : USEION test_unrec WRITE test_unreco
     
     : !!! it would be better to pass them with POINTER to array
-    : !!! ### Edit here when changing the species list ###
+    
+    : vvvvvvvvvv Edit here when changing the species list vvvvvvvvvv
     : Basic ions
     GLOBAL naoinit, koinit, caoinit, cloinit
     : Neurotransmitters
@@ -49,6 +69,7 @@ NEURON {
     GLOBAL frapionoinit, ip3oinit
     : User-defined
     GLOBAL extra1oinit, extra2oinit
+    : ^^^^^^^^^^ Edit here when changing the species list ^^^^^^^^^^
     
     : !!! compiler warning here: Use of POINTER is not thread safe
     : !!! try to make ptr_ecSrcLibDataVec a GLOBAL POINTER or POINTER GLOBAL. UPD: compiler error
@@ -83,7 +104,8 @@ PARAMETER {
     :     having pointers to GLOBAL-s would be a better solution because it allows user to change a GLOBAL variable
     :     during the simulation on the fly and immediately have the effect in this MOD file
     :     also, think about passing a POINTER to array
-    : !!! ### Edit here when changing the species list ###
+    
+    : vvvvvvvvvv Edit here when changing the species list vvvvvvvvvv
     : Basic ions            : Will be copied from:
     naoinit = -1 (mM)       :   na_ion\GLOBAL\nao0_na_ion
     koinit = -1 (mM)        :   k_ion\GLOBAL\ko0_k_ion
@@ -99,6 +121,7 @@ PARAMETER {
     : User-defined
     extra1oinit = -1 (mM)   :   extra1_ion\GLOBAL\extra1o0_extra1_ion
     extra2oinit = -1 (mM)   :   extra2_ion\GLOBAL\extra2o0_extra2_ion
+    : ^^^^^^^^^^ Edit here when changing the species list ^^^^^^^^^^
     
     ptr_spcLibDataVec
     ptr_ecSrcLibDataVec
@@ -112,7 +135,7 @@ PARAMETER {
 }
 
 ASSIGNED {
-    : !!! ### Edit here when changing the species list ###
+    : vvvvvvvvvv Edit here when changing the species list vvvvvvvvvv
     : Basic ions
     nao (mM)
     ko (mM)
@@ -128,15 +151,17 @@ ASSIGNED {
     : User-defined
     extra1o (mM)
     extra2o (mM)
+    : ^^^^^^^^^^ Edit here when changing the species list ^^^^^^^^^^
     
-    : !!!! just for test of the "Unrecognized" species category (don't forget to change numSpeciesInMOD)
+    : !!!! just for test of the "Unrecognized" species category (don't forget to change NUM_SPECIES_IN_MOD)
     : test_unreco
 }
 
 : !!! compiler warning here: VERBATIM blocks are not thread safe
 VERBATIM
-    // !!! ### Edit here when changing the species list ###
-    #define numSpeciesInMOD 11
+    // vvvvvvvvvv Edit here when changing the species list vvvvvvvvvv
+    #define NUM_SPECIES_IN_MOD 11
+    // ^^^^^^^^^^ Edit here when changing the species list ^^^^^^^^^^
     
     struct SpeciesInfo {
         double diff;
@@ -189,28 +214,34 @@ VERBATIM
         struct ExtracellularSource ecs[0];  // !!! keep this one last not to specify the actual array size
     };
     
-    struct SpeciesLibrary *ptr_spcLib;
-    struct ExtracellularSourcesLibrary *ptr_ecSrcLib;
+    static struct SpeciesLibrary *ptr_spcLib;
+    static struct ExtracellularSourcesLibrary *ptr_ecSrcLib;
     
     
-    double *ptr_vec_segm3DSpecificData;
+    static double *ptr_vec_segm3DSpecificData;
     
     // !!! ideally, we need to hide these two into "struct ECSSeriesInfo" being a part of "struct ExtracellularSource"
-    double *ptr_vec_numImpsSoFar;
-    double *ptr_mat_impTimes;
+    static double *ptr_vec_numImpsSoFar;
+    static double *ptr_mat_impTimes;
     
     // !!!! do not convert maxNumImpsPerECS to int each time
     #define IMPULSE_TIME(ecsIdx, impIdx) (ptr_mat_impTimes[(ecsIdx) * (int)maxNumImpsPerECS + (impIdx)])
     
-    double *ptr_vec_o[numSpeciesInMOD];
+    static double *ptr_vec_o[NUM_SPECIES_IN_MOD];
     
     // !!! will be defined below the first call (just for convenience)
     void updateOutConcGivenECSAndImp(int ecsIdx, int impIdxOrMinus1);
     
     void codeContractViolation() {
-        execerror("\n\n    Bug in BrainCell program: Code contract violation", "\n    Please report this problem to the developer along with the call stack shown below\n");
+        hoc_execerror("\n\n    Bug in BrainCell program: Code contract violation", "\n    Please report this problem to the developer along with the call stack shown below\n");
     }
 ENDVERBATIM
+
+FUNCTION getNumSpeciesInMOD() {
+    VERBATIM
+        _lgetNumSpeciesInMOD = NUM_SPECIES_IN_MOD;
+    ENDVERBATIM
+}
 
 INITIAL {
     checkPointers()
@@ -219,7 +250,7 @@ INITIAL {
 }
 
 BREAKPOINT {
-    assignPointers()
+    assignPointers()    : !!! try to use "static" to remove this. UPD: "static" doesn't help (strange), so maybe remove "static"
     calcAllOutConcs()
 }
 
@@ -252,7 +283,8 @@ PROCEDURE assignPointers() {
         //     UPD 2: if I declare 2 vars with the same name in different MOD files, compiler gives an error
         
         // !!! maybe I can call some HOC code here to do this in order to be more flexible with regard to adding/deleting species
-        // !!! ### Edit here when changing the species list ###
+        
+        // vvvvvvvvvv Edit here when changing the species list vvvvvvvvvv
         // Basic ions
         ptr_vec_o[0] = &nao;
         ptr_vec_o[1] = &ko;
@@ -268,6 +300,7 @@ PROCEDURE assignPointers() {
         // User-defined
         ptr_vec_o[9] = &extra1o;
         ptr_vec_o[10] = &extra2o;
+        // ^^^^^^^^^^ Edit here when changing the species list ^^^^^^^^^^
         
         
         // ptr_b = (void*)&ptr_a;   // !!! would work fine below as well (but won't work after migration from C to C++)
@@ -295,8 +328,8 @@ PROCEDURE assignPointers() {
         // Make sure HOC and MOD code is synced with regard to the species list
         // !!!! move this check to the beginning of this PROCEDURE (before we start writing to "ptr_vec_o[*]");
         //      to do this, maybe it makes sense to move numSpeciesInHOC out of the "ptr_spcLib"
-        //      alternatively, expose numSpeciesInMOD here, read it in HOC and do this check on the HOC side (because earlier is better)
-        if (ptr_spcLib->numSpeciesInHOC != numSpeciesInMOD) {
+        //      alternatively, expose NUM_SPECIES_IN_MOD here, read it in HOC and do this check on the HOC side (because earlier is better)
+        if (ptr_spcLib->numSpeciesInHOC != NUM_SPECIES_IN_MOD) {
             codeContractViolation();    // !!!! replace with a message saying that the MOD files list and this MOD file are out of sync and how to fix this problem
         }
     ENDVERBATIM
@@ -320,7 +353,8 @@ PROCEDURE calcAllOutConcs() {
         // !!! maybe I can call some HOC code here to do this in order to be more flexible with regard to adding/deleting species
         // !!! maybe do not modify the species for which we don't have any sources
         // !!! it would be better to pass all "*oinit" with POINTER to array and use a cycle here
-        // !!! ### Edit here when changing the species list ###
+        
+        // vvvvvvvvvv Edit here when changing the species list vvvvvvvvvv
         // Basic ions
         *ptr_vec_o[0] = naoinit;
         *ptr_vec_o[1] = koinit;
@@ -336,6 +370,7 @@ PROCEDURE calcAllOutConcs() {
         // User-defined
         *ptr_vec_o[9] = extra1oinit;
         *ptr_vec_o[10] = extra2oinit;
+        // ^^^^^^^^^^ Edit here when changing the species list ^^^^^^^^^^
         
         for (int ecsIdx = 0; ecsIdx < (int)ptr_ecSrcLib->numECSs; ecsIdx++) {
             
@@ -363,18 +398,56 @@ VERBATIM
         int spcIdx = ptr_ecSrc->speciesIdx;
         
         switch ((int)ptr_ecSrc->spatialInfo.enumPointSphere) {
-            case 0:     // "point" shape
+            case 0: {   // "point" shape
                 
                 // Distance from the 3D point to the segment centre
                 double distance = ptr_vec_segm3DSpecificData[ecsIdx];
                 
                 switch ((int)ptr_ecSrc->temporalInfo.enumStaticSwitchSpike) {
-                    case 0:     // "static" dynamics
+                    case 0: {       // "static" dynamics
                         // !!! I can pass one product var instead of two factor vars into this MOD file
+                        // !!! very similar to "on-off" dynamics
                         *ptr_vec_o[spcIdx] += ptr_ecSrc->capacityInfo.ssOrMinus1 * ptr_ecSrc->capacityInfo.pointCapacityRadiusOrMinus1 / distance;
                         
                         break;
-                    case 2:         // "spike" dynamics
+                    } case 1: {     // "on-off" dynamics
+                        
+                        // !!! code dupl. with "on-off" dynamics for sphere
+                        double offsetTime;
+                        if (impIdxOrMinus1 == -1) {
+                            offsetTime = ptr_ecSrc->temporalInfo.offsetTimeOrMinus1;
+                        } else {
+                            offsetTime = IMPULSE_TIME(ecsIdx, impIdxOrMinus1);
+                        }
+                        
+                        // !!! for t == offsetTime, we would have 1/0 in the timeFactor below
+                        if (t <= offsetTime) {
+                            break;
+                        }
+                        
+                        // !!! think about creating a cache matrix to save all the constants in INITIAL block (not to calc. on each BREAKPOINT)
+                        double diffFactor = 4.0 * ptr_spcLib->speciesInfo[spcIdx].diff;
+                        
+                        double timeFactor = erfc(distance / sqrt(diffFactor * (t - offsetTime)));   // !! make a func and reuse
+                        
+                        double endTime = offsetTime + ptr_ecSrc->temporalInfo.durationOrMinus1;
+                        
+                        // !!! for t == endTime, we would have 1/0 in the timeFactor below
+                        if (t > endTime) {
+                            timeFactor -= erfc(distance / sqrt(diffFactor * (t - endTime)));        // !! make a func and reuse
+                            
+                            // !!! to achieve better performance, investigate if we can express the difference of two "erfc"
+                            //     with some single special function available in <math.h>, e.g. "lgamma" or "tgamma":
+                            //     https://en.wikibooks.org/wiki/C_Programming/math.h
+                        }
+                        
+                        // !!! very similar to "static" dynamics
+                        double delta_o = ptr_ecSrc->capacityInfo.ssOrMinus1 * ptr_ecSrc->capacityInfo.pointCapacityRadiusOrMinus1 * timeFactor / distance;
+                        
+                        *ptr_vec_o[spcIdx] += delta_o;
+                        
+                        break;
+                    } case 2: {     // "spike" dynamics
                         double delta_t;
                         if (impIdxOrMinus1 == -1) {
                             delta_t = t - ptr_ecSrc->temporalInfo.offsetTimeOrMinus1;
@@ -395,12 +468,14 @@ VERBATIM
                         *ptr_vec_o[spcIdx] += delta_o;
                         
                         break;
-                    default:
+                    } default: {
                         codeContractViolation();
+                    }
                 }
                 
                 break;
-            case 1:         // "sphere" shape
+                
+            } case 1: {     // "sphere" shape
                 
                 // 0/1 flag indicating whether the segment centre is inside the sphere
                 double isInsideSphere = ptr_vec_segm3DSpecificData[ecsIdx];
@@ -412,19 +487,19 @@ VERBATIM
                 // !!! no "bool" in this C by default, and cannot #include <stdbool.h>
                 int isOnOrOff;
                 
-                double offsetTime;
-                
                 switch ((int)ptr_ecSrc->temporalInfo.enumStaticSwitchSpike) {
-                    case 0:     // "static" dynamics
+                    case 0: {       // "static" dynamics
                         isOnOrOff = 1;
                         
                         break;
-                    case 1:     // "switch" dynamics
+                    } case 1: {     // "on-off" dynamics
                     
                         // !!! this won't work well, especially for variable time step method
                         //     the best solution would be to schedule 2 "edge" iterations
                         //     alternatively, for fixed dt, we can show a warning to user when they specify the interval shorter than dt
                         
+                        // !!! code dupl. with "on-off" dynamics for point
+                        double offsetTime;
                         if (impIdxOrMinus1 == -1) {
                             offsetTime = ptr_ecSrc->temporalInfo.offsetTimeOrMinus1;
                         } else {
@@ -434,7 +509,7 @@ VERBATIM
                         isOnOrOff = (t >= offsetTime && t < endTime);
                         
                         break;
-                    case 2:     // "spike" dynamics
+                    } case 2: {     // "spike" dynamics
                     
                         // !!! this won't work neither for fixed time step, not for variable time step method
                         //     the best solution would be to schedule an "edge" iteration
@@ -445,6 +520,7 @@ VERBATIM
                         // !!!! do not use "dt" if CVode is enabled
                         
                         // !!!! just a temp solution
+                        double offsetTime;
                         if (impIdxOrMinus1 == -1) {
                             offsetTime = ptr_ecSrc->temporalInfo.offsetTimeOrMinus1;
                             isOnOrOff = (t >= offsetTime - dt/2 && t < offsetTime + dt/2);  // !!!! inconsistent
@@ -454,8 +530,9 @@ VERBATIM
                         }
                         
                         break;
-                    default:
+                    } default: {
                         codeContractViolation();
+                    }
                 }
                 
                 if (isOnOrOff) {
@@ -463,8 +540,10 @@ VERBATIM
                 }
                 
                 break;
-            default:
+                
+            } default: {
                 codeContractViolation();
+            }
         }
     
     }

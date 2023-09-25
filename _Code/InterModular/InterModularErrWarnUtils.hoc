@@ -1,0 +1,31 @@
+
+{ load_file("Exported/InterModularErrWarnUtilsPart1_Exported.hoc") }
+{ load_file("Exported/InterModularErrWarnUtilsPart2_Exported.hoc") }
+
+proc printWasNotExportedSoWeWillCreateDefaultWarning() {
+    strdef what
+    what = $s1
+    printf("\n    Warning: The %s weren't exported to this nanogeometry HOC file, so we'll create default ones.\n\n", what)
+    // !!! maybe "one" for the extracellular sources
+}
+
+// !!!!!!!!! reuse it everywhere where I use "Exception raised in Python code ...",
+//           but be careful with "Exported" callers
+proc printPythonErrMsgAndStop() {
+    strdef where, msg
+    where = $s1
+    sprint(msg, "Exception raised in Python code (caught in %s)", where)
+    printMsgAndRaiseError(msg)
+}
+
+// !!!!!!!!! to make code shorter, it would be better to create a proc like this:
+/*
+proc some_name() { local status
+    strdef pyCommand
+    sprint(pyCommand, " ... %s ... %s ...", strArg1, strArg2, ...)
+    status = nrnpython(pyCommand)
+    if (!status) {
+        printMsgAndRaiseError("Exception raised in Python code (caught in !!!!!!)")
+    }
+}
+*/

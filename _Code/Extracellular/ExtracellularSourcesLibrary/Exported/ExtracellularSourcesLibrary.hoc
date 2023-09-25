@@ -1,0 +1,86 @@
+
+begintemplate ExtracellularSourcesLibrary
+
+    public addNewSource, isEmpty, getNumECSs, getMaxNumImpsPerECS, packToVec, deployAllSeriesChains
+    public ecsList
+    
+    external math, eclDeploymentCache
+    external codeContractViolation
+    external eachItemInList
+    
+    objref ecsList
+    
+    
+    proc init() {
+        ecsList = new List()
+    }
+    
+    proc addNewSource() { local numArg, spcCatIdx localobj spatialInfo, temporalInfo, capacityInfo, ecs, seriesInfo
+        strdef species
+        
+        numArg = numarg()
+        
+        if (numArg < 5 || numArg > 6) {
+            codeContractViolation()
+        }
+        
+        spcCatIdx = $1
+        species = $s2
+        spatialInfo = $o3
+        temporalInfo = $o4
+        capacityInfo = $o5
+        
+        if (numArg == 5) {
+            ecs = new ExtracellularSource(spcCatIdx, species, spatialInfo, temporalInfo, capacityInfo)
+        } else {
+            seriesInfo = $o6
+            ecs = new ExtracellularSource(spcCatIdx, species, spatialInfo, temporalInfo, capacityInfo, seriesInfo)
+        }
+        
+        ecsList.append(ecs)
+    }
+    
+    func isEmpty() {
+        return (getNumECSs() == 0)
+    }
+    
+    func getNumECSs() {
+        return ecsList.count()
+    }
+    
+    func getMaxNumImpsPerECS() { local maxNumImpsPerECS localobj ecs
+        maxNumImpsPerECS = 0
+        for eachItemInList(ecs, ecsList) {
+            if (ecs.temporalInfo.isSeriesOrMinus1 == 1) {
+                maxNumImpsPerECS = math.max(ecs.seriesInfoOrNil.getNumImps(), maxNumImpsPerECS)
+            }
+        }
+        return maxNumImpsPerECS
+    }
+    
+    obfunc packToVec() { localobj vec, ecs
+        vec = new Vector()
+        vec.append(getNumECSs())
+        for eachItemInList(ecs, ecsList) {
+            vec.append(ecs.packToVec())
+        }
+        return vec
+    }
+    
+    proc deployAllSeriesChains() { local ecsIdx localobj numImpsSoFarDataVec, impTimesDataMatrix, ecs
+        numImpsSoFarDataVec = $o1
+        impTimesDataMatrix = $o2
+        
+        eclDeploymentCache.removeAllSeriesChains()
+        
+        for ecsIdx = 0, ecsList.count() - 1 {
+            ecs = ecsList.o(ecsIdx)
+            if (ecs.temporalInfo.isSeriesOrMinus1 == 1) {
+                eclDeploymentCache.deployOneSeriesChain(ecs.seriesInfoOrNil.mechStd, &numImpsSoFarDataVec.x[ecsIdx], &impTimesDataMatrix.x[ecsIdx][0])
+            }
+        }
+    }
+    
+endtemplate ExtracellularSourcesLibrary
+
+ecsLibrary = new ExtracellularSourcesLibrary()

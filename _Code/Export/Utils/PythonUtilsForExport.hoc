@@ -1,0 +1,24 @@
+
+proc sourcePythonCodeForExport() { local status
+    strdef pyCommand
+    
+    pyCommand = "import sys\nimport os\nsys.path.append(os.getcwd() + '\\_Code\\Export\\PythonCode')\nfrom Framework import *\nfrom UtilsCalledFromHoc.GraphUtils import GraphUtils"
+    
+    status = nrnpython(pyCommand)
+    if (!status) {
+        printMsgAndRaiseError("Failed to import Python code")
+    }
+}
+
+proc callPythonExportCore() { local status
+    strdef outHocFilePathName, pyCommand
+    
+    outHocFilePathName = $s1
+    
+    sprint(pyCommand, "exportCore('%s')", outHocFilePathName)
+    
+    status = nrnpython(pyCommand)
+    if (!status) {
+        printPythonErrMsgAndStop("callPythonExportCore")
+    }
+}

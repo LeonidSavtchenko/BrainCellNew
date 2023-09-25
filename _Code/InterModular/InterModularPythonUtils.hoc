@@ -1,0 +1,70 @@
+
+objref pyObj
+pyObj = new PythonObject()
+
+{ load_file("Exported/InterModularPythonUtils_Exported.hoc") }
+
+{ nrnpython("from neuron import h") }
+
+
+// Convert string to lower case
+// $s1 - The input string
+// $s2 (output) - The lower case string
+proc stringToLowerCase() {
+    strdef inStr
+    inStr = $s1
+    _callPythonStringFunc(inStr, "lower()")
+    $s2 = pyObj.pyRes
+}
+
+// !! not intermodular actually
+// Capitalize the first character in the string
+// $s1 - The input string
+// $s2 (output) - The capitalizeed string
+proc stringCapitalize() {
+    strdef inStr
+    inStr = $s1
+    _callPythonStringFunc(inStr, "capitalize()")
+    $s2 = pyObj.pyRes
+}
+
+// Truncate all leading and trailing whitespaces in the string
+// $s1 - The input string
+// $s2 (output) - The truncated string
+proc stringTruncate() {
+    strdef inStr
+    inStr = $s1
+    _callPythonStringFunc(inStr, "strip()")
+    $s2 = pyObj.pyRes
+}
+
+// !! not intermodular actually
+// Check if the given string ends with the given suffix
+// $s1 - The tested string
+// $s2 - The suffix
+// Returns 0/1 flag
+func stringEndsWith() {
+    strdef inStr, inSuffix, pyMembCall
+    inStr = $s1
+    inSuffix = $s2
+    sprint(pyMembCall, "endswith('%s')", inSuffix)
+    _callPythonStringFunc(inStr, pyMembCall)
+    return pyObj.pyRes
+}
+
+// Check if the given string is a valid identifier in Python (assume that means a valid section name in NEURON)
+// $s1 - The section name
+// Returns 0/1 flag
+func isValidSecName() {
+    strdef secName
+    secName = $s1
+    _callPythonStringFunc(secName, "isidentifier()")
+    return pyObj.pyRes
+}
+
+func checkIfFileMissing() {
+    strdef filePathName, pyCommand
+    filePathName = $s1
+    sprint(pyCommand, "(exec('import os'), not os.path.exists('%s'))[1]", filePathName)
+    return pyObj.ev(pyCommand)
+}

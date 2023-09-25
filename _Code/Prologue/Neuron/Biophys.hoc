@@ -1,0 +1,58 @@
+
+if (isBaseOrNanoStart) {
+    celsius = 34.0
+}
+
+mid=12
+dist=27
+secondorder=2
+
+Rm = 28000
+RmDend = Rm/2
+RmSoma = Rm
+RmAx = Rm
+
+Cm    = 1
+CmSoma= Cm
+CmAx  = Cm
+CmDend = Cm*2
+
+RaAll= 150
+RaSoma=150
+RaAx = 50
+
+Vrest = -65
+
+AXONM = 2
+
+KMULT =  0.048
+ghd=0.0
+
+KMULT =  0.0
+
+// !!! ^^^ review and delete unused vars
+
+
+// !! this proc is also called for neuron nanogeometry after reseeding
+proc Neuron_Biophysics_init() {
+    cm = 1
+    // !! warning: g_pas is assigned here and in NanoCore/Neuron/NeuronNanoBranch.hoc -> proc initBiophysics for neuron nanogeometry
+    insert pas e_pas=Vrest g_pas = 1/RmDend Ra=RaAll  //cm=CmDend
+}
+
+
+forall {
+    Neuron_Biophysics_init()
+}
+
+
+soma_ref.o(0).sec {
+        cm = 1
+        Ra=150
+        g_pas = 1/10000
+        e_pas = -65
+        v = -65         // !! Maybe remove because now it's done in NanoBranchesManager.hoc (but that file uses v_init = -64.65)
+        
+            e_pas=Vrest g_pas = 1/RmSoma Ra=RaSoma //cm=CmSoma
+        { finitialize(v) }  // !! Maybe remove because now it's done in NanoBranchesManager.hoc
+    }

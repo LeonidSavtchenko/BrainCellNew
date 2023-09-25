@@ -1,0 +1,35 @@
+
+// An iterator to simplify looping over all elements of the List a bit.
+// Basically, we replace this:
+//     local idx localobj item
+//     for idx = 0, list.count() - 1 {
+//         item = list.o(idx)
+//         do_smth(item)
+//     }
+// with this:
+//     localobj item
+//     for eachItemInList(item, list) {
+//         do_smth(item)
+//     }
+// There are some limitations:
+//  1. iterator_statement cannot contain "return" (otherwise we'll catch Segmentation violation)
+//  2. We cannot create another iterator which calls eachItemInList inside (otherwise the outer iterator "forgets" its input arguments on 2nd iteration)
+// Also, calling "execerror" inside the iterator crashes NEURON
+// $o1 (output) - An element of the List
+// $o2 - The List
+// $3 (optional) - The first index (0 by default)
+iterator eachItemInList() { local numArg, firstIdx, idx localobj list
+    list = $o2
+    numArg = numarg()
+    if (numArg == 2) {
+        firstIdx = 0
+    } else if (numArg == 3) {
+        firstIdx = $3
+    } else {
+        codeContractViolation()
+    }
+    for idx = firstIdx, list.count() - 1 {
+        $o1 = list.o(idx)
+        iterator_statement
+    }
+}

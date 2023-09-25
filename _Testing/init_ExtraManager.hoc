@@ -1,0 +1,93 @@
+
+// Load some test nanogeometry file
+{ load_file("CommonPrologueForTests.hoc") }
+
+obfunc createTestPlotShape() { local y, slotIdx, min_scale, max_scale localobj plotShape
+    strdef varName
+    
+    varName = $s1
+    y = $2
+    slotIdx = $3
+    min_scale = $4
+    max_scale = $5
+    
+    plotShape = new PlotShape(0)
+    plotShape.variable(varName)
+    plotShape.scale(min_scale, max_scale)
+    graphUtils.addPlotDynamicsMenuItem(plotShape, slotIdx, "Extracellular Concentration", varName, 1)
+    plotShape.view(-300, -180, 770, 770, 745, y, 200, 200)
+    plotShape.exec_menu("Shape Plot")
+    plotShape.exec_menu("View = plot")
+    fast_flush_list.append(plotShape)
+    
+    return plotShape
+}
+
+obfunc createTestGraph() { local y, min_scale, max_scale localobj graph
+    strdef varName1, varName2
+    
+    varName1 = $s1
+    varName2 = $s2
+    y = $3
+    min_scale = $4
+    max_scale = $5
+    
+    graph = new Graph(0)
+    graph.addvar(varName1, 2, 0)
+    graph.addvar(varName2, 3, 0)
+    graph.size(0, tstop, min_scale, max_scale)
+    graph.view(0, min_scale, tstop, max_scale - min_scale, 1030, y, 300, 200)
+    graphList[0].append(graph)
+    
+    return graph
+}
+
+y1 = 25
+y2 = 175
+y3 = 325
+y4 = 450
+
+min_scale_1 = 2
+min_scale_2 = 0.5
+min_scale_3 = 139
+min_scale_4 = 0.5   // !!! just to compare GLU "point + on-off" with Ca2+ "point + static" or "point + spike"
+
+max_scale_1 = 5
+max_scale_2 = 2
+max_scale_3 = 145
+max_scale_4 = 2     // !!! just to compare GLU "point + on-off" with Ca2+ "point + static" or "point + spike"
+
+// !!! without this, testPlotShape2 will show the nanogeometry sections in grey rather than in colour
+// !!! NOT BUG (just a test feature): start this test and click "Init & Run" (in AltRunControl or RunControl) => codeContractViolation
+//     but no error after clicking "Apply" in "Manager of extracellular sources";
+//     the root cause is that ECDCalcAndConsHelper, if inserted, must be initialized properly
+forall {
+    insert ECDCalcAndConsHelper
+    
+    // !!! just an alternative way to fix the grey sections problem
+    // insert k_ion
+    // insert ca_ion
+}
+
+// Watch extracellular concentration in space
+objref testPlotShape1, testPlotShape2, testPlotShape3, testPlotShape4
+testPlotShape1 = createTestPlotShape("ko", y1, 3, min_scale_1, max_scale_1)
+testPlotShape2 = createTestPlotShape("cao", y2, 4, min_scale_2, max_scale_2)
+testPlotShape3 = createTestPlotShape("nao", y3, 5, min_scale_3, max_scale_3)
+testPlotShape4 = createTestPlotShape("gluo", y4, 6, min_scale_4, max_scale_4)
+
+tstop = 40
+
+// Watch extracellular concentration in time
+objref testGraph1, testGraph2, testGraph3, testGraph4
+testGraph1 = createTestGraph("s.ko(0.5)", "dendA5_01111111111111111.ko(0.5)", y1, min_scale_1, max_scale_1)
+testGraph2 = createTestGraph("s.cao(0.5)", "dendA5_0111110.cao(0.5)", y2, min_scale_2, max_scale_2)
+testGraph3 = createTestGraph("s.nao(0.5)", "dendA5_01111111111111111.nao(0.5)", y3, min_scale_3, max_scale_3)
+testGraph4 = createTestGraph("s.gluo(0.5)", "dendA5_0111110.gluo(0.5)", y4, min_scale_4, max_scale_4)
+
+{ load_file("../_Code/Managers/CommonLoads.hoc") }  // !!! no need to load everything from this file
+{ load_file("../_Code/Extracellular/ExtracellularManager.hoc") }
+
+showExtracellularManagerBaseWidget()
+
+{ chdir("..") }     // Without this, getcwd() will return different path compared to the start from "init.hoc"

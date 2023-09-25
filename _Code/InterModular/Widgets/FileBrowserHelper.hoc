@@ -1,0 +1,69 @@
+
+// !!! inconsistency in naming: hoc:FileBrowserHelper and py:FileDialogUtils
+
+// !!!! use FileBrowserHelper.showLoadFileDialog to select a file in these 3 proc/func-s:
+//  * loadDiamDistrFile ("*.txt")
+//  * importHocOrSwcOrZipOrOtherFile ("*.*")
+//  * selectDistFuncInputFile_deprecated ("*.hoc", "*.py", "*.txt" or "*.xlsx")
+
+// For both file browsers (native File.chooser and our FileBrowserHelper):
+//  * selecting other disk is OK
+//  * spaces in file path or name is OK
+//  * unicode chars in file path or name is NOT OK
+
+
+begintemplate FileBrowserHelper
+
+    public showLoadFileDialog, showSaveFileDialog
+    
+    external pyObj
+    external stringEmpty, printPythonErrMsgAndStop
+    
+    
+    proc init() { local status
+        strdef pyCommand
+        
+        pyCommand = "import sys\nimport os\nsys.path.append(os.getcwd() + '\\PythonCode')\nfrom FileDialogUtils import FileDialogUtils"
+        
+        status = nrnpython(pyCommand)
+        if (!status) {
+            printPythonErrMsgAndStop("FileBrowserHelper ctor")
+        }
+    }
+    
+    func showLoadFileDialog() {
+        strdef title, subDirName, defaultDirPath, pyCommand
+        
+        title = $s1
+        subDirName = $s2
+        
+        sprint(defaultDirPath, "%s%s/", getcwd(), subDirName)
+        sprint(pyCommand, "FileDialogUtils.showLoadFileDialog('%s', '%s')", title, defaultDirPath)
+        $s3 = pyObj.ev(pyCommand)
+        
+        return stringEmpty($s3)
+    }
+    
+    func showSaveFileDialog() {
+        strdef title, subDirName, defaultDirPath, defaultFileName, pyCommand
+        
+        title = $s1
+        subDirName = $s2
+        
+        sprint(defaultDirPath, "%s%s/", getcwd(), subDirName)
+        
+        // !!!! maybe propose user the default saved file name in style "<imported_name>+nano.hoc" or "<imported_name>_bio.hoc"
+        //      (maybe it should depend on isBaseOrNanoStart or previously loaded biophysics file)
+        defaultFileName = ""
+        
+        sprint(pyCommand, "FileDialogUtils.showSaveFileDialog('%s', '%s', '%s')", title, defaultDirPath, defaultFileName)
+        
+        $s3 = pyObj.ev(pyCommand)
+        
+        return stringEmpty($s3)
+    }
+
+endtemplate FileBrowserHelper
+
+objref fbh
+fbh = new FileBrowserHelper()

@@ -1,0 +1,89 @@
+
+begintemplate ExtracellularSource
+
+    public isEqual, packToVec
+    public spcCatIdx, species, spatialInfo, temporalInfo, capacityInfo, seriesInfoOrNil
+    public s
+    
+    external speciesLibrary
+    external stringsEqual, codeContractViolation
+    
+    spcCatIdx = -1
+    strdef species
+    
+    // !!! think about storing flat speciesIdx here
+    
+    objref spatialInfo, temporalInfo, capacityInfo, seriesInfoOrNil
+    
+    strdef s
+    
+    
+    proc init() { local numArg localobj nil
+        numArg = numarg()
+        
+        if (numArg < 5 || numArg > 6) {
+            codeContractViolation()
+        }
+        
+        spcCatIdx = $1
+        species = $s2
+        spatialInfo = $o3
+        temporalInfo = $o4
+        capacityInfo = $o5
+        if (numArg == 6) {
+            seriesInfoOrNil = $o6
+        }
+        
+        // !!! calling it just to validate spcCatIdx and species here (and avoid unclear errors far downstream)
+        speciesLibrary.getSpeciesFlatIdxForModInterface(spcCatIdx, species)
+        
+        // !!! need to add a check that there is no conflict between enumPointSphere, enumStaticSwitchSpike and capacityInfo
+        //     (currently we can pass e.g. temporalInfo for "spike" and capacityInfo for "static" with no error here => UI will show "Num. molecules" = -1)
+        
+        if ((temporalInfo.isSeriesOrMinus1 != 1 && seriesInfoOrNil != nil) || (temporalInfo.isSeriesOrMinus1 == 1 && seriesInfoOrNil == nil)) {
+            codeContractViolation()
+        }
+        
+        prepareShownString()
+    }
+    
+    func isEqual() { local cond localobj other
+        other = $o1
+        
+        // !!! BUG: it must be illegal to create two sources with the same species, spatialInfo and temporalInfo independently on capacityInfo,
+        //     to achieve this, we need to remove the last predicate in "cond" below,
+        //     but after doing this, we will face other problem: user cannot click "Correct", change only capacityInfo, then click "Apply"
+        
+        // !!! maybe it must be illegal to create two sources with the only difference in either offsetTime, duration or seriesInfoOrNil
+        
+        cond = (spcCatIdx == other.spcCatIdx) && stringsEqual(species, other.species) && spatialInfo.isEqual(other.spatialInfo) && temporalInfo.isEqual(other.temporalInfo) && capacityInfo.isEqual(other.capacityInfo)
+        if (!cond) {
+            return 0
+        }
+        if (temporalInfo.isSeriesOrMinus1 != 1) {
+            return 1
+        }
+        return seriesInfoOrNil.isEqual(other.seriesInfoOrNil)
+    }
+    
+    obfunc packToVec() { local spcFlatIdx localobj vec
+        spcFlatIdx = speciesLibrary.getSpeciesFlatIdxForModInterface(spcCatIdx, species)
+        
+        vec = new Vector()
+        vec.append(spcFlatIdx, spatialInfo.packToVec(), temporalInfo.packToVec(), capacityInfo.packToVec())
+        // !!! no seriesInfoOrNil.packToVec() here by design
+        
+        return vec
+    }
+    
+    // All next staff is private
+    
+    
+    // !!! think about showing the spc cat (BI/NT/SP/EI/UN), the temporal info and the capacity info (maybe indicate the capacity just after the species name)
+    proc prepareShownString() {
+        strdef dynamicsName
+        temporalInfo.getDynamicsName(dynamicsName)
+        spatialInfo.prepareShownString(species, dynamicsName, temporalInfo.isSeriesOrMinus1, seriesInfoOrNil, s)
+    }
+    
+endtemplate ExtracellularSource

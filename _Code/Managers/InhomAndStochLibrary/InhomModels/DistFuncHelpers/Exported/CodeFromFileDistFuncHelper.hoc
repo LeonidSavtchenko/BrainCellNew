@@ -1,0 +1,100 @@
+
+// !! BUG: not ready for export
+
+begintemplate CodeFromFileDistFuncHelper
+
+    public selectedHandler, calculateAt, onJustBeforeFirstSection, onJustBeforeNewSection, onJustAfterLastSection, exportParams, importParams, dismissHandler
+    public parentWidget, isSkipOneSelect
+    
+    external mwh
+    external selectDistFuncInputFile_deprecated, loadPythonFile, printNotImplementedMsgAndRaiseError, codeContractViolation
+    
+    objref nestedHelper, parentWidget
+    
+    modelIdx = -1
+    
+    isSkipOneSelect = -1
+    
+    
+    proc init() {
+        nestedHelper = $o1
+        
+        modelIdx = nestedHelper.modelIdx - 2
+        
+        if (modelIdx < 0 || modelIdx > 1) {
+            codeContractViolation()
+        }
+        
+        isSkipOneSelect = 0
+    }
+    
+    func selectedHandler() { local isChosen, status
+        strdef filePathName
+        
+        if (isSkipOneSelect) {
+            isSkipOneSelect = 0
+            return 0
+        }
+        
+        if (modelIdx == 0) {
+            isChosen = selectDistFuncInputFile_deprecated("HOC", "*.hoc", filePathName)
+        } else {
+            isChosen = selectDistFuncInputFile_deprecated("Python", "*.py", filePathName)
+        }
+        if (!isChosen) {
+            return 1
+        }
+        
+        if (modelIdx == 0) {
+            status = load_file(1, filePathName)
+        } else {
+            status = loadPythonFile(filePathName)
+        }
+        if (!status) {
+            mwh.showWarningBox("Failed to load the file.")
+            return 1
+        }
+        
+        // !! ideally, we can analyze the loaded file and propose user a proper default function name
+        
+        return nestedHelper.selectedHandler(1)
+    }
+    
+    func calculateAt() { local x
+        x = $1
+        return nestedHelper.calculateAt(x)
+    }
+    
+    proc onJustBeforeFirstSection() {
+        // Empty by design
+    }
+    
+    proc onJustBeforeNewSection() {
+        // Empty by design
+    }
+    
+    proc onJustAfterLastSection() {
+        // Empty by design
+    }
+    
+    proc exportParams() { localobj vecOfVals, listOfStrs
+        vecOfVals = $o1
+        listOfStrs = $o2
+        
+        // !! not implemented
+        printNotImplementedMsgAndRaiseError("Cannot export \"Custom function\" inhomogeneity model.")
+    }
+    
+    proc importParams() { localobj vecOfVals, listOfStrs
+        vecOfVals = $o1
+        listOfStrs = $o2
+        
+        // !! not implemented
+        codeContractViolation()
+    }
+    
+    proc dismissHandler() {
+        // Empty by design
+    }
+    
+endtemplate CodeFromFileDistFuncHelper

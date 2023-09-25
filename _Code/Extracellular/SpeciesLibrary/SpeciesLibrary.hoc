@@ -1,0 +1,208 @@
+
+begintemplate SpeciesLibrary
+
+    public validateAndWarnUser, copyGlobalVarsToModParams, packToVec, getSpeciesFlatIdxForModInterface, getSpeciesFlatIdxForColouring, getSpeciesInsideCatIdxForColouring
+    public spcCatsList
+    
+    external mwh, mechSettings
+    external stringsEqual, codeContractViolation
+    external eachItemInList
+    
+    objref spcCatsList
+    
+    iterator eachSpcInfoInLibExceptUnrecCat() { codeContractViolation() }
+    
+    
+    // !!! maybe rename spcNamesList to smth more clear
+    proc init() { local spcCatIdx, diff localobj impRedObjOrNil, spcCatNames, spcNamesList, spcInfoList, nil
+        strdef spcCatName, expIonName, actIonName
+        
+        impRedObjOrNil = $o1
+        
+        spcCatsList = new List()
+        spcCatNames = mechSettings.getAllSpcCatNames()
+        for spcCatIdx = 0, spcCatNames.count() - 1 {
+            spcNamesList = new List()
+            spcInfoList = new List()
+            spcCatName = spcCatNames.o(spcCatIdx).s
+            for mechSettings.getExpIonNameAndDiffIter(spcCatName, expIonName, &diff) {
+                spcNamesList.append(new SpeciesListItem(expIonName))
+                spcInfoList.append(new SpeciesInfo(expIonName, diff))
+            }
+            if (spcNamesList.count() != 0) {
+                spcCatsList.append(new SpeciesCategory(spcCatName, spcNamesList, spcInfoList))
+            }   // !!! maybe else codeContractViolation
+        }
+        spcNamesList = new List()
+        spcInfoList = new List()
+        for mechSettings.getUnrecActIonNameIter(actIonName) {
+            spcNamesList.append(new SpeciesListItem(actIonName))
+            spcInfoList.append(new SpeciesInfo(actIonName, -1))     // !!!! this "-1" will be cropped immediately by "variable_domain". UPD: actually, no
+        }
+        if (spcNamesList.count() != 0) {
+            spcCatsList.append(new SpeciesCategory(mechSettings.unrecSpcCatName, spcNamesList, spcInfoList))
+        }
+        
+        if (impRedObjOrNil != nil) {
+            unpackFromVec(impRedObjOrNil.packToVec())   // !!!! maybe just make this vec a member of ReducedSpeciesLibrary
+        }
+    }
+    
+    proc validateAndWarnUser() { localobj spcCat
+        strdef line1, line2, line3, line4
+        
+        for eachItemInList(spcCat, spcCatsList) {
+            if (!spcCat.isUnrecSpcCat) {
+                continue
+            }
+            
+            // !!! keep the text in sync with OneExtracellularSourceWidget.saveHandler
+            line1 = "There is some ion(s) declared in the MOD files, but unknown to the \"Manager of extracellular sources\"."
+            sprint(line2, "They will be shown under \"%s\" species category.", mechSettings.unrecSpcCatName)
+            line3 = "These ions cannot be used for the extracellular diffusion until \"installed\" properly."
+            line4 = "Click \"Add new species\" button for the instructions."
+            mwh.showWarningBox(line1, line2, line3, line4)
+            
+            break   // Cannot use "return" inside iterator
+        }
+    }
+    
+    proc copyGlobalVarsToModParams() { localobj spcInfo
+        strdef hocCommandTempl, suffix, hocCommand
+        hocCommandTempl = "%soinit_ECDCalcAndConsHelper = %so0_%s_ion"
+        for eachSpcInfoInLibExceptUnrecCat(spcInfo) {
+            suffix = spcInfo.suffix
+            sprint(hocCommand, hocCommandTempl, suffix, suffix, suffix)
+            execute(hocCommand)
+        }
+    }
+    
+    // Keep in sync with unpackFromVec
+    obfunc packToVec() { localobj vec, spcInfo
+        vec = new Vector()
+        vec.append(mechSettings.getNumSpeciesInJSON())
+        for eachSpcInfoInLibExceptUnrecCat(spcInfo) {
+            vec.append(spcInfo.packToVec())
+        }
+        return vec
+    }
+    
+    // !!! unify with the next func
+    func getSpeciesFlatIdxForModInterface() { local spcCatIdx, spcFlatIdx, thisSpcCatIdx, spcIdx localobj spcCat, spcNamesList
+        strdef species
+        
+        spcCatIdx = $1
+        species = $s2
+        
+        spcCat = spcCatsList.o(spcCatIdx)
+        if (spcCat.isUnrecSpcCat) {
+            codeContractViolation()
+        }
+        
+        spcFlatIdx = 0
+        for thisSpcCatIdx = 0, spcCatIdx - 1 {
+            spcFlatIdx += spcCatsList.o(thisSpcCatIdx).spcNamesList.count()
+        }
+        
+        spcNamesList = spcCat.spcNamesList
+        for spcIdx = 0, spcNamesList.count() - 1 {
+            if (stringsEqual(species, spcNamesList.o(spcIdx).s)) {
+                return spcFlatIdx + spcIdx
+            }
+        }
+        
+        codeContractViolation()
+    }
+    
+    // !!! unify with the prev func
+    func getSpeciesFlatIdxForColouring() { local spcCatIdx, spcNameIdx, spcFlatIdx, thisSpcCatIdx
+        spcCatIdx = $1
+        spcNameIdx = $2
+        
+        spcFlatIdx = 0
+        for thisSpcCatIdx = 0, spcCatIdx - 1 {
+            spcFlatIdx += spcCatsList.o(thisSpcCatIdx).spcNamesList.count()
+        }
+        spcFlatIdx += spcNameIdx
+        
+        return spcFlatIdx
+    }
+    
+    // !!! unify with the prev 2 funcs
+    // !!! think about moving it to SpeciesCategory or !!! storing spcIdx inside SpeciesListItem
+    func getSpeciesInsideCatIdxForColouring() { local spcCatIdx, spcIdx localobj spcNamesList
+        strdef species
+        
+        species = $s1
+        
+        for spcCatIdx = 0, spcCatsList.count() - 1 {
+            spcNamesList = spcCatsList.o(spcCatIdx).spcNamesList
+            for spcIdx = 0, spcNamesList.count() - 1 {
+                if (stringsEqual(species, spcNamesList.o(spcIdx).s)) {
+                    return spcIdx
+                }
+            }
+        }
+        
+        codeContractViolation()
+    }
+    
+    // All next staff is private
+    
+    
+    // !!! Keep in sync with py:GensForExtracellularDiffusion.createSpeciesLibrary
+    iterator eachSpcInfoInLibExceptUnrecCat() { local spcCatIdx, spcIdx localobj spcCat, spcInfoList
+        for spcCatIdx = 0, spcCatsList.count() - 1 {
+            spcCat = spcCatsList.o(spcCatIdx)
+            if (spcCat.isUnrecSpcCat) {
+                continue
+            }
+            spcInfoList = spcCat.spcInfoList
+            for spcIdx = 0, spcInfoList.count() - 1 {
+                $o1 = spcInfoList.o(spcIdx)
+                iterator_statement
+            }
+        }
+    }
+    
+    // Keep in sync with packToVec
+    proc unpackFromVec() { local numSpeciesInImportedHoc, idx localobj vec, spcInfo
+        vec = $o1
+        
+        numSpeciesInImportedHoc = vec.x[0]
+        // !!! maybe this check won't be even reached anymore (we must hit codeContractViolation in MechSettings.onDllLoad upstream)
+        if (numSpeciesInImportedHoc != mechSettings.getNumSpeciesInJSON()) {
+            // !!!! overkill here
+            //      must be: if < then try to merge; if > then codeContractViolation (but, ideally, partial merge)
+            // !!!! print a message describing the problem
+            codeContractViolation()
+        }
+        
+        // idea 1 (small): add a loop and call impRedObj.getSpeciesFlatIdxForModInterface for each item to make a deeper check
+        
+        // !!!! BUG: very fragile implementation
+        //           it works fine only in case if BrainCell uses the same JSON file when exports and when imports
+        //           to make it more robust, we need to analyze species names
+        //           and be ready for a case when one user exports HOC with one (bigger) JSON and other user imports HOC with other (smaller) JSON,
+        //           so, during the import, we'll have to add some new species to the local dictionary
+        idx = 1
+        for eachSpcInfoInLibExceptUnrecCat(spcInfo) {
+            idx = spcInfo.unpackFromVec(vec, idx)
+        }
+        if (idx != vec.size()) {
+            codeContractViolation()
+        }
+        
+        // idea 2 (real one !!!!!!!!!!!!): save JSON as a string to the exported HOC file (maybe in "Importability measures" paragraph), then feed it to MechSettings ctor on import
+        //                                 (when stringifying JSON, be careful converting EOL chars to "\n", because the former are variadic, and even git can change them;
+        //                                 need to review how I stringified "table+lin interp" dist func. model)
+        //                                 but, until we implement the merging of data from 2 JSONs, there are some cons:
+        //                                 cons 1: if user exports again, we need to export the imported JSON rather than the one on the disk
+        //                                         (we've made some repeated export measures for section names - maybe unify to smth like "Exportability measures" paragraph)
+        //                                 cons 2: if user edits JSON and then imports HOC file => the changes just made are discarded (even though they were made for some other ions)
+        //                                 once we export/import JSON, maybe move it to "Exported" subfolder
+    }
+    
+endtemplate SpeciesLibrary
+
+speciesLibrary = new SpeciesLibrary(speciesLibrary)

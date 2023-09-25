@@ -34,9 +34,14 @@
         },
         "GLU": {
             "ionMechName": "glu_ion",
-            "baseOuterConc (mM)": 1e-5,
-            "Diff (um2/ms)": -1,
-            "baseInnerConc (mM)": 1
+            "comment1": "!!! use gigantic Diff to compare the asymptote of GLU 'point + on-off' with Ca2+ 'point + static'",
+            "comment2": "!!! use the same Diff to compare the decay dynamics of GLU 'point + on-off' with Ca2+ 'point + spike'",
+            "baseOuterConc (mM)": 1,
+            "Diff (um2/ms)": 160000,
+            "baseInnerConc (mM)": 1e-4,
+            "!!! was_baseOuterConc (mM)": 1e-5,
+            "!!! was_Diff (um2/ms)": -1,
+            "!!! was_baseInnerConc (mM)": 1
         },
         "GABA": {
             "ionMechName": "gaba_ion",
@@ -78,7 +83,7 @@
         "The name for this species shown in the user interface": {
             "ionMechName": "The ion mechanism name for this species (ending with '_ion'). Only 'na_ion' and 'k_ion' are defined in NEURON by default. All others are custom MOD- or HOC-based mechanisms.",
             "baseOuterConc (mM)": "The base concentration outside the cell. It is used as a default value assigned to the GLOBAL var named '{name}o0_{name}_ion'.",
-            "Diff (um2/ms)": "The diffusion coefficient in the extracellular space. It is used only in the 'point-spike' diffusion model.",
+            "Diff (um2/ms)": "The diffusion coefficient in the extracellular space. It is used only in 'point + on-off' and 'point + spike' diffusion models.",
             "baseInnerConc (mM)": "Like the 'Outer' var, but inside the cell, and the GLOBAL var is named '{name}i0_{name}_ion'."
         }
     }

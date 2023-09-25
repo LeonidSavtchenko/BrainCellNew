@@ -6,13 +6,13 @@ isAstrocyteOrNeuron = -1    // 1 - astrocyte, 0 - neuron
 currentMechanismSetup = 0       // 0 - Electric mechanisms, 1 - Glutamate mechanisms
 DensityGluTransporters = 1e12   // 1/um2
 
-{ load_file("Code/InterModular/AllInterModularUtils.hoc") }
+{ load_file("_Code/InterModular/AllInterModularUtils.hoc") }
 
 objref mechsDllUtils
 mechsDllUtils = new MechsDllUtils(getcwd())
 
 proc prologueCompleteHandler() {
-    load_file("Code/Core/MainProgram.hoc")
+    load_file("_Code/Core/MainProgram.hoc")
     runMain()
 }
 
@@ -31,30 +31,33 @@ proc roadmapChosenHandler() { local isLoaded localobj plotShape
         }
     }
     
-    load_file("Code/Core/Utils.hoc")
+    load_file("_Code/Core/Utils.hoc")
     
     if (isBaseOrNanoStart) {
-        load_file("Code/Import/Import.hoc")
+        load_file("_Code/Import/Import.hoc")
         if (isAstrocyteOrNeuron) {
-            load_file("Code/Prologue/Astrocyte/initAstrocyte.hoc")      // This will call prologueCompleteHandler() in the end
+            load_file("_Code/Prologue/Astrocyte/initAstrocyte.hoc")     // This will call prologueCompleteHandler() in the end
         } else {
-            load_file("Code/Prologue/Neuron/initNeuron.hoc")
+            load_file("_Code/Prologue/Neuron/initNeuron.hoc")
             initNeuron()    // This will call prologueCompleteHandler() in the end
             // (Don't encapsulate initNeuron() into "initNeuron.hoc" because the file browser will use different default folder)
         }
     } else {
         if (!isAstrocyteOrNeuron && !name_declared("smAllSyns")) {
-            print "\n\n    Warning: The synapses weren't exported to this nanogeometry HOC file, so we'll create default ones.\n"
-            load_file("Code/Prologue/Neuron/AddSynapses.hoc")
+            printWasNotExportedSoWeWillCreateDefaultWarning("synapses")
+            load_file("_Code/Prologue/Neuron/AddSynapses.hoc")
         }
         initVoltageAndRunControlParams()
         prologueCompleteHandler()
     }
 }
 
-{ load_file("Code/RoadmapWidget.hoc") }
+{ load_file("_Code/RoadmapWidget.hoc") }
 
-proc showRoadmapWidget() {
+proc showRoadmapWidget() { localobj roadmapWidgetCopy
+    // !!! not sure why this temporary copy is needed, but without it we'll catch Segmentation Violation
+    roadmapWidgetCopy = roadmapWidget
+    
     roadmapWidget = new RoadmapWidget()
     roadmapWidget.show()
 }
@@ -70,7 +73,7 @@ proc theEntryPoint() {
         printMsgAndRaiseError("Python is not available")
     }
     
-    load_file("Code/Export/ExportCoreLoads.hoc")
+    load_file("_Code/Export/ExportCoreLoads.hoc")
     
     // Calling here just to show up all the Python warnings early
     sourcePythonCodeForExport()

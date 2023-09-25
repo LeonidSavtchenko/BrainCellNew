@@ -1,0 +1,11 @@
+
+// Sets initial params.
+proc initParamsMain() {
+    if (isAstrocyteOrNeuron) {
+        nanoBranchesManager.reseedBranches(nanoDistrLoaded, nanoDistrLoaded)    // !!
+    }
+    
+    OnlySingleGluSimulations = 1 // parameter for Glu and Potassium single  voltage clamp mechanism
+    
+    initVoltageAndRunControlParams()
+}

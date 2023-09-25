@@ -1,0 +1,304 @@
+
+begintemplate ExportManagerMainWidget
+
+    public show, dismissHandler
+    
+    external mwh, compUtils, inhomAndStochLibrary, ecsLibrary
+    external saveNanoHocFile, createEmptyPanel, openDeck, closeDeck, unmapIfNotNil
+    external isAstrocyteOrNeuron
+    external exportOptions
+    
+    objref mainBox, deck1, deck2, deck3, deck4, deck5, deck6
+    objref childWidgets[1]
+    
+    numChildWidgets = -1
+    
+    firstColWidth = -1
+    secondColWidth = -1
+    
+    
+    proc init() {
+    
+        exportOptions = new ExportOptions()
+        
+        numChildWidgets = 4
+        
+        objref childWidgets[numChildWidgets]
+        childWidgets[0] = new CreateListOfInputVarsWidget(1)
+        childWidgets[1] = new WatchedVarsAndRecorderSettingsWidget()
+        childWidgets[2] = new CreateListOfInputVarsWidget(0)
+        childWidgets[3] = new RepeatForStatsWidget()
+        
+        firstColWidth = 140
+        secondColWidth = 450
+    }
+    
+    proc show() { local slotHeight, numInhomVars, numStochVars, numECSs localobj hBox, deck
+        strdef text
+        
+        compUtils.makeSureAllCompsCreatedOrImported()
+        
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            xlabel("The minimum exported data includes all topology and geometry (with nanogeometry) and division of all sections into compartments.")
+            xlabel("Please choose what other data must be exported:")
+            xpanel()
+            hBox = new HBox()
+            hBox.intercept(1)
+            {
+                slotHeight = 86
+                // It turns out, the usage of Deck-s with just 1 card everywhere in the left column
+                // gives a nicer UI compared to other options (VBox, HBox or no-box)
+                deck = openDeck()
+                {
+                    xpanel("")
+                    xcheckbox("All biophysics", &exportOptions.isExportDistMechs, "distMechsCheckBoxHandler()")
+                    xpanel()
+                }
+                closeDeck(deck, 0, firstColWidth, slotHeight)
+                numInhomVars = inhomAndStochLibrary.getNumInhomVarsForDistMechs()
+                numStochVars = inhomAndStochLibrary.getNumStochVarsForDistMechs()
+                deck1 = createInhomStochDeck(1, numInhomVars, numStochVars, &exportOptions.isExportDistMechAssignedAndState, &exportOptions.isExportDistMechInhoms, &exportOptions.isExportDistMechStochs, exportOptions.isExportDistMechs, slotHeight)
+            }
+            hBox.intercept(0)
+            hBox.map()
+            if (!isAstrocyteOrNeuron) {
+                hBox = new HBox()
+                hBox.intercept(1)
+                {
+                    slotHeight = 53
+                    deck = openDeck()
+                    {
+                        xpanel("")
+                        xcheckbox("All synapses", &exportOptions.isExportSyns, "synsCheckBoxHandler()")
+                        xpanel()
+                    }
+                    closeDeck(deck, 0, firstColWidth, slotHeight)
+                    numInhomVars = inhomAndStochLibrary.getNumInhomVarsForSyns()
+                    numStochVars = inhomAndStochLibrary.getNumStochVarsForSyns()
+                    deck2 = createInhomStochDeck(0, numInhomVars, numStochVars, &exportOptions.isExportSynAssignedAndState, &exportOptions.isExportSynInhoms, &exportOptions.isExportSynStochs, exportOptions.isExportSyns, slotHeight)
+                }
+                hBox.intercept(0)
+                hBox.map()
+            }
+            hBox = new HBox()
+            hBox.intercept(1)
+            {
+                slotHeight = 38
+                deck = openDeck()
+                {
+                    xpanel("")
+                    xcheckbox("All extracellular sources", &exportOptions.isExportECSs, "ECSsCheckBoxHandler()")
+                    xpanel()
+                }
+                closeDeck(deck, 0, firstColWidth, slotHeight)
+                deck3 = openDeck()
+                {
+                    createEmptyPanel()
+                    xpanel("")
+                    numECSs = ecsLibrary.getNumECSs()
+                    sprint(text, "       (%d detected)", numECSs)
+                    xlabel(text)
+                    xpanel()
+                }
+                closeDeck(deck3, exportOptions.isExportECSs, secondColWidth, slotHeight)
+            }
+            hBox.intercept(0)
+            hBox.map()
+            xpanel("")
+            xlabel("")
+            xlabel("Please choose what other files must be created or copied:")
+            xpanel()
+            hBox = new HBox()
+            hBox.intercept(1)
+            {
+                slotHeight = 55
+                deck = openDeck()
+                {
+                    xpanel("")
+                    xcheckbox("Create \"params.hoc\"", &exportOptions.isCreateParamsHoc, "createParamsHocCheckBoxHandler()")
+                    xpanel()
+                }
+                closeDeck(deck, 0, firstColWidth, slotHeight)
+                deck4 = openDeck()
+                {
+                    createEmptyPanel()
+                    xpanel("")
+                    xlabel("By default, the file will contain the next vars:")
+                    xlabel("    celsius, v_init, tstop, dt, steps_per_ms")      // Keep in sync with ExportOptions.init
+                    xcheckbox("Expose some other vars (I will select them)", &exportOptions.isExposeModelVars, "varsSelectorCheckBoxHandler(0, exportOptions.isExposeModelVars)")
+                    xpanel()
+                }
+                closeDeck(deck4, exportOptions.isCreateParamsHoc, secondColWidth, slotHeight)
+            }
+            hBox.intercept(0)
+            hBox.map()
+            hBox = new HBox()
+            hBox.intercept(1)
+            {
+                slotHeight = 53
+                deck = openDeck()
+                {
+                    xpanel("")
+                    xcheckbox("Create \"runner.hoc\"", &exportOptions.isCreateRunnerHoc, "createRunnerHocCheckBoxHandler()")
+                    xpanel()
+                }
+                closeDeck(deck, 0, firstColWidth, slotHeight)
+                deck5 = openDeck()
+                {
+                    createEmptyPanel()
+                    xpanel("")
+                    xcheckbox("Record and save some vars (I will select them)", &exportOptions.isRecordAndSaveModelVars, "varsSelectorCheckBoxHandler(1, exportOptions.isRecordAndSaveModelVars)")
+                    xcheckbox("Make a sweep for some vars (I will select them and define the grids)", &exportOptions.isMakeSweepForModelVars, "varsSelectorCheckBoxHandler(2, exportOptions.isMakeSweepForModelVars)")
+                    xcheckbox("Repeat several times to collect stats (I will select how many)", &exportOptions.isRepeatForStats, "varsSelectorCheckBoxHandler(3, exportOptions.isRepeatForStats)")
+                    xpanel()
+                }
+                closeDeck(deck5, exportOptions.isCreateRunnerHoc, secondColWidth, slotHeight)
+            }
+            hBox.intercept(0)
+            hBox.map()
+            hBox = new HBox()
+            hBox.intercept(1)
+            {
+                slotHeight = 38
+                deck = openDeck()
+                {
+                    xpanel("")
+                    xcheckbox("Copy \"nrnmech.dll\"", &exportOptions.isCopyDll, "copyDllCheckBoxHandler()")
+                    xpanel()
+                }
+                closeDeck(deck, 0, firstColWidth, slotHeight)
+                deck6 = openDeck()
+                {
+                    createEmptyPanel()
+                    xpanel("")
+                    xradiobutton("Copy the existing DLL (it may contain some unused mechs)", "copyDllRadioButtonHandler(0)", exportOptions.isNewOrExistingDll == 0)
+                    xradiobutton("Build and copy a new DLL (it will contain only used mechs)", "copyDllRadioButtonHandler(1)", exportOptions.isNewOrExistingDll == 1)
+                    xpanel()
+                }
+                closeDeck(deck6, exportOptions.isCopyDll, secondColWidth, slotHeight)
+            }
+            hBox.intercept(0)
+            hBox.map()
+            xpanel("")
+            xlabel("")
+            xbutton("Export", "exportHandler()")
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Manager of export", 60, 100, -1, -1)
+    }
+    
+    proc dismissHandler() {
+        dismissChilds()
+        unmapIfNotNil(mainBox)
+    }
+    
+    // All next staff is private
+    
+    
+    // !!! keep in sync with ExportImportBiophysicsWidget.show
+    obfunc createInhomStochDeck() { local isInhomOrStoch, numInhomVars, numStochVars, cardIdx, slotHeight localobj deck
+        strdef text
+        
+        isInhomOrStoch = $1
+        numInhomVars = $2
+        numStochVars = $3
+        cardIdx = $7
+        slotHeight = $8
+        
+        deck = openDeck()
+        {
+            createEmptyPanel()
+            xpanel("")
+            xcheckbox("With ASSIGNED and STATE vars", &$&4)
+            if (isInhomOrStoch) {
+                xlabel("       (in most cases, you don't need to export them explicitly, but some MOD files don't init a var")
+                xlabel("        automatically in the INITIAL block expecting that we set a nonzero value from HOC code)")
+                // !! ideally, we should propose user to select the mechs that require such export
+            }
+            sprint(text, "With inhom models (%d detected)", numInhomVars)
+            xcheckbox(text, &$&5)
+            sprint(text, "With stoch models (%d detected)", numStochVars)
+            xcheckbox(text, &$&6)
+            xpanel()
+        }
+        closeDeck(deck, cardIdx, secondColWidth, slotHeight)
+        
+        return deck
+    }
+    
+    proc distMechsCheckBoxHandler() {
+        deck1.flip_to(exportOptions.isExportDistMechs)
+    }
+    
+    proc synsCheckBoxHandler() {
+        deck2.flip_to(exportOptions.isExportSyns)
+    }
+    
+    proc ECSsCheckBoxHandler() {
+        deck3.flip_to(exportOptions.isExportECSs)
+    }
+    
+    proc createParamsHocCheckBoxHandler() {
+        dismissChilds()
+        deck4.flip_to(exportOptions.isCreateParamsHoc)
+    }
+    
+    proc createRunnerHocCheckBoxHandler() {
+        dismissChilds()
+        deck5.flip_to(exportOptions.isCreateRunnerHoc)
+    }
+    
+    proc varsSelectorCheckBoxHandler() { local childWidIdx, isChecked
+        childWidIdx = $1
+        isChecked = $2
+        dismissChilds()
+        if (isChecked) {
+            childWidgets[childWidIdx].show()
+        }
+    }
+    
+    proc copyDllCheckBoxHandler() {
+        deck6.flip_to(exportOptions.isCopyDll)
+        if (exportOptions.isCopyDll && exportOptions.isNewOrExistingDll) {
+            mwh.showNotImplementedWarning()
+        }
+    }
+    
+    proc copyDllRadioButtonHandler() {
+        exportOptions.isNewOrExistingDll = $1
+        if (exportOptions.isNewOrExistingDll) {
+            mwh.showNotImplementedWarning()
+        }
+    }
+    
+    proc exportHandler() { local isCancel
+        dismissChilds()
+        
+        isCancel = exportOptions.validate()
+        if (isCancel) {
+            return
+        }
+        
+        isCancel = saveNanoHocFile()
+        if (isCancel) {
+            return
+        }
+        
+        unmapIfNotNil(mainBox)
+    }
+    
+    proc dismissChilds() { local childWidIdx
+        for childWidIdx = 0, numChildWidgets - 1 {
+            childWidgets[childWidIdx].dismissHandler()
+        }
+    }
+    
+endtemplate ExportManagerMainWidget
+
+
+objref exportManagerMainWidget

@@ -1,0 +1,45 @@
+
+// !!!! can I merge this template with SpeciesListItem?
+begintemplate SpeciesInfo
+
+    public packToVec, unpackFromVec
+    public suffix, diff
+    
+    external pyObj, math
+    
+    strdef suffix
+    diff = -1       // For "point" shape and ("on-off" or "spike") dynamics only
+    
+    // !!! think about storing flat speciesIdx here
+    
+    
+    proc init() { local inf
+        strdef ionMechName
+        
+        ionMechName = $s1
+        diff = $2               // !!! was: 1 (Deff in legacy Diffusion3D.hoc)
+        
+        // !!! move this util to a better place
+        suffix = pyObj.ms_ionMechNameToSuffix(ionMechName)
+        
+        units(&diff, "um2/ms")
+        
+        inf = math.inf
+        variable_domain(&diff, 0, inf)
+    }
+    
+    obfunc packToVec() { localobj vec
+        vec = new Vector(1)
+        vec.x(0) = diff
+        return vec
+    }
+    
+    func unpackFromVec() { local idx localobj vec
+        vec = $o1
+        idx = $2
+        diff = vec.x(idx)
+        idx += 1
+        return idx
+    }
+    
+endtemplate SpeciesInfo

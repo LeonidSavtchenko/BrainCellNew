@@ -1,0 +1,27 @@
+
+begintemplate ReducedBasicMath
+
+    public inf, nan
+    public max, isNaN
+    
+    inf = -1
+    nan = -1
+    
+    proc init() {
+        sscanf("inf", "%f", &inf)
+        sscanf("nan", "%f", &nan)
+    }
+    
+    func max() {
+        if ($1 > $2) {
+            return $1
+        } else {
+            return $2
+        }
+    }
+    
+    func isNaN() {
+        return !($1 == $1)  // Do not replace with "!="
+    }
+    
+endtemplate ReducedBasicMath

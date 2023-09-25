@@ -19,8 +19,8 @@ PARAMETER {
     celsius 		(degC)
     PcalBar=0.00006622 (cm/s)
     ki=.00002 (mM)
-    cai=5.e-5 (mM)
-    cao = 10  (mM)
+    :cai=5.e-5 (mM)
+    : cao = 10  (mM)
     q10m=11.45
     q10Ampl=2.1
 }
@@ -38,6 +38,8 @@ STATE {
 
 ASSIGNED {
     ica (mA/cm2)
+	cai (mM)
+	cao (mM)
         Pcal  (cm/s) 
         minf
         taum

@@ -1,0 +1,21 @@
+
+// Select input file defining a distance function
+// $s1 - "HOC", "Python", "Text" or "Excel"
+// $s2 - "*.hoc", "*.py", "*.txt" or "*.xlsx"
+// $s3 (output) - The selected file path and name (only if selected)
+// Returns: 0/1 flag indicating that the file was selected
+// !!!!! deprecated in favour of FileBrowserHelper.showLoadFileDialog
+func selectDistFuncInputFile_deprecated() { localobj file
+    strdef hint, defaultDirPath
+    
+    file = new File()
+    sprint(hint, "%s file defining a distance function", $s1)
+    sprint(defaultDirPath, "%sDistance functions/", getcwd())
+    file.chooser("r", hint, $s2, "Load", "Cancel", defaultDirPath)
+    if (!file.chooser()) {
+        return 0
+    }
+    
+    $s3 = file.getname
+    return 1
+}
