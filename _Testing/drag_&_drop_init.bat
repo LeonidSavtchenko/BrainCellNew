@@ -1,2 +1,2 @@
 @echo off
-call "C:\nrn\bin\neuron.exe" %1
+call "%NEURONHOME%\bin\neuron.exe" %1

@@ -1,23 +1,25 @@
 
-// !!! inconsistency in naming: hoc:FileBrowserHelper and py:FileDialogUtils
+// !!! in the future, we can use fbh.showLoadFileDialog to select a file in:
+//  * proc loadDiamDistrFile ("*.txt")
+//  * func selectDistFuncInputFile_deprecated ("*.hoc", "*.py", "*.txt", "*.xlsx")
 
-// !!!! use FileBrowserHelper.showLoadFileDialog to select a file in these 3 proc/func-s:
-//  * loadDiamDistrFile ("*.txt")
-//  * importHocOrSwcOrZipOrOtherFile ("*.*")
-//  * selectDistFuncInputFile_deprecated ("*.hoc", "*.py", "*.txt" or "*.xlsx")
+// !!! in the future, we can use fbh.showSaveFileDialog to select a file for:
+//  * 4 TXT files saved to "Text results" folder ("*.txt")
+
+
+objref pyEnumInFileTypes, pyEnumOutFileTypes
 
 // For both file browsers (native File.chooser and our FileBrowserHelper):
 //  * selecting other disk is OK
 //  * spaces in file path or name is OK
 //  * unicode chars in file path or name is NOT OK
-
-
 begintemplate FileBrowserHelper
 
     public showLoadFileDialog, showSaveFileDialog
     
     external pyObj
     external stringEmpty, printPythonErrMsgAndStop
+    external pyEnumInFileTypes, pyEnumOutFileTypes
     
     
     proc init() { local status
@@ -29,38 +31,32 @@ begintemplate FileBrowserHelper
         if (!status) {
             printPythonErrMsgAndStop("FileBrowserHelper ctor")
         }
+        
+        pyEnumInFileTypes = pyObj.FileDialogUtils.EnumInFileTypes
+        pyEnumOutFileTypes = pyObj.FileDialogUtils.EnumOutFileTypes
     }
     
-    func showLoadFileDialog() {
-        strdef title, subDirName, defaultDirPath, pyCommand
+    func showLoadFileDialog() { localobj pyEnumInFileType
+        pyEnumInFileType = $o1
         
-        title = $s1
-        subDirName = $s2
+        $s2 = pyObj.FileDialogUtils.showLoadFileDialog(pyEnumInFileType)
         
-        sprint(defaultDirPath, "%s%s/", getcwd(), subDirName)
-        sprint(pyCommand, "FileDialogUtils.showLoadFileDialog('%s', '%s')", title, defaultDirPath)
-        $s3 = pyObj.ev(pyCommand)
-        
-        return stringEmpty($s3)
+        return stringEmpty($s2)
     }
     
-    func showSaveFileDialog() {
-        strdef title, subDirName, defaultDirPath, defaultFileName, pyCommand
+    func showSaveFileDialog() { localobj pyEnumOutFileType
+        strdef defaultFileName
         
-        title = $s1
-        subDirName = $s2
+        pyEnumOutFileType = $o1
         
-        sprint(defaultDirPath, "%s%s/", getcwd(), subDirName)
-        
-        // !!!! maybe propose user the default saved file name in style "<imported_name>+nano.hoc" or "<imported_name>_bio.hoc"
-        //      (maybe it should depend on isBaseOrNanoStart or previously loaded biophysics file)
+        // !!!! maybe propose user the default saved file name in style:
+        //          "<imported_name>_converted.hoc" or "<imported_name>+nano.hoc" or "<imported_name>_bio.json"
+        //      (maybe depending on isBaseOrNanoStart or previously loaded file)
         defaultFileName = ""
         
-        sprint(pyCommand, "FileDialogUtils.showSaveFileDialog('%s', '%s', '%s')", title, defaultDirPath, defaultFileName)
+        $s2 = pyObj.FileDialogUtils.showSaveFileDialog(pyEnumOutFileType, defaultFileName)
         
-        $s3 = pyObj.ev(pyCommand)
-        
-        return stringEmpty($s3)
+        return stringEmpty($s2)
     }
 
 endtemplate FileBrowserHelper

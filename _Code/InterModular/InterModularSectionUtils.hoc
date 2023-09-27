@@ -22,7 +22,7 @@ proc getCurrentSecName() { local idx localobj strFunc
 // Get names of all created sections (either object name or array name)
 // Does not work if there is a section owned by a template!!
 // Returns List of String-s containing all unique names
-obfunc getAllSectionNames() { local isFound, idx localobj secNames
+obfunc getAllSectionNames() { local idxOrMinus1 localobj secNames
     strdef secName
     
     secNames = new List()
@@ -32,15 +32,9 @@ obfunc getAllSectionNames() { local isFound, idx localobj secNames
         
         // Check if we have found this name before
         // !! improve performace here using Set in Python
-        isFound = 0
-        for idx = 0, secNames.count() - 1 {
-            if (stringsEqual(secName, secNames.o(idx).s)) {
-                isFound = 1
-                break
-            }
-        }
+        idxOrMinus1 = findItemInListByString(secNames, secName)
         
-        if (!isFound) {
+        if (idxOrMinus1 == -1) {
             secNames.append(new String(secName))
         }
     }
@@ -59,10 +53,27 @@ proc secListToListOfSecRef() { localobj secList, list_ref
     }
 }
 
+obfunc listOfSecRefToSecList() { localobj list_ref, secList
+    list_ref = $o1
+    secList = new SectionList()
+    for eachSecInList(list_ref) {
+        secList.append()
+    }
+    return secList
+}
+
 // Delete all sections
 // (The names remain declared and cannot be used for anything else than creating new sections and section arrays)
 proc deleteAllSections() {
     forall {
         delete_section()
     }
+}
+
+func capDiam() {
+    // If user sets too small "diam" for a section, NEURON resets it to 1e-9 when user enters
+    //  Tools -> Distributed Mechanisms -> Viewers -> Shape Name
+    // and then double clicks on any Spine Neck section in the list.
+    // So we cap "diam" in advance just to avoid the unexpected behaviour later.
+    return math.max($1, 1e-9)
 }

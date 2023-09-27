@@ -69,7 +69,7 @@ proc SimulationSelected() {
         RunAstroGlu(OnlySingleGluSimulations)
     } else if ($1 == 9) {
         load_file(1, "_Code/Core/Simulations/AdvanceProcs/AdvPotassium.hoc")
-        RunAstroPotasasium(OnlySingleGluSimulations) 
+        RunAstroPotassium(OnlySingleGluSimulations) 
     }
 }
 

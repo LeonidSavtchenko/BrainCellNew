@@ -4,7 +4,7 @@
 //          $s1 (optional) - a HOC command to show the warning box
 func loadNanoHocFile() { local isCancel, status
     
-    isCancel = fbh.showLoadFileDialog("Import brain cell with nanogeometry", "Nanogeometry", mechsDllUtils.loadedNanoHocFilePathName)
+    isCancel = fbh.showLoadFileDialog(pyEnumInFileTypes.nanoGeometryHoc, mechsDllUtils.loadedNanoHocFilePathName)
     if (isCancel) {
         return 0
     }

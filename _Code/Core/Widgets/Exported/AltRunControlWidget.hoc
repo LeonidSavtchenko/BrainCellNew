@@ -29,9 +29,9 @@ begintemplate AltRunControlWidget
         mainBox.intercept(1)
         {
             // Making this widget look alike the standard one as close as possible
-            // see C:\nrn\lib\hoc\stdrun.hoc -> proc nrncontrolmenu()
+            // see "%NEURONHOME%\lib\hoc\stdrun.hoc" -> proc nrncontrolmenu()
             
-            // !! the units are not added for 6 params below automatically (no idea why), so have to use some workaround
+            // !! the units are not added for 6 params below automatically (maybe because we are inside a template here in contrast to RunControl), so have to use some workaround
             
             xpanel("")
             

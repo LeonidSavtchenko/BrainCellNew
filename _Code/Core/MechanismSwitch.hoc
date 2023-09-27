@@ -1,12 +1,10 @@
-// !! SizeTotal is deprecated, but used in this file many times
 
 cadifusInElectricalLeaves = 0
 cadifusInAllGlu = 0
 
 // Insert-uninsert FRAP and set its params.
 // $1 - Boolean. 1 - insert. 0 - uninsert.
-// !! private
-proc SectionInsertFRAP() {
+proc _SectionInsertFRAP() {
     if ($1 > 0) {
         insert FRAP
         DFree_FRAP=0.15        // um2/sm
@@ -17,8 +15,7 @@ proc SectionInsertFRAP() {
 
 // Insert-uninsert cadifus and set its params.
 // $1 - Boolean. 1 - insert. 0 - uninsert.
-// !! private
-proc SectionInsertCadifus() {
+proc _SectionInsertCadifus() {
     if ($1 > 0) {
         insert cadifus
         DCa_cadifus=0.30       // um2/sm
@@ -32,49 +29,44 @@ proc SectionInsertCadifus() {
 
 // Insert-uninsert mechanisms for electrical simulations.
 // $1 - Boolean. 1 - insert. 0 - uninsert.
-// !! public
 proc InsertElectricMechanisms() {
-    // Soma
-    soma_ref.o(0).sec {
-        SectionInsertFRAP($1)
-        SectionInsertCadifus($1)
-    }
 
-    // Dendrites
-    for i = 0, NumberDendrites-1 dendrite_ref.o(i).sec {
-        SectionInsertFRAP($1)
-        SectionInsertCadifus($1)
+    // Soma, Dendrites
+    for eachSecInList(soma_ref, dendrite_ref) {
+        _SectionInsertFRAP($1)
+        _SectionInsertCadifus($1)
     }
-
+    
     // Leaves / heads
-    for i = 0, SizeTotal-1 nanoDistal_ref.o(i).sec {
+    for eachSecInList(nanoDistal_ref) {
         insert pas
-
-        SectionInsertFRAP($1)
-
+        
+        _SectionInsertFRAP($1)
+        
         if ($1 > 0) {
             if (cadifusInElectricalLeaves == 1) {
-                SectionInsertCadifus(1)
+                _SectionInsertCadifus(1)
             }
         } else {
-            SectionInsertCadifus(0)
+            _SectionInsertCadifus(0)
         }
     }
     
     // Stalks / necks
-    for i = 0, SizeTotal-1 nanoProximal_ref.o(i).sec {
-        SectionInsertFRAP($1)
-
+    for eachSecInList(nanoProximal_ref) {
+        _SectionInsertFRAP($1)
+        
         if (cadifusInElectricalLeaves == 1) {
-            SectionInsertCadifus($1)
+            _SectionInsertCadifus($1)
         }
     }
+    
+    // !!! how about axon?
 }
 
 // Insert-uninsert mechanisms needed for Glutamate simulation and set their params.
 // $1 - Boolean. 1 - insert. 0 - uninsert.
-// !! private
-proc SectionInsertGlutamateMechanisms() {
+proc _SectionInsertGlutamateMechanisms() {
     if ($1 > 0) {
         insert CAl
         if (isAstrocyteOrNeuron) {
@@ -86,7 +78,7 @@ proc SectionInsertGlutamateMechanisms() {
         Gluout_GluTrans= 20e-6   // mM
 
         if (cadifusInAllGlu == 1) {
-            SectionInsertCadifus(1)
+            _SectionInsertCadifus(1)
         }
     } else {
         uninsert CAl
@@ -96,14 +88,13 @@ proc SectionInsertGlutamateMechanisms() {
         }
         uninsert kdifl // New added
         uninsert GluTrans
-        SectionInsertCadifus(0)
+        _SectionInsertCadifus(0)
     }
 }
 
-// Insert-uninsert mechanisms needed for Potasasium simulation and set their params.
+// Insert-uninsert mechanisms needed for Potassium simulation and set their params.
 // $1 - Boolean. 1 - insert. 0 - uninsert.
-// !! private
-proc SectionInsertPotasasiumMechanisms() {
+proc _SectionInsertPotassiumMechanisms() {
    if ($1 > 0) {
         //Ra = 100
         //cm = 1
@@ -115,7 +106,7 @@ proc SectionInsertPotasasiumMechanisms() {
         ki0_kdifl=110
         insert kpump
         if (cadifusInAllGlu == 1) {
-            SectionInsertCadifus(1)
+            _SectionInsertCadifus(1)
         }
     } else {
        // uninsert CAl
@@ -135,63 +126,43 @@ proc SectionInsertPotasasiumMechanisms() {
 
 // Insert-uninsert mechanisms for Glutamate simulation.
 // $1 - Boolean. 1 - insert. 0 - uninsert.
-// !! public
 proc InsertGlutamateMechanisms() {
-    // Soma
-    soma_ref.o(0).sec {
-        SectionInsertGlutamateMechanisms($1)
-    }
 
-    // Dendrites
-    for i = 0, NumberDendrites-1 dendrite_ref.o(i).sec {
-        SectionInsertGlutamateMechanisms($1)
+    // Soma, Dendrites, Stalks / necks
+    for eachSecInList(soma_ref, dendrite_ref, nanoProximal_ref) {
+        _SectionInsertGlutamateMechanisms($1)
     }
     
     // Leaves / heads
-    for i = 0, SizeTotal-1 nanoDistal_ref.o(i).sec {
-        SectionInsertGlutamateMechanisms($1)
+    for eachSecInList(nanoDistal_ref) {
+        _SectionInsertGlutamateMechanisms($1)
         if ($1 > 0) {
             density_GluTrans=(1+diam/(2*L))*DensityGluTransporters
         }
     }
-
-    // Stalks / necks
-    for i = 0, SizeTotal-1 nanoProximal_ref.o(i).sec {
-        SectionInsertGlutamateMechanisms($1)
-    }
+    
+    // !!! how about axon?
 }
 
 
 // Insert-uninsert mechanisms for potassium simulation.
 // $1 - Boolean. 1 - insert. 0 - uninsert.
-// !! public
 proc InsertPotassiumMechanisms() {
-    // Soma
-    soma_ref.o(0).sec {
-       SectionInsertPotasasiumMechanisms($1)
-    }
 
-    // Dendrites
-    for i = 0, NumberDendrites-1 dendrite_ref.o(i).sec {
-       SectionInsertPotasasiumMechanisms($1)
+    // !!! maybe use "forall" here
+    
+    // Soma, Dendrites, Leaves / heads, Stalks / necks
+    for eachSecInList(soma_ref, dendrite_ref, nanoDistal_ref, nanoProximal_ref) {
+       _SectionInsertPotassiumMechanisms($1)
     }
     
-    // Leaves / heads
-    for i = 0, SizeTotal-1 nanoDistal_ref.o(i).sec {
-       SectionInsertPotasasiumMechanisms($1)
-    }
-
-    // Stalks / necks
-    for i = 0, SizeTotal-1 nanoProximal_ref.o(i).sec {
-       SectionInsertPotasasiumMechanisms($1)
-    }
+    // !!! how about axon?
 }
 
 
 
 // Updates current mechanisms.
-// !! private
-proc ResetMechanisms() {
+proc _ResetMechanisms() {
     if (currentMechanismSetup == 0) {
         InsertElectricMechanisms(0)
         InsertElectricMechanisms(1)
@@ -203,17 +174,14 @@ proc ResetMechanisms() {
 
 // Insert-uninsert cadifus in leaves for electrical simulations.
 // $1 - Boolean. 1 - insert. 0 - uninsert.
-// !! public
 proc InsertCadifusInElectricalLeaves() {
     cadifusInElectricalLeaves = $1
-    ResetMechanisms()
+    _ResetMechanisms()
 }
 
 // Insert-uninsert cadifus in soma, dendrites and leaves for Glutamate simulation.
 // $1 - Boolean. 1 - insert. 0 - uninsert.
-// !! public
 proc InsertCadifusInAllGlu() {
     cadifusInAllGlu = $1
-    ResetMechanisms()
+    _ResetMechanisms()
 }
-

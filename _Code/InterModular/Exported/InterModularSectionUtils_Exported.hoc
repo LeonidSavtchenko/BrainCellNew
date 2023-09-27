@@ -25,3 +25,35 @@ obfunc createListOfSectionRefs() { local isOwnedByObjects localobj list_ref
     
     return list_ref
 }
+
+// Be careful using this iterator after plotShape.push_selected() or in "forsec" block to avoid this error:
+//  "The sectionstack index should be 1 but it is 2"
+// (!!! need to investigate what exactly causes the error)
+iterator eachSecInList() { local numArg, i, secIdx localobj list_ref
+    numArg = numarg()
+    for i = 1, numArg {
+        list_ref = $oi
+        // Don't replace with eachItemInList to avoid Segmentation violation
+        for secIdx = 0, list_ref.count() - 1 {
+            list_ref.o(secIdx).sec {
+                iterator_statement
+            }
+        }
+    }
+}
+
+// Be careful using this iterator after plotShape.push_selected() or in "forsec" block to avoid this error:
+//  "The sectionstack index should be 1 but it is 2"
+// (!!! need to investigate what exactly causes the error)
+iterator eachSegmInSecList() { local secIdx, x localobj list_ref
+    list_ref = $o2
+    // Don't replace with eachItemInList or eachSecInList to avoid Segmentation violation
+    for secIdx = 0, list_ref.count() - 1 {
+        list_ref.o(secIdx).sec {
+            for (x, 0) {
+                $&1 = x
+                iterator_statement
+            }
+        }
+    }
+}

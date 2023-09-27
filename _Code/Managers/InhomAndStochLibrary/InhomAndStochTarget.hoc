@@ -11,7 +11,7 @@ begintemplate InhomAndStochTarget
     external smAllSyns
     external mwh, rngUtils, mth, compUtils
     external codeContractViolation
-    external eachItemInList
+    external eachItemInList, eachSecInList, eachSegmInSecList
     
     // "init" args
     enumDmPpNc = -1
@@ -163,18 +163,16 @@ begintemplate InhomAndStochTarget
     }
     
     // Keep in sync with ReducedInhomAndStochTarget.setPlayIfPossible
-    func setPlayIfPossible() { local x, homogenValue localobj sec_ref
+    func setPlayIfPossible() { local x, homogenValue
         strdef hocCommand
         
         if (!isPlayable) {
             return 0
         }
         
-        for eachItemInList(sec_ref, list_ref) {
-            sec_ref.sec for (x, 0) {
-                sprint(hocCommand, "stochFuncHelper.rng.play(&%s(%.15e))", varName, x)
-                execute(hocCommand, this)
-            }
+        for eachSegmInSecList(&x, list_ref) {
+            sprint(hocCommand, "stochFuncHelper.rng.play(&%s(%.15e))", varName, x)
+            execute(hocCommand, this)
         }
         
         homogenValue = baseMechStd.get(varName, arrayIndex)
@@ -267,7 +265,7 @@ begintemplate InhomAndStochTarget
     // Keep in sync with ReducedInhomAndStochTarget.makeStepOrRestoreBaseValues and "restoreInhomogeneity"
     // !!! maybe BUG: (ASSIGNED or STATE) and (isInhom and isStoch) => the inhom model is applied on each iter;
     //                maybe the correct behaviour would be to ignore the inhom model (especially if VerbatimDistFunc) and just to take the current value and add the noise to it
-    proc makeStepOrRestoreBaseValues() { local isStepOrRestore, isStoch_, homogenValue, x, value, dist, isWeightVar localobj sec_ref, prevSec_ref, nil, syn, synPart
+    proc makeStepOrRestoreBaseValues() { local isStepOrRestore, isStoch_, homogenValue, x, value, dist, isWeightVar localobj prevSec_ref, nil, syn, synPart
     
         isStepOrRestore = $1
         
@@ -296,31 +294,29 @@ begintemplate InhomAndStochTarget
         }
         
         if (isDmOrSynPart) {
-            for eachItemInList(sec_ref, list_ref) {
-                sec_ref.sec {
+            for eachSecInList(list_ref) {
+                if (isInhom) {
+                    distFuncHelper.onJustBeforeNewSection()
+                }
+                for (x, 0) {
+                    // The base value
                     if (isInhom) {
-                        distFuncHelper.onJustBeforeNewSection()
+                        dist = distance(x)
+                        value = distFuncHelper.calculateAt(dist)
+                    } else {
+                        value = homogenValue
                     }
-                    for (x, 0) {
-                        // The base value
-                        if (isInhom) {
-                            dist = distance(x)
-                            value = distFuncHelper.calculateAt(dist)
-                        } else {
-                            value = homogenValue
-                        }
-                        
-                        // The additive noise
-                        if (isStoch_) {
-                            value += boundingHelper.generateNextBoundedValue(stochFuncHelper)
-                        }
-                        
-                        // This approach is 20-30% faster than "sprint"-ing a HOC-command
-                        // of type "varName(x) = value" or "varName[arrayIndex](x) = value" and then "execute"-ing it
-                        tempMechStd.in(x)
-                        tempMechStd.set(varName, value, arrayIndex)
-                        tempMechStd.out(x)
+                    
+                    // The additive noise
+                    if (isStoch_) {
+                        value += boundingHelper.generateNextBoundedValue(stochFuncHelper)
                     }
+                    
+                    // This approach is 20-30% faster than "sprint"-ing a HOC-command
+                    // of type "varName(x) = value" or "varName[arrayIndex](x) = value" and then "execute"-ing it
+                    tempMechStd.in(x)
+                    tempMechStd.set(varName, value, arrayIndex)
+                    tempMechStd.out(x)
                 }
             }
         } else {

@@ -145,7 +145,7 @@ begintemplate MechOpWidgetBase
     proc hideIonsCheckBoxHandler() { local mechOpIdx localobj mainBoxCopy
         mechOpIdx = $1
         
-        // !!! not sure why this temporary copy is needed, but without it we'll catch Segmentation Violation
+        // !!! not sure why this temporary copy is needed, but without it we'll catch Segmentation violation
         mainBoxCopy = mainBox
         
         switchBetweenCompAndMechCentricViewsHandler(mechOpIdx, isCompOrMechCentricView)
@@ -384,6 +384,7 @@ begintemplate MechOpWidgetBase
                 // All checkboxes or buttons
                 xpanel("")          // Panel with slider
                 numInsertedItems = 0
+                // !!! investigate this again
                 // for eachItemInList(comp, mmAllComps) {   // !! syntax error + Segmentation violation (no idea why)
                 for compIdx = 0, mmAllComps.count() - 1 {
                     isSkipItem = mechOpHelper.isSkipBlock(compIdx, mechIdx)

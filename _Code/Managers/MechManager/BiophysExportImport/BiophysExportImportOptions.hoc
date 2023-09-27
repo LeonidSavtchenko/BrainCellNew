@@ -1,0 +1,41 @@
+
+begintemplate BiophysExportImportOptions
+
+    public isUseThisCompNameVec
+    public isGlobals, isAssignedAndState, isInhoms, isStochs
+    
+    public validate
+    
+    external mwh
+    
+    objref isUseThisCompNameVec
+    isGlobals = -1
+    isAssignedAndState = -1
+    isInhoms = -1
+    isStochs = -1
+    
+    
+    proc init() {
+        isGlobals = 1
+        isAssignedAndState = 1
+        isInhoms = 1
+        isStochs = 1
+    }
+    
+    func validate() { local idx, isCancel
+        strdef word, msg, title
+        
+        word = $s1
+        
+        idx = isUseThisCompNameVec.indwhere("==", 1)
+        isCancel = (idx == -1)
+        if (isCancel) {
+            sprint(msg, "Please select at least 1 comp name to %s.", word)
+            sprint(title, "Nothing to %s", word)
+            mwh.showMessageBox(msg, title)
+        }
+        
+        return isCancel
+    }
+    
+endtemplate BiophysExportImportOptions

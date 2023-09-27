@@ -1,2 +1,2 @@
 @echo off
-call "C:\nrn\bin\neuron.exe" init.hoc
+call "%NEURONHOME%\bin\neuron.exe" init.hoc

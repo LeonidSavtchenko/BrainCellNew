@@ -30,7 +30,7 @@ goto :eof
     echo.
     echo     Building %cellTypeFolderName% mechs ...
     echo.
-    call "C:\nrn\bin\mknrndll.bat"
+    call "%NEURONHOME%\bin\mknrndll.bat"
     echo.
     rem "mknrndll.bat" does not set %errorlevel% to 1 on error,
     rem so we have to rely on %errorlevel% set by "move" command below

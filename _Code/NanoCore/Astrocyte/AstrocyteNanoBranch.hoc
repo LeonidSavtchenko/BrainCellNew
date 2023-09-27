@@ -17,14 +17,17 @@ MaxDimStalk = 0.1                               // um
 MinLenStalk = 0.1                               // um
 MaxLenStalk = 0.3                               // um
 
-addLengthUnits("MinDimLeaves")
-addLengthUnits("MaxDimLeaves")
-addLengthUnits("MinLenLeaves")
-addLengthUnits("MaxLenLeaves")
-addLengthUnits("MinDimStalk")
-addLengthUnits("MaxDimStalk")
-addLengthUnits("MinLenStalk")
-addLengthUnits("MaxLenStalk")
+minDiam = capDiam(0)
+minLen = 1e-4       // Chosen to avoid multiple errors of type "nrn_define_shape: AstrocyteNanoBranch[*].LargeGlia[*] first and last 3-d point at same (x,y)"
+
+setUpExposedLengthVar("MinDimLeaves", minDiam)
+setUpExposedLengthVar("MaxDimLeaves", minDiam)
+setUpExposedLengthVar("MinLenLeaves", minLen)
+setUpExposedLengthVar("MaxLenLeaves", minLen)
+setUpExposedLengthVar("MinDimStalk", minDiam)
+setUpExposedLengthVar("MaxDimStalk", minDiam)
+setUpExposedLengthVar("MinLenStalk", minLen)
+setUpExposedLengthVar("MaxLenStalk", minLen)
 
 // Keep this template in sync with its reduced counterpart at Export/OutHocFileStructures/Skeletons/MainHocFileSkeletonForAstrocyte.txt
 
@@ -46,7 +49,7 @@ begintemplate AstrocyteNanoBranch
     external MinDimStalk, MaxDimStalk, MinLenStalk, MaxLenStalk, diamDistrStalks
     
     // func
-    external getDiameterFromDistr
+    external getDiameterFromDistr, capDiam
     
     // Scalars
     external GPassive, currentMechanismSetup, DensityGluTransporters
@@ -150,6 +153,7 @@ begintemplate AstrocyteNanoBranch
                 LargeGlia[leafIdx] {
                     if (isLeavesDiamDistrFromFileOrUniform) {
                         diam = getDiameterFromDistr(diamDistrLeaves, diamStep)
+                        diam = capDiam(diam)
                     } else {
                         diam = randomDiamAndLen.uniform(MinDimLeaves, MaxDimLeaves)
                     }
@@ -163,6 +167,7 @@ begintemplate AstrocyteNanoBranch
                 SmallGlia[leafIdx] {
                     if (isStalksDiamDistrFromFileOrUniform) {
                         diam = getDiameterFromDistr(diamDistrStalks, diamStep)
+                        diam = capDiam(diam)
                     } else {
                         diam = randomDiamAndLen.uniform(MinDimStalk, MaxDimStalk)
                     }
@@ -188,6 +193,7 @@ begintemplate AstrocyteNanoBranch
                     g_pas = (1 + diam / (2 * L)) * GPassive //(1/11150)  // mho/cm2
                     
                     if (currentMechanismSetup == 1) {
+                        // !!!??
                         density_GluTrans = (1 + diam / (2 * L)) * DensityGluTransporters
                     }
                 }
@@ -196,6 +202,7 @@ begintemplate AstrocyteNanoBranch
                 // !! copied from setStalks
                 SmallGlia[leafIdx] {
                     if (currentMechanismSetup == 1) {
+                        // !!!??
                         density_GluTrans = DensityGluTransporters               // !! maybe move it to init?
                     }
                 }

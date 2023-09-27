@@ -16,7 +16,7 @@ begintemplate SynGroup
     external synManagerMainWidget
     external smAllSyns, smAllComps, nanoProximal_ref, nanoDistal_ref
     external mwh, mth, math, mcu, seh, rngUtils
-    external stringEmpty, stringsEqual, codeContractViolation
+    external capDiam, stringEmpty, stringsEqual, codeContractViolation
     external eachItemInList
     external enumSynCompIdxs, smEnumSynLoc, smSynLocP
     external spineNeckDiamCache, inhomAndStochLibrary
@@ -31,10 +31,7 @@ begintemplate SynGroup
     proc init() {
         randomSynLoc = rngUtils.getFor_synLoc()
         
-        // We could set 0 here, but it turns out, NEURON resets the diam to 1e-9 when user enters
-        //  Tools -> Distributed Mechanisms -> Viewers -> Shape Name
-        // and then double clicks on any Spine Neck section in the list.
-        witheredSpineNeckDiam = 1e-9
+        witheredSpineNeckDiam = capDiam(0)
     }
     
     func is3Or1PartInSynStruc() { localobj nil

@@ -57,6 +57,7 @@ proc showSpatialVoltageUi() {
         graphDendrogramm.yaxis(-86, -80, -2, 5, 0, 0, 1)
 
         //for i = 0, NumberDendrites-1 {
+        // !!! maybe use for eachSecInList(dendrite_ref, 1) here, but why to start with 1?
 		  for i = 1, NumberDendrites-1 {
             voltagePlot = new RangeVarPlot("v")
             soma_ref.o(0).sec voltagePlot.begin(0) 

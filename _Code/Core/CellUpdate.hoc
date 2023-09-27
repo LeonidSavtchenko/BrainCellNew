@@ -6,11 +6,11 @@ objref randomStretch
 // Changes height distribution of dendrites.
 // $1 - Random seed !! Z_coordinate is passed here - it looks strange because we will actualy use "ceil" of Z_coordinate as the seed
 // $2 - Scale factor
-proc stretch() { local scaleNew, i, j, d
+proc stretch() { local scaleNew, j, d
     randomStretch = rngUtils.getFor_stretch_withCustomSeed($1)
     scaleNew = $2
     
-    for i = 0, NumberDendrites-2 dendrite_ref.o(i).sec {  // !! why -2?
+    for eachSecInList(dendrite_ref) {
         for j = 0, n3d()-1 {
             if (x3d(j) > 0.01 && y3d(j) > 0.01) {
                 d = 1.67/sqrt(scaleNew*sqrt(x3d(j)^2+y3d(j)^2))     // !! if scaleNew < 0, then error here: sqrt argument out of domain
@@ -21,6 +21,7 @@ proc stretch() { local scaleNew, i, j, d
         }
     }
     
-    MaxDendriticLength = getMaxDendriticLength()
-    // !! need to update astrocyte biophysics here because it depends on L
+    // !! uncomment if this proc starts changing "L" (and don't forget to update astrocyte biophysics here because it depends on "L"):
+    // MaxDendriticLength = getMaxDendriticLength()
+    
 }

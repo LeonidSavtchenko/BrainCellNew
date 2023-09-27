@@ -3,7 +3,7 @@
 
 
 MinDistance = 1             // um
-addLengthUnits("MinDistance")
+setUpExposedLengthVar("MinDistance")
 
 // The next ones will be assigned just below
 MaxDendriticLength = -1     // um
@@ -27,4 +27,5 @@ if (isAstrocyteOrNeuron) {
 }
 
 // The default distance centre
+// !!! we set it here and in GeometricalParameters.hoc, but in different way
 soma_ref.o(0).sec distance()

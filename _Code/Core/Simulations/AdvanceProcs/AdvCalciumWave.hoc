@@ -10,12 +10,10 @@ proc advance() {
     }
 }
 
-proc setIp3ToSomaAndDendrites() { local ip3Value localobj sec_ref
+proc setIp3ToSomaAndDendrites() { local ip3Value
     ip3Value = $1
     
-    soma_ref.o(0).sec.ip3i = ip3Value
-    
-    for eachItemInList(sec_ref, dendrite_ref) {
-        sec_ref.sec.ip3i = ip3Value
+    for eachSecInList(soma_ref, dendrite_ref) {
+        ip3i = ip3Value
     }
 }

@@ -4,14 +4,12 @@ begintemplate CompSubsetWidget
 
     public show, dismissHandler
     
-    // !! init arg
+    external addThisAndFilteredChildSecRefsToTheList, removeAllDupSecRefsFromTheList
+    external mwh
+    external eachSecInList
+    
     objref in_comp
     objref in_plugin
-    
-    external mwh
-    
-    // Callables
-    external eachItemInList, addThisAndFilteredChildSecRefsToTheList, removeAllDupSecRefsFromTheList
     
     isSelectWholeSubtree = -1
     
@@ -26,9 +24,6 @@ begintemplate CompSubsetWidget
     objref selected_ref
     
     
-    // !!
-    // $o1 - !!
-    // $2 - 
     proc init() {
         isSelectWholeSubtree = 0    // Keep in sync with xradiobutton
         
@@ -89,10 +84,10 @@ begintemplate CompSubsetWidget
         plotShape.exec_menu("View = plot")
     }
     
-    proc colorizeCompartments() { localobj item
+    proc colorizeCompartments() {
         plotShape.color_all(notSelectableColor)
-        for eachItemInList(item, in_comp.list_ref) {
-            item.sec plotShape.color(selectableColor)
+        for eachSecInList(in_comp.list_ref) {
+            plotShape.color(selectableColor)
         }
     }
     
@@ -101,7 +96,7 @@ begintemplate CompSubsetWidget
     // $2 - x
     // $3 - y
     // $4 - Keystate: reflects the state of Control (bit 1), Shift (bit 2), and Meta (bit 3) keys
-    proc mouseEventsHandler() { local eventType, x, y, keystate, isMultiselect, isSectSelectable localobj item
+    proc mouseEventsHandler() { local eventType, x, y, keystate, isMultiselect, isSectSelectable
         
         eventType = $1
         x = $2
@@ -142,8 +137,8 @@ begintemplate CompSubsetWidget
             removeAllDupSecRefsFromTheList(selected_ref)
         }
         
-        for eachItemInList(item, selected_ref) {
-            item.sec plotShape.color(selectedColor)
+        for eachSecInList(selected_ref) {
+            plotShape.color(selectedColor)
         }
         
         updateNumSelectedSectsHint()

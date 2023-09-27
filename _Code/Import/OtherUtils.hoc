@@ -116,7 +116,7 @@ proc hideImportedGeometry() {
 proc chooseOutLocationAndExportHocFile() { local isCancel
     strdef hocFilePathName
     
-    isCancel = fbh.showSaveFileDialog("Export base geometry", "Geometry", hocFilePathName)
+    isCancel = fbh.showSaveFileDialog(pyEnumOutFileTypes.baseGeometryHoc, hocFilePathName)
     if (isCancel) {
         // User decided not to export anything
         return

@@ -4,8 +4,8 @@ begintemplate VerbatimDistFuncHelper
     public selectedHandler, calculateAt, onJustBeforeFirstSection, onJustBeforeNewSection, onJustAfterLastSection, exportParams, importParams, dismissHandler
     public parentWidget
     
-    external eachItemInList
     external codeContractViolation
+    external eachSegmInSecList
     
     objref parentWidget
     
@@ -15,7 +15,7 @@ begintemplate VerbatimDistFuncHelper
     
     
     // When we are being created in the main program, this ctor is called from MechComp ctor in contrast to other *DistFuncHelper-s created from InhomEditorSubWidget ctor
-    proc init() { local numArg, arrayIndex, x, value localobj list_ref, tempMechStd, sec_ref
+    proc init() { local numArg, arrayIndex, x, value localobj list_ref, tempMechStd
         strdef varName
         
         numArg = numarg()
@@ -30,12 +30,10 @@ begintemplate VerbatimDistFuncHelper
             
             vecOfVals = new Vector()
             
-            for eachItemInList(sec_ref, list_ref) {
-                sec_ref.sec for (x, 0) {
-                    tempMechStd.in(x)
-                    value = tempMechStd.get(varName, arrayIndex)
-                    vecOfVals.append(value)
-                }
+            for eachSegmInSecList(&x, list_ref) {
+                tempMechStd.in(x)
+                value = tempMechStd.get(varName, arrayIndex)
+                vecOfVals.append(value)
             }
         } else {
             codeContractViolation()

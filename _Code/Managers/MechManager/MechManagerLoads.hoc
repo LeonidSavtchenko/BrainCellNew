@@ -1,6 +1,5 @@
 
 { load_file("MechComp.hoc") }
-{ load_file("BiophysExportImportHelper.hoc") }
 
 { load_file("Widgets/CompOps/MechManagerCompOpMergeSubWidget.hoc") }
 { load_file("Widgets/CompOps/MechManagerCompOpWidget.hoc") }
@@ -11,5 +10,8 @@
 { load_file("Widgets/MechOps/MechOpHelpers/MechOp3Helper.hoc") }
 { load_file("Widgets/MechOps/MechOpWidgetBase.hoc") }
 
+{ load_file("BiophysExportImport/BiophysExportImportOptions.hoc") }
+{ load_file("BiophysExportImport/BiophysExportImportHelper.hoc") }
 { load_file("Widgets/ExportImportBiophysicsWidget.hoc") }
+
 { load_file("Widgets/MechManagerMainWidget.hoc") }

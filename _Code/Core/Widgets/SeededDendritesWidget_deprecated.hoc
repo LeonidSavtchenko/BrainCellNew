@@ -9,8 +9,8 @@ begintemplate SeededDendritesSelectionWidget
     
     external dendrite_ref, seededDendrite_ref
     external mwh, nanoBranchesManager
-    external checkIfCurrentSecIsDendrite, addThisAndAllChildSecRefsToTheList, removeAllDupSecRefsFromTheList
-    external eachItemInList
+    external checkIfCurrentSecIsDendrite, addThisAndAllChildSecRefsToTheList_deprecated, removeAllDupSecRefsFromTheList
+    external eachSecInList
     
     isSelectWholeSubtree = -1
     
@@ -35,10 +35,10 @@ begintemplate SeededDendritesSelectionWidget
         selectedDendrite_ref = new List()
     }
     
-    proc colorizeCompartments() { localobj item
+    proc colorizeCompartments() {
         plotShape.color_all(notDendriteColor)
-        for eachItemInList(item, dendrite_ref) {
-            item.sec plotShape.color(dendriteColor)
+        for eachSecInList(dendrite_ref) {
+            plotShape.color(dendriteColor)
         }
     }
     
@@ -75,7 +75,7 @@ begintemplate SeededDendritesSelectionWidget
     // $2 - x
     // $3 - y
     // $4 - Keystate: reflects the state of Control (bit 1), Shift (bit 2), and Meta (bit 3) keys
-    proc mouseEventsHandler() { local eventType, x, y, keystate, isMultiselect, isDendrite localobj item
+    proc mouseEventsHandler() { local eventType, x, y, keystate, isMultiselect, isDendrite
         eventType = $1
         x = $2
         y = $3
@@ -106,7 +106,7 @@ begintemplate SeededDendritesSelectionWidget
         if (!isSelectWholeSubtree) {
             selectedDendrite_ref.append(new SectionRef())
         } else {
-            addThisAndAllChildSecRefsToTheList(selectedDendrite_ref)
+            addThisAndAllChildSecRefsToTheList_deprecated(selectedDendrite_ref)
         }
         
         pop_section()
@@ -115,8 +115,8 @@ begintemplate SeededDendritesSelectionWidget
             removeAllDupSecRefsFromTheList(selectedDendrite_ref)
         }
         
-        for eachItemInList(item, selectedDendrite_ref) {
-            item.sec plotShape.color(selectedColor)
+        for eachSecInList(selectedDendrite_ref) {
+            plotShape.color(selectedColor)
         }
         
         updateNumSeededDendsHint()

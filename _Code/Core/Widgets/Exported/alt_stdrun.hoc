@@ -5,7 +5,7 @@
 //    maybe the answer is different for PARAMETER, ASSIGNED and STATE
 
 
-// Copied from C:\nrn\lib\hoc\stdrun.hoc -> proc stdinit(), then tweaked
+// Copied from "%NEURONHOME%\lib\hoc\stdrun.hoc" -> proc stdinit(), then tweaked
 proc alt_stdinit() {
 	cvode_simgraph()
 	realtime = 0
@@ -15,14 +15,14 @@ proc alt_stdinit() {
 	initPlot()
 }
 
-// Copied from C:\nrn\lib\hoc\stdrun.hoc -> proc run(), then tweaked
+// Copied from "%NEURONHOME%\lib\hoc\stdrun.hoc" -> proc run(), then tweaked
 proc alt_run() {
 	running_ = 1
 	alt_stdinit()
 	alt_continuerun(tstop)
 }
 
-// Copied from C:\nrn\lib\hoc\stdrun.hoc -> proc continuerun(), then tweaked
+// Copied from "%NEURONHOME%\lib\hoc\stdrun.hoc" -> proc continuerun(), then tweaked
 proc alt_continuerun() {local rt, rtstart, ts
 	realtime = 0  rt = screen_update_invl  rtstart = startsw()
 	eventcount=0
@@ -60,7 +60,7 @@ proc alt_continuerun() {local rt, rtstart, ts
 	realtime = startsw() - rtstart
 }
 
-// Copied from C:\nrn\lib\hoc\stdrun.hoc -> proc steprun(), then tweaked
+// Copied from "%NEURONHOME%\lib\hoc\stdrun.hoc" -> proc steprun(), then tweaked
 proc alt_steprun() {
 	inhomAndStochApplicator.onStep()
 	step()

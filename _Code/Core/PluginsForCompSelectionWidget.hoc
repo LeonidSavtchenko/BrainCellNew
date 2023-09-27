@@ -62,6 +62,10 @@ begintemplate PluginForCSW_FromMM
         
         // !! slow and inefficient implementation, just for demo
         //    need to use Python's Set here
+        
+        // Don't replace with eachSecInList to avoid the error "The sectionstack index should be 1 but it is 2"
+        // (!!! need to investigate what exactly causes this error: either plotShape.push_selected() upstream or
+        // the fact that this func is called inside "forsec" block)
         for secIdx = 0, selectable_ref.count() - 1 {
             sec_ref = selectable_ref.o(secIdx)
             sec_ref.sec secName2 = secname()

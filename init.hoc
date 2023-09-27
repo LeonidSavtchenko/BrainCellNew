@@ -55,7 +55,7 @@ proc roadmapChosenHandler() { local isLoaded localobj plotShape
 { load_file("_Code/RoadmapWidget.hoc") }
 
 proc showRoadmapWidget() { localobj roadmapWidgetCopy
-    // !!! not sure why this temporary copy is needed, but without it we'll catch Segmentation Violation
+    // !!! not sure why this temporary copy is needed, but without it we'll catch Segmentation violation
     roadmapWidgetCopy = roadmapWidget
     
     roadmapWidget = new RoadmapWidget()

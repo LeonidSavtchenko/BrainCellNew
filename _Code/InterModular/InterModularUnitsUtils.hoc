@@ -1,10 +1,28 @@
 
-proc addLengthUnits() {
-    strdef varName, unitsStr, hocCommand
+_inf = -1
+
+proc setUpExposedLengthVar() { local numArg, minValue
+    strdef varName, unitsStr, hocCommand, minValueStr
+    
+    numArg = numarg()
+    if (numArg < 1 || numArg > 2) {
+        codeContractViolation()
+    }
+    
     varName = $s1
+    
     unitsStr = units("L")
-    hocCommand = "units(&%s, unitsStr)"
-    sprint(hocCommand, hocCommand, varName)
+    sprint(hocCommand, "units(&%s, unitsStr)", varName)     // !! here we read the local var "unitsStr" like a top-level one
+    execute(hocCommand)
+    
+    _inf = math.inf
+    if (numArg == 1) {
+        minValueStr = "float_epsilon"
+    } else {
+        minValue = $2
+        minValueStr = pyObj.str(minValue)
+    }
+    sprint(hocCommand, "variable_domain(&%s, %s, _inf)", varName, minValueStr)
     execute(hocCommand)
 }
 

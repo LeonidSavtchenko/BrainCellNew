@@ -6,7 +6,7 @@ proc sourcePythonCodeForExport() { local status
     
     status = nrnpython(pyCommand)
     if (!status) {
-        printMsgAndRaiseError("Failed to import Python code")
+        printPythonErrMsgAndStop("sourcePythonCodeForExport")
     }
 }
 

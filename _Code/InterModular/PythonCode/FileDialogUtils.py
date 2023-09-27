@@ -1,6 +1,7 @@
 
 import os
 import tkinter as tk
+from enum import Enum
 from tkinter import filedialog, messagebox
 
 
@@ -8,91 +9,155 @@ root = tk.Tk()
 root.withdraw()
 
 
-# !!!! a lot of code dupl. in two methods below
-
 class FileDialogUtils:
 
-    reservedFileNamesLower = {'params.hoc', 'runner.hoc'}
+    class EnumInFileTypes(Enum):
+        baseGeometryAny = 0
+        nanoGeometryHoc = 1
+        biophysJson = 2
+        """ !!! in the future, we can add support for:
+        distFuncHoc = 3
+        distFuncPy = 4
+        distFuncTxt = 5
+        distFuncXlsx = 6
+        diamDistrFile = 7
+        """
+        
+    class EnumOutFileTypes(Enum):
+        baseGeometryHoc = 0
+        nanoGeometryHoc = 1
+        biophysJson = 2
+        """ !!! in the future, we can add support for these files saved to "Text results" folder:
+        volumFractionTxt = 3
+        cadynamicsTxt = 4
+        circularFrapAverageTxt = 5
+        timeFRAPTxt = 6
+        """
+        
+    _inFileTypeToArgsDict = {
+        EnumInFileTypes.baseGeometryAny: {
+            'title': 'Import brain cell base geometry',
+            'initialdir': 'Geometry',
+            'filetypes': [('All Files', '*.*'), ('HOC File', '*.hoc'), ('SWC File', '*.swc'), ('ZIP Archive from NeuroMorpho.Org', '*.zip')]},  # !!! ideally, enlist explicitly each file type supported by NLMorphologyConverter, but need to test first
+        EnumInFileTypes.nanoGeometryHoc: {
+            'title': 'Import brain cell with nanogeometry',
+            'initialdir': 'Nanogeometry',
+            'filetypes': [('HOC File', '*.hoc'), ('All Files', '*.*')],
+            'defaultextension': '.hoc'},
+        EnumInFileTypes.biophysJson: {
+            'title': 'Import brain cell biophysics',
+            'initialdir': 'Biophysics',
+            'filetypes': [('JSON File', '*.json'), ('All Files', '*.*')],
+            'defaultextension': '.json'}
+    }
     
-    isBusy = False
-    top = None
+    _outFileTypeToArgsDict = {
+        EnumOutFileTypes.baseGeometryHoc: {
+            'title': 'Export brain cell base geometry',
+            'initialdir': 'Geometry',
+            'filetypes': [('HOC File', '*.hoc'), ('All Files', '*.*')],
+            'defaultextension': '.hoc'},
+        EnumOutFileTypes.nanoGeometryHoc: {
+            'title': 'Export brain cell with nanogeometry',
+            'initialdir': 'Nanogeometry',
+            'filetypes': [('HOC File', '*.hoc'), ('All Files', '*.*')],
+            'defaultextension': '.hoc'},
+        EnumOutFileTypes.biophysJson: {
+            'title': 'Export brain cell biophysics',
+            'initialdir': 'Biophysics',
+            'filetypes': [('JSON File', '*.json'), ('All Files', '*.*')],
+            'defaultextension': '.json'}
+    }
     
-    # !!!! BUG: import biophysics -> leave dialog open -> export biophysics -> click "Export" -> it puts the old "import" file dialog in focus
-    #           the correct behaviour would be to close it once user clicks export biophysics
-    #           (the same problem when first clicking export biophysics, then import biophysics)
+    # !!! keep these file names in sync with other code
+    _reservedHocFileNamesLower = {'params.hoc', 'runner.hoc'}
+    _reservedJsonFileNamesLower = {'hide_stoch_btn_for.json', 'diffusible_species.json'}
+    
+    _isBusy = False
+    _top = None
+    
+    # !!! BUG: import biophysics -> leave dialog open -> export biophysics -> click "Export" -> it puts the old "import" file dialog in focus
+    #          the correct behaviour would be to close it once user clicks export biophysics
+    #          (the same problem when first clicking export biophysics, then import biophysics)
+    
+    
+    # !!! a lot of code dupl. in two methods below
     
     @classmethod
-    def showLoadFileDialog(cls, theTitle, defaultDirPath):
+    def showLoadFileDialog(cls, enumInFileType):
         
-        if cls.isBusy:
-            cls.top.lift()
+        if cls._isBusy:
+            cls._top.lift()
             return ''
             
-        cls.isBusy = True
+        cls._isBusy = True
         
-        cls.top = tk.Toplevel(root)
-        cls.top.withdraw()
+        cls._top = tk.Toplevel(root)
+        cls._top.withdraw()
+        
+        argsDict = cls._inFileTypeToArgsDict[enumInFileType]
         
         try:
             while True:
-                inHocFilePathName = filedialog.askopenfilename(
-                    title=theTitle,
-                    initialdir=defaultDirPath,
-                    filetypes=[('HOC File', '*.hoc'), ('All Files', '*.*')],    # !!! should be different when loading the base geometry
-                    defaultextension='.hoc',                                    # !!!
-                    parent=cls.top)
-                    
-                fileName = os.path.basename(inHocFilePathName)
+                inFilePathName = filedialog.askopenfilename(parent=cls._top, **argsDict)
                 
-                if fileName.lower() in cls.reservedFileNamesLower:  # !! os.path.samefile would be more correct than lower-case comparison
+                fileName = os.path.basename(inFilePathName)
+                
+                cond1 = enumInFileType in [cls.EnumInFileTypes.baseGeometryAny, cls.EnumInFileTypes.nanoGeometryHoc] and \
+                   fileName.lower() in cls._reservedHocFileNamesLower       # !! os.path.samefile would be more correct than lower-case comparison
+                cond2 = enumInFileType == cls.EnumInFileTypes.biophysJson and \
+                   fileName.lower() in cls._reservedJsonFileNamesLower
+                if cond1 or cond2:
                     messagebox.showwarning(
                         title='Reserved name',
-                        message=f'Cannot import "{fileName}" because it\'s a reserved file name.\n\nPlease use some other name.')   # !!!???
+                        message=f'Cannot import "{fileName}" because it\'s a reserved file name.\n\nPlease use some other name.')
+                    # !!! use just selected folder as 'initialdir' when calling filedialog.askopenfilename next time
                 else:
                     break
                     
-            return inHocFilePathName
+            return inFilePathName
             
         finally:
-            cls.top.destroy()
-            cls.isBusy = False
+            cls._top.destroy()
+            cls._isBusy = False
             
     @classmethod
-    def showSaveFileDialog(cls, theTitle, defaultDirPath, defaultFileName):
+    def showSaveFileDialog(cls, enumOutFileType, defaultFileName):
         
-        if cls.isBusy:
-            cls.top.lift()
+        if cls._isBusy:
+            cls._top.lift()
             return ''
             
-        cls.isBusy = True
+        cls._isBusy = True
         
-        cls.top = tk.Toplevel(root)
-        cls.top.withdraw()
+        cls._top = tk.Toplevel(root)
+        cls._top.withdraw()
+        
+        argsDict = cls._outFileTypeToArgsDict[enumOutFileType]
         
         try:
             while True:
-                outHocFilePathName = filedialog.asksaveasfilename(
-                    title=theTitle,
-                    initialdir=defaultDirPath,
-                    initialfile=defaultFileName,
-                    filetypes=[('HOC File', '*.hoc'), ('All Files', '*.*')],
-                    defaultextension='.hoc',
-                    parent=cls.top)
-                    
-                fileName = os.path.basename(outHocFilePathName)
+                outFilePathName = filedialog.asksaveasfilename(parent=cls._top, initialfile=defaultFileName, **argsDict)
                 
-                if fileName.lower() in cls.reservedFileNamesLower:  # !! os.path.samefile would be more correct than lower-case comparison
+                fileName = os.path.basename(outFilePathName)
+                
+                cond1 = enumOutFileType in [cls.EnumOutFileTypes.baseGeometryHoc, cls.EnumOutFileTypes.nanoGeometryHoc] and \
+                   fileName.lower() in cls._reservedHocFileNamesLower       # !! os.path.samefile would be more correct than lower-case comparison
+                cond2 = enumOutFileType == cls.EnumOutFileTypes.biophysJson and \
+                   fileName.lower() in cls._reservedJsonFileNamesLower
+                if cond1 or cond2:
                     messagebox.showwarning(
                         title='Reserved name',
-                        message=f'Cannot export to "{fileName}" because it\'s a reserved file name.\n\nPlease use some other name.')    # !!!???
+                        message=f'Cannot export to "{fileName}" because it\'s a reserved file name.\n\nPlease use some other name.')
+                    # !!! use just selected folder as 'initialdir' when calling filedialog.asksaveasfilename next time
                 else:
                     break
                     
-            # !! if the folder is not empty, then ask user whether to clean up
+            # !!! for EnumOutFileTypes.nanoGeometryHoc, if the folder is not empty, then ask user whether to clean up
             
-            return outHocFilePathName
+            return outFilePathName
             
         finally:
-            cls.top.destroy()
-            cls.isBusy = False
+            cls._top.destroy()
+            cls._isBusy = False
             

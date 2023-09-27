@@ -3,17 +3,12 @@
 
 // 3D modification of Astro geometry reconstructed from real astrocyte
 // File was added at 2 Apr 2018
-proc stretchXY() { local i, j, scaleNew
+proc stretchXY() { local j
     scaleLengthXY=$1
     scaleLengthZ=$2
     shiftToZero=$3
     
-    soma_ref.o(0).sec {
-        for j = 0, n3d()-1 {
-            pt3dchange(j, (x3d(j)-shiftToZero)/scaleLengthXY, (y3d(j)-shiftToZero)/scaleLengthXY,  z3d(j)/scaleLengthZ,  diam3d(j)/scaleLengthXY)
-        }
-    }
-    for i = 0, NumberDendrites-1 dendrite_ref.o(i).sec {
+    for eachSecInList(soma_ref, dendrite_ref) {
         for j = 0, n3d()-1 {
             pt3dchange(j, (x3d(j)-shiftToZero)/scaleLengthXY, (y3d(j)-shiftToZero)/scaleLengthXY,  z3d(j)/scaleLengthZ,  diam3d(j)/scaleLengthXY)
         }
@@ -23,5 +18,6 @@ proc stretchXY() { local i, j, scaleNew
     
     MaxDendriticLength = getMaxDendriticLength()
     
-    // !! need to update astrocyte biophysics here because it depends on L
+    // !! we don't update astrocyte biophysics here (even though it depends on "L")
+    //    because this proc can be called only in Prologue, i.e. before we init astrocyte biophysics
 }

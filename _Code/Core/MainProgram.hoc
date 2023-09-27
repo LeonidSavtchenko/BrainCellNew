@@ -17,10 +17,10 @@ if (isBaseOrNanoStart) {
 
 { load_file("GeometricalParameters.hoc") }
 
-// !! these ones depend on SizeTotal
+
 proc sourceSimulations() {
-    load_file("_Code/Core/Simulations/SimFrapInCircleGeometry.hoc")
-    load_file("_Code/Core/Simulations/SimFrapLine.hoc")
+    load_file("_Code/Core/Simulations/SimFrapInCircleGeometry.hoc")         // !! this one depends on SizeTotal
+    load_file("_Code/Core/Simulations/SimFrapLine.hoc")                     // !! this one depends on SizeTotal
     load_file("_Code/Core/Simulations/SimSpatialVoltageDistributions.hoc")
     load_file("_Code/Core/Simulations/SimConstantElectricalSimulations.hoc")
     load_file("_Code/Core/Simulations/SimFrequencyElectricalSimulation.hoc")

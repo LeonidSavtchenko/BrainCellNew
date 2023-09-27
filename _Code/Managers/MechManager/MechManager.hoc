@@ -74,13 +74,13 @@ objref _compSecNamesSet // !! don't keep it on the top level
 
 // !! rewrite this obfunc or just IF predicate in Python
 // !! test how it affects the performance of proc analyzeSectsAndCreateComps
-obfunc _findAllRemainingSects() { local compIdx localobj sec_ref, other_ref
+obfunc _findAllRemainingSects() { local compIdx localobj other_ref
 
     _compSecNamesSet = pyObj.set()
     
     for compIdx = 0, mmAllComps.count() - 1 {
-        for eachItemInList(sec_ref, mmAllComps.o(compIdx).list_ref) {
-            sec_ref.sec _compSecNamesSet.add(secname())
+        for eachSecInList(mmAllComps.o(compIdx).list_ref) {
+            _compSecNamesSet.add(secname())
         }
     }
     

@@ -3,32 +3,29 @@ if (isBaseOrNanoStart) {
     celsius = 34.0
 }
 
-mid=12
-dist=27
+// !!! need to export/import this var
+// !!! can it be the root cause of error when NetStim.start=0?
 secondorder=2
 
 Rm = 28000
 RmDend = Rm/2
 RmSoma = Rm
-RmAx = Rm
+// !!! RmAx = Rm   // !!! this was not used anywhere, but maybe we need to use it for axon in this file
 
+/* !!! CmSoma and CmDend are used in this file below, but the code was commented
 Cm    = 1
 CmSoma= Cm
-CmAx  = Cm
+// !!! CmAx  = Cm   // !!! this was not used anywhere, but maybe we need to use it for axon in this file
 CmDend = Cm*2
+*/
 
 RaAll= 150
 RaSoma=150
-RaAx = 50
+// !!! RaAx = 50    // !!! this was not used anywhere, but maybe we need to use it for axon in this file
 
 Vrest = -65
 
-AXONM = 2
-
-KMULT =  0.048
-ghd=0.0
-
-KMULT =  0.0
+// !!! ghd=0.0      // !!! ASSIGNED in h.mod (but all ASSIGNED-s are initialized to 0 by NEURON by default), never used in HOC
 
 // !!! ^^^ review and delete unused vars
 
@@ -36,8 +33,12 @@ KMULT =  0.0
 // !! this proc is also called for neuron nanogeometry after reseeding
 proc Neuron_Biophysics_init() {
     cm = 1
-    // !! warning: g_pas is assigned here and in NanoCore/Neuron/NeuronNanoBranch.hoc -> proc initBiophysics for neuron nanogeometry
-    insert pas e_pas=Vrest g_pas = 1/RmDend Ra=RaAll  //cm=CmDend
+    // !!! pas is inserted and g_pas is assigned twice: here and in NanoCore/Neuron/NeuronNanoBranch.hoc -> proc initBiophysics for neuron nanogeometry
+    insert pas
+    e_pas=Vrest
+    g_pas = 1/RmDend
+    Ra=RaAll
+    //cm=CmDend
 }
 
 
@@ -46,13 +47,19 @@ forall {
 }
 
 
-soma_ref.o(0).sec {
-        cm = 1
-        Ra=150
-        g_pas = 1/10000
-        e_pas = -65
-        v = -65         // !! Maybe remove because now it's done in NanoBranchesManager.hoc (but that file uses v_init = -64.65)
-        
-            e_pas=Vrest g_pas = 1/RmSoma Ra=RaSoma //cm=CmSoma
-        { finitialize(v) }  // !! Maybe remove because now it's done in NanoBranchesManager.hoc
-    }
+for eachSecInList(soma_ref) {
+    cm = 1
+    Ra=RaSoma
+    g_pas = 1/10000
+    e_pas = -65
+    v = -65         // !!! maybe remove because now it's done in NanoBranchesManager.hoc (but that file uses v_init = -64.65)
+    
+    e_pas=Vrest
+    g_pas = 1/RmSoma
+    
+    //cm=CmSoma
+    
+    // !!! maybe remove because now it's done in NanoBranchesManager.hoc
+    //     (or at least move below the cycle)
+    finitialize(v)
+}

@@ -1,3 +1,6 @@
+// !!! BUG: This file assumes that SizeTotal*2 is enough for all the sections, but in fact
+//          SizeTotal = nanoProximal_ref.count() = nanoDistal_ref.count(), so the assumption is not guaranteed
+
 // UI
 objref hBoxFrapLine, vBoxFrapLineControls, frapioniPlot, graphFrapLine
 // Concentration file

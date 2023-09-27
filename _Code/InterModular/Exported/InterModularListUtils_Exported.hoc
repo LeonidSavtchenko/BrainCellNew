@@ -33,3 +33,6 @@ iterator eachItemInList() { local numArg, firstIdx, idx localobj list
         iterator_statement
     }
 }
+
+
+// See also: eachSecInList, eachSegmInSecList

@@ -9,7 +9,6 @@ begintemplate SynNCComp
     external smAllSyns, synGroup
     external mcu, utils4FakeMech4NC
     external stringsEqual, codeContractViolation
-    external eachItemInList
     
     strdef name
     enumDmPpNc = -1

@@ -1,9 +1,10 @@
 
-// !!!!! close this widget automatically in the next cases:
-//       * when user performs any comp or mech operation in the parent widget
-//       * once export or import complete (the same as for ExportManagerMainWidget)
+// !!!! close this widget automatically in the next cases:
+//      * when user performs any comp or mech operation in the parent widget
+//      * once export or import complete (the same as for ExportManagerMainWidget)
+// !!!! also, once import complete, we need to close (or re-open) other sub-widgets of MechManagerMainWidget
 
-// !!!!! show "Export/Import complete" msg with the list of unsupported features like for ExportManagerMainWidget (e.g. export of GLOBAL-s)
+// !!!! show "Export/Import complete" msg with the list of unsupported features like for ExportManagerMainWidget (e.g. export of GLOBAL-s)
 
 begintemplate ExportImportBiophysicsWidget
 
@@ -17,25 +18,21 @@ begintemplate ExportImportBiophysicsWidget
     
     objref mainBox
     
+    objref options
+    
     isExportOrImport = -1
     
-    isGlobals = -1
-    isAssignedAndState = -1
-    isInhoms = -1
-    isStochs = -1
+    objref isBlockThisCompNameVec
     
-    objref isBlockThisCompNameVec, isUseThisCompNameVec
+    strdef word
     
     
     proc init() {
-        isGlobals = 1
-        isAssignedAndState = 1
-        isInhoms = 1
-        isStochs = 1
+        options = new BiophysExportImportOptions()
     }
     
     proc show() { local numArg, numInhomVars, numStochVars, numComps, compIdx localobj compNames, mechComp, hBox, vBox, deckSpacerSlider
-        strdef word, Word, text, hocCommand, title
+        strdef Word, text, hocCommand, title
         
         numArg = numarg()
         if (numArg != 1 && numArg != 6) {
@@ -56,7 +53,7 @@ begintemplate ExportImportBiophysicsWidget
             numStochVars = inhomAndStochLibrary.getNumStochVarsForDistMechs()
             numComps = mmAllComps.count()
             isBlockThisCompNameVec = new Vector(numComps)   // All zeros by default
-            isUseThisCompNameVec = new Vector(numComps, 1)
+            options.isUseThisCompNameVec = new Vector(numComps, 1)
         } else {
             if (numArg != 6) {
                 codeContractViolation()
@@ -65,12 +62,12 @@ begintemplate ExportImportBiophysicsWidget
             numInhomVars = $3
             numStochVars = $4
             isBlockThisCompNameVec = $o5
-            isUseThisCompNameVec = $o6
+            options.isUseThisCompNameVec = $o6
             
             numComps = compNames.count()
         }
         
-        isGlobals = 0       // !!!! remove this line once implemented
+        options.isGlobals = 0       // !!!! remove this line once implemented
         
         dismissHandler()
         
@@ -106,7 +103,7 @@ begintemplate ExportImportBiophysicsWidget
                         // !!!! too long comp. names get truncated (until user makes the widget wider)
                         for compIdx = 0, numComps - 1 {
                             sprint(hocCommand, "compNameCheckBoxHandler(%d)", compIdx)
-                            xcheckbox(compNames.o(compIdx).s, &isUseThisCompNameVec.x[compIdx], hocCommand)
+                            xcheckbox(compNames.o(compIdx).s, &options.isUseThisCompNameVec.x[compIdx], hocCommand)
                         }
                         xpanel()
                     }
@@ -132,17 +129,17 @@ begintemplate ExportImportBiophysicsWidget
                     {
                         // !!! keep in sync with ExportManagerMainWidget.createInhomStochDeck
                         xpanel("")
-                        xcheckbox("GLOBAL vars", &isGlobals, "globalVarsCheckBoxHandler()")
+                        xcheckbox("GLOBAL vars", &options.isGlobals, "globalVarsCheckBoxHandler()")
                         sprint(text, "       (when imported, they can have an effect on the comps that you don't import)", word)
                         xlabel(text)
-                        xcheckbox("ASSIGNED and STATE vars", &isAssignedAndState)
+                        xcheckbox("ASSIGNED and STATE vars", &options.isAssignedAndState)
                         sprint(text, "       (in most cases, you don't need to %s them explicitly, but some MOD files don't init a var", word)
                         xlabel(text)
                         xlabel("        automatically in the INITIAL block expecting that we set a nonzero value from HOC code)")
                         sprint(text, "Inhom models (%d detected)", numInhomVars)
-                        xcheckbox(text, &isInhoms)
+                        xcheckbox(text, &options.isInhoms)
                         sprint(text, "Stoch models (%d detected)", numStochVars)
-                        xcheckbox(text, &isStochs)
+                        xcheckbox(text, &options.isStochs)
                         xpanel()
                     }
                     deckSpacerSlider.intercept(0)
@@ -174,23 +171,29 @@ begintemplate ExportImportBiophysicsWidget
     
     proc compNameCheckBoxHandler() { local compIdx
         compIdx = $1
-        if (isBlockThisCompNameVec.x[compIdx] && isUseThisCompNameVec.x[compIdx]) {
-            isUseThisCompNameVec.x[compIdx] = 0
+        if (isBlockThisCompNameVec.x[compIdx] && options.isUseThisCompNameVec.x[compIdx]) {
+            options.isUseThisCompNameVec.x[compIdx] = 0
             mwh.showWarningBox("Cannot import this comp because it's missing in the recipient cell.")
         }
     }
     
     proc globalVarsCheckBoxHandler() {
-        if (isGlobals) {
+        if (options.isGlobals) {
             mwh.showNotImplementedWarning()
         }
     }
     
-    proc exportOrImportHandler() {
+    proc exportOrImportHandler() { local isCancel
+        
+        isCancel = options.validate(word)
+        if (isCancel) {
+            return
+        }
+        
         if (isExportOrImport) {
-            beih.export2()
+            beih.exportStage2(options)
         } else {
-            beih.import2()
+            beih.importStage3(options)
         }
     }
     

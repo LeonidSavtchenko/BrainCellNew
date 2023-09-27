@@ -7,6 +7,7 @@ objref seClamp
 // $1 - Amplitude
 // $2 - Duration
 // !! the only call of this proc is commented
+/*
 proc stimulGlu() {
     soma_ref.o(0).sec {
         seClamp = new SEClamp(0.5)
@@ -14,6 +15,7 @@ proc stimulGlu() {
         seClamp.dur1 = $2
     }
 }
+*/
 
 // Updates Gluout/Gluin values on the cell.
 // $1 - X coordinate circle center

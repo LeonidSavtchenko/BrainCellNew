@@ -1,13 +1,10 @@
 
 { load_file("TopLevelVars.hoc") }
-{ load_file("../InterModular/InterModularStringUtils.hoc") }    // stringEmpty, stringsEqual, containsSubstring
-{ load_file("../InterModular/InterModularPythonUtils.hoc") }    // stringToLowerCase, checkIfFileMissing, pyObj
 { load_file("ErrWarnUtils.hoc") }
 { load_file("ListCopyUtils.hoc") }
 { load_file("BatchUtils.hoc") }
 { load_file("CheckUtils.hoc") }
 { load_file("DefaultSelectionUtils.hoc") }
-{ load_file("../InterModular/InterModularSectionUtils.hoc") }   // getAllSectionNames, deleteAllSections
 { load_file("SectionUtils.hoc") }
 { load_file("SectionRefUtils.hoc") }
 { load_file("PreviewUtils.hoc") }
@@ -26,8 +23,8 @@
 // Output (all initialized on the top level):
 //      always: soma_ref, dendrite_ref (both List-s of SectionRef-s), NumberDendrites (scalar), usedNamesForSoma, usedNamesForDendrites (both List-s of String-s)
 //      only if !isAstrocyteOrNeuron: axon_ref (List of SectionRef-s), usedNamesForAxon (List of String-s)
-proc importHocOrSwcOrZipOrOtherFile() { local numArg localobj file
-    strdef filePathName, defaultDirPath, fileExtLower
+proc importHocOrSwcOrZipOrOtherFile() { local numArg, isCancel
+    strdef filePathName, fileExtLower
     
     if (isRestartRequired) {
         printImportFailedMsgAndRaiseError("Please restart and try again")
@@ -55,15 +52,10 @@ proc importHocOrSwcOrZipOrOtherFile() { local numArg localobj file
     if (numArg == 2) {
         filePathName = $s2
     } else {
-        file = new File()
-        sprint(defaultDirPath, "%sGeometry/", getcwd())
-        file.chooser("r", "Import base geometry", "*.*", "Load", "Cancel", defaultDirPath)
-        if (!file.chooser()) {
-            // File wasn't selected
+        isCancel = fbh.showLoadFileDialog(pyEnumInFileTypes.baseGeometryAny, filePathName)
+        if (isCancel) {
             return
         }
-        
-        filePathName = file.getname
     }
     
     // Prepare the temporary folder

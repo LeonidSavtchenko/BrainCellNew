@@ -38,6 +38,7 @@ proc calculateGeometricalParams() {local i, distanceToCenter, SectionsInside, Vo
     vectDiam = new Vector()
     vecDendrDist = new Vector()
 
+    // !!! we set it here and in CommonPrologue.hoc, but in different way (and we export it in different way)
     WHERE = 0.5                             // Location in the soma that is the reference point
     soma_ref.o(0).sec distance(0, WHERE)    // This sets the origin for distance calculations
 
@@ -98,16 +99,14 @@ proc calculateGeometricalParams() {local i, distanceToCenter, SectionsInside, Vo
 	TotalLength=0
 	totalDiameter=0
 //	f1.wopen("filedata.txt")
-    for i = 0, NumberDendrites - 1 {
-        dendrite_ref.o(i).sec {
-            vectDiam.append(diam)
+    for eachSecInList(dendrite_ref) {
+        vectDiam.append(diam)
 		//	TotalLength=TotalLength+L
 		//	totalDiameter=totalDiameter+diam
 		//	print i, L, diam, TotalLength, totalDiameter
 		//	f1.printf("%-6.3g %-6.3g %-6.3g %-6.3g %-6.3g", i, L, diam, TotalLength, totalDiameter)
 		//	f1.printf("\n")
-            vecDendrDist.append(sqrt(x3d(1)^2+ y3d(1)^2))
-        }
+        vecDendrDist.append(sqrt(x3d(1)^2+ y3d(1)^2))
     }
 //	f1.close()
 }

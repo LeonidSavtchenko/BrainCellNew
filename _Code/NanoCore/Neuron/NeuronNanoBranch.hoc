@@ -31,18 +31,20 @@ proc NormalDistributionOfSpineGeometry_setParams() {
 
 NormalDistributionOfSpineGeometry_setParams()
 
-addLengthUnits("MinRadiusHead")
-addLengthUnits("MaxRadiusHead")
-addLengthUnits("MinSpineNeckLength")
-addLengthUnits("MaxSpineNeckLength")
-addLengthUnits("MinSpineNeckDiameter")
-addLengthUnits("MaxSpineNeckDiameter")
-addLengthUnits("MeanRadiusHead")
-addLengthUnits("SDRadiusHead")
-addLengthUnits("MeanSpineNeckLength")
-addLengthUnits("SDSpineNeckLength")
-addLengthUnits("MeanSpineNeckDiameter")
-addLengthUnits("SDSpineNeckDiameter")
+minDiam = capDiam(0)
+
+setUpExposedLengthVar("MinRadiusHead", minDiam / 2)
+setUpExposedLengthVar("MaxRadiusHead", minDiam / 2)
+setUpExposedLengthVar("MinSpineNeckLength")
+setUpExposedLengthVar("MaxSpineNeckLength")
+setUpExposedLengthVar("MinSpineNeckDiameter", minDiam)
+setUpExposedLengthVar("MaxSpineNeckDiameter", minDiam)
+setUpExposedLengthVar("MeanRadiusHead", minDiam)    // *2/2
+setUpExposedLengthVar("SDRadiusHead")
+setUpExposedLengthVar("MeanSpineNeckLength")
+setUpExposedLengthVar("SDSpineNeckLength")
+setUpExposedLengthVar("MeanSpineNeckDiameter", 2 * minDiam)
+setUpExposedLengthVar("SDSpineNeckDiameter")
 
 // *********************** Set of Parameters independent on distribution
 SpineNeckNSeg = 2
@@ -74,6 +76,9 @@ begintemplate NeuronNanoBranch
     external MinRadiusHead, MaxRadiusHead, MinSpineNeckLength, MaxSpineNeckLength, MinSpineNeckDiameter, MaxSpineNeckDiameter
     // Normal only:
     external MeanRadiusHead, SDRadiusHead, MeanSpineNeckLength, SDSpineNeckLength, MeanSpineNeckDiameter, SDSpineNeckDiameter
+    
+    // func
+    // !! external capDiam
     
     external isFirstReseeding
     
@@ -119,7 +124,7 @@ begintemplate NeuronNanoBranch
     }
     
     proc initBiophysics() {
-        // !! warning: g_pas is assigned here and in Prologue/Neuron/Biophys.hoc -> proc Neuron_Biophysics_init for neuron nanogeometry
+        // !!! pas is inserted and g_pas is assigned twice: here and in Prologue/Neuron/Biophys.hoc -> proc Neuron_Biophysics_init for neuron nanogeometry
         spine_neck {
             Ra = 150
             insert pas
@@ -191,6 +196,7 @@ begintemplate NeuronNanoBranch
             necklength = randomNeckLen.normal(MeanSpineNeckLength, SDSpineNeckLength) //1  /*spine neck length in um*/
             if (necklength < 0.2) necklength = 0.2
             neckdiam = randomNeckDiam.normal(MeanSpineNeckDiameter, SDSpineNeckDiameter) // 0.0394 /*spine neck diameter*/
+            // !! neckdiam = capDiam(neckdiam)
             if (neckdiam < 0.2) neckdiam = 0.2
             spine_neck { nseg = SpineNeckNSeg
                 pt3dclear()
@@ -203,6 +209,7 @@ begintemplate NeuronNanoBranch
             
             //access spine_head[Jitter][Iter]
             R_Radius = randomSpineRadius.normal(MeanRadiusHead, SDRadiusHead)
+            // !! R_Radius = capDiam(2 * R_Radius) / 2
             if (R_Radius < 0.2) R_Radius = 0.2
             
             // ** Head of spine

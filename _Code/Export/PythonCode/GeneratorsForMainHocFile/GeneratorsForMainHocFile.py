@@ -71,7 +71,7 @@ class GeneratorsForMainHocFile:
             'InterModularErrWarnUtilsPart2_Exported.hoc',
             'InterModularListUtils_Exported.hoc',
             'InterModularStringUtils_Exported.hoc',
-            "InterModularSectionUtils_Exported.hoc",
+            'InterModularSectionUtils_Exported.hoc',
             'InterModularOtherUtils_Exported.hoc'
         ]
         for fileName in fileNames:

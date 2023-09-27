@@ -1,14 +1,11 @@
 
 // Get the maximum dendritic length
-// Input: NumberDendrites, dendrite_ref (taken from the top level)
+// Input: dendrite_ref (taken from the top level)
 // Returns the max length
-func getMaxDendriticLength() { local idx localobj vecDendLengths
-    if (dendrite_ref.count() != NumberDendrites) {
-        codeContractViolation()
+func getMaxDendriticLength() { local maxDendLen
+    maxDendLen = -1
+    for eachSecInList(dendrite_ref) {
+        maxDendLen = math.max(maxDendLen, L)
     }
-    vecDendLengths = new Vector(NumberDendrites)
-    for idx = 0, dendrite_ref.count() - 1 {
-        vecDendLengths.x[idx] = dendrite_ref.o(idx).sec.L
-    }
-    return vecDendLengths.max()
+    return maxDendLen
 }

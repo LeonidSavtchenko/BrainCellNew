@@ -10,7 +10,7 @@ function BuildMechsForThisCellType {
         [string]$cellType
     )
     
-    $buildScriptPath = "C:\nrn\bin\mknrndll.bat"
+    $buildScriptPath = "$Env:NEURONHOME\bin\mknrndll.bat"
     
     $cellTypeFolderName = $cellType
     $modFilesFolderName = "MOD files"

@@ -8,7 +8,6 @@ begintemplate SynPPComp
     external mwh, mth, math, mcu
     external smAllSyns, synGroup
     external stringsEqual, codeContractViolation
-    external eachItemInList
     
     strdef name
     enumDmPpNc = -1

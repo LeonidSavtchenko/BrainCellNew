@@ -1,0 +1,134 @@
+
+begintemplate BiophysExportImportHelper
+
+    public export, import
+    public exportStage2, importStage2, importStage3
+    
+    external mmAllComps
+    external stringsEqual, printPythonErrMsgAndStop
+    external pyObj, fbh, mwh
+    external pyEnumOutFileTypes, pyEnumInFileTypes
+    external eachItemInList
+    
+    objref mmeibWidget
+    
+    objref biophysJsonFileHelper
+    strdef jsonFilePathName     // !!! ?? use two different vars for export and import?
+    
+    
+    proc init() { local status
+        strdef pyCommand
+        
+        pyCommand = "import sys\nimport os\nsys.path.append(os.getcwd() + '\\PythonCode')\nfrom BiophysJsonFileHelper import BiophysJsonFileHelper"
+        
+        status = nrnpython(pyCommand)
+        if (!status) {
+            printPythonErrMsgAndStop("BiophysExportImportHelper ctor")
+        }
+        
+        biophysJsonFileHelper = pyObj.BiophysJsonFileHelper()
+    }
+    
+    proc export() {
+        mmeibWidget = $o1
+        
+        mmeibWidget.show(1)     // --> exportStage2
+    }
+    
+    proc exportStage2() { local isCancel, isOK localobj options
+        
+        options = $o1
+        
+        // !!! need to close it somehow once user closes any of parent widgets
+        isCancel = fbh.showSaveFileDialog(pyEnumOutFileTypes.biophysJson, jsonFilePathName)
+        if (isCancel) {
+            return
+        }
+        
+        isOK = biophysJsonFileHelper.exportStage2(jsonFilePathName, options)
+        if (!isOK) {
+            // !!!
+        }
+        
+        // !!!
+        mwh.showNotImplementedWarning()
+        
+        // !!! mmeibWidget.dismissHandler()
+    }
+    
+    proc import() { local isCancel, isOK
+        mmeibWidget = $o1
+        
+        mmeibWidget.dismissHandler()
+        
+        // !!! need to close it somehow once user closes any of parent widgets
+        isCancel = fbh.showLoadFileDialog(pyEnumInFileTypes.biophysJson, jsonFilePathName)
+        if (isCancel) {
+            return
+        }
+        
+        isOK = biophysJsonFileHelper.importStage1(jsonFilePathName)     // --> importStage2
+        if (!isOK) {
+            // !!!
+        }
+    }
+    
+    proc importStage2() { local numInhomVars, numStochVars, numComps, compIdx, isFound localobj compNames, missingCompNames, isBlockThisCompNameVec, isUseThisCompNameVec, mechComp
+        strdef compName, line1, line2
+        
+        compNames = $o1
+        numInhomVars = $2
+        numStochVars = $3
+        
+        numComps = compNames.count()
+        
+        missingCompNames = new List()
+        isBlockThisCompNameVec = new Vector(numComps)   // All zeros by default
+        isUseThisCompNameVec = new Vector(numComps)
+        
+        // Populate missingCompNames, isBlockThisCompNameVec and isUseThisCompNameVec
+        for compIdx = 0, numComps - 1 {
+            compName = compNames.o(compIdx).s
+            isFound = 0
+            for eachItemInList(mechComp, mmAllComps) {
+                if (stringsEqual(compName, mechComp.name)) {
+                    isFound = 1
+                    break
+                }
+            }
+            if (!isFound) {
+                missingCompNames.append(new String(compName))
+                isBlockThisCompNameVec.x[compIdx] = 1
+            }
+            isUseThisCompNameVec.x[compIdx] = isFound
+        }
+        
+        mmeibWidget.show(0, compNames, numInhomVars, numStochVars, isBlockThisCompNameVec, isUseThisCompNameVec)    // --> importStage3
+        
+        if (missingCompNames.count() == 0) {
+            return
+        }
+        
+        line1 = "The following comps are declared in the imported file, but missing in the recipient cell, so cannot be imported:"
+        line2 = "(You can use \"Rename\" or \"Split\" compartment operations and repeat the import.)"
+        mwh.showWarningBox(line1, missingCompNames, "", line2, "")
+    }
+    
+    proc importStage3() { local isOK localobj options
+        options = $o1
+        
+        isOK = biophysJsonFileHelper.importStage3(options)
+        if (!isOK) {
+            // !!!
+        }
+        
+        // !!!
+        mwh.showNotImplementedWarning()
+        
+        // !!! mmeibWidget.dismissHandler()
+    }
+    
+endtemplate BiophysExportImportHelper
+
+objref beih
+beih = new BiophysExportImportHelper()
