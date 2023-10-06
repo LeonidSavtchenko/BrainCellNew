@@ -85,7 +85,7 @@ begintemplate MechOp2Helper
         }
         
         if (numInsertedItems == 0) {
-            codeContractViolation()
+            codeContractViolation()     // !!! BUG: sometimes we hit this when playing with export/import of biophysics with different options
         }
         
         return numInsertedItems

@@ -34,14 +34,9 @@
         },
         "GLU": {
             "ionMechName": "glu_ion",
-            "comment1": "!!! use gigantic Diff to compare the asymptote of GLU 'point + on-off' with Ca2+ 'point + static'",
-            "comment2": "!!! use the same Diff to compare the decay dynamics of GLU 'point + on-off' with Ca2+ 'point + spike'",
-            "baseOuterConc (mM)": 1,
-            "Diff (um2/ms)": 160000,
-            "baseInnerConc (mM)": 1e-4,
-            "!!! was_baseOuterConc (mM)": 1e-5,
-            "!!! was_Diff (um2/ms)": -1,
-            "!!! was_baseInnerConc (mM)": 1
+            "baseOuterConc (mM)": 1e-5,
+            "Diff (um2/ms)": -1,
+            "baseInnerConc (mM)": 1
         },
         "GABA": {
             "ionMechName": "gaba_ion",

@@ -3,7 +3,7 @@ begintemplate AddOneInputVarWidget
 
     public show, dismissHandler
     
-    external mwh, mth, compUtils
+    external mwh, mth, compUtils, mechsDllUtils
     external synGroup
     external createEmptyPanel, createMetaVarHint, findItemInListByStringAndSelect, unmapIfNotNil, codeContractViolation
     external enumSynCompIdxs
@@ -230,10 +230,13 @@ begintemplate AddOneInputVarWidget
             
             numMechs = mth.getNumMechs(enumDmPpNc)
             for mechIdx = 0, numMechs - 1 {
+                mth.getMechName(enumDmPpNc, mechIdx, mechName)
+                if (mechsDllUtils.isThisMechForIntUseOnly(mechName)) {
+                    continue
+                }
                 if (!comp.isMechInserted[mechIdx]) {
                     continue
                 }
-                mth.getMechName(enumDmPpNc, mechIdx, mechName)
                 mechList.append(new ItemOfFilteredBrowsedList(mechIdx, mechName))
             }
         } else {

@@ -5,7 +5,8 @@ begintemplate MessageWarningHelper
 
     public showMessageBox, showWarningBox, showNotImplementedWarning, startIntercepting, endIntercepting, showPleaseWaitBox, hidePleaseWaitBox
     
-    external eachItemInList, codeContractViolation
+    external getNotImplementedLines, codeContractViolation
+    external eachItemInList
     
     objref msgWarnBox, waitBox
     
@@ -136,8 +137,7 @@ begintemplate MessageWarningHelper
     // !!!! $s3, $s4, $s5
     proc showNotImplementedWarning() { local numArg
         strdef line1, line2
-        line1 = "Not implemented."
-        line2 = "If required, please ask the developer to prioritize."
+        getNotImplementedLines(line1, line2)
         numArg = numarg()
         if (numArg == 0) {
             showWarningBox(line1, line2)

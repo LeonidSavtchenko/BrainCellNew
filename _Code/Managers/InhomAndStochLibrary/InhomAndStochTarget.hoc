@@ -41,8 +41,6 @@ begintemplate InhomAndStochTarget
     isPlayable = -1
     objref baseMechStd, tempMechStd
     
-    objref tempImpRedObj
-    
     objref this
     
     
@@ -102,9 +100,10 @@ begintemplate InhomAndStochTarget
         // Load data from the imported reduced template (part 2)
         
         if (impRedObj.segmentationHelper != nil) {
-            tempImpRedObj = impRedObj
-            execute("segmentationHelper = new SegmentationHelper(tempImpRedObj.segmentationHelper)", this)  // If isBaseOrNanoStart, then the template will be sourced at a later time
-            tempImpRedObj = nil
+            execute("segmentationHelper = new SegmentationHelper()", this)  // If isBaseOrNanoStart, then the template will be sourced at a later time
+            segmentationHelper.segmentationMode = impRedObj.segmentationHelper.segmentationMode
+            segmentationHelper.total_nseg = impRedObj.segmentationHelper.total_nseg
+            segmentationHelper.min_nseg = impRedObj.segmentationHelper.min_nseg
         }
         distFuncHelper = impRedObj.distFuncHelper
         distFuncCatIdx = impRedObj.distFuncCatIdx

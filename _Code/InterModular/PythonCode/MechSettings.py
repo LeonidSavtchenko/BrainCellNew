@@ -1,7 +1,7 @@
 
 import os
 import json
-from neuron import hoc
+from OtherInterModularUtils import *
 
 # !!!! encapsulate all the code here into a class
 
@@ -27,7 +27,6 @@ def ms_isHideStochButton(mechName, varNameWithIndex):
     
     
 def ms_setIonGlobalVars():
-    hocObj = hoc.HocObject()    # !!! move it to the enclosing class level or better unify with the one created in Export module
     for subDict in _ms_jsonDict2.values():
         for value in subDict.values():
             ionMechName = value['ionMechName']
@@ -44,7 +43,7 @@ def ms_setIonGlobalVars():
                 pass
                 
 def ms_getAllSpcCatNames():
-    return list(_ms_jsonDict2.keys())
+    return convertPyIterableOfStrsToHocListOfStrObjs(_ms_jsonDict2.keys())
     
 def ms_getTotalNumExpIons():
     numIons = 0
@@ -55,13 +54,15 @@ def ms_getTotalNumExpIons():
 def ms_getAllExpIonNames():
     lst = []
     for spcCatName in _ms_jsonDict2:
-        lst.extend(ms_getAllExpIonNamesInThisCat(spcCatName))
-    return lst
+        lst.extend(ms_getAllExpIonNamesInThisCat(spcCatName, 0))
+    return convertPyIterableOfStrsToHocListOfStrObjs(lst)
     
-def ms_getAllExpIonNamesInThisCat(spcCatName):
+def ms_getAllExpIonNamesInThisCat(spcCatName, isConvertToHocListOfStrObjs):
     lst = []
     for value in _ms_jsonDict2[spcCatName].values():
         lst.append(value['ionMechName'])
+    if isConvertToHocListOfStrObjs:
+        lst = convertPyIterableOfStrsToHocListOfStrObjs(lst)
     return lst
     
 def ms_getUserFriendlyIonNameOrEmpty(actIonName):
@@ -78,17 +79,13 @@ def ms_getDiff(spcCatName, actIonName):
     for value in _ms_jsonDict2[spcCatName].values():
         if value['ionMechName'] == actIonName:
             return value['Diff (um2/ms)']
-    raise Error     # !!! replace with either codeContractViolation or an error saying that the JSON file is malformed
+    raise Exception         # !!! replace with either codeContractViolation or an error saying that the JSON file is malformed
     
-    
-# !!! maybe move to some intermodular utils
-def ms_getPyListItem(pyList, hocIdx):
-    return pyList[int(hocIdx)]
     
 # !!! maybe move to some intermodular utils
 def ms_ionMechNameToSuffix(ionMechName):
     ionSuffix = '_ion'          # !!! already defined in HOC
     if not ionMechName.endswith(ionSuffix):
-        raise Error     # !!! replace with either codeContractViolation or an error saying that the JSON file is malformed
+        raise Exception     # !!! replace with either codeContractViolation or an error saying that the JSON file is malformed
     return ionMechName[: -len(ionSuffix)]
     

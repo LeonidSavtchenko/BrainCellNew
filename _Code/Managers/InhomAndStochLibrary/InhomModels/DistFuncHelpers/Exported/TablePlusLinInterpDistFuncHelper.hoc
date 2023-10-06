@@ -24,7 +24,8 @@ begintemplate TablePlusLinInterpDistFuncHelper
         numArg = numarg()
         
         if (numArg == 0) {
-            // Empty by design (we are being created in the exported file, so will be inited in proc importParams shortly downstream)
+            // Empty by design (we are being created in the exported HOC file or in the process of biophys JSON import,
+            // so will be inited in proc importParams shortly downstream)
         } else {
             setModelIdx($1)
             

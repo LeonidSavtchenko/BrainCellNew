@@ -31,7 +31,8 @@ begintemplate SpecialStochFuncHelper
         numArg = numarg()
         
         if (numArg == 0) {
-            // Empty by design (we are being created in the exported file, so will be inited in proc importParams shortly downstream)
+            // Empty by design (we are being created in the exported HOC file or in the process of biophys JSON import,
+            // so will be inited in proc importParams shortly downstream)
         } else if (numArg == 1) {
             setModelIdx($1)
             if (modelIdx == 4) {

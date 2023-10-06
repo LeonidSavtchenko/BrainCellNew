@@ -36,7 +36,7 @@ begintemplate ExportManagerMainWidget
     proc show() { local slotHeight, numInhomVars, numStochVars, numECSs localobj hBox, deck
         strdef text
         
-        compUtils.makeSureAllCompsCreatedOrImported()
+        compUtils.makeSureAllCompsCreatedOrImportedAndRescanned()
         
         mainBox = new VBox()
         mainBox.intercept(1)

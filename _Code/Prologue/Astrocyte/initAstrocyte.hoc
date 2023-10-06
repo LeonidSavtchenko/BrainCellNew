@@ -25,14 +25,14 @@ proc showAstrocyteLevelOfNanoDetailWidget() {
         xlabel("Maximum number of stalks per dendrite")
         xlabel("This number can be limitless, but if this number is significant")
         xlabel("then the user needs a cluster of computers for calculations.")
-        xvalue("Max number of stalks", "MaxNumberStalksPerDendrite", 1, "", 0, 1)
+        xpvalue("Max number of stalks", &MaxNumberStalksPerDendrite, 1)
         
         NumberLeavesPerStalk = 10
         xlabel("")
         xlabel("Number of leaves per stalk")
         xlabel("This number can be limitless, but if this number is significant")
         xlabel("then the user needs a cluster of computers for calculations.")
-        xvalue("Number of leaves", "NumberLeavesPerStalk", 1, "", 0, 1)
+        xpvalue("Number of leaves", &NumberLeavesPerStalk, 1)
         xpanel(0)
     }
     Boxleaves.intercept(0)
@@ -45,7 +45,7 @@ showAstrocyteLevelOfNanoDetailWidget()
 { load_file("../../Core/NanoDistrFromFile.hoc") }
 
 // UI
-objref vBoxSelectGeometry, plotShapeGeometry, vBoxSelectGeometryReal
+objref vBoxSelectGeometry, plotShapeGeometry, vBoxEndFootGeometry, vBoxSelectGeometryReal
 
 // Shows geometry.
 proc showSelectedGeometry() {
@@ -74,7 +74,7 @@ proc loadGeometryEndFootFile() {
     importHocOrSwcOrZipOrOtherFile("loadGeometryEndFootFile_afterImport()")
 }
 
-proc loadGeometryEndFootFile_afterImport() {
+proc loadGeometryEndFootFile_afterImport() { local minDiam
 
     isAstrocyteBaseGeometryImported = 1
     
@@ -82,26 +82,37 @@ proc loadGeometryEndFootFile_afterImport() {
     ML=101  // Initial length of main branch
     SD =1   // Initial diameter of small branch
     SL=11   // Initial length of small branch
-    InsertM=1
+    
+    minDiam = capDiam(0)
+    setUpExposedLengthVar("MD", minDiam)
+    setUpExposedLengthVar("ML")
+    setUpExposedLengthVar("SD", minDiam)
+    setUpExposedLengthVar("SL")
     
     load_file("_Code/Prologue/Astrocyte/EndFootNew.hoc")
-    xpanel("EndFoof Geometry",0)
-    xvalue("Main diameter (um)","MD", 1, "setEndFoot(MD, ML, SD, SL)", 0, 1)
-    xvalue("Main Length (um),","ML", 1, "setEndFoot(MD, ML, SD, SL)", 0, 1)
-    xvalue("Small diameter (um)","SD", 1, "setEndFoot(MD, ML, SD, SL)", 0, 1)
-    xvalue("Small length (um)","SL", 1, "setEndFoot(MD, ML, SD, SL)", 0, 1)
-    xbutton("Insert Mechanism","InsertAllMechanism()")
-    xpanel()
+    
+    vBoxEndFootGeometry = new VBox()
+    vBoxEndFootGeometry.intercept(1)
+    {
+        xpanel("EndFoot Geometry",0)
+        xpvalue("Main diameter", &MD, 1, "setEndFoot(MD, ML, SD, SL)")
+        xpvalue("Main Length", &ML, 1, "setEndFoot(MD, ML, SD, SL)")
+        xpvalue("Small diameter", &SD, 1, "setEndFoot(MD, ML, SD, SL)")
+        xpvalue("Small length", &SL, 1, "setEndFoot(MD, ML, SD, SL)")
+        xpanel()
+    }
+    vBoxEndFootGeometry.intercept(0)
+    vBoxEndFootGeometry.map("EndFoot Geometry", 600, 200, -1, -1)
 }
 
 //************************************************************************
 // Loads geometry file of reconstructed Astrocyte.
 // The parameter allows to fir the data file to the real geometry
-proc loadGeometryFileReconstract() {
-    importHocOrSwcOrZipOrOtherFile("loadGeometryFileReconstract_afterImport()")
+proc loadGeometryFileReconstruct() {
+    importHocOrSwcOrZipOrOtherFile("loadGeometryFileReconstruct_afterImport()")
 }
 
-proc loadGeometryFileReconstract_afterImport() {
+proc loadGeometryFileReconstruct_afterImport() {
 
     isAstrocyteBaseGeometryImported = 1
     
@@ -117,13 +128,15 @@ proc loadGeometryFileReconstract_afterImport() {
     {
         xpanel("Astrocyte parameters of  Real Geometry",0)
         xlabel(" The initial data in the file init.hoc")
-        xvalue("X - Y scale (pixel/um)","LengthXY", 1, "stretchXY( LengthXY, LengthZ, ShiftXY)", 0, 1)
-        xvalue("Z scale (pixel/um)","LengthZ", 1, "stretchXY( LengthXY, LengthZ, ShiftXY)", 0, 1)
-        xvalue("X-Y shift (um)","ShiftXY", 1, "stretchXY( LengthXY, LengthZ, ShiftXY)", 0, 1)
+        xpvalue("X - Y scale (pixel/um)", &LengthXY, 1)
+        xpvalue("Z scale (pixel/um)", &LengthZ, 1)
+        xpvalue("X-Y shift (um)", &ShiftXY, 1)
+        xlabel("")
+        xbutton("Apply and Close", "stretchXY( LengthXY, LengthZ, ShiftXY)")
         xpanel()
     }
     vBoxSelectGeometryReal.intercept(0)
-    vBoxSelectGeometryReal.map("Astrocyte model", 500, 300, -1, -1)
+    vBoxSelectGeometryReal.map("Astrocyte model", 600, 300, -1, -1)
     
     //stretchXY( LengthXY, LengthZ, ShiftXY)
 }
@@ -139,6 +152,8 @@ proc initMainProgram() {
     
     vBoxSelectGeometry.unmap()
     plotShapeGeometry.unmap()
+    unmapIfNotNil(vBoxEndFootGeometry)
+    unmapIfNotNil(vBoxSelectGeometryReal)
     Boxleaves.unmap()
     
     mechsDllUtils.loadDefaultMechsDllDependingOnCellType()
@@ -170,7 +185,7 @@ proc showSelectGeometryUi() {
         xlabel("========== Load astrocyte geometry files ==========")
         xlabel("Load basic (Real reconstructed) astrocyte skeleton with dendrites and soma.")
         xlabel("(Several examples can be found in 'Geometry' folder.)")
-        xbutton("Select reconstructed stem tree", "loadGeometryFileReconstract()")
+        xbutton("Select reconstructed stem tree", "loadGeometryFileReconstruct()")
         //*************************************************************
         xlabel("-----------------------------------------------------------------------------------------")
         xlabel("Load distribution of diameters for leaves and stalks")

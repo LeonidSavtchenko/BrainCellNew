@@ -66,7 +66,7 @@ begintemplate MechManagerCompOpMergeSubWidget
     proc mergeHandler() { local status, numMechs, isStickyMechBorrowed, numComps, srcCompIdx, mechIdx localobj dstComp, srcComp
         strdef stickyMechNames, mechName
         
-        status = mmmowb.ifDirtyThenProposeUserToApplyChanges("Cannot merge because you have some pending changes to sections biophysics. Do you want to apply them?")
+        status = mmmowb.ifDirtyThenProposeUserToApplyChanges("merge")
         if (status == 1) {
             return
         }

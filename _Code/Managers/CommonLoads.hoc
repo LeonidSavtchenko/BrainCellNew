@@ -12,7 +12,7 @@ if (makeSureDeclared("ecsLibrary") && isBaseOrNanoStart) {
 }
 
 if (isAstrocyteOrNeuron) {
-    objref smAllSyns, enumSynCompIdxs, seh
+    objref enumSynCompIdxs, seh
 }
 
 proc loadIfNotDeclared() { local numArg, isSkipCodeContractCheck

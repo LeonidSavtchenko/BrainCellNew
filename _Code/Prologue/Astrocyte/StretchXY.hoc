@@ -14,7 +14,7 @@ proc stretchXY() { local j
         }
     }
     
-    vBoxSelectGeometryReal.unmap()  // !! is that needed?
+    vBoxSelectGeometryReal.unmap()  // !! is that needed? maybe yes (to avoid the cumulative effect)
     
     MaxDendriticLength = getMaxDendriticLength()
     

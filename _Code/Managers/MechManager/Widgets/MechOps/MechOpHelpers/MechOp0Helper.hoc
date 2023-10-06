@@ -5,7 +5,7 @@ begintemplate MechOp0Helper
     public title, isRequireApply, itemTypeIdx
     
     external mmAllComps
-    external mwh, mth
+    external mth, mcu
     external codeContractViolation
     
     strdef title
@@ -66,7 +66,7 @@ begintemplate MechOp0Helper
     }
     
     proc preventCheckboxUncheckingHandler() { local compIdx, mechIdx
-        strdef mechName, msg
+        strdef mechName
         
         compIdx = $1
         mechIdx = $2
@@ -76,15 +76,13 @@ begintemplate MechOp0Helper
         }
         
         mth.getMechName(0, mechIdx, mechName)
-        
-        sprint(msg, "\"%s\" mechanism cannot be uninserted (NEURON restriction).", mechName)
-        mwh.showWarningBox(msg)
+        mcu.showCannotUninsertMechWarning(mechName, 0)
         
         mmAllComps.o(compIdx).isMechInserted[mechIdx] = 1
     }
     
     proc stickyMechCheckboxHandler() { local compIdx, mechIdx, wasMechInserted, willMechBeInserted localobj comp
-        strdef mechName, msg
+        strdef mechName
         
         compIdx = $1
         mechIdx = $2
@@ -100,8 +98,7 @@ begintemplate MechOp0Helper
         willMechBeInserted = comp.isMechInserted[mechIdx]               // Checkbox state
         
         if (wasMechInserted && !willMechBeInserted) {
-            sprint(msg, "Once inserted, \"%s\" mechanism cannot be uninserted anymore (NEURON restriction).", mechName)
-            mwh.showWarningBox(msg)
+            mcu.showCannotUninsertMechWarning(mechName, 1)
             comp.isMechInserted[mechIdx] = 1
             return
         }

@@ -4,10 +4,11 @@
 begintemplate MechComp
 
     public name, enumDmPpNc, list_ref, isMechInserted, isMechVarTypeInhom, mechStds, isCompDirty
-    public finishAllVerbatimInhomProtos, split, mergeAllSectsFrom, showMechStdPanel, markMechDirty, markAllMechsDirty, applyHomogenChangesToDirtyMechs, getDistRange, getSecList, applySegmentationAndInhomogeneity, updateStatsCurve, updateVerbatimModelCurve, isMechVarInhom, prepareVarsEditorHeader, convertVarTypeToVarTypeIdx
+    public finishAllVerbatimInhomProtos, split, mergeAllSectsFrom, showMechStdPanel, markMechDirty, markAllMechsDirty, applyHomogenChangesToDirtyMechs, getDistRange, getDistRangeAsVec, getSecList, applySegmentationAndInhomogeneity, updateStatsCurve, updateVerbatimModelCurve, isMechVarInhom, prepareVarsEditorHeader, onJustBeforeCompHomogenBiophysImport, onJustAfterCompHomogenBiophysImport
     
     external mmAllComps
     external mwh, math, mth, mmmowb, mcu, dfc
+    external pyObj
     external inhomAndStochLibrary
     external stringsEqual, stringEmpty, joinStrings, concatenateTwoLists, codeContractViolation, printMsgAndRaiseError
     external eachItemInList, eachSecInList
@@ -229,6 +230,7 @@ begintemplate MechComp
                 mth.getMechName(0, mechIdx, mechName)
                 if (!isMechInserted[mechIdx] && ismembrane(mechName)) {
                     if (!mth.isIon(mechName)) {
+                        // !!!!! review this and the message below on import of biophysiscs"
                         codeContractViolation()
                     }
                     joinStrings(autoAddedIons, mechName, ", ")
@@ -270,6 +272,19 @@ begintemplate MechComp
         $&1 = distMin
         $&2 = distMax
         
+        return 0
+    }
+    
+    // !! maybe cache the info in ctor instead of calling this (but the dist range can depend on segmentation)
+    func getDistRangeAsVec() { local isDisconnected, distMin, distMax localobj distMinMaxVec
+        distMinMaxVec = $o1
+        isDisconnected = getDistRange(&distMin, &distMax)
+        if (isDisconnected) {
+            return 1
+        }
+        distMinMaxVec.resize(2)
+        distMinMaxVec.x[0] = distMin
+        distMinMaxVec.x[1] = distMax
         return 0
     }
     
@@ -368,23 +383,136 @@ begintemplate MechComp
         $&3 = yMax
     }
     
+    obfunc onJustBeforeCompHomogenBiophysImport() { local numMechs, mechIdx, varType, varTypeIdx localobj mechType, stickyMechNamesPyList
+        strdef mechName
+        
+        mechType = mth.getMechType(enumDmPpNc)
+        numMechs = mth.getNumMechs(enumDmPpNc)
+        
+        stickyMechNamesPyList = pyObj.list()
+        
+        // Except some special mechs, reset all:
+        //  * mechStd[*][*] to defaults
+        //  * isMechInserted[*] to 0
+        //  * isMechVarTypeInhom[*][*] to 0
+        for mechIdx = 0, numMechs - 1 {
+            
+            mth.getMechName(enumDmPpNc, mechIdx, mechName)
+            
+            if (isMechInserted[mechIdx] && mth.isDistMechSticky(mechIdx)) {
+                stickyMechNamesPyList.append(mechName)
+            }
+            
+            if (mechIdx == mth.morphologyMechIdx || mth.isDistMechSticky(mechIdx)) {
+                // !!!! do we need to reset mechStd for a sticky mech to defaults if it was inserted before and not imported? (currently we don't reset them)
+                continue
+            }
+            
+            isMechInserted[mechIdx] = 0
+            
+            mechType.select(mechIdx)
+            for eachSecInList(list_ref) {
+                mechType.remove()
+            }
+            
+            for varType = 1, 3 {
+                varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
+                mechStds[mechIdx][varTypeIdx] = new MechanismStandard(mechName, varType)
+                isMechVarTypeInhom[mechIdx][varTypeIdx] = 0
+            }
+        }
+        
+        // !!!!!!!!! how about inhomTargetProtos?
+        
+        return stickyMechNamesPyList
+    }
+    
+    proc onJustAfterCompHomogenBiophysImport() {
+        markAllMechsDirty()
+        isMechDirty[mth.morphologyMechIdx] = 0      // !!! and the same for sticky mechs?
+        applyHomogenChangesToDirtyMechs()
+        mmmowb.isDirty = 0
+    }
+    
     // All next staff is private
     
     
     proc analyzeAllSegmentsInAllSections() { local numMechs
         numMechs = $1
         
-        // 1. Analyze the first section to determine what mechanisms are inserted
-        // 2. Use its first segment to read the values assigned to the mechanisms variables
-        analyzeFirstSegmentOfFirstSection(numMechs)
+        // 1. Determine what mechs are inserted
+        // 2. Analyze all the sections and make sure each mech is either inserted or uninserted everywhere
+        analyzeMechInsertion(numMechs)
         
-        // 3. Make sure all other sections have the same mechanisms inserted (otherwise it's code contract violation)
-        // 4. Loop through all segments of all sections to determine what mechanisms variables are inhomogeneous
-        // 5. Create "verbatim" inhom models for them and put these models to the library
-        analyzeOtherSegmentsAndSections(numMechs)
+        // 3. For the first segment of the first section, read the values assigned to mech vars
+        analyzeMechHomogeneity(numMechs)
+        
+        // 4. Loop through all segments of all sections to determine what mech vars are inhomogeneous
+        // 5. Create "verbatim" inhom models for them and put these models into the library
+        analyzeMechInhomogeneity(numMechs)
     }
     
-    proc analyzeFirstSegmentOfFirstSection() { local numMechs, mechIdx, varType, varTypeIdx localobj firstSec_ref, mechStd
+    proc analyzeMechInsertion() { local numMechs, mechIdx, secIdx, isMechInsertedHere, isInsertOrUninsert localobj mechType, firstSec_ref
+        strdef msgTempl1, msgTempl2, mechName, msg
+        
+        numMechs = $1
+        
+        msgTempl1 = "Cannot create the comp \"%s\" until the mech \"%s\" is inserted in some its section(s) but uninserted in other(s). To proceed, we need to either uninsert or insert it everywhere."
+        msgTempl2 = "Cannot create the comp \"%s\" until the mech \"%s\" is inserted in some its section(s) but uninserted in other(s). To proceed, we need to insert it everywhere."
+        
+        mechType = mth.getMechType(0)
+        
+        firstSec_ref = list_ref.o(0)
+        
+        for mechIdx = 0, numMechs - 1 {
+            mth.getMechName(0, mechIdx, mechName)
+            
+            firstSec_ref.sec {
+                isMechInserted[mechIdx] = ismembrane(mechName)
+            }
+            
+            for secIdx = 1, list_ref.count() - 1 {
+                list_ref.o(secIdx).sec {
+                    isMechInsertedHere = ismembrane(mechName)
+                }
+                
+                if (isMechInsertedHere == isMechInserted[mechIdx]) {
+                    continue
+                }
+                
+                if (!mth.isDistMechSticky(mechIdx)) {
+                    sprint(msg, msgTempl1, name, mechName)
+                    isInsertOrUninsert = !boolean_dialog(msg, "Uninsert", "Insert (default)")
+                } else {
+                    // !!! that's strange, but clicking "OK" in this "Warning" widget has the effect on "continue_dialog" (below) or "boolean_dialog" (above)
+                    //     forcing "Continue" or "Insert (default)" respectively
+                    // !!! BUG: depending on screen size and the scale, this warning box can obstructed by "continue_dialog" or "boolean_dialog" (particularly, for 1920x1080 and 150% scale)
+                    mcu.showCannotUninsertMechWarning(mechName, 1)
+                    
+                    sprint(msg, msgTempl2, name, mechName)
+                    continue_dialog(msg)
+                    
+                    isInsertOrUninsert = 1
+                }
+                
+                mechType.select(mechIdx)
+                
+                for eachSecInList(list_ref) {
+                    if (isInsertOrUninsert) {
+                        mechType.make()
+                    } else {
+                        mechType.remove()
+                    }
+                }
+                
+                isMechInserted[mechIdx] = isInsertOrUninsert
+                
+                break
+            }
+        }
+    }
+    
+    proc analyzeMechHomogeneity() { local numMechs, mechIdx, varType, varTypeIdx localobj firstSec_ref, mechStd
         strdef mechName // , handlerHocCommand
         
         numMechs = $1
@@ -394,8 +522,6 @@ begintemplate MechComp
         for mechIdx = 0, numMechs - 1 {
             mth.getMechName(0, mechIdx, mechName)
             
-            firstSec_ref.sec isMechInserted[mechIdx] = ismembrane(mechName)
-            
             for varType = 1, 3 {    // 1: "PARAMETER", 2: "ASSIGNED", 3: "STATE"
                 // If varType == -1 ("GLOBAL"), then MechanismStandard object does not implement "panel" method,
                 // so all the GLOBAL variables will be edited with "nrnglobalmechmenu" just in place
@@ -403,8 +529,12 @@ begintemplate MechComp
                 
                 mechStd = new MechanismStandard(mechName, varType)  // !! do I need to create such "default" mechStd after each uninsert/insert?
                 
-                // NEURON docs say that this copies parameter values into this mechanism standard from the mechanism located in first segment of the currently accessed section
-                firstSec_ref.sec mechStd.in()
+                if (isMechInserted[mechIdx]) {
+                    firstSec_ref.sec {
+                        // NEURON docs say that this copies parameter values into this mechanism standard from the mechanism located in first segment of the currently accessed section
+                        mechStd.in()
+                    }
+                }
                 
                 // Deprecated because MechanismStandard.panel() is not used anymore
                 // sprint(handlerHocCommand, "markMechDirty(%d)", mechIdx)
@@ -417,31 +547,22 @@ begintemplate MechComp
     }
     
     // !! this proc is the bottleneck causing the pause before the widgets show up (loops nesting of depth 6)
-    proc analyzeOtherSegmentsAndSections() { local numMechs, mechIdx, secIdx, isMechInsertedHere, varType, varTypeIdx, varIdx, arraySize, arrayIndex, isInhom, compIdx localobj baseMechStd, tempMechStd, distFuncHelper, inhomTargetProto
-        strdef mechName, msg, varName
+    proc analyzeMechInhomogeneity() { local numMechs, mechIdx, varType, varTypeIdx, varIdx, arraySize, arrayIndex, isInhom, compIdx, isNonVerbatimInhomModelFound, is_g_pas localobj baseMechStd, tempMechStd, distFuncHelper, inhomTargetProto
+        strdef msgTempl, mechName, varName, msg
+        
+        msgTempl = "The inhom model applied earlier to \"%s\" in \"%s\" using Inhomogeneity editor is replaced now with \"Verbatim data\" model."
         
         numMechs = $1
         
         inhomTargetProtos = new List()
         
         for mechIdx = 0, numMechs - 1 {
-            mth.getMechName(0, mechIdx, mechName)
             
-            // !!! maybe use eachSecInList here (starting from 1)
-            for secIdx = 1, list_ref.count() - 1 {
-                list_ref.o(secIdx).sec {
-                    isMechInsertedHere = ismembrane(mechName)
-                }
-                
-                if (isMechInsertedHere != isMechInserted[mechIdx]) {
-                    sprint(msg, "Error: Cannot create compartment \"%s\" because the mechanism \"%s\" is inserted in some its section(s) but uninserted in other(s).", name, mechName)
-                    printMsgAndRaiseError(msg)
-                }
-            }
-        
             if (!isMechInserted[mechIdx]) {
                 continue
             }
+            
+            mth.getMechName(0, mechIdx, mechName)
             
             for varType = 1, 3 {    // 1: "PARAMETER", 2: "ASSIGNED", 3: "STATE"
                 varTypeIdx = mth.convertVarTypeToVarTypeIdx(varType)
@@ -452,7 +573,7 @@ begintemplate MechComp
                 for varIdx = 0, tempMechStd.count() - 1 {
                     arraySize = mth.getVarNameAndArraySize(0, mechIdx, varType, varIdx, varName) 
                     for arrayIndex = 0, arraySize - 1 {
-                        isInhom = analyzeOtherSegmentsAndSectionsCore(mechIdx, varTypeIdx, varName, arrayIndex, baseMechStd, tempMechStd)
+                        isInhom = analyzeMechInhomogeneityCore(mechIdx, varTypeIdx, varName, arrayIndex, baseMechStd, tempMechStd)
                         if (!isInhom) {
                             continue
                         }
@@ -463,8 +584,18 @@ begintemplate MechComp
                         // !! BUG: this won't work correctly if MechComp ctor is called from .split
                         compIdx = mmAllComps.count()
                         
-                        if (inhomAndStochLibrary.isInhomEnabledFor(0, compIdx, mechIdx, varType, varIdx, arrayIndex)) {
-                            continue
+                        isNonVerbatimInhomModelFound = inhomAndStochLibrary.doesThisVarHaveVerbatimOrNonVerbatimInhomModel(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, 0)
+                        is_g_pas = pyObj.isAstrocyteSpecificInhomVar(name, mechIdx, varType, varIdx, arrayIndex)
+                        if (isNonVerbatimInhomModelFound) {
+                            if (is_g_pas) {
+                                // !!! g_pas in "Large Glia" for astrocytes is the only inhom var for which any custom inhom model applied by user using Inhomogeneity editor
+                                //     can be ignored and replaced by verbatim model if user later changes GPassive in Main UI
+                                //     and then opens Manager of biophysics again triggering Rescan
+                                sprint(msg, msgTempl, varName, name)
+                                continue_dialog(msg)
+                            } else {
+                                continue
+                            }
                         }
                         
                         distFuncHelper = new VerbatimDistFuncHelper(list_ref, varName, arrayIndex, tempMechStd)
@@ -478,7 +609,7 @@ begintemplate MechComp
         }
     }
     
-    func analyzeOtherSegmentsAndSectionsCore() { local mechIdx, varTypeIdx, arrayIndex, baseValue, isFirstSecAndSegm, secIdx, x, otherValue localobj baseMechStd, tempMechStd
+    func analyzeMechInhomogeneityCore() { local mechIdx, varTypeIdx, arrayIndex, baseValue, isFirstSecAndSegm, secIdx, x, otherValue localobj baseMechStd, tempMechStd
         strdef varName
         
         mechIdx = $1

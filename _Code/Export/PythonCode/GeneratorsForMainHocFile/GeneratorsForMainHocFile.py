@@ -334,7 +334,7 @@ class GeneratorsForMainHocFile:
         
         dfhTemplNames = set()
         isTablePlusLinInterpDistFuncExported = False
-        for actSpecVar in h.inhomAndStochLibrary.activeSpecVars:
+        for actSpecVar in hocObj.inhomAndStochLibrary.activeSpecVars:
             if not hocObj.exportOptions.isExportedInhomVar(actSpecVar):
                 continue
             dfhTemplNames.add(getTemplateName(actSpecVar.distFuncHelper))
@@ -385,7 +385,7 @@ class GeneratorsForMainHocFile:
         
         sdhTemplNames = set()
         sfhTemplNames = set()
-        for actSpecVar in h.inhomAndStochLibrary.activeSpecVars:
+        for actSpecVar in hocObj.inhomAndStochLibrary.activeSpecVars:
             if not hocObj.exportOptions.isExportedStochVar(actSpecVar):
                 continue
             stochFuncHelper = actSpecVar.stochFuncHelper

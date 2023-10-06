@@ -11,7 +11,7 @@ begintemplate MechTypeHelper
 
     public getMechType, getNumMechs, getMechName, getMechIdx, getNumVarTypes, getNumMechVars, doesMechHaveGlobalVars, doesMechHaveNotGlobalVars, getVarNameAndArraySize, getVarTypeName, getVarNameWithIndex, getVarUnits, getVarNameWithIndexAndUnits, isDistMechSticky, isIon, checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar, isDiamDistMechVar, isWeightNetConVar, convertVarTypeToVarTypeIdx, doesPointProcessRequireSection, isPointProcessAcceptableNetConSource, isPointProcessAcceptableNetConTarget
     
-    public morphologyMechIdx, diamVarType, diamVarName
+    public morphologyMechIdx, morphologyMechName, diamVarType, diamVarName
     public extracellularMechName, ionSuffix
     
     external mwh, mechSettings
@@ -180,6 +180,7 @@ begintemplate MechTypeHelper
         return mechStd.name($s5, varIdx)
     }
     
+    // See also: py:BiophysJsonImportCore._getVarType
     proc getVarTypeName() { local varType
         varType = $1
         

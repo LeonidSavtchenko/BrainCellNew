@@ -33,19 +33,36 @@ proc changeVolume() { local j
 // end
 
 // Change distribution of Leaves
-// $1 - Boolean. 0 - uniform distribution. 1 - distribution from file.
-proc distrSelectedLeaves() {
-    if (numarg() >= 1) {
-        distrStatusLeaves = $1
+// $1 - Boolean. 0 - update both geometry and biophysics. 1 - update biophysics only.
+// $2 (optional) - Boolean. 0 - uniform distribution. 1 - distribution from file. If omitted, then "last used."
+// !!! called from Python on biophys import
+proc distrSelectedLeaves() { local numArg, isBiophysOnly
+
+    numArg = numarg()
+    if (numArg < 1 || numArg > 2) {
+        codeContractViolation()
     }
-    setLeaves(distrStatusLeaves)
+    
+    isBiophysOnly = $1
+    if (numArg == 2) {
+        distrStatusLeaves = $2
+    }
+    
+    setLeaves(isBiophysOnly, distrStatusLeaves)
 }
 
 // Change distribution of Stalks
-// $1 - Boolean. 0 - uniform distribution. 1 - distribution from file.
-proc distrSelectedStalks() {
-    if (numarg() >= 1) {
+// $1 (optional) - Boolean. 0 - uniform distribution. 1 - distribution from file. If omitted, then "last used."
+proc distrSelectedStalks() { local numArg
+
+    numArg = numarg()
+    if (numArg > 1) {
+        codeContractViolation()
+    }
+    
+    if (numArg == 1) {
         distrStatusStalks = $1
     }
+    
     setStalks(distrStatusStalks)
 }

@@ -2,7 +2,7 @@
 // Sets initial params.
 proc initParamsMain() {
     if (isAstrocyteOrNeuron) {
-        nanoBranchesManager.reseedBranches(nanoDistrLoaded, nanoDistrLoaded)    // !!
+        nanoBranchesManager.reseedBranches(createVector(nanoDistrLoaded, nanoDistrLoaded))  // !! why here?
     }
     
     OnlySingleGluSimulations = 1 // parameter for Glu and Potassium single  voltage clamp mechanism

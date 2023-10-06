@@ -77,8 +77,8 @@ begintemplate NeuronNanoBranch
     // Normal only:
     external MeanRadiusHead, SDRadiusHead, MeanSpineNeckLength, SDSpineNeckLength, MeanSpineNeckDiameter, SDSpineNeckDiameter
     
-    // func
-    // !! external capDiam
+    // func/proc
+    external /* !!capDiam,*/ codeContractViolation
     
     external isFirstReseeding
     
@@ -89,8 +89,13 @@ begintemplate NeuronNanoBranch
     create spine_head
     
     
-    proc init() { local isUniformOrNormal
-        isUniformOrNormal = $1
+    proc init() { local isUniformOrNormal localobj args
+        args = $o1
+        
+        if (args.size() != 1) {
+            codeContractViolation()
+        }
+        isUniformOrNormal = args.x[0]
         
         initTopology()
         initGeometry(isUniformOrNormal)
@@ -101,8 +106,13 @@ begintemplate NeuronNanoBranch
         }
     }
     
-    proc update() { local isUniformOrNormal
-        isUniformOrNormal = $1
+    proc update() { local isUniformOrNormal localobj args
+        args = $o1
+        
+        if (args.size() != 1) {
+            codeContractViolation()
+        }
+        isUniformOrNormal = args.x[0]
         
         updateGeometry(isUniformOrNormal)
     }
@@ -236,8 +246,6 @@ begintemplate NeuronNanoBranch
 endtemplate NeuronNanoBranch
 
 
-obfunc createNeuronNanoBranch() { local isUniformOrNormal
-    isUniformOrNormal = $1
-    
-    return new NeuronNanoBranch(isUniformOrNormal)
+obfunc createNeuronNanoBranch() {
+    return new NeuronNanoBranch($o1)
 }

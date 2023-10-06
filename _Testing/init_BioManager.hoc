@@ -15,6 +15,6 @@ stochTestGraph = new Graph()
 { load_file("../_Code/Managers/CommonLoads.hoc") }
 { load_file("../_Code/Managers/MechManager/MechManager.hoc") }
 
-makeSureMechCompsCreatedOrImportedThenShowMechManagerBaseWidget()
+makeSureMechCompsCreatedOrImportedAndRescannedThenShowMechManagerBaseWidget()
 
 { chdir("..") }     // Without this, getcwd() will return different path compared to the start from "init.hoc"

@@ -1,9 +1,7 @@
 
 import os
-from neuron import hoc
+from OtherInterModularUtils import *
 
-
-hocObj = hoc.HocObject()
 
 indentSize = 4
 stdIndent = ' ' * indentSize
@@ -33,12 +31,6 @@ def prepareUniqueNameId(name):
     # !! BUG: Two different names "A1" and "A 1" will have the same ID
     return name.replace(' ', '')
     
-def getTemplateName(hocTemplInst):
-    templName = str(hocTemplInst)
-    idx = templName.index('[')
-    templName = templName[: idx]
-    return templName
-    
 def getExposedVarName(exposedVarIdx):
     return f'EXPOSED_VAR_{exposedVarIdx + 1}'
     
@@ -53,7 +45,4 @@ def getIndent(line):
         if not char.isspace():
             return ' ' * idx
     codeContractViolation()
-    
-def codeContractViolation():
-    raise Exception('Bug in Exporter: Code contract violation')
     

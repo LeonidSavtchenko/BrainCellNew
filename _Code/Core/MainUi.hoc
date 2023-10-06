@@ -178,7 +178,7 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
             if (!isAstrocyteOrNeuron) {
                 xbutton("Edit synapses", "startSynManager()")
             }
-            xbutton("Edit extracellular sources (in development)", "startECSManager()")     // !!!
+            xbutton("Edit extracellular sources", "startECSManager()")
             if (isBaseOrNanoStart && !isAstrocyteOrNeuron) {
                 xbutton("Insert electrode", "insertElectrode()")
             }
@@ -306,7 +306,7 @@ proc startMechManager() { local isCancel
         return
     }
     
-    makeSureMechCompsCreatedOrImportedThenShowMechManagerBaseWidget()
+    makeSureMechCompsCreatedOrImportedAndRescannedThenShowMechManagerBaseWidget()
 }
 
 proc startSynManager() { local isCancel

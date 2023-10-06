@@ -1,87 +1,76 @@
 
 import json
-from neuron import h, hoc
-
-
-hocObj = hoc.HocObject()
+from neuron import h
+from BiophysJsonExportCore import BiophysJsonExportCore
+from BiophysJsonImportCore import BiophysJsonImportCore
+from OtherInterModularUtils import *
 
 
 class BiophysJsonFileHelper:
-
+    
+    _biophysJsonExportCore = BiophysJsonExportCore()
+    _biophysJsonImportCore = BiophysJsonImportCore()
+    
+    _jsonDictForImportStage3 = None
+    
+    
     def exportStage2(self, outJsonFilePathName, options):
-        # !!!
-        print('!!! exportStage2')
         
-        # !!!
-        self._printOptions(options)
+        jsonDict = self._biophysJsonExportCore.exportCore(options)
         
-        return 0    # !!!
+        with open(outJsonFilePathName, 'w') as jsonFile:
+            json.dump(jsonDict, jsonFile, indent=4)
+            
+        return 0
         
     def importStage1(self, inJsonFilePathName):
-        # !!!
-        print('!!! importStage1')
         
         with open(inJsonFilePathName) as jsonFile:
             jsonDict = json.load(jsonFile)
             
+        mechNames = set()
+        
         compNames = h.List()
         numInhomVars = 0
         numStochVars = 0
         for (compName, mechNameToInfoDict) in jsonDict.items():
             compNames.append(h.String(compName))
+            mechNames.update(mechNameToInfoDict.keys())
             for varTypeToInfoDict in mechNameToInfoDict.values():
-                if type(varTypeToInfoDict) == str:                      # !!!!!!!! just a temp shortcut (encountered a comment in the test JSON)
-                    continue
-                for varRecordToInfoDict in varTypeToInfoDict.values():
-                    if type(varRecordToInfoDict) == str:                # !!!!!!!! just a temp shortcut (encountered "..." in the test JSON)
-                        continue
-                    for varRecordKey in varRecordToInfoDict.keys():
-                        if 'inhom' in varRecordKey:         # !!! a bit risky approach because the marker can appear in the units
-                            numInhomVars += 1
-                        if 'stoch' in varRecordKey:         # !!! the same comment
-                            numStochVars += 1
-                            
-        """ !!!
-        compNames.append(h.String('Soma'))
-        compNames.append(h.String('Dendrites'))
-        compNames.append(h.String('Axon'))
-        compNames.append(h.String('Spine Neck'))
-        compNames.append(h.String('Spine Head'))
-        compNames.append(h.String('Comp Test 1'))
-        compNames.append(h.String('Comp Test 2'))
-        compNames.append(h.String('Comp Test 3'))
-        compNames.append(h.String('Comp Test 4'))
-        compNames.append(h.String('Comp Test 5'))
-        compNames.append(h.String('Comp Test 6'))
-        compNames.append(h.String('Comp Test 7'))
-        compNames.append(h.String('Comp Test 8'))
-        compNames.append(h.String('Comp Test 9'))
-        compNames.append(h.String('Comp Test 10'))
-        numInhomVars = 222
-        numStochVars = 333
-        """
+                for varNameToInfoDict in varTypeToInfoDict.values():
+                    for varValueOrInfoDict in varNameToInfoDict.values():
+                        if type(varValueOrInfoDict) is not dict:
+                            continue
+                        for varInfoKey in varValueOrInfoDict.keys():
+                            if varInfoKey == 'inhom_model':
+                                numInhomVars += 1
+                            elif varInfoKey == 'stoch_model':
+                                numStochVars += 1
+                                
+        missingMechNames = h.List()
+        for mechName in mechNames:
+            if self._isMechMissing(mechName):
+                missingMechNames.append(h.String(mechName))
+                
+        if missingMechNames:
+            hocObj.mwh.showWarningBox(
+                "Cannot import this biophys file because it uses some mechs missing in the local library \"nrnmech.dll\":", \
+                missingMechNames)
+            return 1
+            
+        self._jsonDictForImportStage3 = jsonDict
         
-        hocObj.beih.importStage2(compNames, numInhomVars, numStochVars)
+        hocObj.beih.importStage2(compNames, numInhomVars, numStochVars)     # --> importStage3
         
-        return 0    # !!!
+        return 0
         
     def importStage3(self, options):
-        # !!!
-        print('!!! importStage3')
-        
-        # !!!
-        self._printOptions(options)
-        
-        return 0    # !!!
+        return self._biophysJsonImportCore.importCore(self._jsonDictForImportStage3, options)
         
         
-    # !!!
-    def _printOptions(self, options):
-        print('-----')
-        print('options.isUseThisCompNameVec.size(): ', options.isUseThisCompNameVec.size())
-        print('options.isUseThisCompNameVec.sum(): ', options.isUseThisCompNameVec.sum())
-        print('options.isGlobals: ', options.isGlobals)
-        print('options.isAssignedAndState: ', options.isAssignedAndState)
-        print('options.isInhoms: ', options.isInhoms)
-        print('options.isStochs: ', options.isStochs)
+    def _isMechMissing(self, mechName):
+        # !!!!!!! very risky: the name can be declared as an arbitrary var rather than a mech
+        #         re-implement this in a more robust way
+        # !!! try to check type() in Python or object_id in HOC
+        return not h.name_declared(mechName)    # !!! try to use it with 2nd arg; the docs say it returns the type code
         

@@ -5,8 +5,10 @@ begintemplate BiophysExportImportHelper
     public exportStage2, importStage2, importStage3
     
     external mmAllComps
-    external stringsEqual, printPythonErrMsgAndStop
-    external pyObj, fbh, mwh
+    external stringsEqual, stringCapitalize, getNotImplementedLines, printPythonErrMsgAndStop
+    external pyObj, fbh, mth, mwh
+    external isAstrocyteOrNeuron, isBaseOrNanoStart
+    external mechManagerMainWidget, mmmowb
     external pyEnumOutFileTypes, pyEnumInFileTypes
     external eachItemInList
     
@@ -29,13 +31,34 @@ begintemplate BiophysExportImportHelper
         biophysJsonFileHelper = pyObj.BiophysJsonFileHelper()
     }
     
-    proc export() {
+    proc export() { local isCancel, status
         mmeibWidget = $o1
+        
+        isCancel = checkForNotImplementedScenario("export")
+        if (isCancel) {
+            return
+        }
+        
+        // !!!!!! check for pending changes in mech comps as well
+        
+        // !!!!! this is just a half-measure because user can make some changes to biophysics just before the click on "Export" button in "Export of biophysics" widget
+        // !!!!! maybe move this code to (or duplicate in) exportStage2
+        status = mmmowb.ifDirtyThenProposeUserToApplyChanges("export")
+        if (status == 1) {
+            return
+        }
+        
+        if (status == 2) {
+            // !!!!!
+            mwh.endIntercepting()
+        }
+        
+        // !!!!?? mmmowb.dismissHandler()
         
         mmeibWidget.show(1)     // --> exportStage2
     }
     
-    proc exportStage2() { local isCancel, isOK localobj options
+    proc exportStage2() { local isCancel, isError localobj options
         
         options = $o1
         
@@ -45,19 +68,28 @@ begintemplate BiophysExportImportHelper
             return
         }
         
-        isOK = biophysJsonFileHelper.exportStage2(jsonFilePathName, options)
-        if (!isOK) {
-            // !!!
+        // !! export of VerbatimDistFuncHelper can be a slow operation
+        mwh.showPleaseWaitBox("Exporting biophysics file.")
+        {
+            isError = biophysJsonFileHelper.exportStage2(jsonFilePathName, options)
+            if (isError) {
+                return
+            }
         }
+        mwh.hidePleaseWaitBox()
         
-        // !!!
-        mwh.showNotImplementedWarning()
+        showExportOrImportCompleteMsg(1, options)
         
-        // !!! mmeibWidget.dismissHandler()
+        mmeibWidget.dismissHandler()
     }
     
-    proc import() { local isCancel, isOK
+    proc import() { local isCancel, isError
         mmeibWidget = $o1
+        
+        isCancel = checkForNotImplementedScenario("import")
+        if (isCancel) {
+            return
+        }
         
         mmeibWidget.dismissHandler()
         
@@ -67,9 +99,9 @@ begintemplate BiophysExportImportHelper
             return
         }
         
-        isOK = biophysJsonFileHelper.importStage1(jsonFilePathName)     // --> importStage2
-        if (!isOK) {
-            // !!!
+        isError = biophysJsonFileHelper.importStage1(jsonFilePathName)  // --> importStage2
+        if (isError) {
+            return
         }
     }
     
@@ -114,18 +146,85 @@ begintemplate BiophysExportImportHelper
         mwh.showWarningBox(line1, missingCompNames, "", line2, "")
     }
     
-    proc importStage3() { local isOK localobj options
+    proc importStage3() { local isError localobj options
         options = $o1
         
-        isOK = biophysJsonFileHelper.importStage3(options)
-        if (!isOK) {
-            // !!!
+        // !! application of inhomogeneities can be a slow operation
+        mwh.showPleaseWaitBox("Importing biophysics file.")
+        {
+            isError = biophysJsonFileHelper.importStage3(options)
+            if (isError) {
+                return
+            }
         }
+        mwh.hidePleaseWaitBox()
         
-        // !!!
-        mwh.showNotImplementedWarning()
+        // The widget could be closed if we imported the astrocyte-specific inhom model for "g_pas"
+        // that required the call of proc distrSelectedLeaves() which closes the widget
+        // mechManagerMainWidget.mechOpSelectHandler()
+        mechManagerMainWidget.updateVisibleMechOpChilds()
         
-        // !!! mmeibWidget.dismissHandler()
+        showExportOrImportCompleteMsg(0, options)
+        
+        mmeibWidget.dismissHandler()
+    }
+    
+    // All next staff is private
+    
+    
+    func checkForNotImplementedScenario() { local isCancel
+        strdef word, msg
+        word = $s1
+        isCancel = (isAstrocyteOrNeuron && !isBaseOrNanoStart)
+        if (isCancel) {
+            sprint(msg, "Cannot %s astrocyte biophysics in \"Start with Nano geometry\" mode.", word)
+            // See the comments about the errors in py:BiophysJsonExportCore._prepareInhomModelInfoDict and py:BiophysJsonImportCore._importInhomModel
+            mwh.showNotImplementedWarning(msg)
+        }
+        return isCancel
+    }
+    
+    proc showExportOrImportCompleteMsg() { local isExportOrImport, cond localobj options
+        strdef word, Word, line1, line2, line3, line4, line5, line6, line7, msg
+        
+        isExportOrImport = $1
+        options = $o2
+        
+        if (isExportOrImport) {
+            word = "export"
+        } else {
+            word = "import"
+        }
+        stringCapitalize(word, Word)
+        
+        mwh.startIntercepting()
+        {
+            sprint(line1, "Here is what we don't %s at the moment (the list is incomplete):", word)
+            line2 = "    * GLOBAL vars of biophys mechs"
+            line3 = "    * \"Ra\" variable in the sections (for now it's %s)"
+            if (isExportOrImport) {
+                sprint(line3, line3, "exported only by \"Manager of export\"")
+            } else {
+                sprint(line3, line3, "imported only on the beginning in \"Start with Nano geometry\" mode")
+            }
+            cond = options.isAnyStochModels()   // !!! false positive here when user disables export/import of a specific compartment or ASSIGNED and STATE vars
+            if (cond) {
+                line4 = "    * states of RNGs"
+            }
+            getNotImplementedLines(line5, line6)
+            sprint(line7, "Also, please notice that \"%s\" mech is not %sed as a part of biophysics.", mth.morphologyMechName, word)
+            if (cond) {
+                mwh.showWarningBox(line1, line2, line3, line4, "", line5, line6, "", line7)
+            } else {
+                mwh.showWarningBox(line1, line2, line3, "", line5, line6, "", line7)
+            }
+            
+            // !!!!!!! also, mention our behaviour for verbatim models
+            
+            sprint(msg, "%s complete successfully", Word)
+            mwh.showMessageBox(msg, "Complete")
+        }
+        mwh.endIntercepting()
     }
     
 endtemplate BiophysExportImportHelper

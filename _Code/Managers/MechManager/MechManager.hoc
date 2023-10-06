@@ -44,9 +44,9 @@ proc analyzeSectsAndCreateComps() { local compIdx localobj endFoot_ref, other_re
 
 isConvertedFromReducedMechCompTemplates = 0
 
-proc makeSureMechCompsCreatedOrImported() { localobj nil, editableComps, reducedComp
+proc makeSureMechCompsCreatedOrImportedAndRescanned() { localobj nil, editableComps, reducedComp
     
-    if (mmAllComps == nil) {
+    if (mmAllComps == nil || isScheduledRescanningOfDistMechs) {
         analyzeSectsAndCreateComps()
     } else if (!isBaseOrNanoStart && !isConvertedFromReducedMechCompTemplates) {
         editableComps = new List()
@@ -58,9 +58,9 @@ proc makeSureMechCompsCreatedOrImported() { localobj nil, editableComps, reduced
     }
 }
 
-proc makeSureMechCompsCreatedOrImportedThenShowMechManagerBaseWidget() {
+proc makeSureMechCompsCreatedOrImportedAndRescannedThenShowMechManagerBaseWidget() {
 
-    makeSureMechCompsCreatedOrImported()
+    makeSureMechCompsCreatedOrImportedAndRescanned()
     
     dismissIfNotNil(manageAndRunWidget)
     manageAndRunWidget = new ManageAndRunWidget(0)

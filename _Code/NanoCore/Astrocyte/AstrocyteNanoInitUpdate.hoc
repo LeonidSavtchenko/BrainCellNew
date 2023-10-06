@@ -1,16 +1,17 @@
 
 proc addLeaves() {
-    nanoBranchesManager.reseedBranches(distrStatusLeaves, distrStatusStalks)
+    nanoBranchesManager.reseedBranches(createVector(distrStatusLeaves, distrStatusStalks))
 }
 
-proc setLeaves() { local isDiamDistrFromFileOrUniform
-    isDiamDistrFromFileOrUniform = $1
+proc setLeaves() { local isBiophysOnly, isDiamDistrFromFileOrUniform
+    isBiophysOnly = $1
+    isDiamDistrFromFileOrUniform = $2
     
-    nanoBranchesManager.updateBranches(1, isDiamDistrFromFileOrUniform)
+    nanoBranchesManager.updateBranches(createVector(1, isBiophysOnly, isDiamDistrFromFileOrUniform))
 }
 
 proc setStalks() { local isDiamDistrFromFileOrUniform
     isDiamDistrFromFileOrUniform = $1
     
-    nanoBranchesManager.updateBranches(0, isDiamDistrFromFileOrUniform)
+    nanoBranchesManager.updateBranches(createVector(0, 0, isDiamDistrFromFileOrUniform))
 }

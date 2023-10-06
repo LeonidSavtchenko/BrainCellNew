@@ -40,6 +40,7 @@ begintemplate NanoBranchesManager
     external seededDendrite_ref, NumberNanoBranches
     external isAstrocyteOrNeuron, MinDistance, MaxDendriticLength, isFirstReseeding
     external mwh, rngUtils, math
+    external eachItemInList
     external manageAndRunWidget
     
     external createAstrocyteNanoBranch, createNeuronNanoBranch, createRefsForNanoGeometry
@@ -51,8 +52,7 @@ begintemplate NanoBranchesManager
     
     MaxNumberBranchesPerDendrite = -1
     
-    lastUsedArg1 = -1
-    lastUsedArg2OrMinus1 = -1
+    objref lastUsedArgs
     
     
     // Initialization of this singleton template
@@ -67,26 +67,12 @@ begintemplate NanoBranchesManager
     }
     
     // Reseed dendrites with nanobranches
-    // $1 - The 1st argument passed to *NanoBranch template
-    // $2 (optional) - The 2nd argument passed to *NanoBranch template
+    // $o1 - The Vector of args passed to *NanoBranch template
     // Other inputs: seededDendrite_ref (taken from the top level) etc.
-    proc reseedBranches() { local numArg, arg1, arg2, ControlFactor, dendIdx, NormFactor, slotIdx localobj nil
-        numArg = numarg()
-        if (numArg < 1 || numArg > 2) {
-            codeContractViolation()
-        }
+    proc reseedBranches() { local ControlFactor, NormFactor, slotIdx localobj args, nil, sec_ref
+        args = $o1
         
-        arg1 = $1
-        lastUsedArg1 = arg1
-        if (numArg == 2) {
-            arg2 = $2
-            if (arg2 == -1) {
-                codeContractViolation()
-            }
-            lastUsedArg2OrMinus1 = arg2
-        } else {
-            lastUsedArg2OrMinus1 = -1
-        }
+        lastUsedArgs = args
         
         if (manageAndRunWidget != nil) {
             manageAndRunWidget.onNanoReseedOrUpdateHandler()
@@ -100,17 +86,14 @@ begintemplate NanoBranchesManager
             
             ControlFactor=(MinDistance*MaxNumberBranchesPerDendrite)/MaxDendriticLength
             
-            for dendIdx = 0, seededDendrite_ref.count() - 1 {
-                NormFactor=ControlFactor*MaxDendriticLength/seededDendrite_ref.o(dendIdx).sec.L
+            // !!! maybe use eachSecInList here
+            for eachItemInList(sec_ref, seededDendrite_ref) {
+                NormFactor=ControlFactor*MaxDendriticLength/sec_ref.sec.L
                 
                 for slotIdx = 0, MaxNumberBranchesPerDendrite - 1 {
                     
                     if (randomBranchSeeder.uniform(0,1) < 1/NormFactor) {
-                        if (numArg == 1) {
-                            createInitAndConnectOneBranch(dendIdx, slotIdx, arg1)
-                        } else {
-                            createInitAndConnectOneBranch(dendIdx, slotIdx, arg1, arg2)
-                        }
+                        createInitAndConnectOneBranch(sec_ref, slotIdx, args)
                     }
                 }
             }
@@ -140,38 +123,20 @@ begintemplate NanoBranchesManager
     // Reseed dendrites with nanobranches using the same arguments as the last time
     // Inputs: seededDendrite_ref (taken from the top level) etc.
     proc reseedBranchesWithLastUsedArgs() {
-        if (lastUsedArg2OrMinus1 == -1) {
-            reseedBranches(lastUsedArg1)
-        } else {
-            reseedBranches(lastUsedArg1, lastUsedArg2OrMinus1)
-        }
+        reseedBranches(lastUsedArgs)
     }
     
     // Update nanobranches geometry without reseeding
-    // $1 - The 1st argument passed to *NanoBranch template
-    // $2 (optional) - The 2nd argument passed to *NanoBranch template
-    proc updateBranches() { local numArg, arg1, arg2, branchIdx localobj nil, nanoBranch
-        numArg = numarg()
-        if (numArg < 1 || numArg > 2) {
-            codeContractViolation()
-        }
-        
-        arg1 = $1
-        if (numArg == 2) {
-            arg2 = $2
-        }
+    // $o1 - The Vector of args passed to *NanoBranch template
+    proc updateBranches() { localobj args, nil, nanoBranch
+        args = $o1
         
         if (manageAndRunWidget != nil) {
             manageAndRunWidget.onNanoReseedOrUpdateHandler()
         }
         
-        for branchIdx = 0, NumberNanoBranches - 1 {
-            nanoBranch = nanoBranches_flat.o(branchIdx)
-            if (numArg == 1) {
-                nanoBranch.update(arg1)
-            } else {
-                nanoBranch.update(arg1, arg2)
-            }
+        for eachItemInList(nanoBranch, nanoBranches_flat) {
+            nanoBranch.update(args)
         }
         
         if (!isAstrocyteOrNeuron) {
@@ -195,38 +160,26 @@ begintemplate NanoBranchesManager
     
     
     // Create, initialize and connect to dendrite a new nanobranch
-    // $1 - The dendrite index
+    // $o1 - The SectionRef of the seeded dendrite
     // $2 - The index of a slot on that dendrite to connect the new nanobranch
-    // $3 - The 1st argument passed to *NanoBranch template
-    // $4 (optional) - The 2nd argument passed to *NanoBranch template
+    // $o3 - The Vector of args passed to *NanoBranch template
     // Other inputs: seededDendrite_ref (taken from the top level) etc.
-    proc createInitAndConnectOneBranch() { local numArg, dendIdx, slotIdx, arg1, arg2, connectionPoint localobj newBranch
-        numArg = numarg()
-        if (numArg < 3 || numArg > 4) {
-            codeContractViolation()
-        }
-        if (isAstrocyteOrNeuron && numArg == 3) {
-            codeContractViolation()
-        }
-        
-        dendIdx = $1
+    proc createInitAndConnectOneBranch() { local slotIdx, connectionPoint localobj sec_ref, args, newBranch
+        sec_ref = $o1
         slotIdx = $2
-        arg1 = $3
-        if (numArg == 4) {
-            arg2 = $4
-        }
+        args = $o3
         
         // Create and initialize one branch (sections, topology, geometry, biophysics)
         if (isAstrocyteOrNeuron) {
-            newBranch = createAstrocyteNanoBranch(arg1, arg2)
+            newBranch = createAstrocyteNanoBranch(args)
         } else {
-            newBranch = createNeuronNanoBranch(arg1)
+            newBranch = createNeuronNanoBranch(args)
         }
         nanoBranches_flat.append(newBranch)
         
         // Connect the new branch to this dendrite in this point
         connectionPoint = (1/MaxNumberBranchesPerDendrite)*slotIdx
-        seededDendrite_ref.o(dendIdx).sec connect newBranch.root_ref.sec(0), connectionPoint
+        sec_ref.sec connect newBranch.root_ref.sec(0), connectionPoint
     }
     
 endtemplate NanoBranchesManager

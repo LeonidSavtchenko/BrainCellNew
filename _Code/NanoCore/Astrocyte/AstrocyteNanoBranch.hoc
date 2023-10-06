@@ -10,7 +10,7 @@ MinDimLeaves = 1                                // um
 MaxDimLeaves = 3                                // um
 MinLenLeaves = 0.1                              // um
 MaxLenLeaves = 0.12                             // um
-GPassive = 0.001                                // Ohm cm
+GPassive = 0.001                                // S/cm2 = mho/cm2  !! was: Ohm cm
 // Stalks only:
 MinDimStalk = 0.1                               // um
 MaxDimStalk = 0.1                               // um
@@ -18,7 +18,7 @@ MinLenStalk = 0.1                               // um
 MaxLenStalk = 0.3                               // um
 
 minDiam = capDiam(0)
-minLen = 1e-4       // Chosen to avoid multiple errors of type "nrn_define_shape: AstrocyteNanoBranch[*].LargeGlia[*] first and last 3-d point at same (x,y)"
+minLen = 1e-4       // Chosen to avoid multiple warnings of type "nrn_define_shape: AstrocyteNanoBranch[*].LargeGlia[*] first and last 3-d point at same (x,y)"
 
 setUpExposedLengthVar("MinDimLeaves", minDiam)
 setUpExposedLengthVar("MaxDimLeaves", minDiam)
@@ -28,6 +28,12 @@ setUpExposedLengthVar("MinDimStalk", minDiam)
 setUpExposedLengthVar("MaxDimStalk", minDiam)
 setUpExposedLengthVar("MinLenStalk", minLen)
 setUpExposedLengthVar("MaxLenStalk", minLen)
+
+inf = math.inf
+{ variable_domain(&GPassive, 0, inf) }
+strdef unitsStr
+unitsStr = units("g_pas")
+{ units(&GPassive, unitsStr) }
 
 // Keep this template in sync with its reduced counterpart at Export/OutHocFileStructures/Skeletons/MainHocFileSkeletonForAstrocyte.txt
 
@@ -48,8 +54,8 @@ begintemplate AstrocyteNanoBranch
     // Stalks only:
     external MinDimStalk, MaxDimStalk, MinLenStalk, MaxLenStalk, diamDistrStalks
     
-    // func
-    external getDiameterFromDistr, capDiam
+    // func/proc
+    external getDiameterFromDistr, capDiam, codeContractViolation
     
     // Scalars
     external GPassive, currentMechanismSetup, DensityGluTransporters
@@ -63,9 +69,14 @@ begintemplate AstrocyteNanoBranch
     create SmallGlia[1]
     
     
-    proc init() { local isLeavesDiamDistrFromFileOrUniform, isStalksDiamDistrFromFileOrUniform
-        isLeavesDiamDistrFromFileOrUniform = $1
-        isStalksDiamDistrFromFileOrUniform = $2
+    proc init() { local isLeavesDiamDistrFromFileOrUniform, isStalksDiamDistrFromFileOrUniform localobj args
+        args = $o1
+        
+        if (args.size() != 2) {
+            codeContractViolation()
+        }
+        isLeavesDiamDistrFromFileOrUniform = args.x[0]
+        isStalksDiamDistrFromFileOrUniform = args.x[1]
         
         create LargeGlia[NumberLeavesPerStalk]
         create SmallGlia[NumberLeavesPerStalk]
@@ -79,14 +90,22 @@ begintemplate AstrocyteNanoBranch
         }
     }
     
-    proc update() { local isLeavesOrStalks, isDiamDistrFromFileOrUniform, isUpdateLeaves, isUpdateStalks
-        isLeavesOrStalks = $1
-        isDiamDistrFromFileOrUniform = $2
+    proc update() { local isLeavesOrStalks, isBiophysOnly, isDiamDistrFromFileOrUniform, isUpdateLeaves, isUpdateStalks localobj args
+        args = $o1
+        
+        if (args.size() != 3) {
+            codeContractViolation()
+        }
+        isLeavesOrStalks = args.x[0]
+        isBiophysOnly = args.x[1]
+        isDiamDistrFromFileOrUniform = args.x[2]
         
         isUpdateLeaves = isLeavesOrStalks
         isUpdateStalks = 1 - isLeavesOrStalks
         
-        updateGeometry(isUpdateLeaves, isUpdateStalks, isDiamDistrFromFileOrUniform, isDiamDistrFromFileOrUniform)
+        if (!isBiophysOnly) {
+            updateGeometry(isUpdateLeaves, isUpdateStalks, isDiamDistrFromFileOrUniform, isDiamDistrFromFileOrUniform)
+        }
         updateBiophysics(isUpdateLeaves, isUpdateStalks, isDiamDistrFromFileOrUniform, isDiamDistrFromFileOrUniform)
     }
     
@@ -213,9 +232,6 @@ begintemplate AstrocyteNanoBranch
 endtemplate AstrocyteNanoBranch
 
 
-obfunc createAstrocyteNanoBranch() { local isLeavesDiamDistrFromFileOrUniform, isStalksDiamDistrFromFileOrUniform
-    isLeavesDiamDistrFromFileOrUniform = $1
-    isStalksDiamDistrFromFileOrUniform = $2
-    
-    return new AstrocyteNanoBranch(isLeavesDiamDistrFromFileOrUniform, isStalksDiamDistrFromFileOrUniform)
+obfunc createAstrocyteNanoBranch() {
+    return new AstrocyteNanoBranch($o1)
 }

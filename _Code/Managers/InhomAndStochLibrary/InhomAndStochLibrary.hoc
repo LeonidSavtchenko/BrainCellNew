@@ -16,9 +16,10 @@
 begintemplate InhomAndStochLibrary
     
     public isInhomEnabledFor, isStochEnabledFor, onInhomApply, onStochApply, getInhomModelDataFor, getStochModelDataFor, onMakingVarHomogen, onStochDisable, onNanoReseedOrUpdate
-    public isAnyNonVerbatimInhomVarsForDistMechs, getNumInhomVarsForDistMechs, getNumStochVarsForDistMechs, onMechInsert, onMechUninsert, onCompSplit, onCompMerge
+    public isAnyNonVerbatimInhomVarsForDistMechs, getNumInhomVarsForDistMechs, getNumStochVarsForDistMechs, onMechInsert, onMechUninsert, onCompSplit, onCompMerge, onJustBeforeCompInhomStochBiophysImport
     public getNumInhomVarsForSyns, getNumStochVarsForSyns, isAnyStochVarsForSyns, isAnyStochVars, onSynLocChange, onSynStrucChange, restoreToActiveIfWasMadeInactiveOnSynStrucChange
-    public doesDistMechHaveAnyStochVars, doesThisVarHaveVerbatimInhomModel, doesAnyInhomVarRequirePython, doesAnyStochVarRequirePython
+    public doesDistMechHaveAnyStochVars, doesThisVarHaveVerbatimOrNonVerbatimInhomModel, doesAnyInhomVarRequirePython, doesAnyStochVarRequirePython
+    public findActiveSpecVar
     
     public activeSpecVars
     
@@ -270,6 +271,19 @@ begintemplate InhomAndStochLibrary
         // !! mwh.showNotImplementedWarning()
     }
     
+    // in: compIdx
+    proc onJustBeforeCompInhomStochBiophysImport() { local actSpecVarIdx localobj actSpecVar
+        for (actSpecVarIdx = activeSpecVars.count() - 1; actSpecVarIdx >= 0; actSpecVarIdx -= 1) {
+            actSpecVar = activeSpecVars.o(actSpecVarIdx)
+            if (actSpecVar.isDmOrSynPart && actSpecVar.compIdx == $1) {
+                // !!!! maybe just delete it with no option to restore ??
+                //     (otherwise, after the import, the same var can exist in both activeSpecVars and inactiveSpecVars)
+                inactiveSpecVars.append(actSpecVar)
+                activeSpecVars.remove(actSpecVarIdx)
+            }
+        }
+    }
+    
     func isAnyNonVerbatimInhomVarsForDistMechs() { local isFound localobj actSpecVar
         isFound = 0
         for eachItemInList(actSpecVar, activeSpecVars) {
@@ -455,8 +469,8 @@ begintemplate InhomAndStochLibrary
         return isFound
     }
     
-    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
-    func doesThisVarHaveVerbatimInhomModel() { localobj actSpecVar, nil
+    // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, isVerbatimOrNonVerbatim
+    func doesThisVarHaveVerbatimOrNonVerbatimInhomModel() { localobj actSpecVar, nil
         actSpecVar = findActiveSpecVar($1, $2, $3, $4, $5, $6)
         if (actSpecVar == nil) {
             // Not found
@@ -465,7 +479,11 @@ begintemplate InhomAndStochLibrary
         if (!actSpecVar.isInhom) {
             return 0
         }
-        return (actSpecVar.distFuncIdx == dfc.verbatimDistFuncIdx)
+        if ($7) {
+            return (actSpecVar.distFuncIdx == dfc.verbatimDistFuncIdx)
+        } else {
+            return (actSpecVar.distFuncIdx != dfc.verbatimDistFuncIdx)
+        }
     }
     
     func doesAnyInhomVarRequirePython() { local isDmOrSynPart, isExportAssignedAndState, isFound localobj actSpecVar
@@ -502,9 +520,6 @@ begintemplate InhomAndStochLibrary
         return isFound
     }
     
-    // All next staff is private
-    
-    
     // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
     // out: actSpecVarOrNil, (opt) idxOrMinus1
     obfunc findActiveSpecVar() { local numArg, idx localobj actSpecVar, nil
@@ -533,6 +548,9 @@ begintemplate InhomAndStochLibrary
         
         return actSpecVar
     }
+    
+    // All next staff is private
+    
     
     // in: enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex
     // out: actSpecVar, (opt) isFoundOrCreated

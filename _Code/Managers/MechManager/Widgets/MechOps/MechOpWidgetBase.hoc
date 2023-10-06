@@ -89,13 +89,14 @@ begintemplate MechOpWidgetBase
     
     // Returns: 0/1/2 flag: 0 - not dirty; 1 - dirty and cancelled by user; 2 - was dirty then applied (started intercepting messages)
     func ifDirtyThenProposeUserToApplyChanges() { local numArg, isYes
-        strdef msg
+        strdef verb, msg
         
         numArg = numarg()
         if (numArg == 0) {
             msg = "There are some pending changes to sections biophysics. Do you want to apply them?"
         } else if (numArg == 1) {
-            msg = $s1
+            verb = $s1
+            sprint(msg, "Cannot %s because you have some pending changes to sections biophysics. Do you want to apply them?", verb)
         } else {
             codeContractViolation()
         }

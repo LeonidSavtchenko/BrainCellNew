@@ -4,9 +4,9 @@ begintemplate BiophysExportImportOptions
     public isUseThisCompNameVec
     public isGlobals, isAssignedAndState, isInhoms, isStochs
     
-    public validate
+    public validate, isAnyStochModels
     
-    external mwh
+    external mwh, inhomAndStochLibrary
     
     objref isUseThisCompNameVec
     isGlobals = -1
@@ -36,6 +36,10 @@ begintemplate BiophysExportImportOptions
         }
         
         return isCancel
+    }
+    
+    func isAnyStochModels() {
+        return (isStochs && inhomAndStochLibrary.getNumStochVarsForDistMechs() != 0)
     }
     
 endtemplate BiophysExportImportOptions

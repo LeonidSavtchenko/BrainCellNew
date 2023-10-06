@@ -175,24 +175,30 @@ begintemplate ExtracellularManagerMainWidget
             execute("testPlotShape3.flush()")
         }
         
-        line1 = "All the changes were applied."
-        
-        // !!! if RunControl works fine, then we don't need to show AltRunControl together with this widget
-        line2 = "Now you can start the simulation with either RunControl or AltRunControl."
-        
-        // !!! instead of "{species}o", show the list of actual species names from ecsList
-        line3 = "Make sure you don't use any biophys mechs that write the same \"{species}o\" vars to avoid collisions."
-        
-        // !!! when user clicks "Apply", then increases "nseg" in any section and then starts the simulation without clicking "Apply" once again,
-        //     this expectedly results in "Segmentation violation"
-        //     to avoid this, we'll have to stick to AltRunControl only and "click" "Apply" programmatically on start of the simulation
-        //     alternatively, we can save "total_nseg" in MOD file on "Apply", then check it each time user starts the simulation and,
-        //     if we see that it's different, print a message to console suggesting to click "Apply"
-        line4 = "If you modify the cell geometry or move it in 3D space, change \"nseg\" somewhere or add new sections,"
-        
-        sprint(line5, "then get back to the \"%s\" and click \"Apply\" once again.", title)
-        
-        mwh.showMessageBox(line1, line2, "", line3, line4, line5, "Applied")
+        mwh.startIntercepting()
+        {
+            mwh.showNotImplementedWarning("For the extracellular diffusion, the variable time step \"dt\" is not fully supported.")
+            
+            line1 = "All the changes were applied."
+            
+            // !!! if RunControl works fine, then we don't need to show AltRunControl together with this widget
+            line2 = "Now you can start the simulation with either RunControl or AltRunControl."
+            
+            // !!! instead of "{species}o", show the list of actual species names from ecsList
+            line3 = "Make sure you don't use any biophys mechs that write the same \"{species}o\" vars to avoid collisions."
+            
+            // !!! when user clicks "Apply", then increases "nseg" in any section and then starts the simulation without clicking "Apply" once again,
+            //     this expectedly results in "Segmentation violation"
+            //     to avoid this, we'll have to stick to AltRunControl only and "click" "Apply" programmatically on start of the simulation
+            //     alternatively, we can save "total_nseg" in MOD file on "Apply", then check it each time user starts the simulation and,
+            //     if we see that it's different, print a message to console suggesting to click "Apply"
+            line4 = "If you modify the cell geometry or move it in 3D space, change \"nseg\" somewhere or add new sections,"
+            
+            sprint(line5, "then get back to the \"%s\" and click \"Apply\" once again.", title)
+            
+            mwh.showMessageBox(line1, line2, "", line3, line4, line5, "Applied")
+        }
+        mwh.endIntercepting()
     }
     
     proc dismissChild() {

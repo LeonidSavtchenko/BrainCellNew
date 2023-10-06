@@ -85,13 +85,13 @@ proc UniformDistributionofSpineGeometry() {
     xlabel("===============Spine Head====================")
     xvalue("MaxRadius of spine Head","MaxRadiusHead", 1, geomValueChangedHandler, 0, 1)
     xvalue("MinRadius of spine Head","MinRadiusHead", 1, geomValueChangedHandler, 0, 1)
-    xvalue("nseg in spine Head","SpineHeadNSeg", 1, geomValueChangedHandler, 0, 1)
+    xvalue("nseg in spine Head","SpineHeadNSeg", 1, geomValueChangedHandler, 0, 1)      // !!! no need to re-generate the geometry
     xlabel("===============Spine Neck====================")
     xvalue("Max of Spine Neck Length","MaxSpineNeckLength", 1, geomValueChangedHandler, 0, 1)
     xvalue("Min of Spine Neck Length","MinSpineNeckLength", 1, geomValueChangedHandler, 0, 1)
     xvalue("Max Spine Neck Diameter","MaxSpineNeckDiameter", 1, geomValueChangedHandler, 0, 1)
     xvalue("Min Spine Neck Diameter","MinSpineNeckDiameter", 1, geomValueChangedHandler, 0, 1)
-    xvalue("nseg in Spine Neck","SpineNeckNSeg", 1, geomValueChangedHandler, 0, 1)
+    xvalue("nseg in Spine Neck","SpineNeckNSeg", 1, geomValueChangedHandler, 0, 1)      // !!! no need to re-generate the geometry
     xpanel()
 }
 
@@ -101,13 +101,13 @@ proc NormalDistributionofSpineGeometry() {
     xlabel("===============Spine Head====================")
     xvalue("SDRadius of spine Head","SDRadiusHead", 1, geomValueChangedHandler, 0, 1)
     xvalue("MeanRadius of spine Head","MeanRadiusHead", 1, geomValueChangedHandler, 0, 1)
-    xvalue("nseg in spine Head","SpineHeadNSeg", 1, geomValueChangedHandler, 0, 1)
+    xvalue("nseg in spine Head","SpineHeadNSeg", 1, geomValueChangedHandler, 0, 1)      // !!! no need to re-generate the geometry
     xlabel("===============Spine Neck====================")
     xvalue("SD of Spine Neck Length","SDSpineNeckLength", 1, geomValueChangedHandler, 0, 1)
     xvalue("Mean of Spine Neck Length","MeanSpineNeckLength", 1, geomValueChangedHandler, 0, 1)
     xvalue("SD Spine Neck Diameter","SDSpineNeckDiameter", 1, geomValueChangedHandler, 0, 1)
     xvalue("Mean Spine Neck Diameter","MeanSpineNeckDiameter", 1, geomValueChangedHandler, 0, 1)
-    xvalue("nseg in Spine Neck","SpineNeckNSeg", 1, geomValueChangedHandler, 0, 1)
+    xvalue("nseg in Spine Neck","SpineNeckNSeg", 1, geomValueChangedHandler, 0, 1)      // !!! no need to re-generate the geometry
     xpanel()
 }
 
@@ -131,13 +131,13 @@ proc NaturePaperControl() {
     xlabel("===============Spine Head====================")
     xvalue("SDRadius of spine Head","SDRadiusHead", 1, geomValueChangedHandler, 0, 1)
     xvalue("MeanRadius of spine Head","MeanRadiusHead", 1, geomValueChangedHandler, 0, 1)
-    xvalue("nseg in spine Head","SpineHeadNSeg", 1, geomValueChangedHandler, 0, 1)
+    xvalue("nseg in spine Head","SpineHeadNSeg", 1, geomValueChangedHandler, 0, 1)      // !!! no need to re-generate the geometry
     xlabel("===============Spine Neck====================")
     xvalue("SD of Spine Neck Length","SDSpineNeckLength", 1, geomValueChangedHandler, 0, 1)
     xvalue("Mean of Spine Neck Length","MeanSpineNeckLength", 1, geomValueChangedHandler, 0, 1)
     xvalue("SD Spine Neck Diameter","SDSpineNeckDiameter", 1, geomValueChangedHandler, 0, 1)
     xvalue("Mean Spine Neck Diameter","MeanSpineNeckDiameter", 1, geomValueChangedHandler, 0, 1)
-    xvalue("nseg in Spine Neck","SpineNeckNSeg", 1, geomValueChangedHandler, 0, 1)
+    xvalue("nseg in Spine Neck","SpineNeckNSeg", 1, geomValueChangedHandler, 0, 1)      // !!! no need to re-generate the geometry
     xpanel()
 }
 
@@ -161,12 +161,12 @@ proc NaturePaperLTP() {
     xlabel("===============Spine Head====================")
     xvalue("SDRadius of spine Head","SDRadiusHead", 1, geomValueChangedHandler, 0, 1)
     xvalue("MeanRadius of spine Head","MeanRadiusHead", 1, geomValueChangedHandler, 0, 1)
-    xvalue("nseg in spine Head","SpineHeadNSeg", 1, geomValueChangedHandler, 0, 1)
+    xvalue("nseg in spine Head","SpineHeadNSeg", 1, geomValueChangedHandler, 0, 1)      // !!! no need to re-generate the geometry
     xlabel("===============Spine Neck====================")
     xvalue("SD of Spine Neck Length","SDSpineNeckLength", 1, geomValueChangedHandler, 0, 1)
     xvalue("Mean of Spine Neck Length","MeanSpineNeckLength", 1, geomValueChangedHandler, 0, 1)
     xvalue("SD Spine Neck Diameter","SDSpineNeckDiameter", 1, geomValueChangedHandler, 0, 1)
     xvalue("Mean Spine Neck Diameter","MeanSpineNeckDiameter", 1, geomValueChangedHandler, 0, 1)
-    xvalue("nseg in Spine Neck","SpineNeckNSeg", 1, geomValueChangedHandler, 0, 1)
+    xvalue("nseg in Spine Neck","SpineNeckNSeg", 1, geomValueChangedHandler, 0, 1)      // !!! no need to re-generate the geometry
     xpanel()
 }

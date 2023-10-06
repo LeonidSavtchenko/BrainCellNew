@@ -57,7 +57,3 @@ proc setEndFoot() { local i
 
 
 setEndFoot(1, 100, 1, 20)
-
-proc InsertAllMechanism() {
-    load_file("_Code/Prologue/Astrocyte/EndFoot.ses")   // !!!??
-}

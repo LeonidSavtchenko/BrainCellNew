@@ -53,7 +53,7 @@ class GensForInhomAndStochModels:
     def _createAllInhomModels(self, selector):
         lines = []
         
-        for actSpecVar in h.inhomAndStochLibrary.activeSpecVars:
+        for actSpecVar in hocObj.inhomAndStochLibrary.activeSpecVars:
             if not selector(actSpecVar):
                 continue
                 
@@ -79,7 +79,7 @@ class GensForInhomAndStochModels:
     def _createAllStochModels(self, selector):
         lines = []
         
-        for actSpecVar in h.inhomAndStochLibrary.activeSpecVars:
+        for actSpecVar in hocObj.inhomAndStochLibrary.activeSpecVars:
             if not selector(actSpecVar):
                 continue
                 

@@ -16,7 +16,7 @@ proc prologueCompleteHandler() {
     runMain()
 }
 
-proc roadmapChosenHandler() { local isLoaded localobj plotShape
+proc roadmapChosenHandler() { local isLoaded localobj plotShape, nil
     strdef showWarningBoxHocCommand
     
     if (!isBaseOrNanoStart) {
@@ -43,7 +43,7 @@ proc roadmapChosenHandler() { local isLoaded localobj plotShape
             // (Don't encapsulate initNeuron() into "initNeuron.hoc" because the file browser will use different default folder)
         }
     } else {
-        if (!isAstrocyteOrNeuron && !name_declared("smAllSyns")) {
+        if (!isAstrocyteOrNeuron && smAllSyns == nil) {
             printWasNotExportedSoWeWillCreateDefaultWarning("synapses")
             load_file("_Code/Prologue/Neuron/AddSynapses.hoc")
         }

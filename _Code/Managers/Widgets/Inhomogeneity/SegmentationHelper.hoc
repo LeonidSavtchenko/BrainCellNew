@@ -20,23 +20,19 @@ begintemplate SegmentationHelper
     factorMode2 = -1
     
     
-    proc init() { local argType, inf localobj impRedObj
-
-        argType = argtype(1)
-        if (argType == 0) {
+    proc init() { local numArg, inf
+        numArg = numarg()
+        
+        if (numArg == 0) {
+            // Import nano or import biophys mode: all params will be set shortly downstream
+            distRange = -1      // Will be set later from InhomEditorSubWidget
+        } else if (numArg == 1) {
             // Defaults
             segmentationMode = 1    // !! set the default to 2 once implemented
             total_nseg = 30
             min_nseg = 5
             
             setDistRange($1)
-        } else if (argType == 1) {
-            impRedObj = $o1
-            segmentationMode = impRedObj.segmentationMode
-            total_nseg = impRedObj.total_nseg
-            min_nseg = impRedObj.min_nseg
-            
-            distRange = -1  // Will be set later from InhomEditorSubWidget
         } else {
             codeContractViolation()
         }

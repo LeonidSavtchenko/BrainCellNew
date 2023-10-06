@@ -1,11 +1,11 @@
 
 begintemplate ManagersCommonUtils
 
-    public defineDistFuncHandler, defineStochFuncHandler, createApplyReminder, createEditorSubWidgetDigest, copyAllVarsValuesExceptInhom, setOneIfNeededIn_isMechVarTypeInhom, update_isMechVarTypeInhom, isMetaVar, setGraphSize
+    public defineDistFuncHandler, defineStochFuncHandler, showCannotUninsertMechWarning, createApplyReminder, createEditorSubWidgetDigest, copyAllVarsValuesExceptInhom, setOneIfNeededIn_isMechVarTypeInhom, update_isMechVarTypeInhom, isMetaVar, setGraphSize
     
     external mmAllComps, smAllComps
     external mwh, math, mth, compUtils
-    external stringStartsWith
+    external stringStartsWith, codeContractViolation
     
     
     obfunc defineDistFuncHandler() { local enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, isMechOrSynEditor, isDisconnected, xMin, xMax localobj comp, nil, defineDistFuncSubWidget
@@ -45,6 +45,22 @@ begintemplate ManagersCommonUtils
         defineStochFuncSubWidget.show()
         
         return defineStochFuncSubWidget
+    }
+    
+    proc showCannotUninsertMechWarning() { local msgIdx
+        strdef mechName, msg
+        
+        mechName = $s1
+        msgIdx = $2
+        
+        if (msgIdx == 0) {
+            sprint(msg, "\"%s\" mech cannot be uninserted (NEURON restriction).", mechName)
+        } else if (msgIdx == 1) {
+            sprint(msg, "Once inserted, \"%s\" mech cannot be uninserted anymore (NEURON restriction).", mechName)
+        } else {
+            codeContractViolation()
+        }
+        mwh.showWarningBox(msg)
     }
     
     proc createApplyReminder() { local isMechOrSynEditor, isOrLeave

@@ -5,6 +5,7 @@ objref soma_ref
 { load_file("InterModularSectionUtils.hoc") }
 objref usedNamesForDendrites, nanoBranchesManager, seededDendrites_ref
 { load_file("InterModularPythonUtils.hoc") }
+{ load_file("InterModularVectorUtils.hoc") }                    // !! not intermodular yet
 { load_file("InterModularListUtils.hoc") }
 { load_file("InterModularMechSettings.hoc") }
 { load_file("InterModularMechsDllUtils.hoc") }
@@ -26,3 +27,4 @@ objref mmcoWidget
 { load_file("Widgets/FileBrowserHelper.hoc") }
 { load_file("Widgets/CompSubsetWidget.hoc") }                   // !! not intermodular yet
 { load_file("Widgets/GlobalsEditorWidget.hoc") }
+objref smAllSyns

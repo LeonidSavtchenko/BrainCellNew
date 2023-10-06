@@ -4,8 +4,6 @@
 //      * once export or import complete (the same as for ExportManagerMainWidget)
 // !!!! also, once import complete, we need to close (or re-open) other sub-widgets of MechManagerMainWidget
 
-// !!!! show "Export/Import complete" msg with the list of unsupported features like for ExportManagerMainWidget (e.g. export of GLOBAL-s)
-
 begintemplate ExportImportBiophysicsWidget
 
     public show, dismissHandler
@@ -184,6 +182,8 @@ begintemplate ExportImportBiophysicsWidget
     }
     
     proc exportOrImportHandler() { local isCancel
+        
+        // !!!!! check isDirty flags for mechs and comps and propose user to apply the changes
         
         isCancel = options.validate(word)
         if (isCancel) {

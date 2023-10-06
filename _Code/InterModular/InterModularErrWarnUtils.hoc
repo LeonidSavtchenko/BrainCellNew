@@ -2,6 +2,11 @@
 { load_file("Exported/InterModularErrWarnUtilsPart1_Exported.hoc") }
 { load_file("Exported/InterModularErrWarnUtilsPart2_Exported.hoc") }
 
+proc getNotImplementedLines() {
+    $s1 = "Not implemented."
+    $s2 = "If required, please ask the developer to prioritize."
+}
+
 proc printWasNotExportedSoWeWillCreateDefaultWarning() {
     strdef what
     what = $s1

@@ -73,7 +73,7 @@ proc deleteAllSections() {
 func capDiam() {
     // If user sets too small "diam" for a section, NEURON resets it to 1e-9 when user enters
     //  Tools -> Distributed Mechanisms -> Viewers -> Shape Name
-    // and then double clicks on any Spine Neck section in the list.
+    // and then double clicks on a section in the list.
     // So we cap "diam" in advance just to avoid the unexpected behaviour later.
     return math.max($1, 1e-9)
 }

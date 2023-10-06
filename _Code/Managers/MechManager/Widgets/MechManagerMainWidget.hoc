@@ -77,10 +77,10 @@ begintemplate MechManagerMainWidget
             hBox.intercept(1)
             {
                 xpanel("")
-                xbutton("Export biophysics (in development)", "beih.export(mmeibWidget)")
+                xbutton("Export biophysics", "beih.export(mmeibWidget)")
                 xpanel()
                 xpanel("")
-                xbutton("Import biophysics (in development)", "beih.import(mmeibWidget)")
+                xbutton("Import biophysics", "beih.import(mmeibWidget)")
                 xpanel()
             }
             hBox.intercept(0)

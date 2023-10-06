@@ -925,7 +925,7 @@ begintemplate InhomEditorSubWidget
     }
     
     func checkIfVerbatimInhomModelWasDestroyed() { local isDestroyed
-        isDestroyed = !inhomAndStochLibrary.doesThisVarHaveVerbatimInhomModel(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
+        isDestroyed = !inhomAndStochLibrary.doesThisVarHaveVerbatimOrNonVerbatimInhomModel(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, 1)
         if (isDestroyed) {
             mwh.showWarningBox("You have destroyed this verbatim model, so it cannot be shown or applied anymore.")
         }

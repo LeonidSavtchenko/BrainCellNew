@@ -153,7 +153,7 @@ begintemplate MechManagerCompOpWidget
         }
         
         // !! maybe check mmAllComps.o(splitCompIdx).isCompDirty instead of mmmowb.isDirty?
-        status = mmmowb.ifDirtyThenProposeUserToApplyChanges("Cannot split because you have some pending changes to sections biophysics. Do you want to apply them?")
+        status = mmmowb.ifDirtyThenProposeUserToApplyChanges("split")
         if (status == 1) {
             return 1
         }

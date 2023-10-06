@@ -76,7 +76,7 @@ begintemplate MechSettings
     }
     
     obfunc getAllSpcCatNames() {
-        return convertPyListOfStrsToHocListOfStrObjs(pyObj.ms_getAllSpcCatNames())
+        return pyObj.ms_getAllSpcCatNames()
     }
     
     func getNumSpeciesInJSON() {
@@ -94,7 +94,7 @@ begintemplate MechSettings
         
         spcCatName = $s1
         
-        expIonNamesInThisCat = convertPyListOfStrsToHocListOfStrObjs(pyObj.ms_getAllExpIonNamesInThisCat(spcCatName))
+        expIonNamesInThisCat = pyObj.ms_getAllExpIonNamesInThisCat(spcCatName, 1)
         
         for expIonIdx = 0, expIonNamesInThisCat.count() - 1 {
             expIonName = expIonNamesInThisCat.o(expIonIdx).s
@@ -129,18 +129,7 @@ begintemplate MechSettings
     
     
     obfunc getAllExpIonNames() {
-        return convertPyListOfStrsToHocListOfStrObjs(pyObj.ms_getAllExpIonNames())
-    }
-    
-    // !!! maybe move to some higher-level intermodular utils (Python/List/String)
-    obfunc convertPyListOfStrsToHocListOfStrObjs() { local strIdx localobj pyList, hocList
-        pyList = $o1
-        hocList = new List()
-        for strIdx = 0, pyObj.len(pyList) - 1 {
-            // hocList.append(new String(pyList.__getitem__(strIdx)))   // TypeError: list indices must be integers or slices, not float
-            hocList.append(new String(pyObj.ms_getPyListItem(pyList, strIdx)))
-        }
-        return hocList
+        return pyObj.ms_getAllExpIonNames()
     }
     
 endtemplate MechSettings

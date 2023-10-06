@@ -1,0 +1,9 @@
+
+obfunc createVector() { local numArg, i localobj vec
+    numArg = numarg()
+    vec = new Vector(numArg)
+    for i = 1, numArg {
+        vec.x[i - 1] = $i
+    }
+    return vec
+}

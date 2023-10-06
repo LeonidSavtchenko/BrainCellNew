@@ -1,19 +1,19 @@
 
-proc makeSureMechCompsCreatedOrImported() { codeContractViolation() }
+proc makeSureMechCompsCreatedOrImportedAndRescanned() { codeContractViolation() }
 proc makeSureSynCompsCreatedOrImported() { codeContractViolation() }
 
 begintemplate InterModularCompUtils
 
-    public makeSureAllCompsCreatedOrImported, getNumDistMechComps, getComp
+    public makeSureAllCompsCreatedOrImportedAndRescanned, getNumDistMechComps, getComp
     
     external mmAllComps, smAllComps
     external isAstrocyteOrNeuron
-    external makeSureMechCompsCreatedOrImported, makeSureSynCompsCreatedOrImported
+    external makeSureMechCompsCreatedOrImportedAndRescanned, makeSureSynCompsCreatedOrImported
     
     
     // !! not intermodular actually
-    proc makeSureAllCompsCreatedOrImported() { localobj nil
-        makeSureMechCompsCreatedOrImported()
+    proc makeSureAllCompsCreatedOrImportedAndRescanned() { localobj nil
+        makeSureMechCompsCreatedOrImportedAndRescanned()
         if (!isAstrocyteOrNeuron) {
             makeSureSynCompsCreatedOrImported()
         }
