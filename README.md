@@ -9,13 +9,14 @@ Welcome to **BRAINCELL 1.0**, your gateway to understanding the intricate world 
 
 # Installation
 
-  ## Key System and Software Requirements
-  
-  To ensure a smooth experience with BrainCell, please ensure that your system meets the following requirements:
-  Running BrainCell requires the following:
-    1.	PYTHON (version 3.2 or later) - Download from https://www.python.org/downloads/
-    2.	NEURON (version 7.2 or later) - Download from https://neuron.yale.edu/neuron/download
-    3.  Installed Neuron on Windows.
+## Key System and Software Requirements
+
+To ensure a smooth experience with BrainCell, please make sure your system meets the following requirements:
+
+1. **PYTHON** (version 3.2 or later) - Download from [Python Downloads](https://www.python.org/downloads/)
+2. **NEURON** (version 7.2 or later) - Download from [NEURON Downloads](https://neuron.yale.edu/neuron/download)
+3. Installed Neuron on Windows.
+
 
 
 # Preparing BRAINCELL System Files
