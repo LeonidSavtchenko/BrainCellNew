@@ -9,9 +9,18 @@ Welcome to **BRAINCELL 1.0**, your gateway to understanding the intricate world 
 
 # Installation
 **BRAINCELL** requires the following:
+
 - Basic languages: C++, PYTHON (not older than 2013), and Neuron 7.0.
-- Platform: Linux or Windows.
+- Platform: Windows or Linux.
 - Operation type: Sequential and parallel (MPI) computing.
+
+  ## Key System and Software Requirements
+  
+  To ensure a smooth experience with BrainCell, please ensure that your system meets the following requirements:
+  Running BrainCell requires the following:
+    1.	PYTHON (version 3.2 or later) - Download from https://www.python.org/downloads/
+    2.	NEURON (version 7.2 or later) - Download from https://neuron.yale.edu/neuron/download
+    3.  Installed Neuron on Windows.
 
 
 # Preparing BRAINCELL System Files
