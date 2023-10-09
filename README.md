@@ -37,11 +37,11 @@ For Windows 11 users, ensure that any `*.exe` file in the NEURON directory, spec
 
 - **Click "Edit"**: Click the "Edit" button to modify the file's permissions.
 
-- ** Modify Permissions** : In the Permissions window, you can modify the permissions for various users and groups. To grant administrative rights, you would typically select or add a user or group and grant them the appropriate permissions, such as "Full control."
+- **Modify Permissions** : In the Permissions window, you can modify the permissions for various users and groups. To grant administrative rights, you would typically select or add a user or group and grant them the appropriate permissions, such as "Full control."
 
-- ** Apply Changes**: After modifying the permissions, click "Apply" to apply the changes.
+- **Apply Changes**: After modifying the permissions, click "Apply" to apply the changes.
 
-- ** Confirm Administrative Rights**: Confirm that the necessary administrative rights have been granted to the user or group.
+- **Confirm Administrative Rights**: Confirm that the necessary administrative rights have been granted to the user or group.
 
 
 #### Step 2: Execute the init.hoc File
