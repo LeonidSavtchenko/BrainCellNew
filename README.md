@@ -13,8 +13,8 @@ Welcome to **BRAINCELL 1.0**, your gateway to understanding the intricate world 
 
 To ensure a smooth experience with BrainCell, please make sure your system meets the following requirements:
 
-1. **PYTHON** (version 3.2 or later) - Download from [Python Downloads](https://www.python.org/downloads/)
-2. **NEURON** (version 7.2 or later) - Download from [NEURON Downloads](https://neuron.yale.edu/neuron/download)
+1. **PYTHON** (version 3.2 or later) -  [Python Downloads](https://www.python.org/downloads/)
+2. **NEURON** (version 7.2 or later) -  [NEURON Downloads](https://neuron.yale.edu/neuron/download)
 3. Installed Neuron on Windows.
 
 
@@ -26,7 +26,7 @@ For Windows 11 users, ensure that any `*.exe` file in the NEURON directory, spec
 - Updating File Properties: Navigate to the NEURON directory `c:\nrn\bin\` and locate the `*.exe` files. Adjust the properties of each `*.exe` file according to the guidelines presented in the image below.
 
 ## Step 2: Execute the init.hoc File
-Run the `init.hoc` file from the host computer directory. You can find this file in the directory path `...\init.hoc`. Alternatively, you can use the 'NEURON simulations' button accessible from the start menu panel (refer to Fig. 2).
+Run the `init.hoc` file from the host computer directory. You can find this file in the directory path `...\init.hoc`. Alternatively, you can use the 'NEURON simulations' button accessible from the start menu panel.
 
 ## Step 3: Compile NEURON .mod Files
 Activate `build_mechs.bat` to initiate the compilation of NEURON `*.mod` files. This step is crucial for proper functioning and integration of the NEURON modules into your system.
