@@ -8,11 +8,6 @@
 Welcome to **BRAINCELL 1.0**, your gateway to understanding the intricate world of brain cells. This cutting-edge software empowers researchers, neuroscientists, and medical professionals to explore the brain's inner workings, reactions to stimuli, and responses to treatments. With **BRAINCELL 1.0**, you can create lifelike simulations of neurons and astrocytes with nano-geometry precision, faithfully replicating the brain's complex dynamics.
 
 # Installation
-**BRAINCELL** requires the following:
-
-- Basic languages: C++, PYTHON (not older than 2013), and Neuron 7.0.
-- Platform: Windows or Linux.
-- Operation type: Sequential and parallel (MPI) computing.
 
   ## Key System and Software Requirements
   
