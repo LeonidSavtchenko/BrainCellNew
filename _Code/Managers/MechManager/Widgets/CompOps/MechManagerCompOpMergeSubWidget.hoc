@@ -5,7 +5,7 @@ begintemplate MechManagerCompOpMergeSubWidget
     public mainBox
     
     external mmAllComps
-    external mwh, mth, mmmowb, mmcoWidget
+    external mwh, mth, mmmowb, mmcoWidget, mainUiLocker
     external inhomAndStochLibrary
     external joinStrings, codeContractViolation
     
@@ -35,17 +35,18 @@ begintemplate MechManagerCompOpMergeSubWidget
             xpanel("")
             xlabel("The mechs* and comp name will be inherited from:")
             for compIdx = 0, numComps - 1 {
-                if (mergeCheckBoxStates.x(compIdx)) {
-                    comp = mmAllComps.o(compIdx)
-                    sprint(handlerHocCommand, "donorCompIdx = %d", compIdx)
-                    if (donorCompIdx == -1) {
-                        donorCompIdx = compIdx
-                        isChecked = 1
-                    } else {
-                        isChecked = 0
-                    }
-                    xradiobutton(comp.name, handlerHocCommand, isChecked)
+                if (!mergeCheckBoxStates.x(compIdx)) {
+                    continue
                 }
+                comp = mmAllComps.o(compIdx)
+                sprint(handlerHocCommand, "donorCompIdx = %d", compIdx)
+                if (donorCompIdx == -1) {
+                    donorCompIdx = compIdx
+                    isChecked = 1
+                } else {
+                    isChecked = 0
+                }
+                xradiobutton(comp.name, handlerHocCommand, isChecked)
             }
             xbutton("Merge", "mergeHandler()")
             xpanel()
@@ -63,12 +64,19 @@ begintemplate MechManagerCompOpMergeSubWidget
     }
     
     // Input: this.donorCompIdx, this.mergeCheckBoxStates
-    proc mergeHandler() { local status, numMechs, isStickyMechBorrowed, numComps, srcCompIdx, mechIdx localobj dstComp, srcComp
+    proc mergeHandler() { local status, isCancel, numMechs, isStickyMechBorrowed, numComps, srcCompIdx, mechIdx localobj dstComp, srcComp, nil
         strdef stickyMechNames, mechName
         
         status = mmmowb.ifDirtyThenProposeUserToApplyChanges("merge")
         if (status == 1) {
             return
+        }
+        
+        if (mainUiLocker != nil) {  // !!! nil in tests
+            isCancel = mainUiLocker.ifNanoCompThenMakeSureNanoUpdateLocked(mergeCheckBoxStates)
+            if (isCancel) {
+                return
+            }
         }
         
         dstComp = mmAllComps.o(donorCompIdx)

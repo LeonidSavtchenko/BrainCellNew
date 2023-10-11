@@ -276,9 +276,6 @@ begintemplate InhomAndStochLibrary
         for (actSpecVarIdx = activeSpecVars.count() - 1; actSpecVarIdx >= 0; actSpecVarIdx -= 1) {
             actSpecVar = activeSpecVars.o(actSpecVarIdx)
             if (actSpecVar.isDmOrSynPart && actSpecVar.compIdx == $1) {
-                // !!!! maybe just delete it with no option to restore ??
-                //     (otherwise, after the import, the same var can exist in both activeSpecVars and inactiveSpecVars)
-                inactiveSpecVars.append(actSpecVar)
                 activeSpecVars.remove(actSpecVarIdx)
             }
         }

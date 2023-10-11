@@ -2,7 +2,10 @@
 //Geometry of EndFoot
 
 create EndFoot[4]
-
+endFoot_ref = new List()
+for i = 0, 3 EndFoot[i] {
+    endFoot_ref.append(new SectionRef())
+}
 
 soma_ref.o(0).sec connect EndFoot[0](0), 1
 //connect EndFoot[0](1), EndFoot[1](0)

@@ -25,7 +25,7 @@ def convertPyIterableOfStrsToHocListOfStrObjs(pyIter):
         hocList.append(h.String(item))
     return hocList
     
-# !!! called from both Python and HOC
+# !!! not intermodular actually
 def isAstrocyteSpecificInhomVar(compIdxOrName, mechIdx, varType, varIdx, arrayIndex):
     
     mth = hocObj.mth

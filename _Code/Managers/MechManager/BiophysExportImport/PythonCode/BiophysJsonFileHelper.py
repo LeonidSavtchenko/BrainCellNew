@@ -5,6 +5,9 @@ from BiophysJsonExportCore import BiophysJsonExportCore
 from BiophysJsonImportCore import BiophysJsonImportCore
 from OtherInterModularUtils import *
 
+# !!! maybe allow user to put comments in any place of JSON file using "comment" key (and leave an example comment in the exported JSON)
+#     OR use some other file format but JSON to support comments
+
 
 class BiophysJsonFileHelper:
     
@@ -28,14 +31,14 @@ class BiophysJsonFileHelper:
         with open(inJsonFilePathName) as jsonFile:
             jsonDict = json.load(jsonFile)
             
-        mechNames = set()
+        donMechNames = set()    # "don" - donor
         
         compNames = h.List()
         numInhomVars = 0
         numStochVars = 0
         for (compName, mechNameToInfoDict) in jsonDict.items():
             compNames.append(h.String(compName))
-            mechNames.update(mechNameToInfoDict.keys())
+            donMechNames.update(mechNameToInfoDict.keys())
             for varTypeToInfoDict in mechNameToInfoDict.values():
                 for varNameToInfoDict in varTypeToInfoDict.values():
                     for varValueOrInfoDict in varNameToInfoDict.values():
@@ -47,14 +50,16 @@ class BiophysJsonFileHelper:
                             elif varInfoKey == 'stoch_model':
                                 numStochVars += 1
                                 
+        recMechNames = self._getAllMechNames()  # "rec" - recipient
+        
         missingMechNames = h.List()
-        for mechName in mechNames:
-            if self._isMechMissing(mechName):
+        for mechName in donMechNames:
+            if mechName not in recMechNames:        # !!! h.name_declared(mechName) can give a false positive
                 missingMechNames.append(h.String(mechName))
                 
         if missingMechNames:
             hocObj.mwh.showWarningBox(
-                "Cannot import this biophys file because it uses some mechs missing in the local library \"nrnmech.dll\":", \
+                "Cannot import this biophys file because it uses some mech(s) missing in the local library \"nrnmech.dll\":", \
                 missingMechNames)
             return 1
             
@@ -68,9 +73,12 @@ class BiophysJsonFileHelper:
         return self._biophysJsonImportCore.importCore(self._jsonDictForImportStage3, options)
         
         
-    def _isMechMissing(self, mechName):
-        # !!!!!!! very risky: the name can be declared as an arbitrary var rather than a mech
-        #         re-implement this in a more robust way
-        # !!! try to check type() in Python or object_id in HOC
-        return not h.name_declared(mechName)    # !!! try to use it with 2nd arg; the docs say it returns the type code
+    def _getAllMechNames(self):
+        mth = hocObj.mth
+        mechName = h.ref('')
+        allMechNames = set()
+        for mechIdx in range(int(mth.getNumMechs(0))):
+            mth.getMechName(0, mechIdx, mechName)
+            allMechNames.add(mechName[0])
+        return allMechNames
         

@@ -15,3 +15,5 @@
 { load_file("Widgets/ExportImportBiophysicsWidget.hoc") }
 
 { load_file("Widgets/MechManagerMainWidget.hoc") }
+
+{ load_file("MechCreateAndRescanHelper.hoc") }

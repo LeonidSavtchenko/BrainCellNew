@@ -1,5 +1,5 @@
 
-objref soma_ref
+objref soma_ref, axon_ref, endFoot_ref
 { load_file("InterModularErrWarnUtils.hoc") }
 { load_file("InterModularBasicMath.hoc") }
 { load_file("InterModularSectionUtils.hoc") }
@@ -16,7 +16,8 @@ iterator findSecArrayOrObjectIterator() { codeContractViolation() }
 { load_file("InterModularUniqueNameUtils.hoc") }
 { load_file("InterModularUniqueListItemUtils.hoc") }
 { load_file("InterModularRNGUtils.hoc") }
-objref smAllComps
+objref smAllComps, mmcrHelper
+proc makeSureSynCompsCreatedOrImported() { codeContractViolation() }
 { load_file("InterModularCompUtils.hoc") }
 { load_file("InterModularUnitsUtils.hoc") }
 { load_file("InterModularGraphUtils.hoc") }
@@ -27,4 +28,4 @@ objref mmcoWidget
 { load_file("Widgets/FileBrowserHelper.hoc") }
 { load_file("Widgets/CompSubsetWidget.hoc") }                   // !! not intermodular yet
 { load_file("Widgets/GlobalsEditorWidget.hoc") }
-objref smAllSyns
+objref smAllSyns, mainUiLocker

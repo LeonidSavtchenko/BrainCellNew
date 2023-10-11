@@ -47,7 +47,7 @@ begintemplate StochEditorSubWidget
     isSinglePP = -1
     
     isBoundsOK = -1
-    isCancel = -1
+    isCancelInStochFuncHelperSelectedHandler = -1
     
     // !!
     isAltPsdAndAcf = -1
@@ -730,10 +730,10 @@ begintemplate StochEditorSubWidget
         shownCurveChangedHandler(shownCurveIdx)
         
         // For the case if the next command won't finish (when user just ignores the string or file dialog)
-        isCancel = 1
+        isCancelInStochFuncHelperSelectedHandler = 1
         
-        isCancel = stochFuncHelper.selectedHandler()
-        if (isCancel) {
+        isCancelInStochFuncHelperSelectedHandler = stochFuncHelper.selectedHandler()
+        if (isCancelInStochFuncHelperSelectedHandler) {
             graph1.erase()
             graph2.erase()
             return
@@ -1256,7 +1256,7 @@ begintemplate StochEditorSubWidget
             boundingHelper.makeSureBoundsOK()   // !! actually, no need to check, just show the last warning once again
             return 0
         }
-        if (isCancel) {
+        if (isCancelInStochFuncHelperSelectedHandler) {
             mwh.showWarningBox("Please set the distribution model first.")
             return 0
         }

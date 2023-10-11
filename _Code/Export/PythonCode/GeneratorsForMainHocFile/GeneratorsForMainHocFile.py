@@ -272,6 +272,8 @@ class GeneratorsForMainHocFile:
             names.append('utils4FakeMech4NC')
         if hocObj.exportOptions.isExportAnyInhomSynModels() or hocObj.exportOptions.isExportAnyStochFuncs():
             names.append('mcu')
+        if hocObj.exportOptions.isExportAltRunControl():
+            names.append('mmcrHelper')
         line = 'objref ' + ', '.join(names)
         lines.append(line)
         

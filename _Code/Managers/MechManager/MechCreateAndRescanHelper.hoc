@@ -1,0 +1,286 @@
+
+obfunc _findAllRemainingSects() { codeContractViolation() }
+
+begintemplate MechCreateAndRescanHelper
+
+    public rescanNow, scheduleRescan, makeSureMechCompsCreatedOrImportedAndRescanned
+    
+    external isAstrocyteOrNeuron, isBaseOrNanoStart
+    external soma_ref, dendrite_ref, endFoot_ref, axon_ref, nanoProximal_ref, nanoDistal_ref
+    external mmAllComps
+    external _findAllRemainingSects, replaceItemInList, codeContractViolation
+    external mwh, compUtils
+    external eachItemInList
+    
+    isConvertedFromReducedMechCompTemplates = -1
+    
+    // 0 - no rescan scheduled
+    // 1 - full rescan: create all the comps from scratch (used by MechManagerMainWidget.rescanHandler; cannot be scheduled, and always applied immediately)
+    // 2 - all mechs in all comps (used by MechManagerMainWidget.rescanHandler; slower, but simpler solution compared to all next rescan types)
+    // 3 - (!!! never called) only nanogeometry on reseed (used by ManageAndRunWidget.onNanoReseedOrUpdateHandler)
+    // 4 - only nanogeometry on update (used by ManageAndRunWidget.onNanoReseedOrUpdateHandler)
+    // 5 - only spine_neck.diam and ions in dendrite_ref or spine_head (used by SynGroup.applyChangesToLoc)
+    // 6 - only "*o" ion vars (used by ExtracellularManagerMainWidget.applyHandler)
+    // !!! some ideas:
+    //     * maybe split type 4 into three: geometry, LargeGlia.g_pas, spine_neck/head.nseg
+    //     * in addition to type 5, maybe add a type of rescan to use after we created synapses
+    //       (if Target PPs use some ions, these ions are inserted into the section automatically;
+    //       but first need to investigate if insertion of a PP into a sec can result in insertion of not only ions, but also dist mechs)
+    //     * for type 6, we've called "init", so changes in "*o" ion vars could propagate to arbitrary other mech vars
+    enumScheduledRescanType = -1
+    
+    proc init() {
+        isConvertedFromReducedMechCompTemplates = 0
+        enumScheduledRescanType = 0                     // !!!! maybe assign 1 by default (but must be 0 in "start with nano" mode)
+    }
+    
+    proc rescanNow() { local numArg, enumNewRescanType
+        
+        numArg = numarg()
+        if (numArg > 1) {
+            codeContractViolation()
+        }
+        
+        if (numArg == 1) {
+            enumNewRescanType = $1
+            if (enumNewRescanType == 0) {
+                codeContractViolation()
+            }
+            enumScheduledRescanType = mergeWithOldRescanType(enumNewRescanType)
+        }
+        
+        if (enumScheduledRescanType == 0) {
+            return
+        }
+        
+        if (enumScheduledRescanType == 1) {
+            // Full rescan
+            createAllComps()
+        } else if (enumScheduledRescanType == 2) {
+            // All mechs in all comps
+            rescanAllMechsInAllComps()                      // Simpler solution
+        } else if (enumScheduledRescanType == 3) {
+            // Create all nanogeometry comps from scratch
+            replaceNanoComps()
+        } else if (enumScheduledRescanType == 4) {
+            // Rescan each nanogeometry comp
+            rescanNanoComps()
+        } else if (enumScheduledRescanType == 5) {
+            // Rescan spine_neck.diam and ions in dendrite_ref or spine_head
+            // !!! need to investigate if insertion of a PP into a sec can result in insertion of not only ions, but also dist mechs
+            // rescanTheseVarsInTheseComps(compNames, !!!)  // Faster solution
+            codeContractViolation()
+        } else if (enumScheduledRescanType == 6) {
+            // Rescan outer concs for all ions in all comps
+            // rescanTheseVarsInAllComps(!!!)               // Faster solution
+            codeContractViolation()
+        } else {
+            codeContractViolation()
+        }
+    }
+    
+    proc scheduleRescan() { local enumNewRescanType
+        enumNewRescanType = $1
+        
+        if (enumNewRescanType < 3 || enumNewRescanType > 6) {
+            codeContractViolation()
+        }
+        
+        enumScheduledRescanType = mergeWithOldRescanType(enumNewRescanType)
+        
+        if (enumScheduledRescanType > 4) {
+            // !!! simpler, but slower solution (it would be better to rescan only a subset of mechs or vars)
+            enumScheduledRescanType = 2
+        }
+    }
+    
+    proc makeSureMechCompsCreatedOrImportedAndRescanned() { localobj editableComps, reducedComp, nil
+        strdef msg
+        
+        if (mmAllComps == nil) {
+            createAllComps()
+        } else if (!isBaseOrNanoStart && !isConvertedFromReducedMechCompTemplates) {
+            editableComps = new List()
+            getPleaseWaitMsg("Importing all", msg)
+            mwh.showPleaseWaitBox(msg)      // !!! maybe not needed because the import is quite fast
+            {
+                for eachItemInList(reducedComp, mmAllComps) {
+                    editableComps.append(new MechComp(reducedComp))
+                }
+            }
+            mwh.hidePleaseWaitBox()
+            mmAllComps = editableComps
+            isConvertedFromReducedMechCompTemplates = 1
+        } else if (enumScheduledRescanType > 0) {
+            rescanNow()
+        }
+    }
+    
+    // All next staff is private
+    
+    
+    func mergeWithOldRescanType() { local enumNewRescanType
+        enumNewRescanType = $1
+        
+        if (enumNewRescanType == 0) {
+            codeContractViolation()
+        } else if (enumScheduledRescanType == 0) {
+            return enumNewRescanType
+        } else if (enumNewRescanType == 1) {
+            if (enumScheduledRescanType == 1) {
+                codeContractViolation()     // Cannot be scheduled
+            }
+            return 1    // Full rescan: create all the comps from scratch
+        } else if (enumNewRescanType == enumScheduledRescanType) {
+            return enumNewRescanType
+        } else {
+            return 2    // Rescan all mechs in all comps
+        }
+    }
+    
+    proc createAllComps() { local compIdx localobj other_ref, comp, nil
+        strdef msg
+        
+        getPleaseWaitMsg("Analyzing all", msg)
+        mwh.showPleaseWaitBox(msg)
+        {
+            mmAllComps = new List()
+            
+            mmAllComps.append(new MechComp("Soma", soma_ref))
+            mmAllComps.append(new MechComp("Dendrites", dendrite_ref))
+            
+            if (isAstrocyteOrNeuron) {
+                if (endFoot_ref != nil) {
+                    mmAllComps.append(new MechComp("End Foot", endFoot_ref))
+                }
+                
+                mmAllComps.append(new MechComp("Small Glia", nanoProximal_ref))
+                mmAllComps.append(new MechComp("Large Glia", nanoDistal_ref))
+            } else {
+                mmAllComps.append(new MechComp("Axon", axon_ref))
+                
+                mmAllComps.append(new MechComp("Spine Neck", nanoProximal_ref))
+                mmAllComps.append(new MechComp("Spine Head", nanoDistal_ref))
+            }
+            
+            other_ref = _findAllRemainingSects()
+            if (other_ref.count() != 0) {
+                mmAllComps.append(new MechComp("Other", other_ref))
+            }
+            
+            for compIdx = 0, mmAllComps.count() - 1 {
+                comp = mmAllComps.o(compIdx)
+                comp.finishAllVerbatimInhomProtos(compIdx)
+            }
+        }
+        mwh.hidePleaseWaitBox()
+        
+        enumScheduledRescanType = 0
+    }
+    
+    proc replaceNanoComps() { local idx, compIdx localobj compNames, secRefs, comp
+        strdef msg, compName
+        
+        // !!! never called because we block the panel in Main UI (but may be called in the future)
+        codeContractViolation()
+        
+        compNames = compUtils.getReservedNanoDistMechCompNames()
+        if (compNames.count() != 2) {
+            codeContractViolation()
+        }
+        
+        secRefs = new List()
+        secRefs.append(nanoProximal_ref)
+        secRefs.append(nanoDistal_ref)
+        
+        getPleaseWaitMsg("Analyzing all nano", msg)
+        mwh.showPleaseWaitBox(msg)
+        {
+            for idx = 0, 1 {
+                compName = compNames.o(idx).s
+                compUtils.findDistMechCompByName(compName, &compIdx)
+                comp = new MechComp(compName, secRefs.o(idx))
+                comp.finishAllVerbatimInhomProtos(compIdx)
+                replaceItemInList(mmAllComps, comp, compIdx)
+            }
+        }
+        mwh.hidePleaseWaitBox()
+        
+        enumScheduledRescanType = 0
+    }
+    
+    proc rescanNanoComps() { local compIdx localobj compNames, compNameStrObj, comp
+        strdef msg
+        
+        compNames = compUtils.getReservedNanoDistMechCompNames()
+        
+        getPleaseWaitMsg("Rescanning all nano", msg)
+        mwh.showPleaseWaitBox(msg)
+        {
+            for eachItemInList(compNameStrObj, compNames) {
+                comp = compUtils.findDistMechCompByName(compNameStrObj.s, &compIdx)
+                comp.rescanAllVarsInAllMechs(compIdx)
+                comp.finishAllVerbatimInhomProtos(compIdx)
+            }
+        }
+        mwh.hidePleaseWaitBox()
+        
+        enumScheduledRescanType = 0
+    }
+    
+    proc rescanAllMechsInAllComps() { local compIdx localobj comp
+        strdef msg
+        
+        getPleaseWaitMsg("Rescanning all", msg)
+        mwh.showPleaseWaitBox(msg)
+        {
+            for compIdx = 0, mmAllComps.count() - 1 {
+                comp = mmAllComps.o(compIdx)
+                comp.rescanAllVarsInAllMechs(compIdx)
+                comp.finishAllVerbatimInhomProtos(compIdx)
+            }
+        }
+        mwh.hidePleaseWaitBox()
+        
+        enumScheduledRescanType = 0
+    }
+    
+    proc getPleaseWaitMsg() {
+        strdef msgStart, msg
+        msgStart = $s1
+        sprint(msg, "%s comp \\ sect \\ segm \\ mech \\ varType \\ var \\ arrayIndex.", msgStart)
+        $s2 = msg
+    }
+    
+endtemplate MechCreateAndRescanHelper
+
+
+objref _compSecNamesSet // !! try not to keep it on the top level
+
+// Keep it on the top level because it uses "forall"
+// !! rewrite this obfunc or just IF predicate in Python
+// !! test how it affects the performance of proc mmcrHelper.createAllComps
+obfunc _findAllRemainingSects() { local compIdx localobj other_ref
+
+    _compSecNamesSet = pyObj.set()
+    
+    for compIdx = 0, mmAllComps.count() - 1 {
+        for eachSecInList(mmAllComps.o(compIdx).list_ref) {
+            _compSecNamesSet.add(secname())
+        }
+    }
+    
+    other_ref = new List()
+    forall {
+        if (pyObj.ev("str(h.cas()) in h._compSecNamesSet")) {
+            continue
+        }
+        other_ref.append(new SectionRef())
+    }
+    
+    return other_ref
+}
+
+
+objref mmcrHelper
+mmcrHelper = new MechCreateAndRescanHelper()

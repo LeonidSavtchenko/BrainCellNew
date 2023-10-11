@@ -75,7 +75,7 @@ begintemplate NanoBranchesManager
         lastUsedArgs = args
         
         if (manageAndRunWidget != nil) {
-            manageAndRunWidget.onNanoReseedOrUpdateHandler()
+            manageAndRunWidget.onNanoReseedOrUpdateHandler(1)
         }
         
         mwh.showPleaseWaitBox("Reseeding nanostructures.")
@@ -132,7 +132,7 @@ begintemplate NanoBranchesManager
         args = $o1
         
         if (manageAndRunWidget != nil) {
-            manageAndRunWidget.onNanoReseedOrUpdateHandler()
+            manageAndRunWidget.onNanoReseedOrUpdateHandler(0)
         }
         
         for eachItemInList(nanoBranch, nanoBranches_flat) {

@@ -4,7 +4,7 @@
 begintemplate MechComp
 
     public name, enumDmPpNc, list_ref, isMechInserted, isMechVarTypeInhom, mechStds, isCompDirty
-    public finishAllVerbatimInhomProtos, split, mergeAllSectsFrom, showMechStdPanel, markMechDirty, markAllMechsDirty, applyHomogenChangesToDirtyMechs, getDistRange, getDistRangeAsVec, getSecList, applySegmentationAndInhomogeneity, updateStatsCurve, updateVerbatimModelCurve, isMechVarInhom, prepareVarsEditorHeader, onJustBeforeCompHomogenBiophysImport, onJustAfterCompHomogenBiophysImport
+    public rescanAllVarsInAllMechs, finishAllVerbatimInhomProtos, split, mergeAllSectsFrom, showMechStdPanel, markMechDirty, markAllMechsDirty, applyHomogenChangesToDirtyMechs, getDistRange, getDistRangeAsVec, getSecList, applySegmentationAndInhomogeneity, updateStatsCurve, updateVerbatimModelCurve, isMechVarInhom, prepareVarsEditorHeader, onJustBeforeCompHomogenBiophysImport, onJustAfterCompHomogenBiophysImport
     
     external mmAllComps
     external mwh, math, mth, mmmowb, mcu, dfc
@@ -30,7 +30,7 @@ begintemplate MechComp
     iterator updateModelCurveIterator() { codeContractViolation() }
     
     
-    proc init() { local numArg, numMechs localobj impRedObj, nil
+    proc init() { local numArg localobj impRedObj
         strdef msg
         
         numArg = numarg()
@@ -54,22 +54,16 @@ begintemplate MechComp
         
         enumDmPpNc = 0
         
-        numMechs = mth.getNumMechs(enumDmPpNc)
-        
-        double isMechInserted[numMechs]         // 0/1 flags
-        double isMechVarTypeInhom[numMechs][3]  // 0/1 flags
-        objref mechStds[numMechs][3]            // 0: "PARAMETER", 1: "ASSIGNED", 2: "STATE"
-        double isMechDirty[numMechs]            // 0/1 flags
-        
-        if (impRedObj == nil) {
-            analyzeAllSegmentsInAllSections(numMechs)
-        } else {
-            // Load data from the imported reduced template (part 2)
-            initFromImportedReducedTemplate(impRedObj)
-        }
-        
-        // isMechDirty[*] = 0   // Not needed because a new array of doubles is always zeroed by default
-        isCompDirty = 0
+        rescanOrImport(impRedObj)
+    }
+    
+    _compIdxForRescan = -1
+    
+    // !!! maybe I don't need this; what I need is rescan of verbatim models for specific vars
+    proc rescanAllVarsInAllMechs() { localobj nil
+        _compIdxForRescan = $1
+        rescanOrImport(nil)
+        _compIdxForRescan = -1
     }
     
     proc finishAllVerbatimInhomProtos() { local compIdx localobj inhomTargetProto, nil
@@ -437,6 +431,27 @@ begintemplate MechComp
     // All next staff is private
     
     
+    proc rescanOrImport() { local numMechs localobj impRedObjOrNil, nil
+        impRedObjOrNil = $o1
+        
+        numMechs = mth.getNumMechs(enumDmPpNc)
+        
+        double isMechInserted[numMechs]         // 0/1 flags
+        double isMechVarTypeInhom[numMechs][3]  // 0/1 flags
+        objref mechStds[numMechs][3]            // 0: "PARAMETER", 1: "ASSIGNED", 2: "STATE"
+        double isMechDirty[numMechs]            // 0/1 flags
+        
+        if (impRedObjOrNil == nil) {
+            analyzeAllSegmentsInAllSections(numMechs)
+        } else {
+            // Load data from the imported reduced template (part 2)
+            initFromImportedReducedTemplate(impRedObjOrNil)
+        }
+        
+        // isMechDirty[*] = 0   // Not needed because a new array of doubles is always zeroed by default
+        isCompDirty = 0
+    }
+    
     proc analyzeAllSegmentsInAllSections() { local numMechs
         numMechs = $1
         
@@ -547,10 +562,8 @@ begintemplate MechComp
     }
     
     // !! this proc is the bottleneck causing the pause before the widgets show up (loops nesting of depth 6)
-    proc analyzeMechInhomogeneity() { local numMechs, mechIdx, varType, varTypeIdx, varIdx, arraySize, arrayIndex, isInhom, compIdx, isNonVerbatimInhomModelFound, is_g_pas localobj baseMechStd, tempMechStd, distFuncHelper, inhomTargetProto
-        strdef msgTempl, mechName, varName, msg
-        
-        msgTempl = "The inhom model applied earlier to \"%s\" in \"%s\" using Inhomogeneity editor is replaced now with \"Verbatim data\" model."
+    proc analyzeMechInhomogeneity() { local numMechs, mechIdx, varType, varTypeIdx, varIdx, arraySize, arrayIndex, isInhom, compIdx, isNonVerbatimInhomModelFound localobj baseMechStd, tempMechStd, distFuncHelper, inhomTargetProto
+        strdef mechName, varName
         
         numMechs = $1
         
@@ -581,21 +594,16 @@ begintemplate MechComp
                             continue
                         }
                         
-                        // !! BUG: this won't work correctly if MechComp ctor is called from .split
-                        compIdx = mmAllComps.count()
+                        if (_compIdxForRescan != -1) {
+                            compIdx = _compIdxForRescan
+                        } else {
+                            // !! BUG: this won't work correctly if MechComp ctor is called from .split
+                            compIdx = mmAllComps.count()
+                        }
                         
                         isNonVerbatimInhomModelFound = inhomAndStochLibrary.doesThisVarHaveVerbatimOrNonVerbatimInhomModel(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex, 0)
-                        is_g_pas = pyObj.isAstrocyteSpecificInhomVar(name, mechIdx, varType, varIdx, arrayIndex)
                         if (isNonVerbatimInhomModelFound) {
-                            if (is_g_pas) {
-                                // !!! g_pas in "Large Glia" for astrocytes is the only inhom var for which any custom inhom model applied by user using Inhomogeneity editor
-                                //     can be ignored and replaced by verbatim model if user later changes GPassive in Main UI
-                                //     and then opens Manager of biophysics again triggering Rescan
-                                sprint(msg, msgTempl, varName, name)
-                                continue_dialog(msg)
-                            } else {
-                                continue
-                            }
+                            continue
                         }
                         
                         distFuncHelper = new VerbatimDistFuncHelper(list_ref, varName, arrayIndex, tempMechStd)

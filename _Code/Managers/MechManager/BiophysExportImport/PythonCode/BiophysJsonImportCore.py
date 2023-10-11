@@ -1,10 +1,4 @@
 
-# !!!!! maybe add parsing and validation of units (in parentheses in the end of varNameWithIndex keys and "GPassive" key)
-
-# !!! maybe take special measures to allow user put comments in any place of JSON file
-#     (and leave an example comment with "comment" key) OR use some other file format but JSON
-#     we can use the comments to save the units
-
 import math
 from neuron import h
 from OtherInterModularUtils import *
@@ -75,9 +69,11 @@ class BiophysJsonImportCore:
                 if varTypeIdx > 0 and not options.isAssignedAndState:
                     continue
                 allVarNames = self._getAllVarNames(mechName, varType)
-                for (varNameWithIndex, varValueOrInfoDict) in varTypeInfoDict.items():
-                    (varName, arrayIndex) = self._getVarNameAndArrayIndex(varNameWithIndex)
+                for (varNameWithIndexAndUnits, varValueOrInfoDict) in varTypeInfoDict.items():
+                    (varName, arrayIndex, unitsOrEmpty) = self._parseVarNameArrayIndexAndUnits(varNameWithIndexAndUnits)
                     varIdx = self._getVarIdx(varName, allVarNames)
+                    
+                    # !!! compare unitsOrEmpty from JSON with h.units(*) and show a warning if they are different
                     
                     if type(varValueOrInfoDict) is not dict:
                         isInhom = False
@@ -143,18 +139,25 @@ class BiophysJsonImportCore:
             codeContractViolation()
         return varTypeIdx + 1
         
-    def _getVarNameAndArrayIndex(self, varNameWithIndex):
-        idx = varNameWithIndex.find('[')
-        if idx == -1:
-            varName = varNameWithIndex
-            arrayIndex = 0
-        else:
-            varName = varNameWithIndex[: idx]
-            arrayIndex = int(varNameWithIndex[idx + 1 : -1])
-            
-        # !!!!! need to skip the units here (or read and check)
+    def _parseVarNameArrayIndexAndUnits(self, varNameWithIndexAndUnits):
         
-        return varName, arrayIndex
+        (varNameWithIndex, unitsOrEmpty) = self._parseRightPart(varNameWithIndexAndUnits, ' (', '')
+        (varName, arrayIndex) = self._parseRightPart(varNameWithIndex, '[', 0)
+        
+        return varName, int(arrayIndex), unitsOrEmpty
+        
+    def _parseRightPart(self, string, startMarker, defaultRight):
+        
+        # !!! need to make this code tolerant to arbitrary spaces in the string
+        idx = string.find(startMarker)
+        if idx == -1:
+            left = string
+            right = defaultRight
+        else:
+            left = string[: idx]
+            right = string[idx + 1 : -1]
+            
+        return left, right
         
     def _getAllVarNames(self, mechName, varType):
         mechStd = h.MechanismStandard(mechName, varType)    # !!!!! read it from comp ??
@@ -200,7 +203,10 @@ class BiophysJsonImportCore:
         else:
             try:
                 # !!! BUG: error in "start with nano" mode: "LookupError: 'GPassive' is not a defined hoc variable name."
-                hocObj.GPassive = inhomModelInfoDict['GPassive']
+                varName = 'GPassive'
+                varNameWithUnits = '{} ({})'.format(varName, h.units(varName))
+                # !!! BUG: we'll hit KeyError by mistake if the units in JSON and NEURON are different
+                hocObj.GPassive = inhomModelInfoDict[varNameWithUnits]
                 # !!! BUG: error in "start with nano" mode: "setLeaves undefined function"
                 hocObj.distrSelectedLeaves(1)
             except KeyError:

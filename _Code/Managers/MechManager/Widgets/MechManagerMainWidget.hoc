@@ -1,13 +1,13 @@
 
-proc analyzeSectsAndCreateComps() { codeContractViolation() }
+objref mmcrHelper
 
 begintemplate MechManagerMainWidget
 
-    public show, rescanHandler, compOpSelectHandler, mechOpSelectHandler, updateVisibleMechOpChilds, dismissHandler
+    public show, compOpSelectHandler, mechOpSelectHandler, updateVisibleMechOpChilds, dismissHandler
     
-    external analyzeSectsAndCreateComps, dismissIfNotNil
+    external dismissIfNotNil
     external mmAllComps
-    external mwh, beih
+    external mwh, beih, mmcrHelper
     
     // !!!! maybe it would be better to encapsulate mmcoWidget into MechManagerMainWidget
     external mmcoWidget, mmmowb
@@ -38,10 +38,10 @@ begintemplate MechManagerMainWidget
                 {
                     xpanel("")
                     xlabel("Compartment* operations:")
-                    xradiobutton("Split 1 comp into 2", "compOpChangedHandler(0)", compOpIdx == 0)
-                    xradiobutton("Merge 2+ comps into 1", "compOpChangedHandler(1)", compOpIdx == 1)
-                    xradiobutton("Rename a comp", "compOpChangedHandler(2)", compOpIdx == 2)
-                    xbutton("Select", "compOpSelectHandler()")
+                    xradiobutton("Split 1 comp into 2", "compOpChangedHandler(0, 0)", compOpIdx == 0)
+                    xradiobutton("Merge 2+ comps into 1", "compOpChangedHandler(1, 0)", compOpIdx == 1)
+                    xradiobutton("Rename a comp", "compOpChangedHandler(2, 0)", compOpIdx == 2)
+                    xbutton("Select", "compOpSelectHandler(0)")
                     xpanel()
                 }
                 compBox.intercept(0)
@@ -66,19 +66,28 @@ begintemplate MechManagerMainWidget
             hBox.intercept(0)
             hBox.map()
             xpanel("")
-            xbutton("Rescan**", "rescanHandler()")
-            xpanel()
-            xpanel("")
-            xlabel("* Here \"compartment\" is just a group of sects sharing the same biophys model;")
-            xlabel("** Click \"Rescan\" after changing any mech vars outside this biophys manager,")
-            xlabel("   e.g. after usage of Tools -> Distributed Mechs -> Managers -> Homogen Spec")
+            xlabel("* Here \"compartment\" is just a group of sects sharing the same biophys model")
             xpanel()
             hBox = new HBox()
             hBox.intercept(1)
             {
+                createButtonInFirstColumn("Deep rescan**", "rescanHandler(1)", 54)
                 xpanel("")
-                xbutton("Export biophysics", "beih.export(mmeibWidget)")
+                xbutton("Light rescan***", "rescanHandler(2)")
                 xpanel()
+            }
+            hBox.intercept(0)
+            hBox.map()
+            xpanel("")
+            xlabel("** Click after creating or deleting any sections (as a side effect,")
+            xlabel("    all comp operations are discarded and all inhom models become Verbatim)")
+            xlabel("*** Click after changing any mechs outside this biophys manager, e.g. after")
+            xlabel("     Tools -> Distributed Mechs -> Managers -> Inserter or Homogen Spec")
+            xpanel()
+            hBox = new HBox()
+            hBox.intercept(1)
+            {
+                createButtonInFirstColumn("Export biophysics", "beih.export(mmeibWidget)", 66)
                 xpanel("")
                 xbutton("Import biophysics", "beih.import(mmeibWidget)")
                 xpanel()
@@ -88,16 +97,18 @@ begintemplate MechManagerMainWidget
         }
         mainBox.intercept(0)
         mainBox.dismiss_action("dismissHandler()")
-        mainBox.map("Manager of biophysics", 60, 100, -1, -1)
+        mainBox.map("Manager of biophysics", 30, 120, -1, -1)
     }
     
-    proc rescanHandler() {
-        analyzeSectsAndCreateComps()
+    proc rescanHandler() { local enumRescanType
+        enumRescanType = $1
+        mmcrHelper.rescanNow(enumRescanType)
         updateVisibleMechOpChilds()
     }
     
-    proc compOpSelectHandler() {
-        compOpChangedHandler(compOpIdx)
+    proc compOpSelectHandler() { local isCalledAfterCompOp
+        isCalledAfterCompOp = $1
+        compOpChangedHandler(compOpIdx, isCalledAfterCompOp)
     }
     
     proc mechOpSelectHandler() {
@@ -118,14 +129,37 @@ begintemplate MechManagerMainWidget
     // All next staff is private
     
     
-    proc compOpChangedHandler() { localobj nil
+    proc createButtonInFirstColumn() { localobj deck
+        strdef text, handlerHocCommand
+        
+        text = $s1
+        handlerHocCommand = $s2
+        width = $3
+        
+        // It turns out, the usage of Deck-s with just 1 card in the left column
+        // gives a nicer UI compared to other options (VBox or HBox)
+        deck = new Deck()
+        deck.intercept(1)
+        {
+            xpanel("")
+            xbutton(text, handlerHocCommand)
+            xpanel()
+        }
+        deck.intercept(0)
+        deck.flip_to(0)
+        deck.map("", 0, 0, width, 1)
+    }
+    
+    proc compOpChangedHandler() { local isCalledAfterCompOp localobj nil
         compOpIdx = $1
+        isCalledAfterCompOp = $2
         
         dismissIfNotNil(mmcoWidget)
         
         if (compOpIdx == 1 && mmAllComps.count() == 1) {
-            // !! this message unnecessarily shows up immediately after merging all compartments into 1
-            mwh.showMessageBox("There is only 1 compartment, so nothing to merge.", "Nothing to merge")
+            if (!isCalledAfterCompOp) {
+                mwh.showMessageBox("There is only 1 compartment, so nothing to merge.", "Nothing to merge")
+            }
             return
         }
         

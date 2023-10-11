@@ -14,10 +14,10 @@
     Line 40571:         Biophys compartments
     Line 40847:         Homogen biophysics
     Line 40983:         Proto synapses
-    Line 41108:         Synaptic compartments
-    Line 41731:         Homogen synaptic vars
-    Line 41777:         Synapses finale
-    Line 41784:         APCount-s
+    Line 41105:         Synaptic compartments
+    Line 41728:         Homogen synaptic vars
+    Line 41774:         Synapses finale
+    Line 41781:         APCount-s
 */
 //////////////////////////////////////////////////////////////////////////
 
@@ -40986,7 +40986,7 @@ begintemplate Synapse
 
     public sec_ref, connectionPoint, dist
     public srcPp, netCon, trgPp, sngPp, sefwPp, sefwNetCon
-    public getPointProcess, changeLocation, changeStructure
+    public getPointProcess, changeLocation, changeStructure, calcAndCacheDist
     
     external codeContractViolation
     
@@ -41085,9 +41085,6 @@ begintemplate Synapse
             codeContractViolation()
         }
     }
-    
-    // All next staff is private
-    
     
     proc calcAndCacheDist() {
         sec_ref.sec {

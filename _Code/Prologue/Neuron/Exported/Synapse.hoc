@@ -3,7 +3,7 @@ begintemplate Synapse
 
     public sec_ref, connectionPoint, dist
     public srcPp, netCon, trgPp, sngPp, sefwPp, sefwNetCon
-    public getPointProcess, changeLocation, changeStructure
+    public getPointProcess, changeLocation, changeStructure, calcAndCacheDist
     
     external codeContractViolation
     
@@ -102,9 +102,6 @@ begintemplate Synapse
             codeContractViolation()
         }
     }
-    
-    // All next staff is private
-    
     
     proc calcAndCacheDist() {
         sec_ref.sec {

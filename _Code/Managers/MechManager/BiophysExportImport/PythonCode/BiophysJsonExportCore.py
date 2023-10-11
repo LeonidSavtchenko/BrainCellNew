@@ -1,10 +1,4 @@
 
-# !!!!! maybe add export of units (in parentheses in the end of varNameWithIndex keys and "GPassive" key)
-
-# !!! maybe take special measures to allow user put comments in any place of JSON file
-#     (and leave an example comment with "comment" key) OR use some other file format but JSON
-#     we can use the comments to save the units
-
 import math
 from neuron import h
 from OtherInterModularUtils import *
@@ -90,7 +84,7 @@ class BiophysJsonExportCore:
         defaultMechStd = h.MechanismStandard(mechName, varType)
         
         varName = h.ref('')             # !!! maybe just save this one in the class and reuse in _prepareVarInfoDictOrEmpty
-        varNameWithIndex = h.ref('')
+        varNameWithIndexAndUnits = h.ref('')
         
         jsonDict = {}
         
@@ -101,8 +95,8 @@ class BiophysJsonExportCore:
                 varInfoDict = self._prepareVarInfoDictOrEmpty(compIdx, mechIdx, varType, varIdx, arrayIndex, defaultMechStd)
                 if not varInfoDict:
                     continue
-                mth.getVarNameWithIndex(varName[0], arraySize, arrayIndex, varNameWithIndex)
-                jsonDict[varNameWithIndex[0]] = varInfoDict
+                mth.getVarNameWithIndexAndUnits(0, mechIdx, varName[0], arraySize, arrayIndex, varNameWithIndexAndUnits)
+                jsonDict[varNameWithIndexAndUnits[0]] = varInfoDict
                 
         return jsonDict
         
@@ -124,8 +118,6 @@ class BiophysJsonExportCore:
         isInhom = isInhom1
         
         isStoch = inhomAndStochLibrary.isStochEnabledFor(0, compIdx, mechIdx, varType, varIdx, arrayIndex)
-        
-        # !!! don't forget about units
         
         varTypeIdx = int(mth.convertVarTypeToVarTypeIdx(varType))
         varValue = comp.mechStds[mechIdx][varTypeIdx].get(varName, arrayIndex)
@@ -177,7 +169,9 @@ class BiophysJsonExportCore:
             jsonDict = self._prepareInhomModelInfoDictCore(actSpecVar)
         else:
             # !!! BUG: error in "start with nano" mode: "AttributeError: 'hoc.HocObject' object has no attribute 'GPassive'"
-            jsonDict = { 'GPassive': hocObj.GPassive }
+            varName = 'GPassive'
+            varNameWithUnits = '{} ({})'.format(varName, h.units(varName))
+            jsonDict = { varNameWithUnits: hocObj.GPassive }
             
         return jsonDict
         

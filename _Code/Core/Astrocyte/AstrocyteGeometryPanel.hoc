@@ -6,7 +6,7 @@ proc createAstrocyteGeometryPanel() { local isEditLeafOrStalkGeometryByDefault
     isEditLeafOrStalkGeometryByDefault = 1
     
     xpanel("")
-    xlabel("======================= Stalk and Leaf Geometry =======================")
+    xlabel("==================== Stalk and Leaf Geometry ====================")
     xradiobutton("Edit Stalk geometry", "deckEditStalkOrLeafGeometry.flip_to(0)", isEditLeafOrStalkGeometryByDefault == 0)
     xradiobutton("Edit Leaf geometry", "deckEditStalkOrLeafGeometry.flip_to(1)", isEditLeafOrStalkGeometryByDefault == 1)
     xpanel()
@@ -15,7 +15,7 @@ proc createAstrocyteGeometryPanel() { local isEditLeafOrStalkGeometryByDefault
     deckEditStalkOrLeafGeometry.intercept(1)
     {
         xpanel("")
-        xlabel("======================= Stalk Geometry =======================")
+        xlabel("======================== Stalk Geometry =======================")
         xlabel("Stalks are thin higher-order branches that")
         xlabel("connect nanoscopic processes (Leaves)")
         xlabel("-------------------------------------------------------------------------------------------------------------------------")
@@ -23,27 +23,27 @@ proc createAstrocyteGeometryPanel() { local isEditLeafOrStalkGeometryByDefault
             xradiobutton("Diameter distribution from file", "distrSelectedStalks(1)", 1)
             xradiobutton("Stochastic uniform  distribution of diameters between Min and Max", "distrSelectedStalks(0)")
         } else {
-            xlabel("Stochastic uniform  distribution of diameters between Min and Max")
+            xlabel("Stochastic uniform distribution of diameters between Min and Max")
         }
-        xvalue("Max diameter of Stalks",  "MaxDimStalk", 1, "distrSelectedStalks()", 0, 1)
-        xvalue("Min diameter of Stalks",  "MinDimStalk", 1, "distrSelectedStalks()", 0, 1)
+        xvalue("Max diameter of Stalks", "MaxDimStalk", 1, "distrSelectedStalks()", 0, 1)
+        xvalue("Min diameter of Stalks", "MinDimStalk", 1, "distrSelectedStalks()", 0, 1)
         xlabel("-------------------------------------------------------------------------------------------------------------------------")
-        xlabel("Stochastic uniform  distribution of lengths between Min and Max")
-        xvalue("Max length of Stalks","MaxLenStalk", 1, "distrSelectedStalks()", 0, 1)
-        xvalue("Min length of Stalks","MinLenStalk", 1, "distrSelectedStalks()", 0, 1)
+        xlabel("Stochastic uniform distribution of lengths between Min and Max")
+        xvalue("Max length of Stalks", "MaxLenStalk", 1, "distrSelectedStalks()", 0, 1)
+        xvalue("Min length of Stalks", "MinLenStalk", 1, "distrSelectedStalks()", 0, 1)
         //xlabel("=============================================================")
         xpanel()
         
         xpanel("")
-        xlabel("======================= Leaf Geometry =======================")
+        xlabel("======================== Leaf Geometry ========================")
         xlabel("Main parameters of nanoscopic processes (Leaves)")
-        //xlabel("")
+        xlabel("")
         xlabel("-------------------------------------------------------------------------------------------------------------------------")
         if (nanoDistrLoaded == 1) {
             xradiobutton("Diameter distribution from file", "distrSelectedLeaves(0, 1)", 1)
             xradiobutton("Stochastic uniform distribution of diameters between  Min and Max", "distrSelectedLeaves(0, 0)")
         } else {
-            xlabel("Stochastic uniform distribution of diameters between  Min and Max")
+            xlabel("Stochastic uniform distribution of diameters between Min and Max")
         }
         xvalue("Max diameter of Leaves","MaxDimLeaves", 1, "distrSelectedLeaves(0)", 0, 1)
         xvalue("Min diameter of Leaves","MinDimLeaves", 1, "distrSelectedLeaves(0)", 0, 1)
@@ -51,11 +51,6 @@ proc createAstrocyteGeometryPanel() { local isEditLeafOrStalkGeometryByDefault
         xlabel("Stochastic uniform distribution of lengths between Min and Max")
         xvalue("Max length of Leaves","MaxLenLeaves", 1, "distrSelectedLeaves(0)", 0, 1)
         xvalue("Min length of Leaves","MinLenLeaves", 1, "distrSelectedLeaves(0)", 0, 1)
-        xlabel("========== Volume modification. Changes of diameters and lengths of segments =======")
-        xlabel("========== Change diameters in % to diameters =======")
-        xvalue("Diameter change","DiameterParameter", 1, "changeVolume(DiameterParameter, LengthChange)", 0, 1)
-        xlabel("========== Changing length by multiplying by parameter =======")
-        xvalue("Length change","LengthChange", 1, "changeVolume(DiameterParameter, LengthChange)", 0, 1)
         //xlabel("=============================================================")
         xpanel()
     }
@@ -63,8 +58,8 @@ proc createAstrocyteGeometryPanel() { local isEditLeafOrStalkGeometryByDefault
     deckEditStalkOrLeafGeometry.flip_to(isEditLeafOrStalkGeometryByDefault)
     deckEditStalkOrLeafGeometry.map()
     
-    xpanel("Specific membrane conductance")
-    xlabel("========== Specific membrane conductance =======")
+    xpanel("")
+    xlabel("========== Specific membrane conductance =======================")
     xlabel("This membrane conductivity is scaled to base of leaf cylinders")
     // !!! BUG: as a side effect, the handler updates not only biophysics, but also geometry of the nanostructures (no reseeding)
     xvalue("Specific membrane conductance, Gm","GPassive", 1, "distrSelectedLeaves(1)", 0, 1)

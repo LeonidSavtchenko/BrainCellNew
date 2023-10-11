@@ -19,9 +19,10 @@ if (!isAstrocyteOrNeuron) {
 
 { load_file("../Export/Widgets/ExportWidgetsLoads.hoc") }
 
+{ load_file("MainUiLockHelper.hoc") }
 
 // UI
-objref hBoxMainPanel, deckReseeding
+objref hBoxMainPanel
 
 // Runs selected simulation from UI.
 // $1 - Number of selected simulation
@@ -98,21 +99,30 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
                 xpanel()
                 */
                 
-                createReseedingDeck()
+                createNanoReseedingDeck()
+                
+                createNanoGeomAndBiophysDeck()
                 
                 if (isAstrocyteOrNeuron) {
-                    createAstrocyteGeometryPanel()
-                } else {
-                    createNeuronGeometryPanel()
+                    // !!! do we need to show this for neuron as well?
+                    // !!! need to hide it once user performs any comp op in Manager of Biophysics
+                    xpanel("")
+                    xlabel("==== Volume modification. Changes of diams and lengths of segments ====")
+                    xlabel("============ Change diameters in % to diameters ===================")
+                    xvalue("Diameter change","DiameterParameter", 1, "changeVolume(DiameterParameter, LengthChange)", 0, 1)
+                    xlabel("============ Changing length by multiplying by parameter ============")
+                    xvalue("Length change","LengthChange", 1, "changeVolume(DiameterParameter, LengthChange)", 0, 1)
+                    xpanel()
                 }
                 
-                xpanel("Dendritic geometry")
-                xlabel("========= Dendritic geometry ================================")
+                xpanel("")
+                xlabel("========= Dendritic geometry =============================")
                 // xlabel("========= For library stem tree files only =========")
                 //xlabel("Seed of random number to modify Z coordinate")
                 //xlabel("of each segment from - 1 to 1 um")
                 //xvalue("Z coordinate Random number","Z_coordinate", 1, "stretch(Z_coordinate, ScalingDiam)", 0, 1)
                 
+                    // !!! need to hide it once user performs any comp op on dendrites in Manager of Biophysiscs
                    xvalue("Scaling of diameter","ScalingDiam", 1, "stretch(Z_coordinate, ScalingDiam)", 0, 1)
                 
                 //xvalue("Length x and Y","LengthXY", 1, "stretchXY(LengthXY, LengthZ)", 0, 1)
@@ -228,14 +238,14 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
     hBoxMainPanel.map("Repertoire of computation", 285, 0, -1, -1)
 }
 
-proc createReseedingDeck() {
-    strdef text
+proc createNanoReseedingDeck() { localobj deckNanoReseeding
     
-    deckReseeding = new Deck()
-    deckReseeding.intercept(1)
+    deckNanoReseeding = new Deck()
+    mainUiLocker.deckNanoReseeding = deckNanoReseeding
+    deckNanoReseeding.intercept(1)
     {
         xpanel("")
-        xlabel("=============== Where to Seed the Nanostructures ===============")
+        xlabel("============ Where to Seed the Nanostructures =============")
         xradiobutton("All dendrites", "isAllOrSomeDendritesSeeded = 1", isAllOrSomeDendritesSeeded == 1)
         xradiobutton("Some dendrites (I will select them)", "isAllOrSomeDendritesSeeded = 0", isAllOrSomeDendritesSeeded == 0)
         xbutton("Reseed", "seededDendritesChangedHandler()")
@@ -263,7 +273,7 @@ proc createReseedingDeck() {
         }
         xpanel()
         xpanel("")
-        xlabel("=============== Where to Seed the Nanostructures ===============")
+        xlabel("============ Where to Seed the Nanostructures =============")
         xlabel("")
         xlabel("Not available after the first interaction with any of these widgets:")
         xlabel("    * Manager of Biophysics")
@@ -273,9 +283,57 @@ proc createReseedingDeck() {
         xlabel("    * Manager of Extracellular Sources")
         xpanel()
     }
-    deckReseeding.intercept(0)
-    deckReseeding.flip_to(0)
-    deckReseeding.map()
+    deckNanoReseeding.intercept(0)
+    deckNanoReseeding.flip_to(0)
+    deckNanoReseeding.map()
+}
+
+proc createNanoGeomAndBiophysDeck() { local w, h localobj deckNanoGeomAndBiophys, vBox
+    
+    if (isAstrocyteOrNeuron) {
+        w = 350
+    } else {
+        w = 300
+    }
+    h = 325
+    
+    deckNanoGeomAndBiophys = new Deck()
+    mainUiLocker.deckNanoGeomAndBiophys = deckNanoGeomAndBiophys
+    deckNanoGeomAndBiophys.intercept(1)
+    {
+        vBox = new VBox()
+        vBox.intercept(1)
+        {
+            if (isAstrocyteOrNeuron) {
+                createAstrocyteGeometryPanel()
+            } else {
+                createNeuronGeometryPanel()
+            }
+        }
+        vBox.intercept(0)
+        vBox.map()
+        xpanel("")
+        if (isAstrocyteOrNeuron) {
+            xlabel("==================== Stalk and Leaf Geometry ====================")
+            xlabel("")
+            xlabel("========== Specific membrane conductance =======================")
+        } else {
+            xlabel("============= Spine Head and Neck Geometry =============")
+        }
+        xlabel("")
+        xlabel("Not available after one of these operations applied to")
+        xlabel("nanogeometry in Manager of Biophysics:")
+        xlabel("    * Compartment Split / Merge / Rename")
+        xlabel("    * Defining any mech variable as a func(dist)")
+        if (!isAstrocyteOrNeuron) {
+            xlabel("or this operation applied in Manager of Synapses:")
+            xlabel("    * Defining any PP / NetCon variable as a func(dist)")
+        }
+        xpanel()
+    }
+    deckNanoGeomAndBiophys.intercept(0)
+    deckNanoGeomAndBiophys.flip_to(0)
+    deckNanoGeomAndBiophys.map("", 0, 0, w, h)
 }
 
 proc showRunControlPanel() {
@@ -301,7 +359,7 @@ proc insertElectrode() {
 }
 
 proc startMechManager() { local isCancel
-    isCancel = makeSureReseedingLocked()
+    isCancel = mainUiLocker.makeSureNanoReseedingLocked()
     if (isCancel) {
         return
     }
@@ -310,7 +368,7 @@ proc startMechManager() { local isCancel
 }
 
 proc startSynManager() { local isCancel
-    isCancel = makeSureReseedingLocked()
+    isCancel = mainUiLocker.makeSureNanoReseedingLocked()
     if (isCancel) {
         return
     }
@@ -319,7 +377,7 @@ proc startSynManager() { local isCancel
 }
 
 proc startECSManager() { local isCancel
-    isCancel = makeSureReseedingLocked()
+    isCancel = mainUiLocker.makeSureNanoReseedingLocked()
     if (isCancel) {
         return
     }
@@ -336,18 +394,4 @@ proc startExportManager() { localobj nil
         exportManagerMainWidget.dismissHandler()
     }
     exportManagerMainWidget.show()
-}
-
-isReseedingLocked = 0
-
-func makeSureReseedingLocked() { local isCancel
-    if (isReseedingLocked || !isBaseOrNanoStart) {
-        return 0
-    }
-    isCancel = !boolean_dialog("To proceed, we need to lock the ability to reseed the nanostructures. Do you want to proceed?", "Yes", "No")
-    if (!isCancel) {
-        deckReseeding.flip_to(1)
-        isReseedingLocked = 1
-    }
-    return isCancel
 }

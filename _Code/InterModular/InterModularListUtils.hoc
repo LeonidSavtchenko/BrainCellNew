@@ -12,14 +12,29 @@ proc concatenateTwoLists() { localobj list1, list2, item2
     }
 }
 
-proc replaceItemInBrowsedListThenSelect() { local idx localobj list, item
+proc replaceItemInList() { local numArg, idx, isSelect localobj list, item
+    numArg = numarg()
+    if (numArg < 3 || numArg > 4) {
+        codeContractViolation()
+    }
+    
     list = $o1
     item = $o2
     idx = $3
+    
+    if (numArg == 4) {
+        isSelect = $4
+    } else {
+        isSelect = 0
+    }
+    
     // list.o(idx) = item       // Error
-    list.remove(idx)            // As a side effect, the item won't be selected anymore
+    list.remove(idx)            // As a side effect, the item won't be selected anymore (for a browsed list)
     list.insrt(idx, item)
-    list.select(idx)
+    
+    if (isSelect) {
+        list.select(idx)
+    }
 }
 
 // $o1 (in/out) - The list to analyze which must contain objects with public "s" field

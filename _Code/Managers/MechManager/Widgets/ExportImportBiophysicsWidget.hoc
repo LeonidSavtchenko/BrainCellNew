@@ -8,11 +8,9 @@ begintemplate ExportImportBiophysicsWidget
 
     public show, dismissHandler
     
-    external mmAllComps
     external inhomAndStochLibrary
     external stringCapitalize, unmapIfNotNil, codeContractViolation
-    external mwh, beih
-    external eachItemInList
+    external mwh, beih, compUtils
     
     objref mainBox
     
@@ -29,7 +27,7 @@ begintemplate ExportImportBiophysicsWidget
         options = new BiophysExportImportOptions()
     }
     
-    proc show() { local numArg, numInhomVars, numStochVars, numComps, compIdx localobj compNames, mechComp, hBox, vBox, deckSpacerSlider
+    proc show() { local numArg, numInhomVars, numStochVars, numComps, compIdx localobj compNames, hBox, vBox, deckSpacerSlider
         strdef Word, text, hocCommand, title
         
         numArg = numarg()
@@ -43,13 +41,10 @@ begintemplate ExportImportBiophysicsWidget
             if (numArg != 1) {
                 codeContractViolation()
             }
-            compNames = new List()
-            for eachItemInList(mechComp, mmAllComps) {
-                compNames.append(new String(mechComp.name))
-            }
+            compNames = compUtils.getAllDistMechCompNames()
             numInhomVars = inhomAndStochLibrary.getNumInhomVarsForDistMechs()
             numStochVars = inhomAndStochLibrary.getNumStochVarsForDistMechs()
-            numComps = mmAllComps.count()
+            numComps = compUtils.getNumDistMechComps()
             isBlockThisCompNameVec = new Vector(numComps)   // All zeros by default
             options.isUseThisCompNameVec = new Vector(numComps, 1)
         } else {

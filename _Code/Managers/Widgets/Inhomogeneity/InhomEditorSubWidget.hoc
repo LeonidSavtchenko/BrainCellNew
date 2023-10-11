@@ -4,7 +4,7 @@ begintemplate InhomEditorSubWidget
     public show, updateCurves, dismissHandler
     
     external varsEditorSubWidget, synManagerMainWidget
-    external mwh, math, mth, mmmowb, mcu, dfc, compUtils, inhomAndStochLibrary, synGroup, seh, graphUtils
+    external mwh, math, mth, mmmowb, mcu, dfc, compUtils, inhomAndStochLibrary, synGroup, seh, graphUtils, mainUiLocker
     external getDistMechVarRangeOutside, getDistMechVarRangeInside, createEmptyPanel, createElasticSpacer, oneZeroToYesNo, codeContractViolation
     external eachPointInGrid
     
@@ -48,7 +48,7 @@ begintemplate InhomEditorSubWidget
     yMaxOut = -1
     yMinModel = -1
     
-    isCancel = -1
+    isCancelInDistFuncHelperSelectedHandler = -1
     
     
     proc init() { local idx, isInhom1, isInhom2 localobj nil, distFuncHelper, innerDistFuncHelper
@@ -634,10 +634,10 @@ begintemplate InhomEditorSubWidget
         }
         
         // For the case if the next command won't finish (when user just ignores the string or file dialog)
-        isCancel = 1
+        isCancelInDistFuncHelperSelectedHandler = 1
         
-        isCancel = distFuncHelper.selectedHandler()
-        if (isCancel) {
+        isCancelInDistFuncHelperSelectedHandler = distFuncHelper.selectedHandler()
+        if (isCancelInDistFuncHelperSelectedHandler) {
             graph1.erase()
             graph2.erase_all()
             setXYLabels(graph2)
@@ -843,9 +843,9 @@ begintemplate InhomEditorSubWidget
         distFuncChangedHandler(distFuncIdx)
     }
     
-    proc applyHandler() { local isOK, yMin, yMax, isInhom, varValue localobj segmentationHelperOrNil, distFuncHelper, nil, secList
+    proc applyHandler() { local isCancel, isOK, yMin, yMax, isInhom, varValue localobj segmentationHelperOrNil, distFuncHelper, secList, nil
     
-        if (isCancel) {
+        if (isCancelInDistFuncHelperSelectedHandler) {
             mwh.showWarningBox("Please set the distance function first.")
             return
         }
@@ -858,6 +858,17 @@ begintemplate InhomEditorSubWidget
         
         if (distFuncIdx == dfc.verbatimDistFuncIdx) {       //
             if (checkIfVerbatimInhomModelWasDestroyed()) {  // Do not replace with one IF
+                return
+            }
+        }
+        
+        if (mainUiLocker != nil) {  // !!! nil in tests
+            if (isMechOrSynEditor) {
+                isCancel = mainUiLocker.ifNanoCompThenMakeSureNanoUpdateLocked(compName)
+            } else {
+                isCancel = mainUiLocker.makeSureNanoUpdateLocked()
+            }
+            if (isCancel) {
                 return
             }
         }

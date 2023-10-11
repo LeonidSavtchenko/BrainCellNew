@@ -10,17 +10,16 @@
 // A group of synapses (a counterpart of MechComp template)
 begintemplate SynGroup
 
-    public is3Or1PartInSynStruc, getPpNameOrEmpty, getMechIdxAndOptionalName, getDistRange, getSecList, applyChangesToLoc, applyChangesToStrucIfNeeded, applyChangesToDirtyHomogenVars, applyInhomogeneityIter, updateStatsCurveIter, updateColormaps, isAnyVarInhom
+    public is3Or1PartInSynStruc, getPpNameOrEmpty, getMechIdxAndOptionalName, getDistRange, getSecList, reCalcAndCacheDistInSyns, applyChangesToLoc, applyChangesToStrucIfNeeded, applyChangesToDirtyHomogenVars, applyInhomogeneityIter, updateStatsCurveIter, updateColormaps, isAnyVarInhom
     public witheredSpineNeckDiam
     
     external synManagerMainWidget
     external smAllSyns, smAllComps, nanoProximal_ref, nanoDistal_ref
-    external mwh, mth, math, mcu, seh, rngUtils
+    external mwh, mth, math, mcu, seh, rngUtils, mmcrHelper
     external capDiam, stringEmpty, stringsEqual, codeContractViolation
     external eachItemInList
     external enumSynCompIdxs, smEnumSynLoc, smSynLocP
     external spineNeckDiamCache, inhomAndStochLibrary
-    external isScheduledRescanningOfDistMechs
     
     objref randomSynLoc
     objref this
@@ -118,8 +117,14 @@ begintemplate SynGroup
         return secList
     }
     
+    proc reCalcAndCacheDistInSyns() { localobj syn
+        for eachItemInList(syn, smAllSyns) {
+            syn.calcAndCacheDist()
+        }
+    }
+    
     // Other input: smEnumSynLoc, smSynLocP (taken from the top level)
-    proc applyChangesToLoc() { local isReviewAfterApply, distMin, distMax, synIdx, connectionPoint, spineNeckDiam localobj sec_ref, syn
+    proc applyChangesToLoc() { local isReviewAfterApply, distMin, distMax, synIdx, connectionPoint, spineNeckDiam localobj sec_ref, syn, nil
         isReviewAfterApply = $1
         
         if (smEnumSynLoc == 2) {
@@ -142,7 +147,9 @@ begintemplate SynGroup
         
         synManagerMainWidget.onSynLocChangedHandler(distMin, distMax, isReviewAfterApply)
         
-        isScheduledRescanningOfDistMechs = 1    // !! for higher performance, it would be better to rescan only spine_neck.morphology
+        if (mmcrHelper != nil) {    // !!! can be nil in tests
+            mmcrHelper.scheduleRescan(5)
+        }
     }
     
     // Keep in sync with ReducedSynGroup.createSynStruc

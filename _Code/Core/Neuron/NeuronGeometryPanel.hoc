@@ -18,7 +18,7 @@ proc createNeuronGeometryPanel() { local defaultChosenSpineGeometry
     
     // Neuron geometry distribution switch panel
     xpanel("Spine Head and Neck Geometry")
-    xlabel("====================== Spine Head and Neck Geometry ======================")
+    xlabel("============= Spine Head and Neck Geometry =============")
     xradiobutton("Uniform distribution of spine geometry", "switchToOtherNeuronGeometry(0, 0)", defaultChosenSpineGeometry == 0)
     xradiobutton("Normal distribution of spine geometry", "switchToOtherNeuronGeometry(1, 0)", defaultChosenSpineGeometry == 1)
     xradiobutton("Nature paper Control", "switchToOtherNeuronGeometry(2, 0)", defaultChosenSpineGeometry == 2)
@@ -81,7 +81,7 @@ proc switchToOtherNeuronGeometry() { local newChosenSpineGeometry, isCreatePanel
 
 proc UniformDistributionofSpineGeometry() {
     xpanel("Uniform distribution")
-    xlabel("===============Uniform distribution of spine geometry====================")
+    xlabel("=========Uniform distribution of spine geometry=============")
     xlabel("===============Spine Head====================")
     xvalue("MaxRadius of spine Head","MaxRadiusHead", 1, geomValueChangedHandler, 0, 1)
     xvalue("MinRadius of spine Head","MinRadiusHead", 1, geomValueChangedHandler, 0, 1)
@@ -97,7 +97,7 @@ proc UniformDistributionofSpineGeometry() {
 
 proc NormalDistributionofSpineGeometry() {
     xpanel("Normal distribution")
-    xlabel("===============Normal distribution of spine geometry====================")
+    xlabel("=========Normal distribution of spine geometry==============")
     xlabel("===============Spine Head====================")
     xvalue("SDRadius of spine Head","SDRadiusHead", 1, geomValueChangedHandler, 0, 1)
     xvalue("MeanRadius of spine Head","MeanRadiusHead", 1, geomValueChangedHandler, 0, 1)
@@ -127,7 +127,7 @@ proc NaturePaperControl_Init() {
 
 proc NaturePaperControl() {
     xpanel("Nature paper Control")
-    xlabel("===============Nature paper Control====================")
+    xlabel("=========Nature paper Control===========================")
     xlabel("===============Spine Head====================")
     xvalue("SDRadius of spine Head","SDRadiusHead", 1, geomValueChangedHandler, 0, 1)
     xvalue("MeanRadius of spine Head","MeanRadiusHead", 1, geomValueChangedHandler, 0, 1)
@@ -157,7 +157,7 @@ proc NaturePaperLTP_Init() {
 
 proc NaturePaperLTP() {
     xpanel("Nature paper LTP")
-    xlabel("===============Nature paper LTP====================")
+    xlabel("=========Nature paper LTP==============================")
     xlabel("===============Spine Head====================")
     xvalue("SDRadius of spine Head","SDRadiusHead", 1, geomValueChangedHandler, 0, 1)
     xvalue("MeanRadius of spine Head","MeanRadiusHead", 1, geomValueChangedHandler, 0, 1)

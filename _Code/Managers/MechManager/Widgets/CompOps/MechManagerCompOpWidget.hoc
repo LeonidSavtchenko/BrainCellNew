@@ -5,7 +5,7 @@ begintemplate MechManagerCompOpWidget
     public mainBox
     
     external mmAllComps
-    external mwh, mmmowb
+    external mwh, mmmowb, mainUiLocker
     external chooseUniqueNameForCompartmentForMechManager, dismissIfNotNil, unmapIfNotNil
     external inhomAndStochLibrary
     
@@ -134,7 +134,7 @@ begintemplate MechManagerCompOpWidget
     
     // $o1 - All the selected sections (List of SectionRef-s)
     // Returns: 0/1/2 flag indicating OK/Cancel/Applied respectively
-    func splitHandler_layer2() { local isCancel, status localobj selected_ref, comp, newComp
+    func splitHandler_layer2() { local isCancel, status localobj selected_ref, comp, newComp, nil
         strdef newCompName
         
         selected_ref = $o1
@@ -156,6 +156,13 @@ begintemplate MechManagerCompOpWidget
         status = mmmowb.ifDirtyThenProposeUserToApplyChanges("split")
         if (status == 1) {
             return 1
+        }
+        
+        if (mainUiLocker != nil) {  // !!! nil in tests
+            isCancel = mainUiLocker.ifNanoCompThenMakeSureNanoUpdateLocked(comp.name)
+            if (isCancel) {
+                return 1
+            }
         }
         
         newComp = comp.split(selected_ref, newCompName)
@@ -195,22 +202,33 @@ begintemplate MechManagerCompOpWidget
     }
     
     // Input: this.renameCompIdx
-    proc renameHandler() { local isCancel localobj comp
-    
+    proc renameHandler() { local isCancel localobj comp, nil
+        strdef newCompName
+        
         // No check for mech dirtiness here - renaming is always OK
         
         comp = mmAllComps.o(renameCompIdx)
-        isCancel = chooseUniqueNameForCompartmentForMechManager(comp.name, 0, comp.name)
+        
+        isCancel = chooseUniqueNameForCompartmentForMechManager(comp.name, 0, newCompName)
         if (isCancel) {
             return
         }
+        
+        if (mainUiLocker != nil) {  // !!! nil in tests
+            isCancel = mainUiLocker.ifNanoCompThenMakeSureNanoUpdateLocked(comp.name)
+            if (isCancel) {
+                return
+            }
+        }
+        
+        comp.name = newCompName
         
         updateWidgetsAfterOp()
     }
     
     proc updateWidgetsAfterOp() {
         parentWidget.updateVisibleMechOpChilds()
-        parentWidget.compOpSelectHandler()      // This will update us as well
+        parentWidget.compOpSelectHandler(1)     // This will update us as well
     }
     
     proc dismissHandler() {

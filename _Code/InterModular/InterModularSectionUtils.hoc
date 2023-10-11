@@ -62,18 +62,18 @@ obfunc listOfSecRefToSecList() { localobj list_ref, secList
     return secList
 }
 
-// Delete all sections
-// (The names remain declared and cannot be used for anything else than creating new sections and section arrays)
-proc deleteAllSections() {
-    forall {
-        delete_section()
-    }
-}
-
 func capDiam() {
     // If user sets too small "diam" for a section, NEURON resets it to 1e-9 when user enters
     //  Tools -> Distributed Mechanisms -> Viewers -> Shape Name
     // and then double clicks on a section in the list.
     // So we cap "diam" in advance just to avoid the unexpected behaviour later.
     return math.max($1, 1e-9)
+}
+
+// Delete all sections
+// (The names remain declared and cannot be used for anything else than creating new sections and section arrays)
+proc deleteAllSections() {
+    forall {
+        delete_section()
+    }
 }

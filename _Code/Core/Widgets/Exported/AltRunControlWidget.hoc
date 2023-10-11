@@ -11,6 +11,7 @@ begintemplate AltRunControlWidget
     external alt_stdinit, alt_run, alt_continuerun, alt_steprun
     
     external inhomAndStochApplicator, inhomAndStochLibrary
+    external mmcrHelper
     external printNotImplementedMsgAndRaiseError
     
     objref mainBox
@@ -106,6 +107,7 @@ begintemplate AltRunControlWidget
     
     
     proc initHandler() {
+        rescanBiophysCompsIfNeeded()
         if (!isEnableStoch) {
             stdinit()
         } else {
@@ -115,6 +117,7 @@ begintemplate AltRunControlWidget
     }
     
     proc initAndRunHandler() { local isWaitingForCallbacks
+        rescanBiophysCompsIfNeeded()
         if (!isEnableStoch) {
             run()
         } else {
@@ -130,6 +133,7 @@ begintemplate AltRunControlWidget
     }
     
     proc continueTilHandler() { local isWaitingForCallbacks
+        rescanBiophysCompsIfNeeded()
         if (!isEnableStoch) {
             continuerun(runStopAt)
         } else {
@@ -145,6 +149,7 @@ begintemplate AltRunControlWidget
     }
     
     proc continueForHandler() { local tStopAt, isWaitingForCallbacks
+        rescanBiophysCompsIfNeeded()
         tStopAt = t + runStopIn
         if (!isEnableStoch) {
             continuerun(tStopAt)
@@ -161,6 +166,7 @@ begintemplate AltRunControlWidget
     }
     
     proc singleStepHandler() { local isWaitingForCallbacks
+        rescanBiophysCompsIfNeeded()
         if (!isEnableStoch) {
             steprun()
         } else {
@@ -172,6 +178,12 @@ begintemplate AltRunControlWidget
                 alt_steprun()
             }
             inhomAndStochApplicator.stopPlayingVars()
+        }
+    }
+    
+    proc rescanBiophysCompsIfNeeded() { localobj nil
+        if (mmcrHelper != nil) {
+            mmcrHelper.makeSureMechCompsCreatedOrImportedAndRescanned()
         }
     }
     

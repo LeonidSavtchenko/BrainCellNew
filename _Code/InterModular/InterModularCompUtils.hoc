@@ -1,27 +1,72 @@
 
-proc makeSureMechCompsCreatedOrImportedAndRescanned() { codeContractViolation() }
-proc makeSureSynCompsCreatedOrImported() { codeContractViolation() }
-
 begintemplate InterModularCompUtils
 
-    public makeSureAllCompsCreatedOrImportedAndRescanned, getNumDistMechComps, getComp
+    public makeSureAllCompsCreatedOrImportedAndRescanned, getNumDistMechComps, getAllDistMechCompNames, getReservedNanoDistMechCompNames, findDistMechCompByName, getComp
     
     external mmAllComps, smAllComps
     external isAstrocyteOrNeuron
-    external makeSureMechCompsCreatedOrImportedAndRescanned, makeSureSynCompsCreatedOrImported
+    external makeSureSynCompsCreatedOrImported, stringsEqual, codeContractViolation
+    external mmcrHelper
+    external eachItemInList
     
     
     // !! not intermodular actually
     proc makeSureAllCompsCreatedOrImportedAndRescanned() { localobj nil
-        makeSureMechCompsCreatedOrImportedAndRescanned()
+        mmcrHelper.makeSureMechCompsCreatedOrImportedAndRescanned()
         if (!isAstrocyteOrNeuron) {
             makeSureSynCompsCreatedOrImported()
         }
     }
     
-    // !! not intermodular actually
     func getNumDistMechComps() {
         return mmAllComps.count()
+    }
+    
+    // !! not intermodular actually
+    obfunc getAllDistMechCompNames() { localobj compNames, mechComp
+        compNames = new List()
+        for eachItemInList(mechComp, mmAllComps) {
+            compNames.append(new String(mechComp.name))
+        }
+        return compNames
+    }
+    
+    obfunc getReservedNanoDistMechCompNames() { localobj compNames
+        compNames = new List()
+        // It's a code contract that the order of names below cooresponds to nanoProximal_ref and then nanoDistal_ref
+        if (isAstrocyteOrNeuron) {
+            compNames.append(new String("Small Glia"))
+            compNames.append(new String("Large Glia"))
+        } else {
+            compNames.append(new String("Spine Neck"))
+            compNames.append(new String("Spine Head"))
+        }
+        return compNames
+    }
+    
+    // !! not intermodular actually
+    obfunc findDistMechCompByName() { local numArg, compIdx localobj comp
+        strdef compName
+        
+        numArg = numarg()
+        if (numArg < 1 || numArg > 2) {
+            codeContractViolation()
+        }
+        
+        compName = $s1
+        
+        for compIdx = 0, getNumDistMechComps() - 1 {
+            comp = mmAllComps.o(compIdx)
+            if (!stringsEqual(comp.name, compName)) {
+                continue
+            }
+            if (numArg == 2) {
+                $&2 = compIdx
+            }
+            return comp
+        }
+        
+        codeContractViolation()
     }
     
     obfunc getComp() { local isDmOrSynPart, compIdx
