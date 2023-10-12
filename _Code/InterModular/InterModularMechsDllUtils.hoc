@@ -6,7 +6,7 @@ begintemplate MechsDllUtils
     
     external isAstrocyteOrNeuron
     external mechSettings, pyObj
-    external checkIfFileMissing, findItemInListByString, printMsgAndRaiseError
+    external checkIfFileMissing, findItemInListByString, getCellTypeName, printMsgAndRaiseError
     
     strdef startDir, loadedNanoHocFilePathName, loadedDllDirPath
     objref mechsForIntUseOnly
@@ -23,7 +23,7 @@ begintemplate MechsDllUtils
     
     // This proc is called from the nanogeometry file when user loads it back into the main program
     proc ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType() { local isMissing
-        strdef pyCommand, dllDirPath, dllFilePathName, cellName, line2
+        strdef pyCommand, dllDirPath, dllFilePathName, cellTypeName, line2
         
         sprint(pyCommand, "'%s'.rsplit('/', 1)[0]", loadedNanoHocFilePathName)
         dllDirPath = pyObj.ev(pyCommand)
@@ -31,8 +31,8 @@ begintemplate MechsDllUtils
         isMissing = checkIfFileMissing(dllFilePathName)
         if (isMissing) {
             print "\n\n    Warning: There is no \"nrnmech.dll\" in the same folder with the loaded nanogeometry HOC file."
-            _getCellName(cellName)
-            sprint(line2, "             We will load our default DLL for %s cell type with no guarantee that it matches this HOC file.\n", cellName)
+            getCellTypeName(cellTypeName)
+            sprint(line2, "             We will load our default DLL for %s cell type with no guarantee that it matches this HOC file.\n", cellTypeName)
             print line2
             loadDefaultMechsDllDependingOnCellType()
         } else {
@@ -42,7 +42,7 @@ begintemplate MechsDllUtils
     
     proc loadDefaultMechsDllDependingOnCellType() {
         strdef subFolderName, dllDirPath
-        _getCellName(subFolderName)
+        getCellTypeName(subFolderName)
         sprint(dllDirPath, "%sMechanisms/%s", startDir, subFolderName)
         _loadMechsDllFromThisFolder(dllDirPath)
     }
@@ -81,12 +81,4 @@ begintemplate MechsDllUtils
         mechSettings.onDllLoad()
     }
     
-    proc _getCellName() {
-        if (isAstrocyteOrNeuron) {
-            $s1 = "Astrocyte"
-        } else {
-            $s1 = "Neuron"
-        }
-    }
-
 endtemplate MechsDllUtils

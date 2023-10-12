@@ -72,6 +72,18 @@ class BiophysJsonFileHelper:
     def importStage3(self, options):
         return self._biophysJsonImportCore.importCore(self._jsonDictForImportStage3, options)
         
+    def importForSim(self, inJsonFilePathName):
+        
+        with open(inJsonFilePathName) as jsonFile:
+            jsonDict = json.load(jsonFile)
+            
+        defaultOptions = h.BiophysExportImportOptions()
+        # !!! need to do smth if the comp names list is not the same as in the imported JSON file
+        numComps = hocObj.compUtils.getNumDistMechComps()
+        defaultOptions.isUseThisCompNameVec = h.Vector(numComps, 1)
+        
+        return self._biophysJsonImportCore.importCore(jsonDict, defaultOptions)
+        
         
     def _getAllMechNames(self):
         mth = hocObj.mth

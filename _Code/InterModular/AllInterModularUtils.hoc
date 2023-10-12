@@ -8,6 +8,7 @@ objref usedNamesForDendrites, nanoBranchesManager, seededDendrites_ref
 { load_file("InterModularVectorUtils.hoc") }                    // !! not intermodular yet
 { load_file("InterModularListUtils.hoc") }
 { load_file("InterModularMechSettings.hoc") }
+{ load_file("InterModularCellTypeUtils.hoc") }
 { load_file("InterModularMechsDllUtils.hoc") }
 { load_file("Widgets/MessageWarningHelper.hoc") }
 { load_file("InterModularStringUtils.hoc") }

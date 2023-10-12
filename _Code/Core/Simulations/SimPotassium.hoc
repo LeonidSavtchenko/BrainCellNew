@@ -1,3 +1,4 @@
+
 // UI
 objref vBoxPotassiumMain, graphPotassiumSEClamp, graphPotassiumIn, plotShapeVoltagePotassium, plotShapePotassiumIn
 // SEClamp on the soma
@@ -12,12 +13,6 @@ proc stimulPotassium() {
         seClamp.amp1 = $1   // nA
         seClamp.dur1 = $2
     }
-}
-
-forall {
-
-insert kdifl
-insert kpump
 }
 
 // Updates Gluout/Gluin values on the cell.

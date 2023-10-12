@@ -1,0 +1,65 @@
+{
+    "Soma": {
+        "capacitance": {
+            "PARAMETER": {
+                "cm (uF/cm2)": 0.8
+            }
+        },
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 8.968609865470852e-05,
+                "e_pas (mV)": -85.0
+            }
+        },
+        "frapion_ion": {},
+        "FRAP": {}
+    },
+    "Dendrites": {
+        "capacitance": {
+            "PARAMETER": {
+                "cm (uF/cm2)": 0.8
+            }
+        },
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 8.968609865470852e-05,
+                "e_pas (mV)": -85.0
+            }
+        },
+        "frapion_ion": {},
+        "FRAP": {}
+    },
+    "Axon": {
+        "capacitance": {},
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 7.142857142857143e-05,
+                "e_pas (mV)": -65.0
+            }
+        },
+        "frapion_ion": {},
+        "FRAP": {}
+    },
+    "Spine Neck": {
+        "capacitance": {},
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 7.142857142857143e-05,
+                "e_pas (mV)": -65.0
+            }
+        },
+        "frapion_ion": {},
+        "FRAP": {}
+    },
+    "Spine Head": {
+        "capacitance": {},
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 7.142857142857143e-05,
+                "e_pas (mV)": -65.0
+            }
+        },
+        "frapion_ion": {},
+        "FRAP": {}
+    }
+}

@@ -240,6 +240,14 @@ class GeneratorsForMainHocFile:
                 lines.extend(newLines)
         lines.append('}')
         lines.append('')
+        
+        if hocObj.isAstrocyteOrNeuron:
+            varName = 'GPassive'
+            line = '{} = {}    // ({})'.format(varName, hocObj.GPassive, h.units(varName))
+            lines.append(line)
+            line = '{{ units(&{}, units("g_pas")) }}'.format(varName)
+            lines.append(line)      # These units are used by biophys export module
+            lines.append('')
             
         # Make sure the staff from ReducedVersions\InterModular is either:
         #   preserved ("start with nano" mode)

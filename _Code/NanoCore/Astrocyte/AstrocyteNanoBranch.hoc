@@ -31,9 +31,7 @@ setUpExposedLengthVar("MaxLenStalk", minLen)
 
 inf = math.inf
 { variable_domain(&GPassive, 0, inf) }
-strdef unitsStr
-unitsStr = units("g_pas")
-{ units(&GPassive, unitsStr) }
+{ units(&GPassive, units("g_pas")) }
 
 // Keep this template in sync with its reduced counterpart at Export/OutHocFileStructures/Skeletons/MainHocFileSkeletonForAstrocyte.txt
 

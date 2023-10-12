@@ -2,12 +2,11 @@
 begintemplate BiophysExportImportHelper
 
     public export, import
-    public exportStage2, importStage2, importStage3
+    public exportStage2, importStage2, importStage3, importForSim
     
     external mmAllComps
-    external stringsEqual, stringCapitalize, getNotImplementedLines, printPythonErrMsgAndStop
+    external stringsEqual, stringCapitalize, getNotImplementedLines, getCellTypeName, printPythonErrMsgAndStop
     external pyObj, fbh, mth, mwh
-    external isAstrocyteOrNeuron, isBaseOrNanoStart
     external mechManagerMainWidget, mmmowb
     external pyEnumOutFileTypes, pyEnumInFileTypes
     external eachItemInList
@@ -31,13 +30,8 @@ begintemplate BiophysExportImportHelper
         biophysJsonFileHelper = pyObj.BiophysJsonFileHelper()
     }
     
-    proc export() { local isCancel, status
+    proc export() { local status
         mmeibWidget = $o1
-        
-        isCancel = checkForNotImplementedScenario("export")
-        if (isCancel) {
-            return
-        }
         
         // !!!!!! check for pending changes in mech comps as well
         
@@ -85,11 +79,6 @@ begintemplate BiophysExportImportHelper
     
     proc import() { local isCancel, isError
         mmeibWidget = $o1
-        
-        isCancel = checkForNotImplementedScenario("import")
-        if (isCancel) {
-            return
-        }
         
         mmeibWidget.dismissHandler()
         
@@ -169,20 +158,27 @@ begintemplate BiophysExportImportHelper
         mmeibWidget.dismissHandler()
     }
     
+    proc importForSim() { local isError
+        strdef jsonFileName, cellTypeName, jsonFilePathName
+        
+        jsonFileName = $s1
+        
+        getCellTypeName(cellTypeName)
+        sprint(jsonFilePathName, "%sBiophysics/%s/%s", getcwd(), cellTypeName, jsonFileName)
+        
+        // !! application of inhomogeneities can be a slow operation
+        mwh.showPleaseWaitBox("Importing biophysics file.")
+        {
+            isError = biophysJsonFileHelper.importForSim(jsonFilePathName)
+            if (isError) {
+                return
+            }
+        }
+        mwh.hidePleaseWaitBox()
+    }
+    
     // All next staff is private
     
-    
-    func checkForNotImplementedScenario() { local isCancel
-        strdef word, msg
-        word = $s1
-        isCancel = (isAstrocyteOrNeuron && !isBaseOrNanoStart)
-        if (isCancel) {
-            sprint(msg, "Cannot %s astrocyte biophysics in \"Start with Nano geometry\" mode.", word)
-            // See the comments about the errors in py:BiophysJsonExportCore._prepareInhomModelInfoDict and py:BiophysJsonImportCore._importInhomModel
-            mwh.showNotImplementedWarning(msg)
-        }
-        return isCancel
-    }
     
     proc showExportOrImportCompleteMsg() { local isExportOrImport, cond localobj options
         strdef word, Word, line1, line2, line3, line4, line5, line6, line7, msg

@@ -1,0 +1,304 @@
+{
+    "Soma": {
+        "capacitance": {
+            "PARAMETER": {
+                "cm (uF/cm2)": 0.8
+            }
+        },
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 8.968609865470852e-05,
+                "e_pas (mV)": -85.0
+            },
+            "ASSIGNED": {
+                "i_pas (mA/cm2)": 0.0018251121076233179
+            }
+        },
+        "na_ion": {},
+        "k_ion": {
+            "ASSIGNED": {
+                "ek (mV)": -100.1604576668744
+            }
+        },
+        "ca_ion": {
+            "ASSIGNED": {
+                "eca (mV)": 131.0634431305086
+            }
+        },
+        "frapion_ion": {
+            "ASSIGNED": {
+                "efrapion (mV)": 262.1268862610172
+            }
+        },
+        "FRAP": {
+            "STATE": {
+                "frapion_FRAP[0] (mM)": 5e-05,
+                "frapion_FRAP[1] (mM)": 5e-05,
+                "frapion_FRAP[2] (mM)": 5e-05,
+                "frapion_FRAP[3] (mM)": 5e-05
+            }
+        },
+        "glu_ion": {},
+        "GluTrans": {
+            "ASSIGNED": {
+                "itrans_GluTrans (mA/cm2)": 0.3273075409558552
+            },
+            "STATE": {
+                "C1_GluTrans (/cm2)": 0.9074,
+                "C2_GluTrans (/cm2)": 0.0199,
+                "C3_GluTrans (/cm2)": 0.0435,
+                "C4_GluTrans (/cm2)": 0.0103,
+                "C5_GluTrans (/cm2)": 0.0142,
+                "C6_GluTrans (/cm2)": 0.0047
+            }
+        },
+        "ip3_ion": {
+            "ASSIGNED": {
+                "eip3 (mV)": 280.4732022630253
+            }
+        },
+        "cadifus": {
+            "STATE": {
+                "ca_cadifus[0] (mM)": 5e-05,
+                "ca_cadifus[1] (mM)": 5e-05,
+                "ca_cadifus[2] (mM)": 5e-05,
+                "ca_cadifus[3] (mM)": 5e-05,
+                "bufs_cadifus[0] (mM)": 0.06965174129353234,
+                "bufs_cadifus[1] (mM)": 0.06965174129353234,
+                "bufs_cadifus[2] (mM)": 0.06965174129353234,
+                "bufs_cadifus[3] (mM)": 0.06965174129353234,
+                "cabufs_cadifus[0] (mM)": 0.0003482587064676662,
+                "cabufs_cadifus[1] (mM)": 0.0003482587064676662,
+                "cabufs_cadifus[2] (mM)": 0.0003482587064676662,
+                "cabufs_cadifus[3] (mM)": 0.0003482587064676662,
+                "bufm_cadifus[0] (mM)": 0.0062068965517241385,
+                "bufm_cadifus[1] (mM)": 0.0062068965517241385,
+                "bufm_cadifus[2] (mM)": 0.0062068965517241385,
+                "bufm_cadifus[3] (mM)": 0.0062068965517241385,
+                "cabufm_cadifus[0] (mM)": 0.0012931034482758612,
+                "cabufm_cadifus[1] (mM)": 0.0012931034482758612,
+                "cabufm_cadifus[2] (mM)": 0.0012931034482758612,
+                "cabufm_cadifus[3] (mM)": 0.0012931034482758612,
+                "hc_cadifus[0]": 0.19999999999999996,
+                "hc_cadifus[1]": 0.19999999999999996,
+                "hc_cadifus[2]": 0.19999999999999996,
+                "hc_cadifus[3]": 0.19999999999999996,
+                "ho_cadifus[0]": 0.8,
+                "ho_cadifus[1]": 0.8,
+                "ho_cadifus[2]": 0.8,
+                "ho_cadifus[3]": 0.8
+            }
+        },
+        "kpump": {},
+        "kdifl": {
+            "STATE": {
+                "ka_kdifl (mM)": 110.0
+            }
+        }
+    },
+    "Dendrites": {
+        "capacitance": {
+            "PARAMETER": {
+                "cm (uF/cm2)": 0.8
+            }
+        },
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 8.968609865470852e-05,
+                "e_pas (mV)": -85.0
+            },
+            "ASSIGNED": {
+                "i_pas (mA/cm2)": 0.0018251121076233179
+            }
+        },
+        "na_ion": {},
+        "k_ion": {
+            "ASSIGNED": {
+                "ek (mV)": -100.1604576668744
+            }
+        },
+        "ca_ion": {
+            "ASSIGNED": {
+                "eca (mV)": 131.0634431305086
+            }
+        },
+        "frapion_ion": {
+            "ASSIGNED": {
+                "efrapion (mV)": 262.1268862610172
+            }
+        },
+        "FRAP": {
+            "STATE": {
+                "frapion_FRAP[0] (mM)": 5e-05,
+                "frapion_FRAP[1] (mM)": 5e-05,
+                "frapion_FRAP[2] (mM)": 5e-05,
+                "frapion_FRAP[3] (mM)": 5e-05
+            }
+        },
+        "glu_ion": {},
+        "GluTrans": {
+            "ASSIGNED": {
+                "itrans_GluTrans (mA/cm2)": 0.3273075409558552
+            },
+            "STATE": {
+                "C1_GluTrans (/cm2)": 0.9074,
+                "C2_GluTrans (/cm2)": 0.0199,
+                "C3_GluTrans (/cm2)": 0.0435,
+                "C4_GluTrans (/cm2)": 0.0103,
+                "C5_GluTrans (/cm2)": 0.0142,
+                "C6_GluTrans (/cm2)": 0.0047
+            }
+        },
+        "ip3_ion": {
+            "ASSIGNED": {
+                "eip3 (mV)": 280.4732022630253
+            }
+        },
+        "cadifus": {
+            "STATE": {
+                "ca_cadifus[0] (mM)": 5e-05,
+                "ca_cadifus[1] (mM)": 5e-05,
+                "ca_cadifus[2] (mM)": 5e-05,
+                "ca_cadifus[3] (mM)": 5e-05,
+                "bufs_cadifus[0] (mM)": 0.06965174129353234,
+                "bufs_cadifus[1] (mM)": 0.06965174129353234,
+                "bufs_cadifus[2] (mM)": 0.06965174129353234,
+                "bufs_cadifus[3] (mM)": 0.06965174129353234,
+                "cabufs_cadifus[0] (mM)": 0.0003482587064676662,
+                "cabufs_cadifus[1] (mM)": 0.0003482587064676662,
+                "cabufs_cadifus[2] (mM)": 0.0003482587064676662,
+                "cabufs_cadifus[3] (mM)": 0.0003482587064676662,
+                "bufm_cadifus[0] (mM)": 0.0062068965517241385,
+                "bufm_cadifus[1] (mM)": 0.0062068965517241385,
+                "bufm_cadifus[2] (mM)": 0.0062068965517241385,
+                "bufm_cadifus[3] (mM)": 0.0062068965517241385,
+                "cabufm_cadifus[0] (mM)": 0.0012931034482758612,
+                "cabufm_cadifus[1] (mM)": 0.0012931034482758612,
+                "cabufm_cadifus[2] (mM)": 0.0012931034482758612,
+                "cabufm_cadifus[3] (mM)": 0.0012931034482758612,
+                "hc_cadifus[0]": 0.19999999999999996,
+                "hc_cadifus[1]": 0.19999999999999996,
+                "hc_cadifus[2]": 0.19999999999999996,
+                "hc_cadifus[3]": 0.19999999999999996,
+                "ho_cadifus[0]": 0.8,
+                "ho_cadifus[1]": 0.8,
+                "ho_cadifus[2]": 0.8,
+                "ho_cadifus[3]": 0.8
+            }
+        },
+        "kpump": {},
+        "kdifl": {
+            "STATE": {
+                "ka_kdifl (mM)": 110.0
+            }
+        }
+    },
+    "Axon": {
+        "capacitance": {},
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 7.142857142857143e-05,
+                "e_pas (mV)": -65.0
+            }
+        },
+        "na_ion": {},
+        "k_ion": {
+            "ASSIGNED": {
+                "ek (mV)": -100.1604576668744
+            }
+        },
+        "ca_ion": {
+            "ASSIGNED": {
+                "eca (mV)": 131.0634431305086
+            }
+        },
+        "frapion_ion": {
+            "ASSIGNED": {
+                "efrapion (mV)": 262.1268862610172
+            }
+        },
+        "FRAP": {
+            "STATE": {
+                "frapion_FRAP[0] (mM)": 5e-05,
+                "frapion_FRAP[1] (mM)": 5e-05,
+                "frapion_FRAP[2] (mM)": 5e-05,
+                "frapion_FRAP[3] (mM)": 5e-05
+            }
+        },
+        "glu_ion": {},
+        "GluTrans": {
+            "ASSIGNED": {
+                "itrans_GluTrans (mA/cm2)": 0.3273075409558552
+            },
+            "STATE": {
+                "C1_GluTrans (/cm2)": 0.9074,
+                "C2_GluTrans (/cm2)": 0.0199,
+                "C3_GluTrans (/cm2)": 0.0435,
+                "C4_GluTrans (/cm2)": 0.0103,
+                "C5_GluTrans (/cm2)": 0.0142,
+                "C6_GluTrans (/cm2)": 0.0047
+            }
+        },
+        "ip3_ion": {
+            "ASSIGNED": {
+                "eip3 (mV)": 280.4732022630253
+            }
+        },
+        "cadifus": {
+            "STATE": {
+                "ca_cadifus[0] (mM)": 5e-05,
+                "ca_cadifus[1] (mM)": 5e-05,
+                "ca_cadifus[2] (mM)": 5e-05,
+                "ca_cadifus[3] (mM)": 5e-05,
+                "bufs_cadifus[0] (mM)": 0.06965174129353234,
+                "bufs_cadifus[1] (mM)": 0.06965174129353234,
+                "bufs_cadifus[2] (mM)": 0.06965174129353234,
+                "bufs_cadifus[3] (mM)": 0.06965174129353234,
+                "cabufs_cadifus[0] (mM)": 0.0003482587064676662,
+                "cabufs_cadifus[1] (mM)": 0.0003482587064676662,
+                "cabufs_cadifus[2] (mM)": 0.0003482587064676662,
+                "cabufs_cadifus[3] (mM)": 0.0003482587064676662,
+                "bufm_cadifus[0] (mM)": 0.0062068965517241385,
+                "bufm_cadifus[1] (mM)": 0.0062068965517241385,
+                "bufm_cadifus[2] (mM)": 0.0062068965517241385,
+                "bufm_cadifus[3] (mM)": 0.0062068965517241385,
+                "cabufm_cadifus[0] (mM)": 0.0012931034482758612,
+                "cabufm_cadifus[1] (mM)": 0.0012931034482758612,
+                "cabufm_cadifus[2] (mM)": 0.0012931034482758612,
+                "cabufm_cadifus[3] (mM)": 0.0012931034482758612,
+                "hc_cadifus[0]": 0.19999999999999996,
+                "hc_cadifus[1]": 0.19999999999999996,
+                "hc_cadifus[2]": 0.19999999999999996,
+                "hc_cadifus[3]": 0.19999999999999996,
+                "ho_cadifus[0]": 0.8,
+                "ho_cadifus[1]": 0.8,
+                "ho_cadifus[2]": 0.8,
+                "ho_cadifus[3]": 0.8
+            }
+        },
+        "kpump": {},
+        "kdifl": {
+            "STATE": {
+                "ka_kdifl (mM)": 110.0
+            }
+        }
+    },
+    "Spine Neck": {
+        "capacitance": {},
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 7.142857142857143e-05,
+                "e_pas (mV)": -65.0
+            }
+        }
+    },
+    "Spine Head": {
+        "capacitance": {},
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 7.142857142857143e-05,
+                "e_pas (mV)": -65.0
+            }
+        }
+    }
+}

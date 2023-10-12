@@ -4,6 +4,8 @@ from neuron import h
 from OtherInterModularUtils import *
 
 
+# !!! compare the units we read from JSON (including "GPassive") with the units in NEURON and show a warning if they are different
+
 class BiophysJsonImportCore:
     
     _varTypeNames = ['PARAMETER', 'ASSIGNED', 'STATE']
@@ -72,8 +74,6 @@ class BiophysJsonImportCore:
                 for (varNameWithIndexAndUnits, varValueOrInfoDict) in varTypeInfoDict.items():
                     (varName, arrayIndex, unitsOrEmpty) = self._parseVarNameArrayIndexAndUnits(varNameWithIndexAndUnits)
                     varIdx = self._getVarIdx(varName, allVarNames)
-                    
-                    # !!! compare unitsOrEmpty from JSON with h.units(*) and show a warning if they are different
                     
                     if type(varValueOrInfoDict) is not dict:
                         isInhom = False
@@ -196,48 +196,56 @@ class BiophysJsonImportCore:
         
     def _importInhomModel(self, compIdx, mechIdx, varType, varIdx, arrayIndex, inhomModelInfoDict):
         
-        is_g_pas = isAstrocyteSpecificInhomVar(compIdx, mechIdx, varType, varIdx, arrayIndex)
+        is_g_pas_in_LargeGlia = isAstrocyteSpecificInhomVar(compIdx, mechIdx, varType, varIdx, arrayIndex)
         
-        if not is_g_pas:
+        if not is_g_pas_in_LargeGlia:
             self._importInhomModelCore(compIdx, mechIdx, varType, varIdx, arrayIndex, inhomModelInfoDict)
-        else:
-            try:
-                # !!! BUG: error in "start with nano" mode: "LookupError: 'GPassive' is not a defined hoc variable name."
-                varName = 'GPassive'
-                varNameWithUnits = '{} ({})'.format(varName, h.units(varName))
-                # !!! BUG: we'll hit KeyError by mistake if the units in JSON and NEURON are different
-                hocObj.GPassive = inhomModelInfoDict[varNameWithUnits]
-                # !!! BUG: error in "start with nano" mode: "setLeaves undefined function"
-                hocObj.distrSelectedLeaves(1)
-            except KeyError:
-                # !!! user applied a custom inhom model to g_pas in "Large Glia" using Inhomogeneity editor
-                self._importInhomModelCore(compIdx, mechIdx, varType, varIdx, arrayIndex, inhomModelInfoDict)
-                
+            return
+            
+        varName = 'GPassive'
+        varNameWithUnits = '{} ({})'.format(varName, h.units(varName))
+        try:
+            # !!! BUG: we'll hit KeyError by mistake if the units in JSON and NEURON are different
+            GPassive_new = inhomModelInfoDict[varNameWithUnits]
+        except KeyError:
+            # Donor user applied a custom inhom model to g_pas in "Large Glia" using Inhomogeneity editor
+            self._importInhomModelCore(compIdx, mechIdx, varType, varIdx, arrayIndex, inhomModelInfoDict)
+            return
+            
+        # Keep in sync with hoc:InhomAndStochLibrary.onJustBeforeCompInhomStochBiophysImport
+        
+        distFuncHelperOrNone = hocObj.inhomAndStochLibrary.getBiophysVerbatimDistFuncHelperOrNil(compIdx, mechIdx, varType, varIdx, arrayIndex)
+        if distFuncHelperOrNone is None:
+            (mechName, varTypeName, varNameWithIndex) = self._getNamesForMsg(compIdx, mechIdx, varType, varIdx, arrayIndex)
+            comp = hocObj.mmAllComps[compIdx]
+            h.continue_dialog(f'Cannot import Verbatim inhomogeneity model of "{mechName} \ {varTypeName} \ {varNameWithIndex}" in "{comp.name}" because some non-Verbatim model has already been applied.')
+            return
+            
+        GPassive_old = hocObj.GPassive
+        g_pas_factor = GPassive_new / GPassive_old
+        
+        distFuncHelperOrNone.multiplyBy(g_pas_factor)
+        
+        self._importInhomModelInnerCore(compIdx, mechIdx, varType, varIdx, arrayIndex, None, distFuncHelperOrNone)
+        
+        hocObj.GPassive = GPassive_new
+        
+        # !!! BUG: if hocObj.currentMechanismSetup == 1 (which is NOT default), then hoc:AstrocyteNanoBranch.updateBiophysics updates not only g_pas, but also density_GluTrans,
+        #          so we need to update the biophys export/import logic to support it
+        
     def _importInhomModelCore(self, compIdx, mechIdx, varType, varIdx, arrayIndex, inhomModelInfoDict):
         
         segmentationHelperInfoDictOrNone = inhomModelInfoDict['segmentationHelper']
         distFuncHelperInfoDict = inhomModelInfoDict['distFuncHelper']
         
-        mth = hocObj.mth
-        
-        # !!!! maybe just reuse recComp, mechName, varTypeIdx, varTypeName, varName and varNameWithIndex obtained upstream
-        comp = hocObj.mmAllComps[compIdx]
-        mechName = h.ref('')
-        mth.getMechName(0, mechIdx, mechName)
-        varTypeIdx = int(mth.convertVarTypeToVarTypeIdx(varType))
-        varTypeName = self._varTypeNames[varTypeIdx]        # !!!! maybe call mth.getVarTypeName
-        mechStd = comp.mechStds[mechIdx][varTypeIdx]
-        varName = h.ref('')
-        arraySize = mth.getVarNameAndArraySize(0, mechIdx, varType, varIdx, varName)
-        varNameWithIndex = h.ref('')
-        mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
-        
         # !!!! does user prefer to have "keep as is" segmentation mode by default on import?
         if segmentationHelperInfoDictOrNone is not None:
+            comp = hocObj.mmAllComps[compIdx]
             distMinMaxVec = h.Vector()
             isDisconnected = comp.getDistRangeAsVec(distMinMaxVec)
             if isDisconnected:
-                h.continue_dialog(f'Cannot import inhomogeneity (the distance function) of "{mechName[0]} \ {varTypeName} \ {varNameWithIndex[0]}" in "{comp.name}" compartment because at least one its section doesn\'t have a topological connection with the distance centre.')
+                (mechName, varTypeName, varNameWithIndex) = self._getNamesForMsg(compIdx, mechIdx, varType, varIdx, arrayIndex)
+                h.continue_dialog(f'Cannot import inhomogeneity (the distance function) of "{mechName} \ {varTypeName} \ {varNameWithIndex}" in "{comp.name}" because at least one section of this compartment doesn\'t have a topological connection with the distance centre.')
                 return
                 
             segmentationHelper = hocObj.SegmentationHelper()
@@ -258,9 +266,21 @@ class BiophysJsonImportCore:
         distFuncCatIdx = distFuncHelperInfoDict['distFuncCatIdx']
         distFuncIdx = distFuncHelperInfoDict['distFuncIdx']
         
-        comp.applySegmentationAndInhomogeneity(segmentationHelper, mechName, varType, varName, arrayIndex, distFuncHelper)
+        self._importInhomModelInnerCore(compIdx, mechIdx, varType, varIdx, arrayIndex, segmentationHelper, distFuncHelper)
         
         hocObj.inhomAndStochLibrary.onInhomApply(0, compIdx, mechIdx, varType, varIdx, arrayIndex, segmentationHelper, distFuncHelper, distFuncCatIdx, distFuncIdx)
+        
+    def _importInhomModelInnerCore(self, compIdx, mechIdx, varType, varIdx, arrayIndex, segmentationHelper, distFuncHelper):
+        mth = hocObj.mth
+        comp = hocObj.mmAllComps[compIdx]
+        mechName = h.ref('')
+        mth.getMechName(0, mechIdx, mechName)
+        varTypeIdx = int(mth.convertVarTypeToVarTypeIdx(varType))
+        mechStd = comp.mechStds[mechIdx][varTypeIdx]
+        varName = h.ref('')
+        mth.getVarNameAndArraySize(0, mechIdx, varType, varIdx, varName)
+        
+        comp.applySegmentationAndInhomogeneity(segmentationHelper, mechName, varType, varName, arrayIndex, distFuncHelper)
         
         # !!! it's a code contract that we don't export/import "constant" inhom models
         mechStd.set(varName, math.nan, arrayIndex)
@@ -302,4 +322,21 @@ class BiophysJsonImportCore:
         listOfStrs = convertPyIterableOfStrsToHocListOfStrObjs(listOfStrs)
         
         distOrStochFuncHelper.importParams(vecOfVals, listOfStrs)
+        
+    # !!!! maybe just reuse recComp, mechName, varTypeIdx, varTypeName, varName and varNameWithIndex obtained upstream
+    def _getNamesForMsg(self, compIdx, mechIdx, varType, varIdx, arrayIndex):
+        
+        mth = hocObj.mth
+        
+        comp = hocObj.mmAllComps[compIdx]
+        mechName = h.ref('')
+        mth.getMechName(0, mechIdx, mechName)
+        varTypeIdx = int(mth.convertVarTypeToVarTypeIdx(varType))
+        varTypeName = self._varTypeNames[varTypeIdx]    # !!!! maybe call mth.getVarTypeName
+        varName = h.ref('')
+        arraySize = mth.getVarNameAndArraySize(0, mechIdx, varType, varIdx, varName)
+        varNameWithIndex = h.ref('')
+        mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
+        
+        return (mechName[0], varTypeName, varNameWithIndex[0])
         

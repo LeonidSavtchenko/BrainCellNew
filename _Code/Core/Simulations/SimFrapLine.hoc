@@ -1,3 +1,4 @@
+
 // !!! BUG: This file assumes that SizeTotal*2 is enough for all the sections, but in fact
 //          SizeTotal = nanoProximal_ref.count() = nanoDistal_ref.count(), so the assumption is not guaranteed
 
@@ -8,11 +9,6 @@ objref fileFrapLineConcentration
 // Sections affected by FRAP
 objref frapLineSections[SizeTotal*2]
 
-
-forall {
-
-insert FRAP
-}
 
 // Finds sections within a line and sets initial FRAP concentration on them.
 // $1 - AlphaX - line equation parameter

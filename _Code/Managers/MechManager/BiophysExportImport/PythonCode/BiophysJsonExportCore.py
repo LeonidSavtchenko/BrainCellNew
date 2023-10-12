@@ -46,7 +46,7 @@ class BiophysJsonExportCore:
             if mechIdx == mth.morphologyMechIdx or not comp.isMechInserted[mechIdx]:
                 continue
             mechInfoDict = self._prepareMechInfoDictOrEmpty(compIdx, mechIdx)
-            # !!!! empty mechInfoDict means "mech is inserted, but all vars are default"
+            # Empty mechInfoDict means "mech is inserted, but all vars are default"
             mth.getMechName(0, mechIdx, mechName)
             jsonDict[mechName[0]] = mechInfoDict
             
@@ -112,8 +112,6 @@ class BiophysJsonExportCore:
         isInhom1 = inhomAndStochLibrary.isInhomEnabledFor(0, compIdx, mechIdx, varType, varIdx, arrayIndex)
         isInhom2 = comp.isMechVarInhom(mechIdx, varType, varName, arrayIndex)
         if isInhom1 != isInhom2:
-            # !!!! be careful with Verbatim inhom models
-            # !!!!! maybe not codeContractViolation, but some special logic
             codeContractViolation()
         isInhom = isInhom1
         
@@ -168,7 +166,6 @@ class BiophysJsonExportCore:
         if not cond:
             jsonDict = self._prepareInhomModelInfoDictCore(actSpecVar)
         else:
-            # !!! BUG: error in "start with nano" mode: "AttributeError: 'hoc.HocObject' object has no attribute 'GPassive'"
             varName = 'GPassive'
             varNameWithUnits = '{} ({})'.format(varName, h.units(varName))
             jsonDict = { varNameWithUnits: hocObj.GPassive }

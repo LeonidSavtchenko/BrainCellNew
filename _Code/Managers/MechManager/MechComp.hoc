@@ -402,6 +402,8 @@ begintemplate MechComp
                 continue
             }
             
+            // !!! do we need to "continue" for g_pas in LargeGlia as well?
+            
             isMechInserted[mechIdx] = 0
             
             mechType.select(mechIdx)

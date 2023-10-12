@@ -1,7 +1,7 @@
 
 begintemplate VerbatimDistFuncHelper
 
-    public selectedHandler, calculateAt, onJustBeforeFirstSection, onJustBeforeNewSection, onJustAfterLastSection, exportParams, importParams, dismissHandler
+    public selectedHandler, calculateAt, onJustBeforeFirstSection, onJustBeforeNewSection, onJustAfterLastSection, exportParams, importParams, multiplyBy, dismissHandler
     public parentWidget
     
     external codeContractViolation
@@ -89,6 +89,11 @@ begintemplate VerbatimDistFuncHelper
         if (listOfStrs.count() != 0) {
             codeContractViolation()
         }
+    }
+    
+    proc multiplyBy() { local factor
+        factor = $1
+        vecOfVals.mul(factor)
     }
     
     proc dismissHandler() {

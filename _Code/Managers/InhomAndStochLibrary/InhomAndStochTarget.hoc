@@ -6,7 +6,7 @@ if (!isBaseOrNanoStart) {
 begintemplate InhomAndStochTarget
 
     public makeOrUpdateInhom, makeOrUpdateStoch, isEqual, isStochEnabled, getInhomModelData, getStochModelData, setPlayIfPossible, stopPlayingVars, onInit, onStep, restoreInhomogeneity, disableInhomOrStoch
-    public isDmOrSynPart, compIdx, mechIdx, mechName, varType, isInhom, distFuncCatIdx, distFuncIdx, distFuncHelper, isStoch, stochFuncCatIdx, stochFuncIdx
+    public isDmOrSynPart, compIdx, mechIdx, mechName, varType, varIdx, arrayIndex, isInhom, distFuncCatIdx, distFuncIdx, distFuncHelper, isStoch, stochFuncCatIdx, stochFuncIdx
     
     external smAllSyns
     external mwh, rngUtils, mth, compUtils

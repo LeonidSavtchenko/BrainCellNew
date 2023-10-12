@@ -16,7 +16,7 @@
 begintemplate InhomAndStochLibrary
     
     public isInhomEnabledFor, isStochEnabledFor, onInhomApply, onStochApply, getInhomModelDataFor, getStochModelDataFor, onMakingVarHomogen, onStochDisable, onNanoReseedOrUpdate
-    public isAnyNonVerbatimInhomVarsForDistMechs, getNumInhomVarsForDistMechs, getNumStochVarsForDistMechs, onMechInsert, onMechUninsert, onCompSplit, onCompMerge, onJustBeforeCompInhomStochBiophysImport
+    public isAnyNonVerbatimInhomVarsForDistMechs, getNumInhomVarsForDistMechs, getNumStochVarsForDistMechs, onMechInsert, onMechUninsert, onCompSplit, onCompMerge, onJustBeforeCompInhomStochBiophysImport, getBiophysVerbatimDistFuncHelperOrNil
     public getNumInhomVarsForSyns, getNumStochVarsForSyns, isAnyStochVarsForSyns, isAnyStochVars, onSynLocChange, onSynStrucChange, restoreToActiveIfWasMadeInactiveOnSynStrucChange
     public doesDistMechHaveAnyStochVars, doesThisVarHaveVerbatimOrNonVerbatimInhomModel, doesAnyInhomVarRequirePython, doesAnyStochVarRequirePython
     public findActiveSpecVar
@@ -25,6 +25,7 @@ begintemplate InhomAndStochLibrary
     
     external mwh, math, dfc, sfc
     external stringsEqual, stringEmpty, concatenateTwoLists, codeContractViolation
+    external pyObj
     external eachItemInList
     external enumSynCompIdxs
     
@@ -272,13 +273,44 @@ begintemplate InhomAndStochLibrary
     }
     
     // in: compIdx
-    proc onJustBeforeCompInhomStochBiophysImport() { local actSpecVarIdx localobj actSpecVar
+    proc onJustBeforeCompInhomStochBiophysImport() { local actSpecVarIdx, cond localobj actSpecVar
         for (actSpecVarIdx = activeSpecVars.count() - 1; actSpecVarIdx >= 0; actSpecVarIdx -= 1) {
             actSpecVar = activeSpecVars.o(actSpecVarIdx)
-            if (actSpecVar.isDmOrSynPart && actSpecVar.compIdx == $1) {
+            cond = (actSpecVar.isDmOrSynPart && actSpecVar.compIdx == $1)
+            if (!cond) {
+                continue
+            }
+            cond = (actSpecVar.isInhom && pyObj.isAstrocyteSpecificInhomVar(actSpecVar.compIdx, actSpecVar.mechIdx, actSpecVar.varType, actSpecVar.varIdx, actSpecVar.arrayIndex))
+            // !!!! not sure if we need to remove (the current behaviour) or preserve the inhom model for g_pas in LargeGlia if user have applied some custom distance func to it
+            //      which results in our inability to import Verbatim model from JSON file
+            if (!cond) {
                 activeSpecVars.remove(actSpecVarIdx)
+            } else {
+                // Remove stoch model, but preserve Verbatim inhom model to be re-scaled according to the new GPassive value imported as a part of biophysics
+                // Keep in sync with py:BiophysJsonImportCore._importInhomModel
+                actSpecVar.disableInhomOrStoch(0)
             }
         }
+    }
+    
+    // in: compIdx, mechIdx, varType, varIdx, arrayIndex
+    obfunc getBiophysVerbatimDistFuncHelperOrNil() { local distFuncCatIdx, distFuncIdx localobj actSpecVar, segmentationHelper, distFuncHelper, nil
+        actSpecVar = findActiveSpecVar(0, $1, $2, $3, $4, $5)
+        if (actSpecVar == nil) {
+            // Not found
+            return nil
+        }
+        if (!actSpecVar.isInhom) {
+            return nil
+        }
+        actSpecVar.getInhomModelData(segmentationHelper, distFuncHelper, &distFuncCatIdx, &distFuncIdx)
+        if (actSpecVar.distFuncIdx != dfc.verbatimDistFuncIdx) {
+            return nil
+        }
+        if (segmentationHelper != nil) {
+            codeContractViolation()
+        }
+        return distFuncHelper
     }
     
     func isAnyNonVerbatimInhomVarsForDistMechs() { local isFound localobj actSpecVar

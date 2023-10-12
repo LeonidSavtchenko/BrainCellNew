@@ -1,0 +1,8 @@
+
+proc getCellTypeName() {
+    if (isAstrocyteOrNeuron) {
+        $s1 = "Astrocyte"
+    } else {
+        $s1 = "Neuron"
+    }
+}

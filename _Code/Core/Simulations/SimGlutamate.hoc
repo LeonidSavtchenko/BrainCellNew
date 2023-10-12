@@ -1,13 +1,9 @@
+
 // UI
 objref vBoxGluMain, graphSEClamp, graphGluout, plotShapeVoltage, plotShapeGluOut, plotShapeitrans
 // SEClamp on the soma
 objref seClamp
 
-
-forall {
-
-insert GluTrans
-}
 // Sets SEClamp params on the soma.
 // $1 - Amplitude
 // $2 - Duration

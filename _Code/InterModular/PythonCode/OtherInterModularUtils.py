@@ -25,15 +25,14 @@ def convertPyIterableOfStrsToHocListOfStrObjs(pyIter):
         hocList.append(h.String(item))
     return hocList
     
-# !!! not intermodular actually
-def isAstrocyteSpecificInhomVar(compIdxOrName, mechIdx, varType, varIdx, arrayIndex):
+# Called from both Python and HOC
+def isAstrocyteSpecificInhomVar(compIdx, mechIdx, varType, varIdx, arrayIndex):
     
     mth = hocObj.mth
     
-    if type(compIdxOrName) == int:
-        compName = hocObj.mmAllComps[compIdxOrName].name
-    elif type(compIdxOrName) == str:
-        compName = compIdxOrName
+    tp = type(compIdx)
+    if tp == int or tp == float:
+        compName = hocObj.mmAllComps[int(compIdx)].name
     else:
         codeContractViolation()
         
