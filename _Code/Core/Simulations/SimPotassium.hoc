@@ -15,7 +15,7 @@ proc stimulPotassium() {
     }
 }
 
-// Updates Gluout/Gluin values on the cell.
+// Updates !!!Gluout/Gluin!!! values on the cell.
 // $1 - X coordinate circle center
 // $2 - Y coordinate circle center
 // $3 - Radius of a circle
@@ -61,8 +61,8 @@ proc PotassiumExtra() {
 
 
 
-// Runs Glutamate simulation.
-proc runGlutamate() {
+// Runs Potassium simulation.
+proc runPotassium() {
     stimulPotassium(Amplitude, Duration)
     run()
 
@@ -77,7 +77,7 @@ proc initParamsPotassium() {
     Duration = 20000      // Duration of Voltage Clamp in mV
     DelayStim = 0
 
-    // Parameter of Glutamate release in two places
+    // Parameter of Potassium release in two places
     PX = 0                // X- Coordinate of the place
     PY = -20              // Y - coordinate of the place
     PZ =0                 // Z - coordinate of the place
@@ -99,7 +99,7 @@ proc initParamsPotassium() {
     
 }
 
-// Shows Glutamate simulation UI.
+// Shows Potassium simulation UI.
 proc showPotassiumUi() {
     vBoxPotassiumMain = new VBox()
     vBoxPotassiumMain.intercept(1)
@@ -132,7 +132,7 @@ proc showPotassiumUi() {
         xvalue("Somatic voltage clamp (mV)","Amplitude", 1,"", 0, 1)
         xvalue("Clamp duration (ms) ","Duration", 1,"", 0, 1)
         xvalue("Simulation time (ms)","tstop", 1,"", 0, 1)
-        xbutton("Run simulation", "runGlutamate()")
+        xbutton("Run simulation", "runPotassium()")
         xpanel(328,129)
     }
     vBoxPotassiumMain.intercept(0)
@@ -170,6 +170,7 @@ proc showPotassiumUi() {
     plotShapePotassiumIn.size(-50,50,-50,50)
     plotShapePotassiumIn.view(-50, -49.9003, 100, 100, 601, 102, 400.64, 400.32)
     plotShapePotassiumIn.exec_menu("Shape Plot")
+    plotShapePotassiumIn.exec_menu("View = plot")
     plotShapePotassiumIn.variable("ki")
     plotShapePotassiumIn.label(0.1, 0.5, "[K+]in (mM)", 2, 1, 0, 1, 1)
     plotShapePotassiumIn.show(0)
@@ -180,23 +181,26 @@ proc showPotassiumUi() {
     plotShapeVoltagePotassium.size(-50,50,-50,50)
     plotShapeVoltagePotassium.view(-50, -49.9003, 100, 100, 1145, 102, 400.64, 400.32)
     plotShapeVoltagePotassium.exec_menu("Shape Plot")
+    plotShapeVoltagePotassium.exec_menu("View = plot")
     plotShapeVoltagePotassium.variable("v")
     plotShapeVoltagePotassium.label(0.5, 0.09, "Transmembrane Voltage (mV)", 2, 1, 0, 1, 1)
     plotShapeVoltagePotassium.show(0)
     plotShapeVoltagePotassium.scale(-87,-83)
     
+    // !!! collision with the previous PlotShape
         plotShapeVoltagePotassium = new PlotShape(0)
     fast_flush_list.append(plotShapeVoltagePotassium)
     plotShapeVoltagePotassium.size(-50,50,-50,50)
     plotShapeVoltagePotassium.view(-50, -49.9003, 100, 100, 1745, 102, 400.64, 400.32)
     plotShapeVoltagePotassium.exec_menu("Shape Plot")
+    plotShapeVoltagePotassium.exec_menu("View = plot")
     plotShapeVoltagePotassium.variable("ko")
     plotShapeVoltagePotassium.label(0.5, 0.09, "[K+]o (mM)", 2, 1, 0, 1, 1)
     plotShapeVoltagePotassium.show(0)
     plotShapeVoltagePotassium.scale(0,12)
 }
 
-// Opens Glutamate simulation window.
+// Opens Potassium simulation window.
 proc RunAstroPotassium() {
     if ($1 > 0) {
         load_file(1, "_Code/Core/Simulations/PointProcessManager.hoc")

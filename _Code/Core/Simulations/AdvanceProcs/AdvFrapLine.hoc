@@ -33,6 +33,12 @@ proc advance() { local i, cylinderVolume, FraRec, FraBasic, recoveryBleaching
         }
     }
 
+    if (!fileFrapLineConcentration.isopen()) {
+        // !!! this is required when user uses RunControl or AltRunControl for the simulation;
+        //     unfortunately, in this case user will have to click "Save results" button manually
+        //     because otherwise it's not guaranteed that the last lines are flushed to the file
+        fileFrapLineConcentration.aopen("Text results/TimeFRAP.txt")
+    }
     fileFrapLineConcentration.printf("%-6.5g\t%-6.5g\n", t, FraRec/FraBasic)
 
     if (t < tstop) {

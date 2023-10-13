@@ -42,6 +42,7 @@ proc showCaWaveUi() {
     plotShapeCaWaveCai.size(-50,50,-50,50)
     plotShapeCaWaveCai.view(-50, -49.9003, 100, 100, 601, 102, 400.64, 400.32)
     plotShapeCaWaveCai.exec_menu("Shape Plot")
+    plotShapeCaWaveCai.exec_menu("View = plot")
     plotShapeCaWaveCai.variable("cai")
 	plotShapeCaWaveCai.label(0.12, 0.95, "[Ca2+]i (mM)", 2, 1, 0, 1, 1)
     plotShapeCaWaveCai.show(0)

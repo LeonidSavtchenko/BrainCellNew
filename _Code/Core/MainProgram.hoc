@@ -6,12 +6,15 @@ if (isBaseOrNanoStart) {
     // !! move to caller file
     if (isAstrocyteOrNeuron) {
         load_file("../NanoCore/Astrocyte/AstrocyteNanoInitUpdate.hoc")
-        objref nanoDistal_ref, nanoProximal_ref // !! just to source MechanismSwitch.hoc without errors
+        objref nanoDistal_ref, nanoProximal_ref // !! just to source MechanismSwitch_deprecated.hoc without errors
     }
     load_file("InitParamsMain.hoc")
 }
 
-{ load_file("MechanismSwitch.hoc") }
+// !!! deprecated: get rid of this file in favour of BiophysExportImportHelper and JSON files once we:
+//     (1) export/import density_GluTrans inhom model in the same way as for g_pas;
+//     (2) move the GLOBAL vars assigned in "MechanismSwitch_deprecated.hoc" to the loaded JSON file
+{ load_file("MechanismSwitch_deprecated.hoc") }
 
 { load_file("MainUi.hoc") }
 

@@ -4,6 +4,12 @@ proc advance() {
     // Update plot view
     graphDendrites.exec_menu("View = plot")
     
+    if (!fileCalciumTime.isopen()) {
+        // !!! this is required when user uses RunControl or AltRunControl for the simulation;
+        //     unfortunately, in this case user will have to click "Save results" button manually
+        //     because otherwise it's not guaranteed that the last lines are flushed to the file
+        fileCalciumTime.aopen("Text results/Cadynamics.txt")
+    }
     fileCalciumTime.printf("%-6.5g\t%-6.5g\t%-6.5g\n", t, dendrite_ref.o(ActiveDendrite1).sec.cai(0.5), dendrite_ref.o(ActiveDendrite2).sec.cai(0.5))
 	
 	// these data are necessary for calculating Fig. 7 extra

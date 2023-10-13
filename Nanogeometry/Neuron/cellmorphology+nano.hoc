@@ -13,11 +13,11 @@
     Line 40135:         Inhom and stoch library
     Line 40571:         Biophys compartments
     Line 40847:         Homogen biophysics
-    Line 40983:         Proto synapses
-    Line 41105:         Synaptic compartments
-    Line 41728:         Homogen synaptic vars
-    Line 41774:         Synapses finale
-    Line 41781:         APCount-s
+    Line 40963:         Proto synapses
+    Line 41085:         Synaptic compartments
+    Line 41708:         Homogen synaptic vars
+    Line 41754:         Synapses finale
+    Line 41761:         APCount-s
 */
 //////////////////////////////////////////////////////////////////////////
 
@@ -40865,10 +40865,6 @@ proc addHomogenBiophysInfoToSomaComp() { localobj comp, mechStd
     mechStd.set("g_pas", 8.968609865470852e-05)    // (S/cm2)
     mechStd.set("e_pas", -85.0)    // (mV)
     comp.mechStds[2][0] = mechStd
-    
-    mechStd = new MechanismStandard("pas", 2)    // ASSIGNED
-    mechStd.set("i_pas", 0.0018251121076233179)    // (mA/cm2)
-    comp.mechStds[2][1] = mechStd
 }
 
 proc addHomogenBiophysInfoToDendritesComp() { localobj comp, mechStd
@@ -40890,10 +40886,6 @@ proc addHomogenBiophysInfoToDendritesComp() { localobj comp, mechStd
     mechStd.set("g_pas", 8.968609865470852e-05)    // (S/cm2)
     mechStd.set("e_pas", -85.0)    // (mV)
     comp.mechStds[2][0] = mechStd
-    
-    mechStd = new MechanismStandard("pas", 2)    // ASSIGNED
-    mechStd.set("i_pas", 0.0018251121076233179)    // (mA/cm2)
-    comp.mechStds[2][1] = mechStd
 }
 
 proc addHomogenBiophysInfoToAxonComp() { localobj comp, mechStd
@@ -40911,10 +40903,6 @@ proc addHomogenBiophysInfoToAxonComp() { localobj comp, mechStd
     mechStd.set("g_pas", 7.142857142857143e-05)    // (S/cm2)
     mechStd.set("e_pas", -65.0)    // (mV)
     comp.mechStds[2][0] = mechStd
-    
-    mechStd = new MechanismStandard("pas", 2)    // ASSIGNED
-    mechStd.set("i_pas", 2.4999999999999595e-05)    // (mA/cm2)
-    comp.mechStds[2][1] = mechStd
 }
 
 proc addHomogenBiophysInfoToSpineNeckComp() { localobj comp, mechStd
@@ -40932,10 +40920,6 @@ proc addHomogenBiophysInfoToSpineNeckComp() { localobj comp, mechStd
     mechStd.set("g_pas", 7.142857142857143e-05)    // (S/cm2)
     mechStd.set("e_pas", -65.0)    // (mV)
     comp.mechStds[2][0] = mechStd
-    
-    mechStd = new MechanismStandard("pas", 2)    // ASSIGNED
-    mechStd.set("i_pas", 2.4999999999999595e-05)    // (mA/cm2)
-    comp.mechStds[2][1] = mechStd
 }
 
 proc addHomogenBiophysInfoToSpineHeadComp() { localobj comp, mechStd
@@ -40953,10 +40937,6 @@ proc addHomogenBiophysInfoToSpineHeadComp() { localobj comp, mechStd
     mechStd.set("g_pas", 7.142857142857143e-05)    // (S/cm2)
     mechStd.set("e_pas", -65.0)    // (mV)
     comp.mechStds[2][0] = mechStd
-    
-    mechStd = new MechanismStandard("pas", 2)    // ASSIGNED
-    mechStd.set("i_pas", 2.4999999999999595e-05)    // (mA/cm2)
-    comp.mechStds[2][1] = mechStd
 }
 
 comp = mmAllComps.o(0)

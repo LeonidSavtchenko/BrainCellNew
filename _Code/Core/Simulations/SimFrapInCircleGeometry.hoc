@@ -135,6 +135,7 @@ proc showFrapCircleUi() {
         plotShapeFrapioniCircle.size(-50,50,-50,50)
         plotShapeFrapioniCircle.view(-50, -50, 100, 100, 165, 169, 400.64, 400.32)
         plotShapeFrapioniCircle.exec_menu("Shape Plot")
+        plotShapeFrapioniCircle.exec_menu("View = plot")
         plotShapeFrapioniCircle.variable("frapioni")
         plotShapeFrapioniCircle.show(0)
         plotShapeFrapioniCircle.scale(0,1)

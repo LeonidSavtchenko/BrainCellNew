@@ -56,7 +56,7 @@ begintemplate AstrocyteNanoBranch
     external getDiameterFromDistr, capDiam, codeContractViolation
     
     // Scalars
-    external GPassive, currentMechanismSetup, DensityGluTransporters
+    external GPassive
     
     // It turns out that variable size is not allowed here: we'll get the strange error "LargeGlia not an array variable" in procs below while sourcing this file
     // create LargeGlia[NumberLeavesPerStalk]
@@ -197,32 +197,20 @@ begintemplate AstrocyteNanoBranch
     
     proc updateBiophysics() { local isUpdateLeaves, isUpdateStalks, leafIdx
         isUpdateLeaves = $1
-        isUpdateStalks = $2
+        isUpdateStalks = $2     // !!! not used
         
         if (!isUpdateLeaves && !isUpdateStalks) {
             codeContractViolation()
         }
         
+        if (!isUpdateLeaves) {
+            return
+        }
+        
         for leafIdx = 0, NumberLeavesPerStalk - 1 {
-            if (isUpdateLeaves) {
-                // !! copied from setLeaves
-                LargeGlia[leafIdx] {
-                    g_pas = (1 + diam / (2 * L)) * GPassive //(1/11150)  // mho/cm2
-                    
-                    if (currentMechanismSetup == 1) {
-                        // !!!??
-                        density_GluTrans = (1 + diam / (2 * L)) * DensityGluTransporters
-                    }
-                }
-            }
-            if (isUpdateStalks) {
-                // !! copied from setStalks
-                SmallGlia[leafIdx] {
-                    if (currentMechanismSetup == 1) {
-                        // !!!??
-                        density_GluTrans = DensityGluTransporters               // !! maybe move it to init?
-                    }
-                }
+            // !! copied from setLeaves
+            LargeGlia[leafIdx] {
+                g_pas = (1 + diam / (2 * L)) * GPassive //(1/11150)  // mho/cm2
             }
         }
     }

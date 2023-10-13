@@ -160,6 +160,7 @@ proc showCaDynamicsUi() {
         xlabel("Offset of first calcium  spike (ms) ") 
         xvalue("NoiseCaBegin","NoiseCaBegin", 1,"", 0, 1  )
         xlabel("------------------------------------------------------------------------------------------------------------------------------")
+        // !!! is that correct that we expose a RANGE variable in UI?
         xvalue("ip3i Concentration (M)", "ip3i", 1)
         xlabel("------------------------------------------------------------------------------------------------------------------------------")
         xvalue("Active dendrite 1", "ActiveDendrite1", 1, "showDendritesGraph(ActiveDendrite1, ActiveDendrite2)", 0, 1  )
@@ -167,10 +168,15 @@ proc showCaDynamicsUi() {
         xlabel("------------------------------------------------------------------------------------------------------------------------------")
         xvalue("Simulation time (ms)","tstop", 1,"", 0, 1  )
         xbutton("Run simulation", "runCaDynamics()")
+        // !!! instead of this button, maybe use a Timer with e.g. 1 sec interval to check if simulation is running and, if not, close the file;
+        //     alternatively, we'll have to stick to AltRunControl and update it's code to close this file
+        xbutton("Save results*", "fileCalciumTime.close()")
+        xlabel("* If you used RunControl or AltRunControl for the simulation,")
+        xlabel("   then click this button once stopped")
         xpanel()
     }
     vBoxCalciumDynamics.intercept(0)
-    vBoxCalciumDynamics.map("Calcium Stimulation parameters", 91, 102, 380, 560)
+    vBoxCalciumDynamics.map("Calcium Stimulation parameters", 91, 102, -1, -1)
 
     removeIfExists(fast_flush_list, plotShapeCai)
     plotShapeCai = new PlotShape(0)
@@ -179,6 +185,7 @@ proc showCaDynamicsUi() {
     plotShapeCai.view(-50, -49.9003, 100, 100, 601, 102, 400.64, 400.32)
 	plotShapeCai.label(0.0986842, 0.968387, "[Ca2+]in (mM)", 2, 1, 0, 0, 1)
     plotShapeCai.exec_menu("Shape Plot")
+    plotShapeCai.exec_menu("View = plot")
     plotShapeCai.variable("cai")
     plotShapeCai.show(0)
     plotShapeCai.scale(0,0.00006)    // mV, scale of voltage on 3D plots

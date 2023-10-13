@@ -26,6 +26,8 @@ def convertPyIterableOfStrsToHocListOfStrObjs(pyIter):
     return hocList
     
 # Called from both Python and HOC
+# !!!! fragile logic in the callers of this method:
+#      there is no guarantee that user didn't apply, say, liner function to g_pas in LargeGlia and then clicked "Deep rescan" making it verbatim
 def isAstrocyteSpecificInhomVar(compIdx, mechIdx, varType, varIdx, arrayIndex):
     
     mth = hocObj.mth

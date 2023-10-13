@@ -100,6 +100,11 @@ proc showFrapLineUi() { localobj plotShapeFrapioniLine
             xvalue("Bleaching-recovery iterations","iterations", 1, "updateTstop()", 0, 1)
             xlabel("Run simulation. Results are saved to the TimeFRAP.txt")
             xbutton("Run FRAP", "runFrapLine()")
+            // !!! instead of this button, maybe use a Timer with e.g. 1 sec interval to check if simulation is running and, if not, close the file;
+            //     alternatively, we'll have to stick to AltRunControl and update it's code to close this file
+            xbutton("Save results*", "fileFrapLineConcentration.close()")
+            xlabel("* If you used RunControl or AltRunControl for the simulation,")
+            xlabel("   then click this button once stopped")
             xlabel("===========================================================")
             xpanel()
 
@@ -125,6 +130,7 @@ proc showFrapLineUi() { localobj plotShapeFrapioniLine
         plotShapeFrapioniLine.size(-50,50,-50,50)
         plotShapeFrapioniLine.view(-50, -50, 100, 100, 165, 169, 400.64, 400.32)
         plotShapeFrapioniLine.exec_menu("Shape Plot")
+        plotShapeFrapioniLine.exec_menu("View = plot")
         plotShapeFrapioniLine.variable("frapioni")
         plotShapeFrapioniLine.show(0)
         plotShapeFrapioniLine.scale(0.8*BasicFRAP, 1.0*BasicFRAP)

@@ -3,9 +3,15 @@ if (isBaseOrNanoStart) {
     celsius = 34.0
 }
 
-// !!! need to export/import this var
-// !!! can it be the root cause of error when NetStim.start=0?
-secondorder=2
+// !!! need to export/import "secondorder" var
+// !!! can it be the root cause of the Graph/PlotShape-related errors when NetStim.start=0?
+// !!! commented out as a workaround to avoid this error:
+//      at line 236 in file cadifus.mod:
+//          SOLVE state METHOD sparse
+//      Error at section location dendA2_01011(0.45)
+//      Convergence not achieved in maximum number of iterations
+//      C:\nrn\bin\nrniv.exe: scopmath library error
+// secondorder=2
 
 Rm = 28000
 RmDend = Rm/2

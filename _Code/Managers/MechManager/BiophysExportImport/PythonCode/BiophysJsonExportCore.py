@@ -1,6 +1,7 @@
 
 import math
 from neuron import h
+from BiophysJsonExportImportUtils import BiophysJsonExportImportUtils
 from OtherInterModularUtils import *
 
 
@@ -156,7 +157,7 @@ class BiophysJsonExportCore:
         
         # !!! do we really need to export/import segmentationHelper as a part of biophysics?
         #     (does user prefer to have "keep as is" segmentation mode by default on import?)
-        # !!! be careful importing VerbatimDistFuncHelper
+        # !!!!! be careful importing VerbatimDistFuncHelper
         
         actSpecVar = hocObj.inhomAndStochLibrary.findActiveSpecVar(0, compIdx, mechIdx, varType, varIdx, arrayIndex)
         
@@ -191,6 +192,9 @@ class BiophysJsonExportCore:
         # !!! for encapsulation, maybe implement actSpecVar.toJson which, in turn, will call .toJson for all nested objects;
         #     also, implement actSpecVar.fromJson
         
+        if actSpecVar.distFuncIdx == hocObj.dfc.verbatimDistFuncIdx:
+            BiophysJsonExportImportUtils.showVerbatimModelWarning(actSpecVar.compIdx, actSpecVar.mechIdx, actSpecVar.varType, actSpecVar.varIdx, actSpecVar.arrayIndex)
+            
         jsonDict = {
             'distFuncHelper': {
                 'hocTemplateName': getTemplateName(distFuncHelper),

@@ -34,6 +34,8 @@ proc SimulationSelected() { local simIdx
     
     if (simIdx == 2) {
         beih.importForSim("SimFrapLine.json")
+    } else if (simIdx == 6) {
+        beih.importForSim("SimCalciumDynamics.json")
     } else if (simIdx == 7) {
         beih.importForSim("SimCalciumWave.json")
     } else if (simIdx == 8) {
@@ -42,21 +44,18 @@ proc SimulationSelected() { local simIdx
         beih.importForSim("SimPotassium.json")
     }
     
-    if (simIdx >= 1 && simIdx <= 7 && currentMechanismSetup == 1) {
-        InsertGlutamateMechanisms(0)
+    // !!!! deprecated: remove this IF operator in favour of beih.importForSim (called just above) once we:
+    //      (1) export/import density_GluTrans inhom model in the same way as for g_pas;
+    //      (2) move the GLOBAL vars assigned in "MechanismSwitch_deprecated.hoc" to the loaded JSON file
+    if (simIdx == 2) {
+        InsertElectricMechanisms(0)
+    } else if (simIdx == 6 || simIdx == 7) {
         InsertElectricMechanisms(1)
-        currentMechanismSetup = 0
-    } else if (simIdx == 8 && currentMechanismSetup == 0) {
-        InsertElectricMechanisms(0)
-        InsertGlutamateMechanisms(1)
-        currentMechanismSetup = 1
-    } else if (simIdx == 9) { // && currentMechanismSetup == 0) {
-        InsertElectricMechanisms(0)
-       InsertPotassiumMechanisms(1)
-        currentMechanismSetup = 0 
+    } else if (simIdx == 8) {
+        InsertGlutamateMechanisms()
+    } else if (simIdx == 9) {
+        InsertPotassiumMechanisms()
     }
-    
-    
     
     // Update advance() proc and run
     if (simIdx == 1) {
@@ -212,8 +211,8 @@ proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentral
             xbutton("Export cell", "startExportManager()")
             xpanel()
             xpanel("Various scenarios for calculating astrocyte dynamics")
-            xlabel("====================== Simulations ======================")
-            xlabel("(Each simulation below assumes you've inserted certain biophys mechs)")
+            xlabel("===================== Simulations =====================")
+            xlabel("(Most sims below insert certain biophys mechs into the sections)")
            //xlabel("Simulation of FRAP experiment with  round-spot bleaching")
            //xbutton("FRAP with round-spot bleaching", "SimulationSelected(1)")
             xlabel("---------------------------------------------------------------------------------------------------------")

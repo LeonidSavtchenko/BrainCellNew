@@ -1,0 +1,69 @@
+{
+    "Soma": {
+        "capacitance": {
+            "PARAMETER": {
+                "cm (uF/cm2)": 0.8
+            }
+        },
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 8.968609865470852e-05,
+                "e_pas (mV)": -85.0
+            }
+        },
+        "ca_ion": {},
+        "ip3_ion": {},
+        "cadifus": {}
+    },
+    "Dendrites": {
+        "capacitance": {
+            "PARAMETER": {
+                "cm (uF/cm2)": 0.8
+            }
+        },
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 8.968609865470852e-05,
+                "e_pas (mV)": -85.0
+            }
+        },
+        "ca_ion": {},
+        "ip3_ion": {},
+        "cadifus": {}
+    },
+    "Small Glia": {
+        "capacitance": {
+            "PARAMETER": {
+                "cm (uF/cm2)": 0.8
+            }
+        },
+        "pas": {
+            "PARAMETER": {
+                "e_pas (mV)": -85.0
+            }
+        },
+        "ca_ion": {},
+        "ip3_ion": {},
+        "cadifus": {}
+    },
+    "Large Glia": {
+        "capacitance": {
+            "PARAMETER": {
+                "cm (uF/cm2)": 0.8
+            }
+        },
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": {
+                    "inhom_model": {
+                        "GPassive (S/cm2)": 0.001
+                    }
+                },
+                "e_pas (mV)": -85.0
+            }
+        },
+        "ca_ion": {},
+        "ip3_ion": {},
+        "cadifus": {}
+    }
+}

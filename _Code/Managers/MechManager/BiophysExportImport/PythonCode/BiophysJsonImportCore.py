@@ -1,15 +1,13 @@
 
 import math
 from neuron import h
+from BiophysJsonExportImportUtils import BiophysJsonExportImportUtils
 from OtherInterModularUtils import *
 
 
 # !!! compare the units we read from JSON (including "GPassive") with the units in NEURON and show a warning if they are different
 
 class BiophysJsonImportCore:
-    
-    _varTypeNames = ['PARAMETER', 'ASSIGNED', 'STATE']
-    
     
     def importCore(self, jsonDict, options):
         
@@ -41,7 +39,7 @@ class BiophysJsonImportCore:
             inhomAndStochLibrary.onJustBeforeCompInhomStochBiophysImport(recCompIdx)
             self._consumeDataFromCompInfoDict(recCompIdx, compInfoDict, options, 0)
             
-            # !!!!! don't forget about special logic for verbatim inhom models
+            # !!!!!!! don't forget about special logic for verbatim inhom models
             stickyMechNames = list(name for name in stickyMechNamesList_before if name not in stickyMechNamesSet_imported)
             if stickyMechNames:
                 csv = ', '.join(stickyMechNames)
@@ -134,7 +132,7 @@ class BiophysJsonImportCore:
     # See also: hoc:MechTypeHelper.getVarTypeName
     def _getVarType(self, varTypeName):
         try:
-            varTypeIdx = self._varTypeNames.index(varTypeName)
+            varTypeIdx = BiophysJsonExportImportUtils.varTypeNames.index(varTypeName)
         except ValueError:
             codeContractViolation()
         return varTypeIdx + 1
@@ -216,9 +214,9 @@ class BiophysJsonImportCore:
         
         distFuncHelperOrNone = hocObj.inhomAndStochLibrary.getBiophysVerbatimDistFuncHelperOrNil(compIdx, mechIdx, varType, varIdx, arrayIndex)
         if distFuncHelperOrNone is None:
-            (mechName, varTypeName, varNameWithIndex) = self._getNamesForMsg(compIdx, mechIdx, varType, varIdx, arrayIndex)
+            (mechName, varTypeName, varNameWithIndex) = BiophysJsonExportImportUtils.getNamesForMsg(compIdx, mechIdx, varType, varIdx, arrayIndex)
             comp = hocObj.mmAllComps[compIdx]
-            h.continue_dialog(f'Cannot import Verbatim inhomogeneity model of "{mechName} \ {varTypeName} \ {varNameWithIndex}" in "{comp.name}" because some non-Verbatim model has already been applied.')
+            h.continue_dialog(f'Cannot import "Verbatim data" inhom model for "{mechName} \ {varTypeName} \ {varNameWithIndex}" in "{comp.name}" because some other inhom model has already been applied to this var.')
             return
             
         GPassive_old = hocObj.GPassive
@@ -230,9 +228,6 @@ class BiophysJsonImportCore:
         
         hocObj.GPassive = GPassive_new
         
-        # !!! BUG: if hocObj.currentMechanismSetup == 1 (which is NOT default), then hoc:AstrocyteNanoBranch.updateBiophysics updates not only g_pas, but also density_GluTrans,
-        #          so we need to update the biophys export/import logic to support it
-        
     def _importInhomModelCore(self, compIdx, mechIdx, varType, varIdx, arrayIndex, inhomModelInfoDict):
         
         segmentationHelperInfoDictOrNone = inhomModelInfoDict['segmentationHelper']
@@ -240,12 +235,12 @@ class BiophysJsonImportCore:
         
         # !!!! does user prefer to have "keep as is" segmentation mode by default on import?
         if segmentationHelperInfoDictOrNone is not None:
-            comp = hocObj.mmAllComps[compIdx]
             distMinMaxVec = h.Vector()
+            comp = hocObj.mmAllComps[compIdx]
             isDisconnected = comp.getDistRangeAsVec(distMinMaxVec)
             if isDisconnected:
-                (mechName, varTypeName, varNameWithIndex) = self._getNamesForMsg(compIdx, mechIdx, varType, varIdx, arrayIndex)
-                h.continue_dialog(f'Cannot import inhomogeneity (the distance function) of "{mechName} \ {varTypeName} \ {varNameWithIndex}" in "{comp.name}" because at least one section of this compartment doesn\'t have a topological connection with the distance centre.')
+                (mechName, varTypeName, varNameWithIndex) = BiophysJsonExportImportUtils.getNamesForMsg(compIdx, mechIdx, varType, varIdx, arrayIndex)
+                h.continue_dialog(f'Cannot import inhomogeneity (the distance function) for "{mechName} \ {varTypeName} \ {varNameWithIndex}" in "{comp.name}" because at least one section of this compartment doesn\'t have a topological connection with the distance centre.')
                 return
                 
             segmentationHelper = hocObj.SegmentationHelper()
@@ -265,7 +260,9 @@ class BiophysJsonImportCore:
         
         distFuncCatIdx = distFuncHelperInfoDict['distFuncCatIdx']
         distFuncIdx = distFuncHelperInfoDict['distFuncIdx']
-        
+        if distFuncIdx == hocObj.dfc.verbatimDistFuncIdx:
+            BiophysJsonExportImportUtils.showVerbatimModelWarning(compIdx, mechIdx, varType, varIdx, arrayIndex)
+            
         self._importInhomModelInnerCore(compIdx, mechIdx, varType, varIdx, arrayIndex, segmentationHelper, distFuncHelper)
         
         hocObj.inhomAndStochLibrary.onInhomApply(0, compIdx, mechIdx, varType, varIdx, arrayIndex, segmentationHelper, distFuncHelper, distFuncCatIdx, distFuncIdx)
@@ -322,21 +319,4 @@ class BiophysJsonImportCore:
         listOfStrs = convertPyIterableOfStrsToHocListOfStrObjs(listOfStrs)
         
         distOrStochFuncHelper.importParams(vecOfVals, listOfStrs)
-        
-    # !!!! maybe just reuse recComp, mechName, varTypeIdx, varTypeName, varName and varNameWithIndex obtained upstream
-    def _getNamesForMsg(self, compIdx, mechIdx, varType, varIdx, arrayIndex):
-        
-        mth = hocObj.mth
-        
-        comp = hocObj.mmAllComps[compIdx]
-        mechName = h.ref('')
-        mth.getMechName(0, mechIdx, mechName)
-        varTypeIdx = int(mth.convertVarTypeToVarTypeIdx(varType))
-        varTypeName = self._varTypeNames[varTypeIdx]    # !!!! maybe call mth.getVarTypeName
-        varName = h.ref('')
-        arraySize = mth.getVarNameAndArraySize(0, mechIdx, varType, varIdx, varName)
-        varNameWithIndex = h.ref('')
-        mth.getVarNameWithIndex(varName, arraySize, arrayIndex, varNameWithIndex)
-        
-        return (mechName[0], varTypeName, varNameWithIndex[0])
         

@@ -33,7 +33,7 @@ if (testSetIdx == 0) {
     ecsLibrary.addNewSource(1, "GLU", new ECSSpatialInfo(0, 115, 350, -30), new ECSTemporalInfo(1, 5, dt, 0), new ECSCapacityInfo(0, 1, 5000, 15))
 } else if (testSetIdx == 3) {
     // !!! comparing the decay dynamics in "point + on-off" and "point + spike"
-    //     (don't forget to open JSON, set the same baseOuterConc and Diff for Ca2+ and GLU and use "View=plot" for both in the end)
+    //     (don't forget to open JSON, set the same baseOuterConc and Diff for Ca2+ and GLU and use "View = plot" for both in the end)
     
     ecsLibrary.addNewSource(0, "Ca2+", new ECSSpatialInfo(0, 140, 30, 60), new ECSTemporalInfo(2, 8.5, 0), new ECSCapacityInfo(0, 2, 1.65e7))
     
