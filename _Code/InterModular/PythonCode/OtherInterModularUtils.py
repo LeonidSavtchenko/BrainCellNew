@@ -1,4 +1,5 @@
 
+import os
 from neuron import h, hoc
 
 
@@ -53,4 +54,17 @@ def isAstrocyteSpecificInhomVar(compIdx, mechIdx, varType, varIdx, arrayIndex):
         arrayIndex == 0)
         
     return cond
+    
+# !!! find a better place for this (not intermodular actually)
+def isInPySet(theSet, theItem):
+    return theItem in theSet
+    
+def getDirPath(anyFilePathName):
+    return os.path.dirname(anyFilePathName)
+    
+# !!! not intermodular actually
+def getDllFilePathName(anyFilePathName):
+    dirPath = getDirPath(anyFilePathName)
+    sepChar = anyFilePathName[len(dirPath)]
+    return dirPath + sepChar + 'nrnmech.dll'
     

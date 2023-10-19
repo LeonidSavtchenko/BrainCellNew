@@ -19,12 +19,12 @@
 // Import a file
 // $s1 (optional) - HOC command to execute after successful import completion
 // $s2 (optional) - Path to the input file; if omitted, then file browser will be shown
-// Other input: isRestartRequired, isAstrocyteOrNeuron (taken from the top level)
+// Other input: isRestartRequired, isExternalSimStart, isAstrocyteOrNeuron (taken from the top level)
 // Output (all initialized on the top level):
 //      always: soma_ref, dendrite_ref (both List-s of SectionRef-s), NumberDendrites (scalar), usedNamesForSoma, usedNamesForDendrites (both List-s of String-s)
 //      only if !isAstrocyteOrNeuron: axon_ref (List of SectionRef-s), usedNamesForAxon (List of String-s)
-proc importHocOrSwcOrZipOrOtherFile() { local numArg, isCancel
-    strdef filePathName, fileExtLower
+proc importHocOrSwcOrZipOrOtherFile() { local numArg, isCancel localobj pyEnumInFileType
+    strdef filePathName, dllDirPath, fileExtLower
     
     if (isRestartRequired) {
         printImportFailedMsgAndRaiseError("Please restart and try again")
@@ -52,9 +52,18 @@ proc importHocOrSwcOrZipOrOtherFile() { local numArg, isCancel
     if (numArg == 2) {
         filePathName = $s2
     } else {
-        isCancel = fbh.showLoadFileDialog(pyEnumInFileTypes.baseGeometryAny, filePathName)
+        if (!isExternalSimStart) {
+            pyEnumInFileType = pyEnumInFileTypes.baseGeometryAny
+        } else {
+            pyEnumInFileType = pyEnumInFileTypes.baseGeometryHoc
+        }
+        isCancel = fbh.showLoadFileDialog(pyEnumInFileType, filePathName)
         if (isCancel) {
             return
+        }
+        if (isExternalSimStart) {
+            dllDirPath = pyObj.getDirPath(filePathName)
+            mechsDllUtils.loadMechsDllFromThisFolder(dllDirPath)
         }
     }
     

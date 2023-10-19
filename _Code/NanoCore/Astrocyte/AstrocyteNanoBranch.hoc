@@ -4,7 +4,7 @@ objref randomDiamAndLen
 randomDiamAndLen = rngUtils.getFor_diamAndLen()
 
 // Both leaves and stalks:
-// diamStep = -1                                // Already defined in Core/NanoDistrFromFile.hoc
+// diamStep = -1                                // Already defined in MainUI/NanoDistrFromFile.hoc
 // Leaves only:
 MinDimLeaves = 1                                // um
 MaxDimLeaves = 3                                // um

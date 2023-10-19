@@ -16,9 +16,9 @@ class BiophysJsonExportImportUtils:
         (mechName, varTypeName, varNameWithIndex) = cls.getNamesForMsg(compIdx, mechIdx, varType, varIdx, arrayIndex)
         
         h.continue_dialog(f'Warning: Import of "Verbatim data" inhom model for "{mechName} \ {varTypeName} \ {varNameWithIndex}" in "{comp.name}" requires that the recipient cell has exactly the same total number of segments in this compartment.')
-            # !!! strictly speaking, the same number of segments doesn't mean the same diam and L,
-            #     so even successfully imported VerbatimDistFuncHelper for g_pas in LargeGlia won't necessarily match diam and L in the recipient cell
-            
+        # !!! strictly speaking, the same number of segments doesn't mean the same diam and L,
+        #     so even successfully imported VerbatimDistFuncHelper for g_pas in LargeGlia won't necessarily match diam and L in the recipient cell
+        
     # !!!! maybe just reuse recComp, mechName, varTypeIdx, varTypeName, varName and varNameWithIndex obtained upstream
     @classmethod
     def getNamesForMsg(cls, compIdx, mechIdx, varType, varIdx, arrayIndex):

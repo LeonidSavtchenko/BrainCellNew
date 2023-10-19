@@ -1,0 +1,23 @@
+
+// !!! maybe I don't need to assign, use and export NumberDendrites anywhere
+//     (maybe keep NumberDendrites only in Import module for old-style files)
+// !!! direct usage of MaxNumberStalksPerDendrite and MaxNumberSpinesPerDendrite in cycles is deprecated
+// !!! maybe replace MaxNumberStalksPerDendrite and MaxNumberSpinesPerDendrite with one MaxNumberNanoBranchesPerDendrite
+
+// Sets default initial params to soma and dendrites which doesn't depend on simulation.
+proc setSomaDendrCommonParams() {
+    for eachSecInList(soma_ref, dendrite_ref) {
+        Ra = 100                // Ohm cm
+        cm = 0.8                // uF/cm2
+        nseg = 10
+        
+        insert pas
+        e_pas = -85             // mV
+        g_pas = 1/11150         // mS/cm2
+    }
+}
+
+// Initial all the cell parameters.
+proc initCell() {
+    setSomaDendrCommonParams()
+}

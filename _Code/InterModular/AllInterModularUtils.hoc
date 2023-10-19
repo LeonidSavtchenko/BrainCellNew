@@ -25,7 +25,7 @@ proc makeSureSynCompsCreatedOrImported() { codeContractViolation() }
 { load_file("InterModularWidgetUtils.hoc") }
 { load_file("InterModularOtherUtils.hoc") }
 objref mmcoWidget
-{ load_file("../Core/PluginsForCompSelectionWidget.hoc") }
+{ load_file("../MainUI/PluginsForCompSelectionWidget.hoc") }
 { load_file("Widgets/FileBrowserHelper.hoc") }
 { load_file("Widgets/CompSubsetWidget.hoc") }                   // !! not intermodular yet
 { load_file("Widgets/GlobalsEditorWidget.hoc") }

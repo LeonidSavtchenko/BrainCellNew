@@ -42,14 +42,14 @@ proc showAstrocyteLevelOfNanoDetailWidget() {
 showAstrocyteLevelOfNanoDetailWidget()
 
 { load_file("nrngui.hoc") }
-{ load_file("../../Core/NanoDistrFromFile.hoc") }
+{ load_file("../../MainUI/NanoDistrFromFile.hoc") }
 
 // UI
 objref vBoxSelectGeometry, plotShapeGeometry, vBoxEndFootGeometry, vBoxSelectGeometryReal
 
 // Shows geometry.
 proc showSelectedGeometry() {
-    removeIfExists(fast_flush_list, plotShapeGeometry)      // !!! maybe not needed
+    removeItemFromList(fast_flush_list, plotShapeGeometry)  // !!! maybe not needed
     plotShapeGeometry = new PlotShape(0)
     fast_flush_list.append(plotShapeGeometry)               // !!!
     plotShapeGeometry.size(-40,40,-37.0217,37.0217)
@@ -156,7 +156,9 @@ proc initMainProgram() {
     unmapIfNotNil(vBoxSelectGeometryReal)
     Boxleaves.unmap()
     
-    mechsDllUtils.loadDefaultMechsDllDependingOnCellType()
+    if (!isExternalSimStart) {
+        mechsDllUtils.loadDefaultMechsDllDependingOnCellType()
+    }
     
     load_file("_Code/Prologue/CommonPrologue.hoc")
     

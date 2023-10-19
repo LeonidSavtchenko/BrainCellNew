@@ -1,0 +1,155 @@
+
+// !!!! maybe call .dismissHandler() for the current sim widget if user closes any its panel
+
+objref simIdxToWidget[10]
+
+begintemplate SimulationManager
+    
+    public createSimulationsPanel
+    
+    external isAstrocyteOrNeuron
+    external InsertElectricMechanisms, InsertGlutamateMechanisms, InsertPotassiumMechanisms
+    external stringEmpty, codeContractViolation
+    external mmcrHelper, beih
+    
+    external simIdxToWidget
+    
+    lastSimIdxOrMinus1 = -1
+    
+    double simIdxToLEDState[1]
+    
+    
+    proc init() {
+        simIdxToWidget[0] = new SimVoltageCA1Neuron()
+        simIdxToWidget[1] = new SimFrapInCircleGeometry()           // !!! never called (hidden in UI)
+        simIdxToWidget[2] = new SimFrapLine()
+        simIdxToWidget[3] = new SimSpatialVoltageDistributions()
+        simIdxToWidget[4] = new SimConstantElectricalSimulations()
+        simIdxToWidget[5] = new SimFrequencyElectricalSimulation()  // !!! never called (hidden in UI)
+        simIdxToWidget[6] = new SimCalciumDynamics()
+        simIdxToWidget[7] = new SimCalciumWave()
+        simIdxToWidget[8] = new SimGlutamate()
+        simIdxToWidget[9] = new SimPotassium()
+        
+        double simIdxToLEDState[10]
+        
+        lastSimIdxOrMinus1 = -1
+    }
+    
+    proc createSimulationsPanel() {
+        xpanel("")
+        xlabel("===================== Simulations =====================")
+        xlabel("(Most sims below insert certain biophys mechs into the sections)")
+        if (!isAstrocyteOrNeuron) {
+            xlabel("---------------------------------------------------------------------------------------------------------")
+            xlabel("Basic voltage simulation of CA1-neuron")
+            xstatebutton("CA1-neuron voltage", &simIdxToLEDState[0], "simSelectedHandler(0)")
+        }
+        //xlabel("---------------------------------------------------------------------------------------------------------")
+        //xlabel("Simulation of FRAP experiment with round-spot bleaching")
+        //xstatebutton("FRAP with round-spot bleaching", &simIdxToLEDState[1], "simSelectedHandler(1)")
+        xlabel("---------------------------------------------------------------------------------------------------------")
+        xlabel("Simulation of line-scan FRAP")
+        xstatebutton("Line-scan FRAP", &simIdxToLEDState[2], "simSelectedHandler(2)")
+        xlabel("---------------------------------------------------------------------------------------------------------")
+        xlabel("Simulation of spatial distribution of voltage along dendrites") 
+        xstatebutton("Membrane voltage distribution", &simIdxToLEDState[3], "simSelectedHandler(3)")
+        xlabel("---------------------------------------------------------------------------------------------------------")
+        xlabel("Parameters of somatic stimuli")
+        xstatebutton("Constant electric stimuli", &simIdxToLEDState[4], "simSelectedHandler(4)")
+        //xlabel("---------------------------------------------------------------------------------------------------------")
+        //xlabel("Parameters of sinusoidal stimulations into soma")
+        //xstatebutton("Variable electric stimuli", &simIdxToLEDState[5], "simSelectedHandler(5)")
+        xlabel("---------------------------------------------------------------------------------------------------------")
+        xlabel("Parameters for microscopic calcium dynamics")
+        xstatebutton("Microscopic calcium dynamics", &simIdxToLEDState[6], "simSelectedHandler(6)")
+        xlabel("---------------------------------------------------------------------------------------------------------")
+        xlabel("Calcium Wave simulations")
+        xstatebutton("Calcium Wave", &simIdxToLEDState[7], "simSelectedHandler(7)")
+        xlabel("---------------------------------------------------------------------------------------------------------")
+        xlabel("Astrocyte model with Glutamate transporters")
+        xstatebutton("Membrane biophysics with glutamate transport", &simIdxToLEDState[8], "simSelectedHandler(8)")
+        xlabel("Astrocyte model with potassium dynamics")
+        xstatebutton("Dynamics of intra and extracellular K+", &simIdxToLEDState[9], "simSelectedHandler(9)")
+        xpanel()
+    }
+    
+    // All next staff is private
+    
+    
+    proc simSelectedHandler() { local simIdx, isCancel localobj widget
+        strdef biophysJsonFileNameOrEmpty, hocCommand
+        
+        simIdx = $1
+        
+        if (simIdx == -1) {
+            codeContractViolation()
+        }
+        
+        if (lastSimIdxOrMinus1 != -1) {
+            simIdxToWidget[lastSimIdxOrMinus1].dismissHandler()
+            if (simIdx == lastSimIdxOrMinus1) {
+                deployDefaultProcAdvance()
+                lastSimIdxOrMinus1 = -1
+                return
+            } else {
+                simIdxToLEDState[lastSimIdxOrMinus1] = 0
+                doNotify()
+            }
+        }
+        
+        // !!! here we can call some more specialized proc because no need to have them imported or rescanned
+        mmcrHelper.makeSureMechCompsCreatedOrImportedAndRescanned()
+        
+        widget = simIdxToWidget[simIdx]
+        
+        // Import biophysics from JSON file
+        biophysJsonFileNameOrEmpty = widget.biophysJsonFileNameOrEmpty
+        if (!stringEmpty(biophysJsonFileNameOrEmpty)) {
+            isCancel = beih.importForSim(biophysJsonFileNameOrEmpty)
+            if (isCancel) {
+                return
+            }
+        }
+        
+        // !!!! deprecated: remove this IF operator in favour of beih.importForSim (called just above) once we:
+        //      (1) export/import density_GluTrans inhom model in the same way as for g_pas;
+        //      (2) move the GLOBAL vars assigned in "MechanismSwitch_deprecated.hoc" to the loaded JSON file;
+        //      (3?) create JSON files for the simulations hidden in UI (simIdx = 1 and 5)
+        if (simIdx == 2) {
+            InsertElectricMechanisms(0)
+        } else if (simIdx == 6 || simIdx == 7) {
+            InsertElectricMechanisms(1)
+        } else if (simIdx == 8) {
+            InsertGlutamateMechanisms()
+        } else if (simIdx == 9) {
+            InsertPotassiumMechanisms()
+        }
+        
+        if (widget.isCustomProcAdvance) {
+            deployCustomProcAdvance(simIdx)
+        } else {
+            deployDefaultProcAdvance()
+        }
+        
+        lastSimIdxOrMinus1 = simIdx
+        
+        widget.show()
+    }
+    
+    proc deployDefaultProcAdvance() {
+        execute("~proc advance() { fadvance() }")
+    }
+    
+    proc deployCustomProcAdvance() { local simIdx
+        strdef hocCommand
+        simIdx = $1
+        // !!!! for simplicity, we can call proc fadvance() in this generated HOC command rather than on the beginning of each proc widget.advance()
+        sprint(hocCommand, "~proc advance() { simIdxToWidget[%d].advance() }", simIdx)
+        execute(hocCommand)
+    }
+    
+endtemplate SimulationManager
+
+objref simManager
+simManager = new SimulationManager()

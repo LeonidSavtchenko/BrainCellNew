@@ -618,10 +618,10 @@ class GeneratorsForMainHocFile:
         if not hocObj.exportOptions.isExportAltRunControl():
             return emptyParagraphHint()
             
-        lines = self.insertAllLinesFromFile('_Code\\Core\\Widgets\\Exported\\alt_stdrun.hoc')
+        lines = self.insertAllLinesFromFile('_Code\\AltRunControl\\Exported\\alt_stdrun.hoc')
         lines.append('')
         
-        newLines = self.insertAllLinesFromFile('_Code\\Core\\Widgets\\Exported\\AltRunControlWidget.hoc')
+        newLines = self.insertAllLinesFromFile('_Code\\AltRunControl\\Exported\\AltRunControlWidget.hoc')
         lines.extend(newLines)
         lines.append('')
         

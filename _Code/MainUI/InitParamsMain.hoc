@@ -1,0 +1,9 @@
+
+// Sets initial params.
+proc initParamsMain() {
+    if (isAstrocyteOrNeuron) {
+        nanoBranchesManager.reseedBranches(createVector(nanoDistrLoaded, nanoDistrLoaded))  // !! why here?
+    }
+    
+    initVoltageAndRunControlParams()
+}

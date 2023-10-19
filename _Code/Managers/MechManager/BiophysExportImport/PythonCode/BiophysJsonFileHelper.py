@@ -15,6 +15,7 @@ class BiophysJsonFileHelper:
     _biophysJsonImportCore = BiophysJsonImportCore()
     
     _jsonDictForImportStage3 = None
+    _jsonDictForImportForSimStage2 = None
     
     
     def exportStage2(self, outJsonFilePathName, options):
@@ -50,7 +51,7 @@ class BiophysJsonFileHelper:
                             elif varInfoKey == 'stoch_model':
                                 numStochVars += 1
                                 
-        recMechNames = self._getAllMechNames()  # "rec" - recipient
+        recMechNames = self._getAllRecMechNames()   # "rec" - recipient
         
         missingMechNames = h.List()
         for mechName in donMechNames:
@@ -70,22 +71,35 @@ class BiophysJsonFileHelper:
         return 0
         
     def importStage3(self, options):
-        return self._biophysJsonImportCore.importCore(self._jsonDictForImportStage3, options)
-        
-    def importForSim(self, inJsonFilePathName):
+        try:
+            return self._biophysJsonImportCore.importCore(self._jsonDictForImportStage3, options)
+        finally:
+            self._jsonDictForImportStage3 = None
+            
+    def importForSimStageA(self, inJsonFilePathName, compNames):
         
         with open(inJsonFilePathName) as jsonFile:
             jsonDict = json.load(jsonFile)
             
+        for donCompName in jsonDict.keys():         # "don" - donor
+            compNames.append(h.String(donCompName))
+            
+        self._jsonDictForImportForSimStage2 = jsonDict
+        
+        return 0
+        
+    def importForSimStageB(self, isUseThisCompNameVec):
+        
         defaultOptions = h.BiophysExportImportOptions()
-        # !!! need to do smth if the comp names list is not the same as in the imported JSON file
-        numComps = hocObj.compUtils.getNumDistMechComps()
-        defaultOptions.isUseThisCompNameVec = h.Vector(numComps, 1)
+        defaultOptions.isUseThisCompNameVec = isUseThisCompNameVec
         
-        return self._biophysJsonImportCore.importCore(jsonDict, defaultOptions)
-        
-        
-    def _getAllMechNames(self):
+        try:
+            return self._biophysJsonImportCore.importCore(self._jsonDictForImportForSimStage2, defaultOptions)
+        finally:
+            self._jsonDictForImportForSimStage2 = None
+            
+            
+    def _getAllRecMechNames(self):
         mth = hocObj.mth
         mechName = h.ref('')
         allMechNames = set()

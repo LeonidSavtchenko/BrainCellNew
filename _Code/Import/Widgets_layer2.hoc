@@ -14,7 +14,7 @@ begintemplate ImportCompleteWidget
     objref mainBox
     
     external pyObj
-    external isAstrocyteOrNeuron, mwh, ic, importCompleteHandler
+    external isAstrocyteOrNeuron, isExternalSimStart, mwh, ic, importCompleteHandler
     external chooseOutLocationAndExportHocFile, hideImportedGeometry, cleanupBeforeNextImport, printMsgAndRaiseError
     
     // Show all warnings and/or modifiers and ask user whether to proceed with this file (optionally saving it as HOC somewhere) or import other one
@@ -67,9 +67,20 @@ begintemplate ImportCompleteWidget
                 xlabel("")
             }
             
-            xlabel("Do you want to proceed with this file or import other one?")
+            text = "Do you want to proceed with this file%s?"
+            if (!isExternalSimStart) {
+                sprint(text, text, " or import other one")
+            } else {
+                // !!! maybe that's an overkill, but we don't propose "Import other" option here just to prevent an error in NEURON
+                //     in case if another file "nrnmech.dll" contains some mechs loaded before,
+                //     e.g. this error: "The user defined name already exists: AmpaSynapse"
+                sprint(text, text, "")
+            }
+            xlabel(text)
             xbutton("Use this one", "useThisOneHandler()")
-            xbutton("Import other", "importOtherHandler()")
+            if (!isExternalSimStart) {
+                xbutton("Import other", "importOtherHandler()")
+            }
             if (isCalledAfterConversion) {
                 xlabel("")
                 // !! If we inserted a default axon, it will be lost

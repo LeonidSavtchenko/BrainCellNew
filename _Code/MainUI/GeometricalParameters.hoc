@@ -1,0 +1,149 @@
+// UI
+objref hBoxGeometricalParams
+// Data vectors
+objref vecVolSphereRatio, vecSurfVolRatio, vecDistance, vecVolume, vecSurface, vectDiam, vecDendrDist
+
+
+objref f1
+f1 = new File()
+
+// Returns graph with default parameters for all plots.
+// $o1 - X data
+// $o2 - Y data
+// $s3 - Label
+// $s4 - Units
+// $5 - Boolean. Connect points
+obfunc genericGraph() { localobj genericGraph
+    genericGraph = new Graph(0)
+    genericGraph.yaxis(0)
+    genericGraph.label(0.3, 0.1, "Distance from soma (um)", 2, 1, 0, 1, 1)
+    genericGraph.label(0.01, 1.0, $s3, 2, 1, 0, 1, 1)
+    genericGraph.label(0.5, 0.8, $s4)
+    if ($5 > 0) {
+        $o1.plot(genericGraph, $o2)
+    }
+    $o1.mark(genericGraph, $o2, "+", 10)
+    genericGraph.view(0, 0, 0, 0, 0, 0, 300, 200)
+    genericGraph.exec_menu("View = plot")
+    return genericGraph
+}
+
+// Caclculates parameters of the current geometry.
+proc calculateGeometricalParams() {local i, distanceToCenter, SectionsInside, VolumeSum, SurfaceSum, Radius, Step, quadDistance, SphereVolume, VolSumTotal, SurSumLoc
+    vecVolSphereRatio = new Vector()
+    vecSurfVolRatio = new Vector()
+    vecDistance = new Vector()
+    vecVolume = new Vector()
+    vecSurface = new Vector()
+    vectDiam = new Vector()
+    vecDendrDist = new Vector()
+
+    // !!! we set it here and in CommonPrologue.hoc, but in different way (and we export it in different way)
+    WHERE = 0.5                             // Location in the soma that is the reference point
+    soma_ref.o(0).sec distance(0, WHERE)    // This sets the origin for distance calculations
+
+    SectionsInside = 0
+    VolumeSum = 0               // um^3 volume of the local astrosyte
+	VolumeMax =0 
+    SurfaceSum = 0
+	VolSumTotal = 0
+	SurSumLoc = 0
+    Radius = 0
+    Step = 2
+    distanceToCenter = 0
+    NumberOfSections = 200      // Number of Volume calculations. NumberOfSections*Step should be less than 50.
+    
+    for i = 1, NumberOfSections {
+        forall {
+            quadDistance = x3d(1)^2+y3d(1)^2
+           
+            if (quadDistance > (Radius+Step*(i-1))^2 && (quadDistance < (Radius+Step*i)^2)) {
+                SectionsInside += 1
+                Volume = PI*L*diam^2/4
+
+                if (diam > 0.2) {
+                    Surface = PI*diam*L+2*PI*diam^2/4
+                } else {
+                    Surface = PI*diam*L
+                }
+                
+                distanceToCenter = sqrt(quadDistance)
+                VolumeSum += Volume
+                SurfaceSum += Surface
+				VolSumTotal += Volume
+	            SurSumLoc += Surface
+            }
+
+            SphereVolume = 4/3*PI*((distanceToCenter+Step)^3-distanceToCenter^3)
+        }
+
+        if (SectionsInside < 2) {
+            SectionsInside = 0
+        } else {
+            vecDistance.append(distanceToCenter)
+            vecSurfVolRatio.append(SurfaceSum/VolumeSum)
+            vecVolSphereRatio.append(VolumeSum/SphereVolume)
+            vecVolume.append(VolSumTotal)
+            vecSurface.append(SurSumLoc)
+        }
+
+        Radius = Radius+Step
+		VolumeMax=VolumeMax+VolumeSum
+        SectionsInside = 0
+        VolumeSum = 0
+        SurfaceSum = 0
+        SphereVolume = 0
+    }
+    print(VolumeMax)
+	VolumeMax=0
+	TotalLength=0
+	totalDiameter=0
+//	f1.wopen("filedata.txt")
+    for eachSecInList(dendrite_ref) {
+        vectDiam.append(diam)
+		//	TotalLength=TotalLength+L
+		//	totalDiameter=totalDiameter+diam
+		//	print i, L, diam, TotalLength, totalDiameter
+		//	f1.printf("%-6.3g %-6.3g %-6.3g %-6.3g %-6.3g", i, L, diam, TotalLength, totalDiameter)
+		//	f1.printf("\n")
+        vecDendrDist.append(sqrt(x3d(1)^2+ y3d(1)^2))
+    }
+//	f1.close()
+}
+
+// Plots geometrical parameters and show them.
+proc plotGeometricalParams() {
+    hBoxGeometricalParams = new HBox()
+    hBoxGeometricalParams.intercept(1)
+    {
+        genericGraph(vecSurfVolRatio, vecDistance, "Surface/Volume Ratio", "1/um", 1)
+        genericGraph(vecVolSphereRatio.log(), vecDistance, "Volume tissue fraction", "Ln(Va/V)", 1)
+        genericGraph(vecVolume, vecDistance, "Total volume", "um3", 1)
+        genericGraph(vecSurface, vecDistance, "Total surface area", "um2", 1)
+        genericGraph(vectDiam, vecDendrDist, "Branch diameter", "um", 0)
+    }
+    hBoxGeometricalParams.intercept(0)
+    hBoxGeometricalParams.map("Geometrical Parameters")
+}
+
+// Prints geometrical params to file.
+// NOTE Call before plotGeometricalParams() because of log() call
+// $o1 - File to print data to
+proc printGeometricalParamsToFile() { local i
+    $o1.printf("L\t\t\tV_Ratio\t\tVolume\t\tSurface\t\tSurface/Volume\n")
+    for i=0, vecVolSphereRatio.size()-1 {
+        $o1.printf("%-8.4g\t%-8.4g\t%-8.4g\t%-8.4g\t%-8.4g\n", vecDistance.x[i], vecVolSphereRatio.x[i], vecVolume.x[i], vecSurface.x[i], vecSurfVolRatio.x[i])
+    }
+}
+
+// Calculates and shows parameters of current geometry.
+proc GeometricalParameters() { localobj fileForData
+    calculateGeometricalParams()
+
+    fileForData = new File()
+    fileForData.aopen("Text results/VolumFraction.txt")
+    printGeometricalParamsToFile(fileForData)
+    fileForData.close()
+
+    plotGeometricalParams()
+}

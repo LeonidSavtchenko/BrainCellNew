@@ -77,6 +77,8 @@ begintemplate MechCreateAndRescanHelper
         } else {
             codeContractViolation()
         }
+        
+        enumScheduledRescanType = 0
     }
     
     proc scheduleRescan() { local enumNewRescanType
@@ -87,11 +89,6 @@ begintemplate MechCreateAndRescanHelper
         }
         
         enumScheduledRescanType = mergeWithOldRescanType(enumNewRescanType)
-        
-        if (enumScheduledRescanType > 4) {
-            // !!! simpler, but slower solution (it would be better to rescan only a subset of mechs or vars)
-            enumScheduledRescanType = 2
-        }
     }
     
     proc makeSureMechCompsCreatedOrImportedAndRescanned() { localobj editableComps, reducedComp, nil
@@ -119,23 +116,31 @@ begintemplate MechCreateAndRescanHelper
     // All next staff is private
     
     
-    func mergeWithOldRescanType() { local enumNewRescanType
+    func mergeWithOldRescanType() { local enumNewRescanType, mergedRescanType
         enumNewRescanType = $1
         
         if (enumNewRescanType == 0) {
             codeContractViolation()
         } else if (enumScheduledRescanType == 0) {
-            return enumNewRescanType
+            mergedRescanType = enumNewRescanType
         } else if (enumNewRescanType == 1) {
             if (enumScheduledRescanType == 1) {
                 codeContractViolation()     // Cannot be scheduled
             }
-            return 1    // Full rescan: create all the comps from scratch
+            mergedRescanType = 1    // Full rescan: create all the comps from scratch
         } else if (enumNewRescanType == enumScheduledRescanType) {
-            return enumNewRescanType
+            mergedRescanType = enumNewRescanType
         } else {
-            return 2    // Rescan all mechs in all comps
+            mergedRescanType = 2    // Rescan all mechs in all comps
         }
+        
+        if (mergedRescanType > 4) {
+            // !!! just a temp stub: fallback to "Light rescan" until we have all specialized rescanners implemented
+            //     (simpler, but slower solution than rescanning only a subset of mechs or vars)
+            mergedRescanType = 2
+        }
+        
+        return mergedRescanType
     }
     
     proc createAllComps() { local compIdx localobj other_ref, comp, nil
@@ -174,8 +179,6 @@ begintemplate MechCreateAndRescanHelper
             }
         }
         mwh.hidePleaseWaitBox()
-        
-        enumScheduledRescanType = 0
     }
     
     proc replaceNanoComps() { local idx, compIdx localobj compNames, secRefs, comp
@@ -205,8 +208,6 @@ begintemplate MechCreateAndRescanHelper
             }
         }
         mwh.hidePleaseWaitBox()
-        
-        enumScheduledRescanType = 0
     }
     
     proc rescanNanoComps() { local compIdx localobj compNames, compNameStrObj, comp
@@ -224,8 +225,6 @@ begintemplate MechCreateAndRescanHelper
             }
         }
         mwh.hidePleaseWaitBox()
-        
-        enumScheduledRescanType = 0
     }
     
     proc rescanAllMechsInAllComps() { local compIdx localobj comp
@@ -241,8 +240,6 @@ begintemplate MechCreateAndRescanHelper
             }
         }
         mwh.hidePleaseWaitBox()
-        
-        enumScheduledRescanType = 0
     }
     
     proc getPleaseWaitMsg() {
@@ -282,5 +279,4 @@ obfunc _findAllRemainingSects() { local compIdx localobj other_ref
 }
 
 
-objref mmcrHelper
 mmcrHelper = new MechCreateAndRescanHelper()

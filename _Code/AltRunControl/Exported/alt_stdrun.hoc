@@ -1,0 +1,68 @@
+
+// Keeping these 4 procs on the top level rather than in AltRunControlWidget template because they use many top-level vars, objs and procs
+
+// !! not sure if we need to call inhomAndStochApplicator.onInit() and inhomAndStochApplicator.onStep() before or after init() and step() respectively
+//    maybe the answer is different for PARAMETER, ASSIGNED and STATE
+
+
+// Copied from "%NEURONHOME%\lib\hoc\stdrun.hoc" -> proc stdinit(), then tweaked
+proc alt_stdinit() {
+	cvode_simgraph()
+	realtime = 0
+	setdt()
+	inhomAndStochApplicator.onInit()
+	init()
+	initPlot()
+}
+
+// Copied from "%NEURONHOME%\lib\hoc\stdrun.hoc" -> proc run(), then tweaked
+proc alt_run() {
+	running_ = 1
+	alt_stdinit()
+	alt_continuerun(tstop)
+}
+
+// Copied from "%NEURONHOME%\lib\hoc\stdrun.hoc" -> proc continuerun(), then tweaked
+proc alt_continuerun() {local rt, rtstart, ts
+	realtime = 0  rt = screen_update_invl  rtstart = startsw()
+	eventcount=0
+	eventslow=1
+	stoprun = 0
+	if (using_cvode_) {
+		cvode.event($1)
+		ts = $1
+		if (cvode.use_local_dt) {
+			cvode.solve(ts)
+			flushPlot()
+			realtime = startsw() - rtstart
+			return
+		}
+	}else{
+		ts = $1 - dt/2
+	}
+	while(t < ts && stoprun == 0) {
+		inhomAndStochApplicator.onStep()
+		step()
+		realtime = startsw() - rtstart
+		if (realtime >= rt) {
+//			if (!stdrun_quiet) fastflushPlot()
+			screen_update()
+			//really compute for at least screen_update_invl
+			realtime = startsw() - rtstart
+			rt = realtime + screen_update_invl
+		}
+	}
+	if (using_cvode_ && stoprun == 0) { // handle the "tstop" event
+		inhomAndStochApplicator.onStep()
+		step() // so all recordings take place at tstop
+	}
+	flushPlot()
+	realtime = startsw() - rtstart
+}
+
+// Copied from "%NEURONHOME%\lib\hoc\stdrun.hoc" -> proc steprun(), then tweaked
+proc alt_steprun() {
+	inhomAndStochApplicator.onStep()
+	step()
+	flushPlot()
+}

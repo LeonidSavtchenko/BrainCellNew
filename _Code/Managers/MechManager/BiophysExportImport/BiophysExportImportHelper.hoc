@@ -1,8 +1,8 @@
 
 begintemplate BiophysExportImportHelper
 
-    public export, import
-    public exportStage2, importStage2, importStage3, importForSim
+    public export, import, importForSim
+    public exportStage2, importStage2, importStage3
     
     external mmAllComps
     external stringsEqual, stringCapitalize, getNotImplementedLines, getCellTypeName, printPythonErrMsgAndStop
@@ -62,7 +62,7 @@ begintemplate BiophysExportImportHelper
             return
         }
         
-        // It can take a while to export all VerbatimDistFuncHelper inhom models
+        // It may take a while to export all VerbatimDistFuncHelper inhom models
         mwh.showPleaseWaitBox("Exporting biophysics file.")
         {
             isError = biophysJsonFileHelper.exportStage2(jsonFilePathName, options)
@@ -94,35 +94,14 @@ begintemplate BiophysExportImportHelper
         }
     }
     
-    proc importStage2() { local numInhomVars, numStochVars, numComps, compIdx, isFound localobj compNames, missingCompNames, isBlockThisCompNameVec, isUseThisCompNameVec, mechComp
-        strdef compName, line1, line2
+    proc importStage2() { local numInhomVars, numStochVars localobj compNames, missingCompNames, isBlockThisCompNameVec, isUseThisCompNameVec
         
         compNames = $o1
         numInhomVars = $2
         numStochVars = $3
         
-        numComps = compNames.count()
-        
-        missingCompNames = new List()
-        isBlockThisCompNameVec = new Vector(numComps)   // All zeros by default
-        isUseThisCompNameVec = new Vector(numComps)
-        
         // Populate missingCompNames, isBlockThisCompNameVec and isUseThisCompNameVec
-        for compIdx = 0, numComps - 1 {
-            compName = compNames.o(compIdx).s
-            isFound = 0
-            for eachItemInList(mechComp, mmAllComps) {
-                if (stringsEqual(compName, mechComp.name)) {
-                    isFound = 1
-                    break
-                }
-            }
-            if (!isFound) {
-                missingCompNames.append(new String(compName))
-                isBlockThisCompNameVec.x[compIdx] = 1
-            }
-            isUseThisCompNameVec.x[compIdx] = isFound
-        }
+        populateThree(compNames, missingCompNames, isBlockThisCompNameVec, isUseThisCompNameVec)
         
         mmeibWidget.show(0, compNames, numInhomVars, numStochVars, isBlockThisCompNameVec, isUseThisCompNameVec)    // --> importStage3
         
@@ -130,15 +109,13 @@ begintemplate BiophysExportImportHelper
             return
         }
         
-        line1 = "The following comps are declared in the imported file, but missing in the recipient cell, so cannot be imported:"
-        line2 = "(You can use \"Rename\" or \"Split\" compartment operations and repeat the import.)"
-        mwh.showWarningBox(line1, missingCompNames, "", line2, "")
+        showMissingCompNamesWarning(missingCompNames, 0)
     }
     
     proc importStage3() { local isError localobj options
         options = $o1
         
-        // It can take a while to apply all inhom models
+        // It may take a while to apply all inhom models
         mwh.showPleaseWaitBox("Importing biophysics file.")
         {
             isError = biophysJsonFileHelper.importStage3(options)
@@ -158,7 +135,7 @@ begintemplate BiophysExportImportHelper
         mmeibWidget.dismissHandler()
     }
     
-    proc importForSim() { local isError
+    func importForSim() { local isError, isCancel localobj compNames, missingCompNames, placeholder, isUseThisCompNameVec
         strdef jsonFileName, cellTypeName, jsonFilePathName
         
         jsonFileName = $s1
@@ -166,19 +143,93 @@ begintemplate BiophysExportImportHelper
         getCellTypeName(cellTypeName)
         sprint(jsonFilePathName, "%sBiophysics/%s/%s", getcwd(), cellTypeName, jsonFileName)
         
-        // It can take a while to apply all inhom models
-        mwh.showPleaseWaitBox("Importing biophysics file.")
+        // It may take a while to parse JSON file
+        mwh.showPleaseWaitBox("Analyzing cell compartments.")
         {
-            isError = biophysJsonFileHelper.importForSim(jsonFilePathName)
+            compNames = new List()
+            isError = biophysJsonFileHelper.importForSimStageA(jsonFilePathName, compNames)
             if (isError) {
-                return
+                return 1
+            }
+            
+            // Populate missingCompNames and isUseThisCompNameVec
+            populateThree(compNames, missingCompNames, placeholder, isUseThisCompNameVec)
+        }
+        mwh.hidePleaseWaitBox()
+        
+        if (missingCompNames.count() != 0) {
+            showMissingCompNamesWarning(missingCompNames, 1)
+            isCancel = !boolean_dialog("Do you want to proceed despite the missing compartments?", "Yes", "No")
+            if (isCancel) {
+                return 1
+            }
+        }
+        
+        // It may take a while to apply all inhom models
+        mwh.showPleaseWaitBox("Initializing biophysics.")
+        {
+            isError = biophysJsonFileHelper.importForSimStageB(isUseThisCompNameVec)
+            if (isError) {
+                return 1
             }
         }
         mwh.hidePleaseWaitBox()
+        
+        return 0
     }
     
     // All next staff is private
     
+    
+    // Populate missingCompNames, isBlockThisCompNameVec and isUseThisCompNameVec
+    proc populateThree() { local numComps, compIdx, isFound localobj compNames, missingCompNames, isBlockThisCompNameVec, isUseThisCompNameVec, mechComp
+        strdef compName
+        
+        compNames = $o1
+        
+        numComps = compNames.count()
+        
+        missingCompNames = new List()
+        isBlockThisCompNameVec = new Vector(numComps)   // All zeros by default
+        isUseThisCompNameVec = new Vector(numComps)
+        
+        for compIdx = 0, numComps - 1 {
+            compName = compNames.o(compIdx).s
+            isFound = 0
+            for eachItemInList(mechComp, mmAllComps) {
+                if (stringsEqual(compName, mechComp.name)) {
+                    isFound = 1
+                    break
+                }
+            }
+            if (!isFound) {
+                missingCompNames.append(new String(compName))
+                isBlockThisCompNameVec.x[compIdx] = 1
+            }
+            isUseThisCompNameVec.x[compIdx] = isFound
+        }
+        
+        $o2 = missingCompNames
+        $o3 = isBlockThisCompNameVec
+        $o4 = isUseThisCompNameVec
+    }
+    
+    proc showMissingCompNamesWarning() { local isForSim localobj missingCompNames
+        strdef line2Templ, line1, line2
+        
+        missingCompNames = $o1
+        isForSim = $2
+        
+        line2Templ = "(You can %suse \"Rename\" or \"Split\" compartment operations and then repeat%s.)"
+        if (!isForSim) {
+            line1 = "The following compartments are declared in the imported file, but missing in the recipient cell, so cannot be imported:"
+            sprint(line2, line2Templ, "", " the import")
+        } else {
+            line1 = "This simulation requires for the cell to have certain compartments, but in fact the next ones are missing:"
+            sprint(line2, line2Templ, "open \"Manager of biophysics\" and ", "")
+        }
+        mwh.showWarningBox(line1, missingCompNames, "", line2, "")
+    }
     
     proc showExportOrImportCompleteMsg() { local isExportOrImport, cond localobj options
         strdef word, Word, line1, line2, line3, line4, line5, line6, line7, msg

@@ -1,0 +1,108 @@
+
+begintemplate MainUiLockHelper
+
+    public makeSureNanoReseedingLocked, makeSureNanoUpdateLocked, ifNanoCompThenMakeSureNanoUpdateLocked
+    public deckNanoReseeding, deckNanoGeomAndBiophys
+    
+    external isBaseOrNanoStart
+    external findItemInListByString, codeContractViolation
+    external mmAllComps
+    external compUtils
+    
+    objref deckNanoReseeding, deckNanoGeomAndBiophys
+    
+    isNanoReseedingLocked = -1
+    isNanoGeomAndBiophysLocked = -1
+    
+    objref reservedNanoCompNames
+    
+    
+    proc init() {
+        isNanoReseedingLocked = 0
+        isNanoGeomAndBiophysLocked = 0
+        
+        reservedNanoCompNames = compUtils.getReservedNanoDistMechCompNames()
+    }
+    
+    func makeSureNanoReseedingLocked() {
+        return makeSureUiLocked(&isNanoReseedingLocked, deckNanoReseeding, "reseed the nanostructures")
+    }
+    
+    func makeSureNanoUpdateLocked() {
+        return makeSureUiLocked(&isNanoGeomAndBiophysLocked, deckNanoGeomAndBiophys, "edit nanostructures in the main widget")
+    }
+    
+    func ifNanoCompThenMakeSureNanoUpdateLocked() { local argType, idxOrMinus1, isSelected localobj isCheckedVec
+        strdef compName
+        
+        argType = argtype(1)
+        if (argType == 2) {         // 2: strdef
+            compName = $s1
+            idxOrMinus1 = findItemInListByString(reservedNanoCompNames, compName)
+            if (idxOrMinus1 == -1) {
+                return 0
+            }
+        } else if (argType == 1) {  // 1: objref
+            isCheckedVec = $o1
+            isSelected = checkIfNanoCompSelected(isCheckedVec)
+            if (!isSelected) {
+                return 0
+            }
+        } else {
+            codeContractViolation()
+        }
+        
+        return makeSureNanoUpdateLocked()
+    }
+    
+    // All next staff is private
+    
+    
+    func makeSureUiLocked() { local isCancel localobj deck
+        strdef what, msg
+        
+        deck = $o2
+        what = $s3
+        
+        if ($&1 || !isBaseOrNanoStart) {
+            return 0
+        }
+        
+        sprint(msg, "To proceed, we need to lock the ability to %s. Do you want to proceed?", what)
+        isCancel = !boolean_dialog(msg, "Yes", "No")
+        if (!isCancel) {
+            deck.flip_to(1)
+            $&1 = 1
+        }
+        
+        return isCancel
+    }
+    
+    func checkIfNanoCompSelected() { local numComps, compIdx, idxOrMinus1 localobj isCheckedVec
+        strdef compName
+        
+        isCheckedVec = $o1
+        
+        numComps = isCheckedVec.size()
+        if (numComps != mmAllComps.count()) {
+            codeContractViolation()
+        }
+        
+        for compIdx = 0, numComps - 1 {
+            if (!isCheckedVec.x[compIdx]) {
+                continue
+            }
+            compName = mmAllComps.o(compIdx).name
+            idxOrMinus1 = findItemInListByString(reservedNanoCompNames, compName)
+            if (idxOrMinus1 != -1) {
+                return 1
+            }
+        }
+        
+        return 0
+    }
+    
+endtemplate MainUiLockHelper
+
+objref mainUiLocker
+mainUiLocker = new MainUiLockHelper()

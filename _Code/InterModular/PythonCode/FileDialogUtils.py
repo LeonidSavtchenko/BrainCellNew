@@ -13,14 +13,15 @@ class FileDialogUtils:
 
     class EnumInFileTypes(Enum):
         baseGeometryAny = 0
-        nanoGeometryHoc = 1
-        biophysJson = 2
+        baseGeometryHoc = 1
+        nanoGeometryHoc = 2
+        biophysJson = 3
         """ !!! in the future, we can add support for:
-        distFuncHoc = 3
-        distFuncPy = 4
-        distFuncTxt = 5
-        distFuncXlsx = 6
-        diamDistrFile = 7
+        distFuncHoc = 4
+        distFuncPy = 5
+        distFuncTxt = 6
+        distFuncXlsx = 7
+        diamDistrFile = 8
         """
         
     class EnumOutFileTypes(Enum):
@@ -38,7 +39,12 @@ class FileDialogUtils:
         EnumInFileTypes.baseGeometryAny: {
             'title': 'Import brain cell base geometry',
             'initialdir': 'Geometry',
-            'filetypes': [('All Files', '*.*'), ('HOC File', '*.hoc'), ('SWC File', '*.swc'), ('ZIP Archive from NeuroMorpho.Org', '*.zip')]},  # !!! ideally, enlist explicitly each file type supported by NLMorphologyConverter, but need to test first
+            'filetypes': [('All Files', '*.*'), ('HOC File', '*.hoc'), ('SWC File', '*.swc'), ('ZIP Archive from NeuroMorpho.org', '*.zip')]},  # !!! ideally, enlist explicitly each file type supported by NLMorphologyConverter, but need to test first
+        EnumInFileTypes.baseGeometryHoc: {
+            'title': 'Import external NEURON simulation',
+            'initialdir': 'External simulations',
+            'filetypes': [('HOC File', '*.hoc'), ('All Files', '*.*')],
+            'defaultextension': '.hoc'},
         EnumInFileTypes.nanoGeometryHoc: {
             'title': 'Import brain cell with nanogeometry',
             'initialdir': 'Nanogeometry',

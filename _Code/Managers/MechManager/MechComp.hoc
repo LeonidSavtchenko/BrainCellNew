@@ -10,7 +10,7 @@ begintemplate MechComp
     external mwh, math, mth, mmmowb, mcu, dfc
     external pyObj
     external inhomAndStochLibrary
-    external stringsEqual, stringEmpty, joinStrings, concatenateTwoLists, codeContractViolation, printMsgAndRaiseError
+    external getDistRangeGivenSections, stringsEqual, stringEmpty, joinStrings, concatenateTwoLists, codeContractViolation, printMsgAndRaiseError
     external eachItemInList, eachSecInList
     
     strdef name
@@ -151,8 +151,9 @@ begintemplate MechComp
     }
     
     // !! think about applyChangesToDirtySects instead of this
-    proc markAllMechsDirty() { local mechIdx
-        for mechIdx = 0, mth.getNumMechs(0) - 1 {
+    proc markAllMechsDirty() { local numMechs, mechIdx
+        numMechs = mth.getNumMechs(enumDmPpNc)
+        for mechIdx = 0, numMechs - 1 {
             isMechDirty[mechIdx] = 1
         }
         isCompDirty = 1
@@ -240,33 +241,10 @@ begintemplate MechComp
         }
     }
     
-    // !! the range returned by this func depends on the initial segmentation. do I need to apply some default segmentation before calling it?
-    func getDistRange() { local distMin, distMax, isDisconnected, x, dist
-        distMin = math.inf
-        distMax = -1
-        
-        isDisconnected = 0
-        // We could check just 2 end points for each section for higher performance,
-        // but there is no guarantee that the distance centre was not placed somewhere in this compartment inside a section
-        for eachSecInList(list_ref) {
-            for (x) {
-                dist = distance(x)
-                if (dist == 1e20) { // NEURON docs say: If a continuous path does not exist the return value is 1e20
-                    isDisconnected = 1
-                    break
-                }
-                math.updateMinMax(&distMin, &distMax, dist)
-            }
-        }
-        
-        if (isDisconnected) {
-            return 1
-        }
-        
-        $&1 = distMin
-        $&2 = distMax
-        
-        return 0
+    // !!! the range returned by this func depends on the initial segmentation;
+    //     do I need to apply some default segmentation before calling it?
+    func getDistRange() {
+        return getDistRangeGivenSections(list_ref, &$&1, &$&2)
     }
     
     // !! maybe cache the info in ctor instead of calling this (but the dist range can depend on segmentation)
@@ -672,7 +650,7 @@ begintemplate MechComp
         
         isAnyMorphologyDiamMechStdNil = 0
         
-        numMechs = mth.getNumMechs(0)
+        numMechs = mth.getNumMechs(enumDmPpNc)
         for mechIdx = 0, numMechs - 1 {
             mth.getMechName(0, mechIdx, mechName)
             

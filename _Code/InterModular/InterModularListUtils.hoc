@@ -75,6 +75,18 @@ func findItemInListByStringAndSelect() { local idxOrMinus1 localobj list
     return idxOrMinus1
 }
 
+// Find and remove the item from the List; do nothing if it's not there
+// $o1 - The List to remove from
+// $o2 - The item to remove
+proc removeItemFromList() { local idxOrMinus1 localobj list, item
+    list = $o1
+    item = $o2
+    idxOrMinus1 = list.index(item)
+    if (idxOrMinus1 != -1){
+        list.remove(idxOrMinus1)
+    }
+}
+
 proc deleteSelectedItemFromBrowsedList() { local selItemIdx localobj list
     list = $o1
     

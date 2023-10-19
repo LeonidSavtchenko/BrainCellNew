@@ -410,7 +410,7 @@ begintemplate OneExtracellularSourceWidget
                     plotShape = new PlotShape()
                     // !!! plotShape.exec_menu("Shape Plot")    // this affects performance while positioning the source
                     
-                    // !!!! plotShape.menu_remove("3D Rotate")       // !!!! error here: menu_remove not a public member of PlotShape
+                    // plotShape.menu_remove("3D Rotate")       // !!! error here: menu_remove not a public member of PlotShape
                     
                     // !!!! maybe add a hint label: "Please don't use \"3D Rotate\""
                     

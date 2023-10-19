@@ -1,6 +1,6 @@
 
-{ load_file("../../Core/Widgets/Exported/alt_stdrun.hoc") }
-loadIfNotDeclared("AltRunControlWidget", "../../Core/Widgets/Exported/AltRunControlWidget.hoc")
+{ load_file("../../AltRunControl/Exported/alt_stdrun.hoc") }
+loadIfNotDeclared("AltRunControlWidget", "../../AltRunControl/Exported/AltRunControlWidget.hoc")
 
 
 objref ecsManagerMainWidget, exportManagerMainWidget

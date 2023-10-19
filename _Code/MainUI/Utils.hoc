@@ -1,0 +1,34 @@
+
+proc initVoltage() {
+    if (isBaseOrNanoStart) {
+        if (isAstrocyteOrNeuron) {
+            v_init = -85    // mV
+        } else {
+            v_init = -64.65
+        }
+    }
+    finitialize(v_init)
+}
+
+proc initVoltageAndRunControlParams() {
+    initVoltage()
+    
+    if (isBaseOrNanoStart) {
+        dt = 1  // ms
+        if (isAstrocyteOrNeuron) {
+            tstop = 10000
+            steps_per_ms = 1
+        } else {
+            tstop = 100
+            steps_per_ms = 10
+        }
+        setdt()     // Letting NEURON change "dt" now rather than on start of the simulation
+    }
+    
+    if (!isAstrocyteOrNeuron) {
+        runStopAt = 5
+        runStopIn = 1
+        screen_update_invl = 0.05
+        realtime = 0
+    }
+}

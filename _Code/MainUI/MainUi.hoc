@@ -1,0 +1,316 @@
+
+if (isAstrocyteOrNeuron) {
+    load_file("Astrocyte/AstrocyteGeometryPanel.hoc")
+    load_file("Astrocyte/AstrocyteHandlers.hoc")
+} else {
+    load_file("Neuron/NeuronGeometryPanel.hoc")
+}
+
+if (isBaseOrNanoStart) {
+    load_file("Widgets/SeededDendritesWidget_deprecated.hoc")
+}
+
+{ load_file("../Managers/CommonLoads.hoc") }
+{ load_file("../Managers/MechManager/MechManager.hoc") }
+if (!isAstrocyteOrNeuron) {
+    load_file("../Managers/SynManager/SynManager.hoc")
+}
+{ load_file("../Extracellular/ExtracellularManager.hoc") }
+
+{ load_file("../Export/Widgets/ExportWidgetsLoads.hoc") }
+
+{ load_file("../Simulations/SimManagerLoads.hoc") }
+
+{ load_file("MainUiLockHelper.hoc") }
+
+// UI
+objref hBoxMainPanel
+
+// Shows main program UI.
+proc showMainUi() { local minV1, minV2, maxV localobj vBoxLeftPanel, vBoxCentralPanel, vBoxRightPanel, plotShapeMainV, graphMainSomaV
+
+    Z_coordinate = 10   // the stochastic parameter changes the Z-distribution of astrocytes branches
+    ScalingDiam = 0.2   //  the parameter scales the diameter of the central dendrites
+    
+    // LengthXY = 5.5   //
+    // LengthZ = 2      // These were not used;
+    // ShiftXY = 200    // also, the first three duplicate those ones from _Code\Prologue\Astrocyte\initAstrocyte.hoc
+    // Distance = 2     //
+    
+    hBoxMainPanel = new HBox()
+    hBoxMainPanel.intercept(1)
+    {
+        // Left panel of main menu
+        vBoxLeftPanel = new VBox()
+        vBoxLeftPanel.intercept(1)
+        {
+            if (isBaseOrNanoStart) {
+                /* !!
+                xpanel("")
+                xbutton("Import cell", "loadNanoHocFile()")
+                xpanel()
+                */
+                
+                createNanoReseedingDeck()
+                
+                createNanoGeomAndBiophysDeck()
+                
+                if (isAstrocyteOrNeuron) {
+                    // !!! do we need to show this for neuron as well?
+                    // !!! need to hide it once user performs any comp op in Manager of Biophysics
+                    xpanel("")
+                    xlabel("==== Volume modification. Changes of diams and lengths of segments ====")
+                    xlabel("============ Change diameters in % to diameters ===================")
+                    xvalue("Diameter change","DiameterParameter", 1, "changeVolume(DiameterParameter, LengthChange)", 0, 1)
+                    xlabel("============ Changing length by multiplying by parameter ============")
+                    xvalue("Length change","LengthChange", 1, "changeVolume(DiameterParameter, LengthChange)", 0, 1)
+                    xpanel()
+                }
+                
+                xpanel("")
+                xlabel("========= Dendritic geometry =============================")
+                // xlabel("========= For library stem tree files only =========")
+                //xlabel("Seed of random number to modify Z coordinate")
+                //xlabel("of each segment from - 1 to 1 um")
+                //xvalue("Z coordinate Random number","Z_coordinate", 1, "stretch(Z_coordinate, ScalingDiam)", 0, 1)
+                
+                    // !!! need to hide it once user performs any comp op on dendrites in Manager of Biophysiscs
+                   xvalue("Scaling of diameter","ScalingDiam", 1, "stretch(Z_coordinate, ScalingDiam)", 0, 1)
+                
+                //xvalue("Length x and Y","LengthXY", 1, "stretchXY(LengthXY, LengthZ)", 0, 1)
+                //xvalue("Length z","LengthZ", 1, "stretchXY(LengthXY, LengthZ)", 0, 1)
+                
+                xlabel("To display the radial distribution of: S/V ratio,")
+                xlabel("tissue volume fraction, volume, surface area, and branch diameter")
+                xlabel("Results are  saved to file VolumeFraction.txt")
+                xbutton("Geometrical Parameters", "GeometricalParameters()")
+                xpanel()
+            } else {
+                // !! maybe something must be available
+                xpanel("Not available")
+                xlabel("Not available in \"Start with Nano geometry\" mode")
+                xpanel()
+            }
+        }
+        vBoxLeftPanel.intercept(0)
+        vBoxLeftPanel.map("Geometry")
+        
+        // Plots
+        vBoxCentralPanel = new VBox()
+        vBoxCentralPanel.intercept(1)
+        {
+            // Space plot of Voltage
+            plotShapeMainV = new PlotShape(0)
+            fast_flush_list.append(plotShapeMainV)
+            plotShapeMainV.size(-50,50,-50,50)
+            plotShapeMainV.view(-50, -50, 100, 100, 165, 169, 400.64, 400.32)
+            plotShapeMainV.exec_menu("Shape Plot")
+            plotShapeMainV.exec_menu("View = plot")
+            plotShapeMainV.variable("v")
+            graphUtils.addPlotDynamicsMenuItem(plotShapeMainV, 0, "Voltage", "v", 1)
+            plotShapeMainV.show(0)
+            if (isAstrocyteOrNeuron) {
+                minV1 = -85
+                minV2 = -85
+                maxV = -80
+            } else {
+                minV1 = -65
+                minV2 = -80
+                maxV = 40
+            }
+            plotShapeMainV.scale(minV1, maxV)   // mV, scale of voltage on 3D plots
+            plotShapeMainV.label(0.0340357, 0.94, "Voltage (mV)", 2, 1, 0, 0, 1)
+            
+            graphMainSomaV = new Graph()
+            addplot(graphMainSomaV,0)
+            graphMainSomaV.size(0, tstop, minV2, maxV)
+            graphMainSomaV.addvar("soma_ref.o(0).sec.v(0.5)")
+            graphMainSomaV.label(0.0340357, 0.94, "Voltage (mV)", 2, 1, 0, 0, 1)
+            graphMainSomaV.label(0.45, 0.01, "Time (ms)", 2, 1, 0, 0, 1)
+        }
+        vBoxCentralPanel.intercept(0)
+        vBoxCentralPanel.map("Plots")
+        
+        // Right panel of main menu
+        vBoxRightPanel = new VBox()
+        vBoxRightPanel.intercept(1)
+        {
+            xpanel("")
+            xbutton("Edit biophysics", "startMechManager()")
+            if (!isAstrocyteOrNeuron) {
+                xbutton("Edit synapses", "startSynManager()")
+            }
+            xbutton("Edit extracellular sources", "startECSManager()")
+            if (isBaseOrNanoStart && !isAstrocyteOrNeuron) {
+                xlabel("")
+                xbutton("Insert electrode", "insertElectrode()")
+            }
+            xlabel("")
+            xbutton("Export cell", "startExportManager()")
+            xpanel()
+            simManager.createSimulationsPanel()
+        }
+        vBoxRightPanel.intercept(0)
+        vBoxRightPanel.map()
+    }
+    hBoxMainPanel.intercept(0)
+    hBoxMainPanel.map("Repertoire of computation", 285, 0, -1, -1)
+}
+
+proc createNanoReseedingDeck() { localobj deckNanoReseeding
+    
+    deckNanoReseeding = new Deck()
+    mainUiLocker.deckNanoReseeding = deckNanoReseeding
+    deckNanoReseeding.intercept(1)
+    {
+        xpanel("")
+        xlabel("============ Where to Seed the Nanostructures =============")
+        xradiobutton("All dendrites", "isAllOrSomeDendritesSeeded = 1", isAllOrSomeDendritesSeeded == 1)
+        xradiobutton("Some dendrites (I will select them)", "isAllOrSomeDendritesSeeded = 0", isAllOrSomeDendritesSeeded == 0)
+        xbutton("Reseed", "seededDendritesChangedHandler()")
+        xlabel("")
+        if (isAstrocyteOrNeuron) {
+            // !!!! dup. with initAstrocyte.hoc
+            xpvalue("Max number of stalks per dendrite", &nanoBranchesManager.MaxNumberBranchesPerDendrite, 1, "addLeaves(MinDistance)")
+            // !!!! commented just because it's not about "Where to Seed the Nanostructures"
+            // xpvalue("Number of leaves per stalk", &NumberLeavesPerStalk, 1, "addLeaves(MinDistance)")
+            
+            /* !!!!
+            xlabel("Initial min. distance between stalks is limit value that cannot be reduced using panel.")
+            xlabel("To decrease this value, increase value - MaxNumberStalksPerDendrite")
+            */
+            xpvalue("Min distribution over branches", &MinDistance, 1, "addLeaves(MinDistance)")
+        } else {
+            // !!!! dup. with initNeuron.hoc
+            xpvalue("Max number of spines per dendrite", &nanoBranchesManager.MaxNumberBranchesPerDendrite, 1, "ReseedSpines()")
+            
+            /* !!!!
+            xlabel("Initial min. distance between spines is limit value that cannot be reduced using panel.")
+            xlabel("To decrease this value, increase value - MaxNumberSpinesPerDendrite")
+            */
+            xpvalue("Min distribution over branches", &MinDistance, 1, "ReseedSpines()")
+        }
+        xpanel()
+        xpanel("")
+        xlabel("============ Where to Seed the Nanostructures =============")
+        xlabel("")
+        xlabel("Not available after the first interaction with any of these widgets:")
+        xlabel("    * Manager of Biophysics")
+        if (!isAstrocyteOrNeuron) {
+            xlabel("    * Manager of Synapses")
+        }
+        xlabel("    * Manager of Extracellular Sources")
+        xpanel()
+    }
+    deckNanoReseeding.intercept(0)
+    deckNanoReseeding.flip_to(0)
+    deckNanoReseeding.map()
+}
+
+proc createNanoGeomAndBiophysDeck() { local w, h localobj deckNanoGeomAndBiophys, vBox
+    
+    if (isAstrocyteOrNeuron) {
+        w = 350
+    } else {
+        w = 300
+    }
+    h = 325
+    
+    deckNanoGeomAndBiophys = new Deck()
+    mainUiLocker.deckNanoGeomAndBiophys = deckNanoGeomAndBiophys
+    deckNanoGeomAndBiophys.intercept(1)
+    {
+        vBox = new VBox()
+        vBox.intercept(1)
+        {
+            if (isAstrocyteOrNeuron) {
+                createAstrocyteGeometryPanel()
+            } else {
+                createNeuronGeometryPanel()
+            }
+        }
+        vBox.intercept(0)
+        vBox.map()
+        xpanel("")
+        if (isAstrocyteOrNeuron) {
+            xlabel("==================== Stalk and Leaf Geometry ====================")
+            xlabel("")
+            xlabel("========== Specific membrane conductance =======================")
+        } else {
+            xlabel("============= Spine Head and Neck Geometry =============")
+        }
+        xlabel("")
+        xlabel("Not available after one of these operations applied to")
+        xlabel("nanogeometry in Manager of Biophysics:")
+        xlabel("    * Compartment Split / Merge / Rename")
+        xlabel("    * Defining any mech variable as a func(dist)")
+        if (!isAstrocyteOrNeuron) {
+            xlabel("or this operation applied in Manager of Synapses:")
+            xlabel("    * Defining any PP / NetCon variable as a func(dist)")
+        }
+        xpanel()
+    }
+    deckNanoGeomAndBiophys.intercept(0)
+    deckNanoGeomAndBiophys.flip_to(0)
+    deckNanoGeomAndBiophys.map("", 0, 0, w, h)
+}
+
+proc showRunControlPanel() {
+    xpanel("RunControl", 0)
+    xvalue("Init","v_init", 1,"stdinit()", 1, 1 )
+    xbutton("Init & Run","run()")
+    xbutton("Stop","stoprun=1")
+    xvalue("Continue til","runStopAt", 1,"{continuerun(runStopAt) stoprun=1}", 1, 1 )
+    xvalue("Continue for","runStopIn", 1,"{continuerun(t + runStopIn) stoprun=1}", 1, 1 )
+    xbutton("Single Step","steprun()")
+    xvalue("t","t", 2 )
+    xvalue("Tstop","tstop", 1,"tstop_changed()", 0, 1 )
+    xvalue("dt","dt", 1,"setdt()", 0, 1 )
+    xvalue("Points plotted/ms","steps_per_ms", 1,"setdt()", 0, 1 )
+    xvalue("Scrn update invl","screen_update_invl", 1,"", 0, 1 )
+    xvalue("Real Time","realtime", 0,"", 0, 1 )
+    xpanel(0, 125)
+}
+
+proc insertElectrode() {
+    load_file(1, "_Code/Prologue/Neuron/Electrod.hoc")
+    mwh.showMessageBox("IClamp was inserted into the centre of the first soma section.", "Please be advised that it will be deleted immediately once you close the \"PointProcessGroupManager\" widget.", "IClamp inserted")
+}
+
+proc startMechManager() { local isCancel
+    isCancel = mainUiLocker.makeSureNanoReseedingLocked()
+    if (isCancel) {
+        return
+    }
+    
+    makeSureMechCompsCreatedOrImportedAndRescannedThenShowMechManagerBaseWidget()
+}
+
+proc startSynManager() { local isCancel
+    isCancel = mainUiLocker.makeSureNanoReseedingLocked()
+    if (isCancel) {
+        return
+    }
+    
+    makeSureSynCompsCreatedOrImportedThenShowSynManagerBaseWidget()
+}
+
+proc startECSManager() { local isCancel
+    isCancel = mainUiLocker.makeSureNanoReseedingLocked()
+    if (isCancel) {
+        return
+    }
+    
+    showExtracellularManagerBaseWidget()
+}
+
+proc startExportManager() { localobj nil
+    dismissIfNotNil(manageAndRunWidget)
+    
+    if (exportManagerMainWidget == nil) {
+        exportManagerMainWidget = new ExportManagerMainWidget()
+    } else {
+        exportManagerMainWidget.dismissHandler()
+    }
+    exportManagerMainWidget.show()
+}

@@ -1,0 +1,162 @@
+{
+    "Soma": {
+        "capacitance": {
+            "PARAMETER": {
+                "cm (uF/cm2)": 0.8
+            }
+        },
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 8.968609865470852e-05,
+                "e_pas (mV)": -85.0
+            },
+            "ASSIGNED": {
+                "i_pas (mA/cm2)": 0.0018251121076233179
+            }
+        },
+        "na_ion": {},
+        "k_ion": {},
+        "kap": {
+            "PARAMETER": {
+                "gkabar_kap (mho/cm2)": 0.048
+            }
+        },
+        "kdr": {
+            "PARAMETER": {
+                "gkdrbar_kdr (mho/cm2)": 0.01
+            }
+        },
+        "na3": {
+            "PARAMETER": {
+                "gbar_na3 (mho/cm2)": 0.032
+            }
+        }
+    },
+    "ProxyDendrites": {
+        "capacitance": {
+            "PARAMETER": {
+                "cm (uF/cm2)": 0.8
+            }
+        },
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 8.968609865470852e-05,
+                "e_pas (mV)": -85.0
+            },
+            "ASSIGNED": {
+                "i_pas (mA/cm2)": 0.0018251121076233179
+            }
+        }
+    },
+    "DistalDendrites": {
+        "capacitance": {
+            "PARAMETER": {
+                "cm (uF/cm2)": 0.8
+            }
+        },
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 8.968609865470852e-05,
+                "e_pas (mV)": -85.0
+            },
+            "ASSIGNED": {
+                "i_pas (mA/cm2)": 0.0018251121076233179
+            }
+        },
+        "na_ion": {},
+        "k_ion": {},
+        "kap": {
+            "PARAMETER": {
+                "gkabar_kap (mho/cm2)": 0.048
+            }
+        },
+        "kdr": {
+            "PARAMETER": {
+                "gkdrbar_kdr (mho/cm2)": 0.01
+            }
+        },
+        "na3": {
+            "PARAMETER": {
+                "gbar_na3 (mho/cm2)": 0.032
+            }
+        }
+    },
+    "Axon": {
+        "capacitance": {},
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 7.142857142857143e-05,
+                "e_pas (mV)": -65.0
+            }
+        },
+        "na_ion": {},
+        "k_ion": {},
+        "kap": {
+            "PARAMETER": {
+                "gkabar_kap (mho/cm2)": 0.048
+            }
+        },
+        "kdr": {
+            "PARAMETER": {
+                "gkdrbar_kdr (mho/cm2)": 0.01
+            }
+        },
+        "na3": {
+            "PARAMETER": {
+                "gbar_na3 (mho/cm2)": 0.032
+            }
+        }
+    },
+    "Spine Neck": {
+        "capacitance": {},
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 7.142857142857143e-05,
+                "e_pas (mV)": -65.0
+            }
+        },
+        "na_ion": {},
+        "k_ion": {},
+        "kap": {
+            "PARAMETER": {
+                "gkabar_kap (mho/cm2)": 0.048
+            }
+        },
+        "kdr": {
+            "PARAMETER": {
+                "gkdrbar_kdr (mho/cm2)": 0.01
+            }
+        },
+        "na3": {
+            "PARAMETER": {
+                "gbar_na3 (mho/cm2)": 0.032
+            }
+        }
+    },
+    "Spine Head": {
+        "capacitance": {},
+        "pas": {
+            "PARAMETER": {
+                "g_pas (S/cm2)": 7.142857142857143e-05,
+                "e_pas (mV)": -65.0
+            }
+        },
+        "na_ion": {},
+        "k_ion": {},
+        "kap": {
+            "PARAMETER": {
+                "gkabar_kap (mho/cm2)": 0.048
+            }
+        },
+        "kdr": {
+            "PARAMETER": {
+                "gkdrbar_kdr (mho/cm2)": 0.01
+            }
+        },
+        "na3": {
+            "PARAMETER": {
+                "gbar_na3 (mho/cm2)": 0.032
+            }
+        }
+    }
+}

@@ -1,7 +1,7 @@
 
 begintemplate MechsDllUtils
 
-    public ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType, loadDefaultMechsDllDependingOnCellType, isThisMechForIntUseOnly
+    public ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType, loadDefaultMechsDllDependingOnCellType, loadMechsDllFromThisFolder, isThisMechForIntUseOnly
     public loadedNanoHocFilePathName, loadedDllDirPath
     
     external isAstrocyteOrNeuron
@@ -23,11 +23,9 @@ begintemplate MechsDllUtils
     
     // This proc is called from the nanogeometry file when user loads it back into the main program
     proc ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType() { local isMissing
-        strdef pyCommand, dllDirPath, dllFilePathName, cellTypeName, line2
+        strdef dllFilePathName, cellTypeName, line2, dllDirPath
         
-        sprint(pyCommand, "'%s'.rsplit('/', 1)[0]", loadedNanoHocFilePathName)
-        dllDirPath = pyObj.ev(pyCommand)
-        sprint(dllFilePathName, "%s/nrnmech.dll", dllDirPath)
+        dllFilePathName = pyObj.getDllFilePathName(loadedNanoHocFilePathName)
         isMissing = checkIfFileMissing(dllFilePathName)
         if (isMissing) {
             print "\n\n    Warning: There is no \"nrnmech.dll\" in the same folder with the loaded nanogeometry HOC file."
@@ -36,7 +34,8 @@ begintemplate MechsDllUtils
             print line2
             loadDefaultMechsDllDependingOnCellType()
         } else {
-            _loadMechsDllFromThisFolder(dllDirPath)
+            dllDirPath = pyObj.getDirPath(loadedNanoHocFilePathName)
+            loadMechsDllFromThisFolder(dllDirPath)
         }
     }
     
@@ -44,20 +43,10 @@ begintemplate MechsDllUtils
         strdef subFolderName, dllDirPath
         getCellTypeName(subFolderName)
         sprint(dllDirPath, "%sMechanisms/%s", startDir, subFolderName)
-        _loadMechsDllFromThisFolder(dllDirPath)
+        loadMechsDllFromThisFolder(dllDirPath)
     }
     
-    func isThisMechForIntUseOnly() { local idxOrMinus1
-        strdef mechName
-        mechName = $s1
-        idxOrMinus1 = findItemInListByString(mechsForIntUseOnly, mechName)
-        return (idxOrMinus1 != -1)
-    }
-    
-    // All next staff is private
-    
-    
-    proc _loadMechsDllFromThisFolder() { local status
+    proc loadMechsDllFromThisFolder() { local status
         strdef dllDirPath, pyCommand, dllFilePathName
         
         dllDirPath = $s1
@@ -79,6 +68,13 @@ begintemplate MechsDllUtils
         
         // !!! maybe not the best place for this
         mechSettings.onDllLoad()
+    }
+    
+    func isThisMechForIntUseOnly() { local idxOrMinus1
+        strdef mechName
+        mechName = $s1
+        idxOrMinus1 = findItemInListByString(mechsForIntUseOnly, mechName)
+        return (idxOrMinus1 != -1)
     }
     
 endtemplate MechsDllUtils

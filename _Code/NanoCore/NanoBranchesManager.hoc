@@ -14,7 +14,7 @@ isFirstReseeding = 1
 
 NumberNanoBranches = -1
 
-{ load_file("Exported/CreateNanoRefs_Exported.hoc") }
+{ load_file("Exported/CreateNanoRefs_Exported_deprecated.hoc") }
 
 if (isAstrocyteOrNeuron) {
     load_file("Astrocyte/AstrocyteNanoBranch.hoc")
@@ -43,11 +43,14 @@ begintemplate NanoBranchesManager
     external eachItemInList
     external manageAndRunWidget
     
-    external createAstrocyteNanoBranch, createNeuronNanoBranch, createRefsForNanoGeometry
+    external createAstrocyteNanoBranch, createNeuronNanoBranch, createRefsForNanoGeometry_deprecated
     external spineNeckDiamCache, Neuron_AddSynapses_reseed, Neuron_AddSynapses_delete
     external initVoltage
     
-    objref nanoBranches_flat    // !! Flat List of all AstrocyteNanoBranch or NeuronNanoBranch -- need to merge this with the logic from Exported/CreateNanoRefs_Exported.hoc !!
+    // Flat List of all AstrocyteNanoBranch or NeuronNanoBranch
+    // !!! merge this with the logic from Exported/CreateNanoRefs_Exported_deprecated.hoc
+    objref nanoBranches_flat
+    
     objref randomBranchSeeder 
     
     MaxNumberBranchesPerDendrite = -1
@@ -99,8 +102,8 @@ begintemplate NanoBranchesManager
             }
             
             // !! is this correct place?
-            // !! maybe it would be easier to collect references while creating sections rather than search for sections with regex afterwards
-            createRefsForNanoGeometry()
+            // !!! deprecated: collect the references when creating sections rather than search for sections with regex afterwards
+            createRefsForNanoGeometry_deprecated()
             
             // !! it would be better to init the voltage just in nanogeometry
             initVoltage()

@@ -75,9 +75,9 @@ py:createListOfSectionRef('usedNamesForAxon', 'axon_ref')
 
 // Nanogeometry
 
-py:insertAllLinesFromFile('_Code\\NanoCore\\Exported\\CreateNanoRefs_Exported.hoc')
+py:insertAllLinesFromFile('_Code\\NanoCore\\Exported\\CreateNanoRefs_Exported_deprecated.hoc')
 
-createRefsForNanoGeometry()
+createRefsForNanoGeometry_deprecated()
 
 //////////////////// End of section references ///////////////////////////
 

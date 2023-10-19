@@ -3,8 +3,8 @@ begintemplate ExportManagerMainWidget
 
     public show, dismissHandler
     
-    external mwh, compUtils, inhomAndStochLibrary, ecsLibrary
-    external saveNanoHocFile, createEmptyPanel, openDeck, closeDeck, unmapIfNotNil
+    external mwh, compUtils, inhomAndStochLibrary, ecsLibrary, mmcrHelper
+    external saveNanoHocFile, applyExtracellularSources, createEmptyPanel, openDeck, closeDeck, unmapIfNotNil
     external isAstrocyteOrNeuron
     external exportOptions
     
@@ -282,6 +282,16 @@ begintemplate ExportManagerMainWidget
         isCancel = exportOptions.validate()
         if (isCancel) {
             return
+        }
+        
+        if (exportOptions.isExportExtracellularLibrary()) {
+            // !!! it would be better to skip applying ECSs now and, as a result, skip exporting huge VerbatimDistFuncHelper-s for ions
+            //     (the exported file remains fully functional in standalone mode even without them),
+            //     but, in order to avoid errors in "start with nano" mode, we need to create the missing models on import
+            //     (somewhere in MechComp.analyzeMechInhomogeneity or MechCreateAndRescanHelper.makeSureMechCompsCreatedOrImportedAndRescanned),
+            //     and for now this logic is not implemented
+            applyExtracellularSources()
+            mmcrHelper.rescanNow(6)
         }
         
         isCancel = saveNanoHocFile()

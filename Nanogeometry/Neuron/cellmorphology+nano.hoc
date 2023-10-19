@@ -637,10 +637,12 @@ objref nanoProximal_ref, nanoDistal_ref
 
 // Create two List-s of SectionRef containing references to all the sections of nano geometry
 // Input: isAstrocyteOrNeuron (taken from the top level)
-// Output: nanoProximal_ref, nanoDistal_ref and SizeTotal (initialized on the top level)
-proc createRefsForNanoGeometry() { localobj nil
+// Output: nanoProximal_ref, nanoDistal_ref (initialized on the top level)
+// !!! deprecated: collect the references when creating sections rather than search for sections with regex afterwards
+proc createRefsForNanoGeometry_deprecated() {
     nanoProximal_ref = new List()
     nanoDistal_ref = new List()
+    
     if (isAstrocyteOrNeuron) {
         nanoProximal_ref = createListOfSectionRefs("SmallGlia[.*", 1)
         nanoDistal_ref = createListOfSectionRefs("LargeGlia[.*", 1)
@@ -649,13 +651,12 @@ proc createRefsForNanoGeometry() { localobj nil
         nanoDistal_ref = createListOfSectionRefs("spine_head", 1)
     }
     
-    SizeTotal = nanoProximal_ref.count()
-    if (nanoDistal_ref.count() != SizeTotal) {
+    if (nanoProximal_ref.count() != nanoDistal_ref.count()) {
         codeContractViolation()
     }
 }
 
-createRefsForNanoGeometry()
+createRefsForNanoGeometry_deprecated()
 
 //////////////////// End of section references ///////////////////////////
 

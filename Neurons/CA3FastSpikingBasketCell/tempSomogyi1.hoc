@@ -1,0 +1,167 @@
+	//Template for the detailed  FS Somogyi_1!
+	//Alexandra Tzilivaki  
+
+	begintemplate FScell 
+	external v_init
+	objref unscrProx, unscrDist
+	objref all, somatic, axonal, basal_prox, basal_dist
+	//Public members need to be declared afterwards:
+	public soma, axon, dend 
+	public init //enables the init() to be called again after object is created!
+	public all, somatic, axonal, basal_prox, basal_dist
+	public dendproxNo, denddistNo
+	public unscrProx, unscrDist
+	//Initial creation necessary (segmentation violation error otherwise):
+	create soma, axon, dend
+
+
+	proc init () {
+		print "Opening gjhui",  $s1
+	//The right amount of compartments is declared per object instance inside
+	//the loaded morphology script:
+		xopen($s1) // !! 
+
+		dendproxNo=0
+		denddistNo=0
+	//Create public members for the number of proximal (distal) dendrites,
+	//accessible through dot notation (i.e. myFS.dendproxNo):
+		forsec basal_prox dendproxNo = dendproxNo + 1
+		forsec basal_dist denddistNo = denddistNo + 1
+
+	//Define electrophysiological properties:
+		//..........................................................................................................................................................................
+		soma_Nafin= 0.045/*//*0.025//0.060*3*/                                      
+		soma_kdrin=0.018*2//*0.028//0.0018*2
+		soma_Kslowin=0.000725/*//*0.1//*0.00006*0.1//0.000725*0.1 //*0.1 9/12/15*/
+		soma_hin=0.00001/*//*10//*100//*100//*100//*/                                                    
+		soma_kapin=0.0032//*2//*0.1//*2//*0.001
+		soma_can=0.0003//*2 alexandra 17/12/2015
+		soma_cat=0.001*2 //for dends
+		soma_kctin=0.0001//*10//100//*100//*10                   
+		soma_kcain=20*0.001//..001//0.5//*0   
+		               
+		//...........................................................................................................................................................................
+
+		forsec somatic {
+		
+		        nseg= 5 //1 12/16
+			insert pas
+			cm=1.2//microF/cm2
+			g_pas =1/7600                               
+			e_pas = v_init
+			Ra=172 //(Noerenberg et al, 2010 PNAS)
+
+		insert Nafx
+			gnafbar_Nafx= soma_Nafin*0.8*11
+
+			insert kdrin
+			gkdrbar_kdrin= soma_kdrin*1.2
+
+			insert IKsin	
+			gKsbar_IKsin= soma_Kslowin
+
+			insert hin
+			gbar_hin=soma_hin
+
+			insert kapin
+			gkabar_kapin=soma_kapin
+
+			insert kctin
+			gkcbar_kctin=soma_kctin
+
+			insert kcain
+			gbar_kcain=soma_kcain
+
+		          
+		         insert cadynin // cai
+
+		}
+
+			                
+		forsec axonal {
+		
+		        nseg=10          
+			insert pas
+			cm=1.2
+			g_pas =1/281600
+			e_pas = v_init
+			Ra=172
+
+			insert Nafx
+			gnafbar_Nafx=soma_Nafin*0.8*36
+						                                                                    
+			insert kdrin
+			gkdrbar_kdrin=soma_kdrin*4
+
+		}
+		      
+		forsec basal_prox {
+		
+		        nseg=5
+			insert pas
+			cm=1.2//microF/cm2
+			g_pas =1/7600  
+			e_pas = v_init                                            
+			Ra=142
+
+			insert Nafx
+			gnafbar_Nafx=soma_Nafin*0.4//*1.2
+
+			insert kdrin
+			gkdrbar_kdrin=0.018*0.5
+                        
+                        insert kapin
+			gkabar_kapin=soma_kapin*0.2//*1.2                                                      
+
+			insert can 
+			gcabar_can = soma_can
+
+			insert cat
+			gcatbar_cat=soma_cat*0.1
+		  
+		        insert cal
+		        gcalbar_cal=0.00003  // L type calcium channel
+
+		        insert cadynin
+		     
+		}
+
+
+		forsec basal_dist {
+		
+		        nseg=5
+			insert pas
+			cm=1.2           //microF/cm2
+			g_pas =1/74300 
+			e_pas = v_init                                            
+			Ra=142
+
+			insert Nafx
+			gnafbar_Nafx=soma_Nafin*0.4*0.8
+
+			insert kdrin
+			gkdrbar_kdrin=0.018*0.5                                             
+		        
+                        insert kadin
+                        gkabar_kadin=1.8*0.001//*1.2      // IA current used in distal regions >100 microns from the soma
+		       
+            insert cat
+			gcatbar_cat=soma_cat*0.1
+
+			insert can
+			gcabar_can=soma_can
+		    
+		        insert cal
+		        gcalbar_cal=0.00003 
+		          
+		       insert cadynin
+		       }	
+	       
+		ko0_k_ion = 3.82   //mM
+		ki0_k_ion = 140    //mM  
+	
+	} //end init()
+
+	endtemplate FScell
+
+

@@ -1,0 +1,83 @@
+
+// Diameter distribution
+objref diamDistrLeaves, diamDistrStalks
+diamStep = 0
+nanoDistrLoaded = 0 // Boolean
+
+// Random
+objref randomDiameters
+randomDiameters = rngUtils.getFor_diameters()
+
+// Shows window to select a .TXT file with diameter distribution.
+proc loadDiamDistrFile() { local divisions localobj radiiFile, line, neuronLine, radiiDistrPointer
+    
+    radiiFile = new File()
+    radiiFile.chooser("r", "Load", "*.txt", "Load", "Cancel", getcwd())
+    
+    if (!radiiFile.chooser()) {
+        // File selection canceled
+        return
+    }
+    
+    // File selected
+    
+    line = new String()
+    neuronLine = new String()
+    
+    // This procedure is looking for "NEURON" word inside the data file that's located before distribution
+    // TO DO Add some action in case if file doesn't contain NEURON word 
+    // or has wrong distribution structure
+    while (!radiiFile.eof() && !stringsEqual(neuronLine.s, "NEURON")) {
+        radiiFile.gets(line.s)
+        sscanf(line.s, "%[^\n]", neuronLine.s)
+    }
+    
+    diamStep = radiiFile.scanvar()
+    
+    for group = 1, 2 {
+        // Amount of non-non-zero-probability groups
+        divisions = radiiFile.scanvar()
+        print divisions
+        
+        if (group == 1) {
+            diamDistrStalks = new Matrix(divisions, 2)
+            radiiDistrPointer = diamDistrStalks
+        } else {
+            diamDistrLeaves = new Matrix(divisions, 2)
+            radiiDistrPointer = diamDistrLeaves
+        }
+        
+        // Leaves and stalks distribution
+        for row = 0, divisions-1 {
+            radiiDistrPointer.setval(row, 0, radiiFile.scanvar())
+            radiiDistrPointer.setval(row, 1, radiiFile.scanvar())
+        }
+    }
+    
+    nanoDistrLoaded = 1
+}
+
+// Returns random diameter from the distribution matrix.
+// $o1 - Diameter distribution matrix
+// $2 - Diameter step
+func getDiameterFromDistr() { local diameter, bottomProbability
+    diameter = $o1.getval(0, 0)
+    randomValue = randomDiameters.uniform(0, 1)
+    
+    if (randomValue > 0) {
+        for row = 0, $o1.nrow-1 {
+            if (randomValue <= $o1.getval(row, 1)) {
+                if (row > 0) {
+                    bottomProbability = $o1.getval(row-1, 1)
+                } else {
+                    bottomProbability = 0
+                }
+                
+                diameter = $o1.getval(row, 0)+$2*(randomValue-bottomProbability)/($o1.getval(row, 1)-bottomProbability)
+                break
+            }
+        }
+    }
+    
+    return diameter
+}

@@ -1,0 +1,36 @@
+// This function is used to balance the membrane potential to v_init 
+// written by Yiota Poirazi, July 2001, poirazi@LNC.usc.edu
+// modified by Alexandra Tzilivaki, 2015 alexandra_tzilivaki@imbb.forth.gr
+
+proc current_balanceFS() {
+
+  finitialize($1)
+  fcurrent()
+
+  printf("Balancing each compartment to %d mV\n", $1)
+
+  forsec FSdetailedtemplate.all {
+   for (x) {
+    	if (ismembrane("na_ion")) {e_pas(x)=v(x)+ina(x)/g_pas(x)} 
+   	if (ismembrane("k_ion")) {e_pas(x)=e_pas(x)+ik(x)/g_pas(x)} 
+
+      	if (ismembrane("ca_ion")) {e_pas(x)=e_pas(x)+ica(x)/g_pas(x)}
+    //  if (ismembrane("Ca_ion")) {e_pas(x)=e_pas(x)+iCa(x)/g_pas(x)}
+    //    if (ismembrane("in_ion")) {e_pas(x)=e_pas(x)+in(x)/g_pas(x)} //ican
+       if (ismembrane("h")) {e_pas(x)=e_pas(x)+ihi(x)/g_pas(x)}
+
+
+    }
+  }
+
+//finitialize(v_init)
+fcurrent()
+}
+
+
+
+
+     
+
+
+

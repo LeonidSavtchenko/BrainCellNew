@@ -1,0 +1,192 @@
+load_file("nrngui.hoc")
+cvode.active(1)
+cvode.atol(1.e-3)
+
+mid=5
+dist=15
+secondorder=2
+FARADAY=96520
+PI=3.14159
+
+Rm = 28000
+RmDend = Rm/2
+RmSoma = Rm
+RmAx = Rm
+
+Cm    = 1
+CmSoma= Cm
+CmAx  = Cm
+CmDend = Cm*2
+
+RaAll= 150
+RaSoma=150  
+RaAx = 50
+
+Vrest = -65
+dt = 0.025
+gna =  .032
+AXONM = 2
+gkdr = 0.01
+celsius = 34.0  
+KMULT =  0.048
+KMULTP = 0.048
+
+tstop=100
+
+objref ncond, netd, g, b, synd, stim1,stim2
+
+xopen("n160_mod.nrn")             // geometry file
+
+b = new VBox()
+b.intercept(1)
+g = new Graph()
+g.size(0,tstop,-70,-10)
+g.color(1)
+g.label(0.2,0.5,"unpaired")
+g.color(2)
+g.label(0.2,0.45,"paired 35ms")
+g.color(3)
+g.label(0.2,0.4,"paired 45ms")
+g.xaxis(1)
+xpanel("",1)
+xbutton("run", "runc()")
+xpanel()
+b.intercept(0)
+b.map("Watanabe et al, 2002, Fig.6", 100,100,600,300)
+
+weight=1500e-6
+access soma[5]
+	distance()
+	stim1 = new IClamp(0.5)
+	stim1.del=45
+	stim1.dur=1.5
+	stim1.amp=1
+	stim2 = new IClamp(0.5)
+	stim2.del=55
+	stim2.dur=1.5
+	stim2.amp=1
+	netd = new NetStim(0.5)
+	netd.number=5
+	netd.interval=10
+	netd.start=10
+
+axon[1] {
+                insert nax    gbar_nax=gna * AXONM
+                insert kdr gkdrbar_kdr=gkdr
+                insert pas e_pas=Vrest g_pas = 1/RmAx Ra=RaAx cm=CmAx
+                insert kap gkabar_kap = KMULTP*0.2
+}
+
+axon[0] {   
+                insert nax  gbar_nax=gna * AXONM
+                insert kdr  gkdrbar_kdr=gkdr 
+                insert pas e_pas=Vrest g_pas = 1/RmAx Ra=RaAx cm=CmAx
+                insert kap gkabar_kap = KMULTP*0.2
+}
+
+for i=0,NumSoma-1 soma[i] {   
+                insert na3  gbar_na3=gna     
+                insert kdr gkdrbar_kdr=gkdr
+		ar2_na3=1
+                insert kap gkabar_kap = KMULTP
+                insert pas e_pas=Vrest g_pas = 1/RmSoma Ra=RaSoma cm=CmSoma
+}
+
+for i=0,NumBasal-1 basal[i] {
+                insert na3    gbar_na3=gna   
+                insert kdr gkdrbar_kdr=gkdr 
+		ar2_na3=1
+                insert kap gkabar_kap=KMULTP
+                insert pas e_pas=Vrest g_pas = 1/RmDend Ra=RaAll cm=CmDend
+}
+                
+for i=0,NumApical-1 apical[i] {
+              insert pas e_pas=Vrest g_pas = 1/RmDend Ra=RaAll  cm=CmDend
+		if (diam>0.5 && distance(0.5)<500) {
+                insert na3 
+		ar2_na3=1
+		gbar_na3=gna
+                insert kdr 
+		gkdrbar_kdr=gkdr
+		insert kap
+		insert kad
+		gkabar_kap=0
+		gkabar_kad=0
+
+              for (x){ xdist = distance(x)
+                if (xdist>500) {xdist=500}
+                if (xdist > 100){
+                        gkabar_kad(x) = KMULT*(1+xdist/100)
+                } else {
+                        gkabar_kap(x) = KMULTP*(1+xdist/100)
+                	}
+              				}
+							}
+				}
+
+apical[dist] {
+	print distance(1)
+	synd = new Exp2Syn(1)
+	synd.e=0
+	synd.tau1=3
+	synd.tau2=3
+}
+
+	ncond= new NetCon(netd,synd,0.5,0,weight) 
+
+proc init() {
+	t=0
+        forall {
+        v=Vrest
+        if (ismembrane("nax") || ismembrane("na3")) {ena=55}
+        if (ismembrane("kdr") || ismembrane("kap") || ismembrane("kad")) {ek=-90}
+        if (ismembrane("kad")) {vhalfn_kad=-1}
+	}
+	finitialize(v)
+        fcurrent()
+
+        forall {
+	for (x) {
+	if (ismembrane("na3")||ismembrane("nax")){e_pas(x)=v(x)+(ina(x)+ik(x))/g_pas(x)
+		} else {
+	e_pas(x)=v(x)
+			}
+		}
+	}
+	cvode.re_init()
+	g.begin()
+	g.plot(t)
+}
+
+proc step() {
+
+	fadvance()
+g.plot(t)
+g.flush()
+doNotify()
+}
+
+proc run() {
+	init()
+	while(t<tstop) { step()}
+}
+
+
+proc runc() {
+	g.exec_menu("Keep Lines")
+	ncond.weight=0
+	color=1
+	g.addvar("apical[dist].v(1)",color,1,2*tstop,0,2)
+	run()
+	ncond.weight=2000e-6
+	color=2
+	g.addvar("apical[dist].v(1)",color,1,2*tstop,0,2)
+	run()
+	stim1.del=55	
+	stim2.del=65
+	color=3
+	g.addvar("apical[dist].v(1)",color,1,2*tstop,0,2)
+	run()
+}
+
+

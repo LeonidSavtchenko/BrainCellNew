@@ -1,0 +1,89 @@
+// For validation of electrophysiological values according to experimental data.
+// Alexandra Tzilivaki
+
+
+//Initialize NEURON
+	load_file("nrngui.hoc") 	
+        v_init = -68          // vrest
+	cvode.active(0)     
+	//-----Objects for record data
+	objref cv
+	cv=new CVode(0)
+	tstop=1000//700//2000 // Simulation duration
+	steps_per_ms=10
+	dt=1/steps_per_ms
+	n=int(tstop/dt)
+ 
+	objref all_msec
+	all_msec = new Vector(n,0)
+
+	  
+//Open Fast Spiking Template
+xopen("tempSomogyi1.hoc") // template
+objref FSdetailedtemplate
+FSdetailedtemplate = new FScell("Somogyi_1.hoc")// cell reconstruction. 
+
+
+xopen("../bash_templates/current_balance_fs.hoc")
+current_balanceFS(-68)
+xopen("../bash_templates/basic-graphics.hoc")
+addgraph("FSdetailedtemplate.soma.v(0.5)",-90,50)
+
+
+objref FSv[1], FSt[1]
+
+//Procedures:
+objref vsoma
+proc rec_soma_Voltage(){
+	FSv[0]=new Vector(n)
+	FSt[0]=new Vector(n) 
+	for j=0,n-1 {FSt[0].x[j]=j*dt }
+	FSdetailedtemplate.soma cv.record(&v(0.5),FSv[0],FSt[0],1)
+}
+
+strdef temp
+proc save_soma_Voltage() {
+	vsoma = new File()		
+	sprint(temp,"ValidationData/Hipp/somogyi_%d_current_%g.txt", $1,$2)  
+	vsoma.wopen(temp)
+	for sb=0, FSv.size()-1 { 
+		vsoma.printf ("%f\n",FSv.x[sb])
+	}
+	vsoma.close()
+        }
+
+
+// --------------Current clamp procedure!
+objref ic_new
+proc applyIClamp(){
+        FSdetailedtemplate.soma {ic_new = new IClamp(0.5)}            
+	ic_new.amp = $1//(nA)
+	ic_new.del=100//100//100//0
+	ic_new.dur=500//500//or 500//2000
+	print  "Current injected is: ",ic_new.amp
+}
+
+for runs =0,4{
+if (runs==0){
+	applyIClamp(-0.1) 
+}else{
+	applyIClamp(0.10+0.1*runs) 
+}
+rec_soma_Voltage()
+
+
+run()
+//save_soma_Voltage(cellidnum,ic_new.amp)
+
+}
+
+
+
+//=============================================================================================================
+
+
+
+
+
+
+

@@ -1,0 +1,24 @@
+
+// Two List-s of SectionRef containing references to all the sections of nano geometry
+objref nanoProximal_ref, nanoDistal_ref
+
+// Create two List-s of SectionRef containing references to all the sections of nano geometry
+// Input: isAstrocyteOrNeuron (taken from the top level)
+// Output: nanoProximal_ref, nanoDistal_ref (initialized on the top level)
+// !!! deprecated: collect the references when creating sections rather than search for sections with regex afterwards
+proc createRefsForNanoGeometry_deprecated() {
+    nanoProximal_ref = new List()
+    nanoDistal_ref = new List()
+    
+    if (isAstrocyteOrNeuron) {
+        nanoProximal_ref = createListOfSectionRefs("SmallGlia[.*", 1)
+        nanoDistal_ref = createListOfSectionRefs("LargeGlia[.*", 1)
+    } else {
+        nanoProximal_ref = createListOfSectionRefs("spine_neck", 1)
+        nanoDistal_ref = createListOfSectionRefs("spine_head", 1)
+    }
+    
+    if (nanoProximal_ref.count() != nanoDistal_ref.count()) {
+        codeContractViolation()
+    }
+}
