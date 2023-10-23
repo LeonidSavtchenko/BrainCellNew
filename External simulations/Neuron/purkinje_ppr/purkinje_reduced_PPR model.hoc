@@ -1,0 +1,448 @@
+/*
+Purkinje_reduced_PPR model.hoc
+
+A hoc file for a cerebellar Purkinje neuron.
+
+Adapted by SHERRY-ANN BROWN in "Virtual NEURON: a Strategy For Merged Biochemical and Electrophysiological Modeling"(Brown et al., 2010)
+from original code written by MIYASHO Tsugumichi and MIYAKAWA Hiroyoshi.
+
+This model runs on NEURON (version 3.2.3).
+
+Description of the original version of this model can be found in 
+"Low-threshold potassium channels and a low-threshold calcium channel regulate
+Ca2+ spike firing in the dendrites of cerebellar Purkinje neurons : a modeling study"(T. Miyasho et al., Brain Res 891, 2001, 106-115)
+
+Morphology of the original cell used for the original model was taken from a paper by D.P.Shelton (Neuroscience 14, 1985, 111-131).
+
+Channel descriptions are taken from a paper by E.De.Shutter and 
+J.M.Bower. (J. Neurophysiol., 71, 1994, 375-400)
+
+*/
+xopen("$(NEURONHOME)/lib/hoc/noload.hoc")
+
+{load_proc("nrnmainmenu")} 
+/*
+{
+	load_template("Inserter")
+	load_template("Electrode")
+	load_template("PointProcessManager")
+	load_template("PointProcessLocator")
+	load_template("ShowMechanism")
+}
+*/
+NumMainDendrite=1
+NumSmoothDistalDendriteshort=1
+NumSmoothDistalDendritelong=1
+NumSpinyDistalDendrite=1
+NumAdjacentDendrite=1
+NumSpineNeck=1
+NumSpine=1
+
+NumIO1sm=1
+NumIO1sp=1
+NumIO2sm=1
+NumIO2sp=1
+NumIO3sm=1
+NumIO3sp=1
+NumIO4sm=1
+NumIO4sp=1
+NumIO5sp=1
+NumIO6sp=1
+
+create Soma, MainDendrite[NumMainDendrite], SmoothDistalDendriteshort[NumSmoothDistalDendriteshort], SmoothDistalDendritelong[NumSmoothDistalDendritelong], SpinyDistalDendrite[NumSpinyDistalDendrite], AdjacentDendrite[NumAdjacentDendrite], SpineNeck[NumSpineNeck], Spine[NumSpine], IO1sm[NumIO1sm], IO1sp[NumIO1sp], IO2sm[NumIO2sm], IO2sp[NumIO2sp], IO3sm[NumIO3sm], IO3sp[NumIO3sp], IO4sm[NumIO4sm], IO4sp[NumIO4sp], IO5sp[NumIO5sp], IO6sp[NumIO6sp]
+
+access Soma
+ 
+    Soma connect MainDendrite(0),1
+    Soma	          {nseg=1 L=22 diam=22 }
+    MainDendrite      {nseg=1 L=18 diam=4 }
+ 
+    MainDendrite connect IO1sm (0),1
+    IO1sm {nseg=1 L=140.5 diam=7.74 }
+
+    IO1sm connect IO1sp (0),1
+    IO1sp {nseg=1 L=95 diam=5.63 }
+
+    IO1sm connect IO2sm (0),1
+    IO2sm {nseg=1 L=82.5 diam=4.85 }
+
+    IO2sm connect IO2sp (0),1
+    IO2sp {nseg=1 L=159 diam=5.34 }
+
+    MainDendrite connect SmoothDistalDendriteshort (0),1
+    SmoothDistalDendriteshort {nseg=3 L=44 diam=5 }
+
+    SmoothDistalDendriteshort connect IO3sm (0),0.5
+    IO3sm {nseg=1 L=33 diam=2.63 }
+
+    IO3sm connect IO3sp (0),1
+    IO3sp {nseg=1 L=69 diam=3.67 }
+
+    SmoothDistalDendriteshort connect SmoothDistalDendritelong (0),1
+    SmoothDistalDendritelong {nseg=3 L=74 diam=5.3 }
+ 
+    SmoothDistalDendritelong connect IO4sm (0),0.5
+    IO4sm {nseg=1 L=134 diam=4.75 }
+
+    IO4sm connect IO4sp (0),1
+    IO4sp {nseg=1 L=204 diam=5.271633548 }
+
+    SmoothDistalDendritelong connect SpinyDistalDendrite (0),1
+    SpinyDistalDendrite {nseg=3 L=9.02 diam=2 }
+ 
+    SpinyDistalDendrite connect IO5sp (0),0.5
+    IO5sp {nseg=1 L=21  diam=1.918877022 }
+
+    SpinyDistalDendrite connect AdjacentDendrite (0),1
+    AdjacentDendrite {nseg=15 L=27.98 diam=1.4 }
+ 
+    AdjacentDendrite connect IO6sp (0),0.5
+    IO6sp {nseg=1 L=36 diam=1.86 }
+
+    AdjacentDendrite connect SpineNeck (0),1
+    SpineNeck {nseg=1 L=0.66 diam=0.2 }
+    
+    SpineNeck connect Spine (0),1	
+    Spine {nseg=1 L=0.57 diam=0.57 }
+     
+    Soma               	{cm=0.8    
+         insert Leak gl_Leak = 0.00006 el_Leak = -80
+         insert NaF  gnabar_NaF = 10
+         insert NaP
+         insert CaP2 cai = 0.00012723632   cao = 2.4  gcabar_CaP2 = 0.0005
+         insert CaT cai = 0.00012723632    cao = 2.4  gcabar_CaT = 0
+         insert CaE cai = 0.00012723632    cao = 2.4  gcabar_CaE = 0
+         insert Khh
+         insert KM
+         insert KA 
+         insert KD  gkbar_KD  = 0
+         insert Kh   gkbar_Kh = 0.0005
+         insert cad taur_cad = 2 cainf_cad = 4e-5    cainit_cad = 0.00012723632
+		    kt_cad = 4e-5 kd_cad = 4e-5 
+}
+    MainDendrite 	 	{cm=0.8  
+         insert Leak gl_Leak = 0.00021 el_Leak = -80
+         insert CaP2 cai = 0.00404746 cao = 2.4 gcabar_CaP2 = 0.004
+         insert CaT cai = 0.00404746 cao = 2.4  gcabar_CaT = 0.0015
+         insert CaE cai = 0.00404746 cao = 2.4  gcabar_CaE = 0.008
+         insert Khh gkbar_Khh = 0.0006
+         insert KM  gkbar_KM  = 0.00001
+         insert KA  gkbar_KA  = 0.08
+         insert KD  gkbar_KD  = 0.09
+         insert KC3 gkbar_KC3  = 0.06
+         insert K23
+         insert cad taur_cad = 2 cainf_cad = 4e-5      cainit_cad = 0.0040600975
+		    kt_cad = 4e-5 kd_cad = 4e-5 
+}
+    SmoothDistalDendriteshort  {cm=0.8  
+         insert Leak gl_Leak = 0.00021 el_Leak = -80
+         insert CaP2 cai = 0.00404746 cao = 2.4 gcabar_CaP2 = 0.004
+         insert CaT cai = 0.00404746 cao = 2.4  gcabar_CaT = 0.0015
+         insert CaE cai = 0.00404746 cao = 2.4  gcabar_CaE = 0.008
+         insert Khh gkbar_Khh = 0.0006
+         insert KM  gkbar_KM  = 0.00001
+         insert KA  gkbar_KA  = 0.08
+         insert KD  gkbar_KD  = 0.09
+         insert KC3 gkbar_KC3  = 0.06
+         insert K23
+         insert cad taur_cad = 2 cainf_cad = 4e-5      cainit_cad = 0.0040600975
+		    kt_cad = 4e-5 kd_cad = 4e-5 
+}
+    SmoothDistalDendritelong  {cm=0.8  
+         insert Leak gl_Leak = 0.00021 el_Leak = -80
+         insert CaP2 cai = 0.00404746 cao = 2.4 gcabar_CaP2 = 0.004
+         insert CaT cai = 0.00404746 cao = 2.4  gcabar_CaT = 0.0015
+         insert CaE cai = 0.00404746 cao = 2.4  gcabar_CaE = 0.008
+         insert Khh gkbar_Khh = 0.0006
+         insert KM  gkbar_KM  = 0.00001
+         insert KA  gkbar_KA  = 0.08
+         insert KD  gkbar_KD  = 0.09
+         insert KC3 gkbar_KC3  = 0.06
+         insert K23
+         insert cad taur_cad = 2 cainf_cad = 4e-5      cainit_cad = 0.0040600975
+		    kt_cad = 4e-5 kd_cad = 4e-5 
+}
+    SpinyDistalDendrite  {cm=1.5
+         insert Leak gl_Leak = 0.00021 el_Leak = -80
+         insert CaP2 cai = 0.00404746 cao = 2.4 gcabar_CaP2 = 0.004
+         insert CaT cai = 0.00404746 cao = 2.4  gcabar_CaT = 0.0015
+         insert CaE cai = 0.00404746 cao = 2.4  gcabar_CaE = 0.008
+         insert Khh gkbar_Khh = 0.0006
+         insert KM  gkbar_KM  = 0.00001
+         insert KA  gkbar_KA  = 0.08
+         insert KD  gkbar_KD  = 0.09
+         insert KC3 gkbar_KC3  = 0.06
+         insert K23
+         insert cad taur_cad = 2 cainf_cad = 4e-5      cainit_cad = 0.0040600975
+		    kt_cad = 4e-5 kd_cad = 4e-5 
+}
+    AdjacentDendrite  {cm=1.5
+         insert Leak gl_Leak = 0.00021 el_Leak = -80
+         insert CaP2 cai = 0.00404746 cao = 2.4 gcabar_CaP2 = 0.004
+         insert CaT cai = 0.00404746 cao = 2.4  gcabar_CaT = 0.0015
+         insert CaE cai = 0.00404746 cao = 2.4  gcabar_CaE = 0.008
+         insert Khh gkbar_Khh = 0.0006
+         insert KM  gkbar_KM  = 0.00001
+         insert KA  gkbar_KA  = 0.08
+         insert KD  gkbar_KD  = 0.09
+         insert KC3 gkbar_KC3  = 0.06
+         insert K23
+         insert cad taur_cad = 2 cainf_cad = 4e-5      cainit_cad = 0.0040600975
+		    kt_cad = 4e-5 kd_cad = 4e-5 
+}
+	Spine        	{cm=0.8
+         insert Leak gl_Leak = 0.00021 el_Leak = -80
+         insert CaP2 cai = 0.00404746 cao = 2.4 gcabar_CaP2 = 0.004
+         insert CaT cai = 0.00404746 cao = 2.4  gcabar_CaT = 0.0015
+         insert CaE cai = 0.00404746 cao = 2.4  gcabar_CaE = 0.008
+         insert Khh gkbar_Khh = 0.0006
+         insert KM  gkbar_KM  = 0.00001
+         insert KA  gkbar_KA  = 0.08
+         insert KD  gkbar_KD  = 0.09
+         insert KC3 gkbar_KC3  = 0.06
+         insert K23
+         insert cad taur_cad = 2 cainf_cad = 4e-5      cainit_cad = 0.0040600975
+		    kt_cad = 4e-5 kd_cad = 4e-5 
+}
+    IO1sm     	{cm= 0.84197833
+	insert Leak gl_Leak = 0.000221019    el_Leak = -80
+         insert CaP2 cai = 0.00404746 cao = 2.4  gcabar_CaP2 = 0.004209892
+
+         insert CaT cai = 0.00404746 cao = 2.4  gcabar_CaT = 0.001578709
+
+         insert CaE cai = 0.00404746 cao = 2.4  gcabar_CaE = 0.008419783
+
+         insert Khh gkbar_Khh = 0.000631484
+         insert KM  gkbar_KM  = 1.05247E-05
+
+         insert KA  gkbar_KA  = 0.084197833
+
+         insert KD  gkbar_KD  = 0.094722562
+
+         insert KC3 gkbar_KC3  = 0.063148375
+
+         insert K23 gkbar_K23  = 0.000410464
+
+         insert cad taur_cad = 2 cainf_cad = 4e-5      cainit_cad = 0.0040600975    cainit_cad = 0.0040600975
+		    kt_cad = 4e-5 kd_cad = 4e-5 icaadjust_cad= 0.950143215
+}
+    IO1sp        	{cm= 7.924229275
+
+	insert Leak gl_Leak = 0.001109392    el_Leak = -80
+         insert CaP2 cai = 0.00404746 cao = 2.4  gcabar_CaP2 = 0.021131278
+
+         insert CaT cai = 0.00404746 cao = 2.4  gcabar_CaT = 0.007924229
+
+         insert CaE cai = 0.00404746 cao = 2.4  gcabar_CaE = 0.042262556
+
+         insert Khh gkbar_Khh = 0.003169692
+
+         insert KM  gkbar_KM  = 5.28282E-05
+
+         insert KA  gkbar_KA  = 0.422625561
+
+         insert KD  gkbar_KD  = 0.475453756
+
+         insert KC3 gkbar_KC3  = 0.316969171
+
+         insert K23 gkbar_K23  = 0.0020603
+
+         insert cad taur_cad = 2 cainf_cad = 4e-5      cainit_cad = 0.0040600975    cainit_cad = 0.0040600975
+		    kt_cad = 4e-5 kd_cad = 4e-5 icaadjust_cad= 0.189292857
+
+}    
+	IO2sm     	{cm= 0.731103206
+	insert Leak gl_Leak = 0.000191915     el_Leak = -80
+         insert CaP2 cai = 0.00404746 cao = 2.4  gcabar_CaP2 = 0.003655516
+
+         insert CaT cai = 0.00404746 cao = 2.4  gcabar_CaT = 0.001370819
+
+         insert CaE cai = 0.00404746 cao = 2.4  gcabar_CaE = 0.007311032
+
+         insert Khh gkbar_Khh = 0.000548327
+
+         insert KM  gkbar_KM  = 9.13879E-06
+
+         insert KA  gkbar_KA  = 0.073110321
+
+         insert KD  gkbar_KD  = 0.082249111
+
+         insert KC3 gkbar_KC3  = 0.05483274
+
+         insert K23 gkbar_K23  = 0.000356413
+
+         insert cad taur_cad = 2 cainf_cad = 4e-5      cainit_cad = 0.0040600975    cainit_cad = 0.0040600975
+		    kt_cad = 4e-5 kd_cad = 4e-5 icaadjust_cad= 1.094236756
+
+}
+    IO2sp        	{cm= 6.509497645
+	insert Leak gl_Leak = 0.00091133   el_Leak = -80
+         insert CaP2 cai = 0.00404746 cao = 2.4  gcabar_CaP2 = 0.01735866
+
+         insert CaT cai = 0.00404746 cao = 2.4  gcabar_CaT = 0.006509498
+
+         insert CaE cai = 0.00404746 cao = 2.4  gcabar_CaE = 0.034717321
+
+         insert Khh gkbar_Khh = 0.002603799
+
+         insert KM  gkbar_KM  = 4.33967E-05
+
+         insert KA  gkbar_KA  = 0.347173208
+
+         insert KD  gkbar_KD  = 0.390569859
+
+         insert KC3 gkbar_KC3  = 0.260379906
+
+         insert K23 gkbar_K23  = 0.001692469
+         insert cad taur_cad = 2 cainf_cad = 4e-5      cainit_cad = 0.0040600975    cainit_cad = 0.0040600975
+		    kt_cad = 4e-5 kd_cad = 4e-5 icaadjust_cad= 0.230432528
+
+}
+    IO3sm     	{cm= 0.515767253
+	insert Leak gl_Leak = 0.000135389    el_Leak = -80
+         insert CaP2 cai = 0.00404746 cao = 2.4  gcabar_CaP2 = 0.002578836
+
+         insert CaT cai = 0.00404746 cao = 2.4  gcabar_CaT = 0.000967064
+
+         insert CaE cai = 0.00404746 cao = 2.4  gcabar_CaE = 0.005157673
+
+         insert Khh gkbar_Khh = 0.000386825
+
+         insert KM  gkbar_KM  = 6.44709E-06
+
+         insert KA  gkbar_KA  = 0.051576725
+
+         insert KD  gkbar_KD  = 0.058023816
+
+         insert KC3 gkbar_KC3  = 0.038682544
+
+         insert K23 gkbar_K23  = 0.000251437
+
+         insert cad taur_cad = 2 cainf_cad = 4e-5      cainit_cad = 0.0040600975    cainit_cad = 0.0040600975
+		    kt_cad = 4e-5 kd_cad = 4e-5 icaadjust_cad= 1.55108723
+
+}
+    IO3sp        	{cm= 3.16498077
+	insert Leak gl_Leak = 0.000443097   el_Leak = -80
+         insert CaP2 cai = 0.00404746 cao = 2.4  gcabar_CaP2 = 0.008439949
+
+         insert CaT cai = 0.00404746 cao = 2.4  gcabar_CaT = 0.003164981
+
+         insert CaE cai = 0.00404746 cao = 2.4  gcabar_CaE = 0.016879897
+
+         insert Khh gkbar_Khh = 0.001265992
+
+         insert KM  gkbar_KM  = 2.10999E-05
+
+         insert KA  gkbar_KA  = 0.168798974
+         insert KD  gkbar_KD  = 0.189898846
+
+         insert KC3 gkbar_KC3  = 0.126599231
+
+         insert K23 gkbar_K23  = 0.000822895
+
+         insert cad taur_cad = 2 cainf_cad = 4e-5      cainit_cad = 0.0040600975    cainit_cad = 0.0040600975
+		    kt_cad = 4e-5 kd_cad = 4e-5 icaadjust_cad= 0.473936529
+
+}
+    IO4sm     	{cm= 0.675232434
+	insert Leak gl_Leak = 0.000177249     el_Leak = -80
+         insert CaP2 cai = 0.00404746 cao = 2.4  gcabar_CaP2 = 0.003376162
+
+         insert CaT cai = 0.00404746 cao = 2.4  gcabar_CaT = 0.001266061
+
+         insert CaE cai = 0.00404746 cao = 2.4  gcabar_CaE = 0.006752324
+
+         insert Khh gkbar_Khh = 0.000506424
+
+         insert KM  gkbar_KM  = 8.44041E-06
+
+         insert KA  gkbar_KA  = 0.067523243
+
+         insert KD  gkbar_KD  = 0.075963649
+
+         insert KC3 gkbar_KC3  = 0.050642433
+
+         insert K23 gkbar_K23  = 0.000329176
+
+         insert cad taur_cad = 2 cainf_cad = 4e-5      cainit_cad = 0.0040600975    cainit_cad = 0.0040600975
+		    kt_cad = 4e-5 kd_cad = 4e-5 icaadjust_cad= 1.184777212
+
+}
+    IO4sp        	{cm= 4.232977441
+	insert Leak gl_Leak = 0.000592617    el_Leak = -80
+         insert CaP2 cai = 0.00404746 cao = 2.4  gcabar_CaP2 = 0.01128794
+
+         insert CaT cai = 0.00404746 cao = 2.4  gcabar_CaT = 0.004232977
+         insert CaE cai = 0.00404746 cao = 2.4  gcabar_CaE = 0.02257588
+
+         insert Khh gkbar_Khh = 0.001693191
+
+         insert KM  gkbar_KM  = 2.82198E-05
+
+         insert KA  gkbar_KA  = 0.225758797
+
+         insert KD  gkbar_KD  = 0.253978646
+
+         insert KC3 gkbar_KC3  = 0.169319098
+         insert K23 gkbar_K23  = 0.001100574
+
+         insert cad taur_cad = 2 cainf_cad = 4e-5      cainit_cad = 0.0040600975    cainit_cad = 0.0040600975
+		    kt_cad = 4e-5 kd_cad = 4e-5 icaadjust_cad= 0.354360499
+
+}
+    IO5sp        	{cm= 1.838873147
+	insert Leak gl_Leak = 0.000257442   el_Leak = -80
+         insert CaP2 cai = 0.00404746 cao = 2.4  gcabar_CaP2 = 0.004903662
+
+         insert CaT cai = 0.00404746 cao = 2.4  gcabar_CaT = 0.001838873
+
+         insert CaE cai = 0.00404746 cao = 2.4  gcabar_CaE = 0.009807323
+
+         insert Khh gkbar_Khh = 0.000735549
+
+         insert KM  gkbar_KM  = 1.22592E-05
+     
+	   insert KA  gkbar_KA  = 0.098073235
+
+         insert KD  gkbar_KD  = 0.110332389
+
+         insert KC3 gkbar_KC3  = 0.073554926
+
+         insert K23 gkbar_K23  = 0.000478107
+
+         insert cad taur_cad = 2 cainf_cad = 4e-5      cainit_cad = 0.0040600975    cainit_cad = 0.0040600975
+		    kt_cad = 4e-5 kd_cad = 4e-5 icaadjust_cad= 0.815716953
+
+}
+    IO6sp        	{cm= 1.93409695
+	insert Leak gl_Leak = 0.000270774  el_Leak = -80
+         insert CaP2 cai = 0.00404746 cao = 2.4  gcabar_CaP2 = 0.005157592
+
+         insert CaT cai = 0.00404746 cao = 2.4  gcabar_CaT = 0.001934097
+
+         insert CaE cai = 0.00404746 cao = 2.4  gcabar_CaE = 0.010315184
+
+         insert Khh gkbar_Khh = 0.000773639
+
+         insert KM  gkbar_KM  = 1.2894E-05
+
+         insert KA  gkbar_KA  = 0.103151837
+         insert KD  gkbar_KD  = 0.116045817
+         insert KC3 gkbar_KC3  = 0.077363878
+
+         insert K23 gkbar_K23  = 0.000502865
+
+         insert cad taur_cad = 2 cainf_cad = 4e-5      cainit_cad = 0.0040600975    cainit_cad = 0.0040600975
+		    kt_cad = 4e-5 kd_cad = 4e-5 icaadjust_cad= 0.775555744
+}
+
+global_ra = 250
+set_ra()
+celsius = 37
+  
+
+
+nrnmainmenu()		/* shows the main panel window on the screen */
+
+

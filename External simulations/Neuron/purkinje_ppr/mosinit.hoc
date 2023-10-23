@@ -1,0 +1,7 @@
+load_file("nrngui.hoc")
+xpanel("Brown et al. 2010 PPR model")
+  xbutton("Figures 2c and 2e","xopen(\"mosinit_spine\ and\ spine\ neck\ at\ spinydendrite133.hoc\")")
+  xbutton("Figures 2d and 2f","xopen(\"mosinit_reduced_PPR\ model.hoc\")")
+  xbutton("CVODE or other solvers","xopen(\"mosinit_reduced_PPR\ model_cvode.hoc\")")
+  xbutton("quit","quit()")
+xpanel()

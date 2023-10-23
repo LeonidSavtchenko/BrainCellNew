@@ -1,0 +1,4 @@
+load_file("nrngui.hoc")
+load_file("purkinje_spine and spine neck at spinydendrite133.hoc")
+load_file("purkinje_spine and spine neck at spinydendrite133.ses")
+run()

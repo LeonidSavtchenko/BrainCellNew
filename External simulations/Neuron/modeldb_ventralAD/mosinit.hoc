@@ -1,0 +1,707 @@
+load_file("nrngui.hoc")
+load_file("cell_seed2_0.hoc")
+cvode_active(1)
+objref testcell, stim, stim2, apc, v1
+testcell = new test_Wt() 
+
+
+
+testcell.init()
+tstop=2500
+celsius=25 
+
+proc distribute_distance(){local x localobj sl
+  strdef stmp, distfunc, mech
+
+  sl = $o1
+  mech = $s2
+  distfunc = $s3
+  testcell.soma[0] distance(0, 0.5)
+  sprint(distfunc, "%%s %s(%%f) = %s", mech, distfunc)
+  forsec sl for(x, 0) {
+  sprint(stmp, distfunc, secname(), x, distance(x))
+  execute(stmp)
+  }
+}
+
+proc run_N(){
+//printf("%s\n",filename)
+for j=1,12{
+	current=j*0.05
+	stim.amp=current
+	//biophysint()
+	run()
+	printf("%f \t N Spikes: %lf\n",stim.amp, apc.n)
+	//save()
+	}
+}
+
+proc value() {
+	valuehd= 9.9999999999999995e-08
+	valuekad= 0.02814452105989701
+}
+
+
+value()
+
+proc def(){ 
+	
+//******AXON************
+cmall=testcell.axon.cm
+gpasax=testcell.axon.g_pas
+epasax=testcell.axon.e_pas
+RaAx=testcell.axon.Ra
+kdr_ax=testcell.axon.gkdrbar_kdr
+nax_ax=testcell.axon.gbar_nax    
+kap_ax=testcell.axon.gkabar_kap
+kmb_ax=testcell.axon.gbar_kmb   
+	
+//******DEND-BASAL************
+cmall=testcell.dend.cm
+gpasdend=testcell.dend.g_pas
+epasdend=testcell.dend.e_pas
+Radend=testcell.dend.Ra
+kdr_allnoax=testcell.dend.gkdrbar_kdr
+na3_dend=testcell.dend.gbar_na3
+kad_alldend=testcell.dend.gkabar_kad
+hd_allnoax=testcell.dend.ghdbar_hdpas 
+can_allnoax=testcell.dend.gcanbar_can
+cal_allnoax=testcell.dend.gcalbar_cal
+cat_allnoax=testcell.dend.gcatbar_cat
+kca_allnoax=testcell.dend.gbar_kca  			
+cagk_allnoax=testcell.dend.gbar_cagk
+
+//******DEND-APICAL************
+cmall=testcell.apic.cm
+gpasapic=testcell.apic.g_pas
+epasapic=testcell.apic.e_pas
+Raapic=testcell.apic.Ra
+kdr_allnoax=testcell.apic.gkdrbar_kdr
+na3_apic=testcell.apic.gbar_na3
+kad_alldend=testcell.apic.gkabar_kad
+hd_allnoax=testcell.apic.ghdbar_hdpas 
+can_allnoax=testcell.apic.gcanbar_can
+cal_allnoax=testcell.apic.gcalbar_cal
+cat_allnoax=testcell.apic.gcatbar_cat
+kca_allnoax=testcell.apic.gbar_kca  			
+cagk_allnoax=testcell.apic.gbar_cagk
+	
+//**********SOMA********
+cmall=testcell.soma.cm
+gpassoma=testcell.soma.g_pas
+epassoma=testcell.soma.e_pas
+Rasoma=testcell.soma.Ra
+kdr_allnoax=testcell.soma.gkdrbar_kdr
+na3_soma=testcell.soma.gbar_na3
+kap_soma=testcell.soma.gkabar_kap 
+kmb_soma=testcell.soma.gbar_kmb
+hd_soma=testcell.soma.ghdbar_hdpas
+can_allnoax=testcell.soma.gcanbar_can
+cal_allnoax=testcell.soma.gcalbar_cal
+cat_allnoax=testcell.soma.gcatbar_cat
+kca_allnoax=testcell.soma.gbar_kca  			
+cagk_allnoax=testcell.soma.gbar_cagk
+
+}
+//********************************************
+
+Vrest=-70
+proc init() {
+
+  t=0
+  
+  finitialize(Vrest)
+
+	forall {
+		v = Vrest
+		if(ismembrane("nax") || ismembrane("na3")) {
+			ena=50
+		}
+		if(ismembrane("kdr") || ismembrane("kap") || ismembrane("kad") || ismembrane("kmb") || ismembrane("kir")) {
+			ek=-90
+		}
+	if(ismembrane("hdpas")) {
+			ehd_hd=-30
+		}
+		
+	}
+
+	finitialize(Vrest)
+	fcurrent()
+	cvode.re_init()
+
+}
+
+
+
+def()
+init() 
+proc biophysint() {
+
+forsec testcell.axonal {  
+	cm = cmall
+	g_pas = gpasax
+    e_pas = epasax
+	Ra = RaAx
+	gkdrbar_kdr = kdr_ax
+	gbar_nax = nax_ax
+	gkabar_kap = kap_ax
+	gbar_kmb=kmb_ax
+}
+
+forsec testcell.basal {
+	cm = cmall
+	g_pas = gpasdend
+	e_pas = epasdend
+    Ra = Radend
+	gkdrbar_kdr = kdr_allnoax
+	gbar_na3 = na3_dend
+	gkabar_kad = kad_alldend
+	ghdbar_hdpas =hd_allnoax
+	gcanbar_can = can_allnoax 
+	gcalbar_cal = cal_allnoax 	
+	gcatbar_cat= cat_allnoax
+	gbar_kca = kca_allnoax
+	gbar_cagk = cagk_allnoax
+}
+
+forsec testcell.apical {
+	cm = cmall
+	g_pas = gpasapic
+	e_pas = epasapic
+    Ra = Raapic
+	gkdrbar_kdr = kdr_allnoax
+	gbar_na3 = na3_apic
+	gkabar_kad = kad_alldend
+	ghdbar_hdpas =hd_allnoax
+	gcanbar_can = can_allnoax 
+	gcalbar_cal = cal_allnoax 	
+	gcatbar_cat= cat_allnoax
+	gbar_kca = kca_allnoax
+	gbar_cagk = cagk_allnoax
+}
+  
+forsec testcell.somatic {
+	cm = cmall
+	Ra = Rasoma
+    g_pas = gpassoma
+	e_pas = epassoma
+	gkdrbar_kdr= kdr_allnoax
+	gbar_na3=na3_soma
+	gkabar_kap=kap_soma
+	gbar_kmb=kmb_soma
+	ghdbar_hdpas=hd_soma
+	gcanbar_can= can_allnoax
+	gcalbar_cal= cal_allnoax
+	gcatbar_cat= cat_allnoax
+	gbar_kca=kca_allnoax
+	gbar_cagk=cagk_allnoax
+}
+  
+  distribute_distance(testcell.apical, "ghdbar_hdpas", "(1. + 3./100. * %.17g)*valuehd")
+  distribute_distance(testcell.apical, "gkabar_kad", "(15./(1. + exp((150-%.17g)/10)))*valuekad")
+  distribute_distance(testcell.basal, "ghdbar_hdpas", "(1. + 3./100. * %.17g)*valuehd")
+  distribute_distance(testcell.basal, "gkabar_kad", "(15./(1. + exp((150-%.17g)/10)))*valuekad")
+  
+}
+  
+
+
+proc rest() {
+testcell.biophys()
+def()
+//biophysint()
+print "reset"
+}
+
+
+access testcell.soma
+
+	
+testcell.soma {
+stim = new IClamp(0.5)
+stim.del=1139.0
+stim.dur=1000
+stim.amp=0.1
+}
+testcell.soma {
+stim2 = new IClamp(0.5)
+stim2.del=0
+stim2.dur=2500
+//stim2.amp=-0.05625
+stim2.amp=-0.08083333333333333
+}
+testcell.soma {
+apc = new APCount(0.5)
+apc.thresh = -5
+v1 = new Vector()
+apc.record(v1)
+}
+
+proc run_N_rev(){
+i=12
+//printf("%s\n",filename)
+for j=1,12{
+	current=i*0.05
+	stim.amp=current
+	//biophysint()
+	run()
+	printf("%f \t N Spikes: %lf\n",stim.amp, apc.n)
+	//save()
+	i=i-1
+	}
+}
+
+proc print_cond(){
+printf("gpasax= %g\n",gpasax)
+printf("gpasdend= %g\n",gpasdend)
+printf("gpassoma= %g\n",gpassoma)
+printf("gpasapic= %g\n",gpasapic)
+printf("epasax= %g\n",epasax)
+printf("epasapic= %g\n",epasapic)
+printf("epassoma= %g\n",epassoma)
+printf("epasdend= %g\n",epasdend)
+printf("kap_ax= %g\n",kap_ax)
+printf("kap_soma= %g\n",kap_soma)
+printf("valuekad= %g\n",valuekad)
+printf("kmb_soma= %g\n",kmb_soma)
+printf("kmb_ax= %g\n",kmb_ax)
+printf("kca_allnoax= %g\n",kca_allnoax)
+printf("cagk_allnoax= %g\n",cagk_allnoax)
+printf("RaAx= %g\n",RaAx)
+printf("Rasoma= %g\n",Rasoma)
+printf("Raapic= %g\n",Raapic)
+printf("Radend= %g\n",Radend)
+printf("nax_ax= %g\n",nax_ax)
+printf("na3_soma= %g\n",na3_soma)
+printf("na3_dend= %g\n",na3_dend)
+printf("na3_apic= %g\n",na3_apic)
+printf("kdr_ax= %g\n",kdr_ax)
+printf("kdr_allnoax= %g\n",kdr_allnoax)
+printf("hd_soma= %g\n",hd_soma)
+printf("valuehd= %g\n",valuehd)
+printf("gcalbar_cal= %g\n",cal_allnoax)
+printf("gcanbar_can= %g\n",cal_allnoax)
+printf("gcatbar_cat= %g\n",cal_allnoax)
+}
+
+
+proc print_cond_table(){
+printf("%g\n",cm)
+printf("%g\n",gpasax)
+printf("%g\n",epasdend)
+printf("%g\n",RaAx)
+printf("%g\n",Rasoma)
+printf("%g\n",Raapic)
+printf("%g\n",Radend)
+printf("%g\n",nax_ax)
+printf("%g\n",na3_soma)
+printf("%g\n",na3_apic)
+printf("%g\n",na3_dend)
+printf("%g\n",kdr_ax)
+printf("%g\n",kdr_allnoax)
+printf("%g\n",kap_ax)
+printf("%g\n",kap_soma)
+printf("%g\n",valuekad)
+printf("%g\n",kmb_soma)
+printf("%g\n",kmb_ax)
+printf("%g\n",hd_soma)
+printf("%g\n",valuehd)
+printf("%g\n",cal_allnoax)
+printf("%g\n",can_allnoax)
+printf("%g\n",cat_allnoax)
+printf("%g\n",kca_allnoax)
+printf("%g\n",cagk_allnoax)
+}
+
+{
+ocbox_ = NumericalMethodPanel[0]
+}
+{object_push(ocbox_)}
+{
+atol_ = 1e-05  CVode[0].atol(atol_)
+restore(301, 1)
+ atoltool_ = new AtolTool()
+    ats("cai", 1e-05)
+    ats("Vector", -1)
+ atoltool_.scales()
+}
+{object_pop()}
+{
+//ocbox_.map("VariableTimeStep", 106, 120, 224.1, 131.4)
+}
+objref ocbox_
+
+
+proc WT23_0p25(){
+
+cmall = 1
+gpasax = 0.00015
+gpassoma = 0.00015
+gpasapic = 0.00015
+gpasdend = 0.00015
+epasax = -63
+epassoma = -63
+epasapic = -63
+epasdend = -63
+RaAx = 50.1772
+Rasoma = 196.769
+Raapic = 288.677
+Radend = 384.508
+nax_ax = 0.08
+na3_soma = 0.04
+na3_apic = 0.025
+na3_dend = 0.02
+kdr_ax = 0.008
+kdr_allnoax = 0.004
+kap_ax = 1e-05
+kap_soma = 1e-05
+valuekad = 1e-05
+kmb_soma = 0.003
+kmb_ax = 0.006
+hd_soma = 1e-07
+valuehd = 1e-07
+cal_allnoax = 1e-06
+can_allnoax = 1e-06
+cat_allnoax = 1e-06
+kca_allnoax = 7e-06
+cagk_allnoax = 7e-06
+
+tha_na3 = -30
+tha_nax = -30
+
+stim2.amp = -0.088
+stim.amp = 0.25
+biophysint()
+run()
+printf("WT 3m %.2f nA \t N Spikes: %d\n",stim.amp, apc.n)
+}
+
+proc WT23_0p5(){
+
+cmall = 1
+gpasax = 0.00015
+gpassoma = 0.00015
+gpasapic = 0.00015
+gpasdend = 0.00015
+epasax = -63
+epassoma = -63
+epasapic = -63
+epasdend = -63
+RaAx = 50.1772
+Rasoma = 196.769
+Raapic = 288.677
+Radend = 384.508
+nax_ax = 0.08
+na3_soma = 0.04
+na3_apic = 0.025
+na3_dend = 0.02
+kdr_ax = 0.008
+kdr_allnoax = 0.004
+kap_ax = 1e-05
+kap_soma = 1e-05
+valuekad = 1e-05
+kmb_soma = 0.003
+kmb_ax = 0.006
+hd_soma = 1e-07
+valuehd = 1e-07
+cal_allnoax = 1e-06
+can_allnoax = 1e-06
+cat_allnoax = 1e-06
+kca_allnoax = 7e-06
+cagk_allnoax = 7e-06
+
+tha_na3 = -30
+tha_nax = -30
+
+stim2.amp = -0.088
+stim.amp = 0.5
+biophysint()
+run()
+printf("WT 3m %.2f nA \t N Spikes: %d\n",stim.amp, apc.n)
+}
+
+proc TG23_0p25(){
+
+cmall = 1
+gpasax = 4.65e-05
+gpassoma = 4.65e-05
+gpasapic = 4.65e-05
+gpasdend = 4.65e-05
+epasax = -50
+epassoma = -50
+epasapic = -50
+epasdend = -50
+RaAx = 50.1772
+Rasoma = 196.769
+Raapic = 288.677
+Radend = 384.508
+nax_ax = 0.08
+na3_soma = 0.04
+na3_apic = 0.025
+na3_dend = 0.02
+kdr_ax = 4.00e-04
+kdr_allnoax = 1.48e-04
+kap_ax = 1e-05
+kap_soma = 1e-05
+valuekad = 1e-05
+kmb_soma = 4.50e-04
+kmb_ax = 8.50e-04
+hd_soma = 1e-07
+valuehd = 1e-07
+cal_allnoax = 1e-06
+can_allnoax = 1e-06
+cat_allnoax = 1e-06
+kca_allnoax = 1e-06
+cagk_allnoax = 5.00e-06
+
+tha_na3 = -20
+tha_nax = -25
+
+stim2.amp = -0.085
+stim.amp = 0.25
+biophysint()
+run()
+printf("TG 3m %.2f nA \t N Spikes: %d\n",stim.amp, apc.n)
+}
+
+proc TG23_0p5(){
+
+cmall = 1
+gpasax = 4.65e-05
+gpassoma = 4.65e-05
+gpasapic = 4.65e-05
+gpasdend = 4.65e-05
+epasax = -50
+epassoma = -50
+epasapic = -50
+epasdend = -50
+RaAx = 50.1772
+Rasoma = 196.769
+Raapic = 288.677
+Radend = 384.508
+nax_ax = 0.08
+na3_soma = 0.04
+na3_apic = 0.025
+na3_dend = 0.02
+kdr_ax = 4.00e-04
+kdr_allnoax = 1.48e-04
+kap_ax = 1e-05
+kap_soma = 1e-05
+valuekad = 1e-05
+kmb_soma = 4.50e-04
+kmb_ax = 8.50e-04
+hd_soma = 1e-07
+valuehd = 1e-07
+cal_allnoax = 1e-06
+can_allnoax = 1e-06
+cat_allnoax = 1e-06
+kca_allnoax = 1e-06
+cagk_allnoax = 5.00e-06
+
+tha_na3 = -20
+tha_nax = -25
+
+stim2.amp = -0.085
+stim.amp = 0.5
+biophysint()
+run()
+printf("TG 3m %.2f nA \t N Spikes: %d\n",stim.amp, apc.n)
+}
+
+
+proc WT68_0p2(){
+
+cmall = 1
+gpasax = 8.80e-05
+gpassoma = 8.80e-05
+gpasapic = 8.80e-05
+gpasdend = 8.80e-05
+epasax = -51
+epassoma = -51
+epasapic = -51
+epasdend = -51
+RaAx = 50.1772
+Rasoma = 196.769
+Raapic = 288.677
+Radend = 384.508
+nax_ax = 0.08
+na3_soma = 0.04
+na3_apic = 0.025
+na3_dend = 0.02
+kdr_ax = 6.00e-03
+kdr_allnoax = 3.70e-04
+kap_ax = 1.00e-06
+kap_soma = 1.00e-06
+valuekad = 1.00e-06
+kmb_soma = 1.00e-04
+kmb_ax = 7.10e-04
+hd_soma = 1e-07
+valuehd = 1e-07
+cal_allnoax = 1e-06
+can_allnoax = 1e-06
+cat_allnoax = 1e-06
+kca_allnoax = 1.50e-04
+cagk_allnoax = 2.00e-05
+
+tha_na3 = -20
+tha_nax = -25
+
+stim2.amp = -0.05625
+stim.amp = 0.2
+biophysint()
+run()
+printf("WT 8m %.2f nA \t N Spikes: %d\n",stim.amp, apc.n)
+}
+
+proc WT68_0p25(){
+
+cmall = 1
+gpasax = 8.80e-05
+gpassoma = 8.80e-05
+gpasapic = 8.80e-05
+gpasdend = 8.80e-05
+epasax = -51
+epassoma = -51
+epasapic = -51
+epasdend = -51
+RaAx = 50.1772
+Rasoma = 196.769
+Raapic = 288.677
+Radend = 384.508
+nax_ax = 0.08
+na3_soma = 0.04
+na3_apic = 0.025
+na3_dend = 0.02
+kdr_ax = 6.00e-03
+kdr_allnoax = 3.70e-04
+kap_ax = 1.00e-06
+kap_soma = 1.00e-06
+valuekad = 1.00e-06
+kmb_soma = 1.00e-04
+kmb_ax = 7.10e-04
+hd_soma = 1e-07
+valuehd = 1e-07
+cal_allnoax = 1e-06
+can_allnoax = 1e-06
+cat_allnoax = 1e-06
+kca_allnoax = 1.50e-04
+cagk_allnoax = 2.00e-05
+
+tha_na3 = -20
+tha_nax = -25
+
+stim2.amp = -0.05625
+stim.amp = 0.25
+biophysint()
+run()
+printf("WT 8m %.2f nA \t N Spikes: %d\n",stim.amp, apc.n)
+}
+
+proc TG68_0p2(){
+
+cmall = 1
+gpasax = 6.60e-05
+gpassoma = 6.60e-05
+gpasapic = 6.60e-05
+gpasdend = 6.60e-05
+epasax = -53.7
+epassoma = -53.7
+epasapic = -53.7
+epasdend = -53.7
+RaAx = 50.1772
+Rasoma = 196.769
+Raapic = 288.677
+Radend = 384.508
+nax_ax = 0.08
+na3_soma = 0.04
+na3_apic = 0.025
+na3_dend = 0.02
+kdr_ax = 4.00e-03
+kdr_allnoax = 3.00e-05
+kap_ax = 1.00e-05
+kap_soma = 1.00e-05
+valuekad = 1.00e-05
+kmb_soma = 5.80e-04
+kmb_ax = 1.16e-03
+hd_soma = 1e-07
+valuehd = 1e-07
+cal_allnoax = 1e-06
+can_allnoax = 1e-06
+cat_allnoax = 1e-06
+kca_allnoax = 2.00e-04
+cagk_allnoax = 5.00e-05
+
+tha_na3 = -20
+tha_nax = -25
+
+stim2.amp = -0.08083333333
+stim.amp = 0.2
+biophysint()
+run()
+printf("TG 8m %.2f nA \t N Spikes: %d\n",stim.amp, apc.n)
+}
+
+proc TG68_0p25(){
+
+cmall = 1
+gpasax = 6.60e-05
+gpassoma = 6.60e-05
+gpasapic = 6.60e-05
+gpasdend = 6.60e-05
+epasax = -53.7
+epassoma = -53.7
+epasapic = -53.7
+epasdend = -53.7
+RaAx = 50.1772
+Rasoma = 196.769
+Raapic = 288.677
+Radend = 384.508
+nax_ax = 0.08
+na3_soma = 0.04
+na3_apic = 0.025
+na3_dend = 0.02
+kdr_ax = 4.00e-03
+kdr_allnoax = 3.00e-05
+kap_ax = 1.00e-05
+kap_soma = 1.00e-05
+valuekad = 1.00e-05
+kmb_soma = 5.80e-04
+kmb_ax = 1.16e-03
+hd_soma = 1e-07
+valuehd = 1e-07
+cal_allnoax = 1e-06
+can_allnoax = 1e-06
+cat_allnoax = 1e-06
+kca_allnoax = 2.00e-04
+cagk_allnoax = 5.00e-05
+
+
+tha_na3 = -20
+tha_nax = -25
+
+stim2.amp = -0.08083333333
+stim.amp = 0.25
+biophysint()
+run()
+printf("TG 8m %.2f nA \t N Spikes: %d\n",stim.amp, apc.n)
+}
+
+
+xpanel("Fig. 5A",1)
+xbutton("WT 3m 0.25nA","WT23_0p25()")
+xbutton("WT 3m 0.5nA","WT23_0p5()")
+xbutton("TG 3m 0.25nA","TG23_0p25()")
+xbutton("TG 3m 0.5nA","TG23_0p5()")
+xpanel(250,252)
+xpanel("Fig. 5B",1)
+xbutton("WT 8m 0.2nA","WT68_0p2()")
+xbutton("WT 8m 0.25nA","WT68_0p25()")
+xbutton("TG 8m 0.2nA","TG68_0p2()")
+xbutton("TG 8m 0.25nA","TG68_0p25()")
+xpanel(250,362)
+//xpanel(528,252)
+
+load_file("ses.ses")
+
+

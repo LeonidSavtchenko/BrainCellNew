@@ -1,0 +1,235 @@
+load_file("nrngui.hoc")
+cvode.active(1)
+
+mid=5
+dist=27
+
+Rm = 28000
+RmDend = Rm/2
+RmSoma = Rm
+RmAx = Rm
+
+Cm    = 1
+CmSoma= Cm
+CmAx  = Cm
+CmDend = Cm*2
+
+RaAll= 150
+RaSoma=150  
+RaAx = 50
+
+Vrest = -65
+gna =  .032
+AXONM = 2
+gkdr = 0.01
+celsius = 34.0  
+KMULT =  0.048
+KMULTP = 0.048
+ghd=0.0005
+
+tstop=70
+
+objref nconp, ncond, net, netp, netd, g, b, c, synp, synd, apc
+strdef marker
+xopen("n160_mod.nrn")             // geometry file
+
+b = new VBox()
+b.intercept(1)
+g = new Graph()
+g.size(0,tstop,-70,-50)
+g.xaxis(1)
+g.label(0.45,0.9,"time (ms)")
+g.label(0.45,0.22,"S1")
+g.mark(33,-66,"O",6,1,1)
+g.exec_menu("10% Zoom out")
+c = new Graph()
+c.size(-35,30,-2,5)
+c.yaxis(3)
+c.exec_menu("10% Zoom out")
+c.beginline(1,2)
+c.line(0,-0.5)
+c.line(0,3)
+c.label(0.18,0.22,"-30")
+c.label(0.52,0.22,"0")
+c.label(0.7,0.22,"18")
+c.label(0.42, 0.1,"tS2 - tS1 (ms)")
+xpanel("",1)
+xbutton("full model (black)", "runf()")
+xbutton("uniform KA (red)", "runa()")
+xbutton("uniform KA and I-h (blue)", "runh()")
+xpanel()
+b.intercept(0)
+b.map()
+
+access soma[5]
+	distance()
+	netp = new NetStim(0.5)
+	netp.number=1
+	netd = new NetStim(0.5)
+	netd.number=1
+	apc = new APCount(0.5)
+	apc.thresh = 0
+
+apical[mid] {
+print distance(0.25)
+	synp = new Exp2Syn(0.25)
+	synp.e=0
+	synp.tau1=3
+	synp.tau2=3
+}	
+
+apical[dist] {
+print distance(0.5)
+	synd = new Exp2Syn(0.5)
+	synd.e=0
+	synd.tau1=3
+	synd.tau2=3
+}
+
+axon[1] {
+                insert nax    gbar_nax=gna * AXONM
+                insert kdr gkdrbar_kdr=gkdr
+                insert pas g_pas = 1/RmAx Ra=RaAx cm=CmAx
+                insert kap gkabar_kap = KMULTP*0.2
+}
+
+axon[0] {   
+                insert nax  gbar_nax=gna * AXONM
+                insert kdr  gkdrbar_kdr=gkdr 
+                insert pas g_pas = 1/RmAx Ra=RaAx cm=CmAx
+                insert kap gkabar_kap = KMULTP*0.2
+}
+
+for i=0,NumSoma-1 soma[i] {   
+		insert hd ghdbar=ghd
+			vhalfl_hd=-82
+                insert na3  gbar_na3=gna     
+                insert kdr gkdrbar_kdr=gkdr
+		ar2_na3=0.8
+                insert kap gkabar_kap = KMULTP
+                insert pas g_pas = 1/RmSoma Ra=RaSoma cm=CmSoma
+}
+
+for i=0,NumBasal-1 basal[i] {
+                insert na3    gbar_na3=gna   
+                insert kdr gkdrbar_kdr=gkdr 
+		ar2_na3=1
+                insert kap gkabar_kap=KMULTP
+                insert pas g_pas = 1/RmDend Ra=RaAll cm=CmDend
+}
+for i=0,NumApical-1 apical[i] {
+		insert pas Ra=RaAll g_pas = 1/RmDend cm=CmDend
+		if (diam>0.5 && distance(0.5)<500) {
+		insert hd ghdbar_hd=ghd
+                insert na3 
+		ar2_na3=0.7
+		gbar_na3=gna
+                insert kdr 
+		gkdrbar_kdr=gkdr
+		insert kap
+		insert kad
+		gkabar_kap=0
+		gkabar_kad=0
+		}
+}
+
+
+	nconp= new NetCon(netp,synp,0.5,0,3.6e-3) 
+	ncond= new NetCon(netd,synd,0.5,0,3.5e-3) 
+
+proc init() {
+	t=0
+	membs = Vrest
+	for i=0,NumApical-1 apical[i] {
+		if (diam>0.5 && distance(0.5)<500) {
+		for (x){ xdist = distance(x)
+                if (xdist>500) {xdist=500}
+		if (hflag==0) {ghdbar_hd(x) = ghd*(1+3*xdist/100)} else {ghdbar_hd(x) = ghd}
+                if (xdist > 100){
+			vhalfl_hd(x)=-90
+		if (aflag==0) {gkabar_kad(x) = KMULT*(1+xdist/100)} else {gkabar_kad(x) = KMULT}
+                } else {
+			vhalfl_hd(x)=-82
+		if (aflag==0) {gkabar_kap(x) = KMULTP*(1+xdist/100)} else {gkabar_kap(x) = KMULTP}
+                	}
+				}
+	}
+	}
+
+        forall {
+        v=Vrest
+        if (ismembrane("nax") || ismembrane("na3")) {ena=55}
+        if (ismembrane("kdr") || ismembrane("kap") || ismembrane("kad")) {ek=-90}
+        if (ismembrane("hd") ) {ehd_hd=-30}
+	}
+	finitialize(v)
+        fcurrent()
+
+        forall {
+	for (x) {
+	e_pas(x)=Vrest
+	if (ismembrane("hd")) {e_pas(x)=e_pas(x)+i_hd(x)/g_pas(x)}
+	if (ismembrane("kad")||ismembrane("kap")){e_pas(x)=e_pas(x)+(ina(x)+ik(x))/g_pas(x)}
+		}
+	}
+	cvode.re_init()
+	access soma[5]
+	g.begin()
+	g.plot(t)
+}
+
+proc step() {
+	fadvance()
+	g.plot(t)
+}
+
+proc run() {
+	init()
+	while(t<tstop) { step()}
+	g.flush()
+	doNotify()
+}
+
+proc runf() {
+	c.begin()
+	c.exec_menu("Keep Lines")
+	aflag=0
+	hflag=0
+	color=1
+	loop(3,54, 1)
+}
+
+proc runa() {
+	c.begin()
+	c.exec_menu("Keep Lines")
+	aflag=1
+	hflag=0
+	color=2
+	loop(3,54, 1.5)
+}
+
+
+proc runh() {
+	c.begin()
+	c.exec_menu("Keep Lines")
+	aflag=1
+	hflag=1
+	color=3
+	loop(3,54, 2)
+}
+
+
+proc loop() {
+	c.color(color)
+	g.addvar("soma[5].v(0)",color,1, 2*tstop,0,2)
+	netd.start=$1
+	netp.start=33
+		while (netd.start<$2) {
+		run()
+		if (apc.n==0) {sprint(marker,"o")} else {sprint(marker,"O")}
+		c.mark(netd.start-netp.start,$3,marker,10,color,1)
+		doNotify()
+		netd.start=netd.start+3
+	}
+}
+

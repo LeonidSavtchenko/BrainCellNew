@@ -1,0 +1,4 @@
+load_file("nrngui.hoc")
+load_file("purkinje_reduced_PPR model.hoc")
+load_file("purkinje_reduced_PPR model.ses")
+run()
