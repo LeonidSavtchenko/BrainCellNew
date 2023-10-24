@@ -108,7 +108,7 @@ proc calculateGeometricalParams() {local i, distanceToCenter, SectionsInside, Vo
 		//	f1.printf("\n")
         vecDendrDist.append(sqrt(x3d(1)^2+ y3d(1)^2))
     }
-//	f1.close()
+//	closeFileAndShowCompleteMsg(f1)
 }
 
 // Plots geometrical parameters and show them.
@@ -138,12 +138,17 @@ proc printGeometricalParamsToFile() { local i
 
 // Calculates and shows parameters of current geometry.
 proc GeometricalParameters() { localobj fileForData
+    strdef outTxtFileRelPathName
+    
+    outTxtFileRelPathName = "Text results/VolumFraction.txt"
+    
     calculateGeometricalParams()
-
+    
     fileForData = new File()
-    fileForData.aopen("Text results/VolumFraction.txt")
+    fileForData.aopen(outTxtFileRelPathName)
     printGeometricalParamsToFile(fileForData)
-    fileForData.close()
-
+    
     plotGeometricalParams()
+    
+    closeFileAndShowCompleteMsg(fileForData)
 }

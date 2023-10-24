@@ -12,7 +12,7 @@ begintemplate ManageAndRunWidget
     external isAstrocyteOrNeuron
     external mechManagerMainWidget, synManagerMainWidget, ecsManagerMainWidget, exportManagerMainWidget
     external mmAllComps, smAllSyns, synGroup
-    external mwh, mmcrHelper
+    external mwh, mmIcrHelper
     external inhomAndStochLibrary
     external dismissIfNotNil, codeContractViolation
     
@@ -57,7 +57,7 @@ begintemplate ManageAndRunWidget
             return
         }
         
-        mmcrHelper.rescanNow()
+        mmIcrHelper.rescanNow()
         
         if (mechManagerMainWidget == nil) {
             execute("mechManagerMainWidget = new MechManagerMainWidget()", this)
@@ -128,7 +128,7 @@ begintemplate ManageAndRunWidget
         dismissManagers()
         
         enumRescanType = 4 - isReseedOrUpdate
-        mmcrHelper.scheduleRescan(enumRescanType)
+        mmIcrHelper.scheduleRescan(enumRescanType)
     }
     
     proc dismissHandler() {

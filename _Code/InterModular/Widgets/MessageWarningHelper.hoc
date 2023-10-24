@@ -36,16 +36,26 @@ begintemplate MessageWarningHelper
     // Show the message box with "OK" button OR intercept all message lines and the title to show them later
     // Restriction: Cannot be called in the process of construction of a panel (applied if !isIntMode)
     // $si, i from 1 to numarg()-1 - All lines of the message
+    // $oi - (List of String-s) The lines of the message to be shown as a bulleted list
     // $si, i=numarg() - The widget title
-    proc showMessageBox() { local numArg, i
+    proc showMessageBox() { local numArg, i, argType
+        
         numArg = numarg()
         
         if (isIntMode) {
             if (intMsgLines.count() != 0) {
                 intMsgLines.append(new String("--------------------"))
             }
+            // !!! keep in sync with similar cycle below
             for i = 1, numArg - 1 {
-                intMsgLines.append(new String($si))
+                argType = argtype(i)
+                if (argType == 2) {         // 2: strdef
+                    intMsgLines.append(new String($si))
+                } else if (argType == 1) {  // 1: objref
+                    appendBulletedList(intMsgLines, $oi)
+                } else {
+                    codeContractViolation()
+                }
             }
             lastIntMsgTitle = $si       // here i == numArg
             numInts += 1
@@ -58,8 +68,16 @@ begintemplate MessageWarningHelper
         msgWarnBox.intercept(1)
         {
             xpanel("")
+            // !!! keep in sync with similar cycle above
             for i = 1, numArg - 1 {
-                xlabel($si)
+                argType = argtype(i)
+                if (argType == 2) {         // 2: strdef
+                    xlabel($si)
+                } else if (argType == 1) {  // 1: objref
+                    showBulletedList($oi)
+                } else {
+                    codeContractViolation()
+                }
             }
             xbutton("OK", "dismissHandler()")
             xpanel()
@@ -73,8 +91,7 @@ begintemplate MessageWarningHelper
     // Restriction: Cannot be called in the process of construction of a panel (applied if !isIntMode)
     // $si - The lines of the warning
     // $oi - (List of String-s) The lines of the warning to be shown as a bulleted list
-    proc showWarningBox() { local numArg, i, argType localobj listOfStrs, strObj
-        strdef str
+    proc showWarningBox() { local numArg, i, argType
         
         numArg = numarg()
         
@@ -88,11 +105,7 @@ begintemplate MessageWarningHelper
                 if (argType == 2) {         // 2: strdef
                     intWarnLines.append(new String($si))
                 } else if (argType == 1) {  // 1: objref
-                    listOfStrs = $oi
-                    for eachItemInList(strObj, listOfStrs) {
-                        sprint(str, "    * %s", strObj.s)
-                        intWarnLines.append(new String(str))
-                    }
+                    appendBulletedList(intWarnLines, $oi)
                 } else {
                     codeContractViolation()
                 }
@@ -113,11 +126,7 @@ begintemplate MessageWarningHelper
                 if (argType == 2) {         // 2: strdef
                     xlabel($si)
                 } else if (argType == 1) {  // 1: objref
-                    listOfStrs = $oi
-                    for eachItemInList(strObj, listOfStrs) {
-                        sprint(str, "    * %s", strObj.s)
-                        xlabel(str)
-                    }
+                    showBulletedList($oi)
                 } else {
                     codeContractViolation()
                 }
@@ -247,6 +256,29 @@ begintemplate MessageWarningHelper
     
     // All next staff is private
     
+    
+    proc appendBulletedList() { localobj intLines, listOfStrs, strObj
+        strdef str
+        
+        intLines = $o1
+        listOfStrs = $o2
+        
+        for eachItemInList(strObj, listOfStrs) {
+            sprint(str, "    * %s", strObj.s)
+            intLines.append(new String(str))
+        }
+    }
+    
+    proc showBulletedList() { localobj listOfStrs, strObj
+        strdef str
+        
+        listOfStrs = $o1
+        
+        for eachItemInList(strObj, listOfStrs) {
+            sprint(str, "    * %s", strObj.s)
+            xlabel(str)
+        }
+    }
     
     proc dumpAllIntLines() { local isOnlyOneWarnOrMsg localobj intLines, line
         strdef name, text

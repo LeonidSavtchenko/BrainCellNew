@@ -11,7 +11,7 @@ begintemplate AltRunControlWidget
     external alt_stdinit, alt_run, alt_continuerun, alt_steprun
     
     external inhomAndStochApplicator, inhomAndStochLibrary
-    external mmcrHelper
+    external mmIcrHelper
     external printNotImplementedMsgAndRaiseError
     
     objref mainBox
@@ -182,8 +182,8 @@ begintemplate AltRunControlWidget
     }
     
     proc rescanBiophysCompsIfNeeded() { localobj nil
-        if (mmcrHelper != nil) {
-            mmcrHelper.makeSureMechCompsCreatedOrImportedAndRescanned()
+        if (mmIcrHelper != nil) {
+            mmIcrHelper.makeSureMechCompsCreatedOrImportedAndRescanned()
         }
     }
     

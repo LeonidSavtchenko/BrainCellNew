@@ -82,7 +82,7 @@ class GeneratorsForMainHocFile:
         # The instances of the next reduced templates from "InterModular" folder are created
         # only in standalone mode; otherwise we just reuse the instances created earlier in the main program
         
-        newLines = self._insertAllLinesFromReducedVersionFile('InterModular\\ReducedBasicMath.hoc')     # Keep in sync with hoc:loadHocFile and hoc:loadNanoHocFile
+        newLines = self._insertAllLinesFromReducedVersionFile('InterModular\\ReducedBasicMath.hoc')     # Keep in sync with hoc:loadNanoHocFile
         lines.extend(newLines)
         
         if hocObj.exportOptions.isExportAltRunControl():
@@ -119,23 +119,12 @@ class GeneratorsForMainHocFile:
     def getAllCreateStatementsExceptNanogeometry(self):
         # output: a string like 'create name1, name2[123], name3[456][7], ...'
         
-        # Get all names (base geometry, nanogeometry, extracellular source etc.)
-        # !! it's not optimal because:
-        # (1) there is a lot of nanogeometry sections with known names (no need to use slow "forall")
-        # (2) we already had all base geometry names at some point before (in Import module)
-        allNames = hocObj.getAllSectionNames()      # !! for nanogeometry it simply returns AstrocyteNanoBranch, but the full name is AstrocyteNanoBranch[1].LargeGlia[2]
-        
-        if len(allNames) == 0:
-            codeContractViolation()
+        secNames = getAllSectionNamesExceptNanogeometry()
         
         createdNames = []
-        for name in allNames:
-            createdName = name.s
+        for secName in secNames:
+            createdName = secName.s
             
-            # !! update this logic once I correct/replace obfunc getAllSectionNames which produces allNames
-            if createdName == 'AstrocyteNanoBranch' or createdName == 'NeuronNanoBranch':   # !! hardcode
-                continue
-                
             secObj = self._getHocVar(createdName)
             while True:
                 isSecObjOrArray = self._isSecObjOrArray(secObj)
@@ -281,7 +270,7 @@ class GeneratorsForMainHocFile:
         if hocObj.exportOptions.isExportAnyInhomSynModels() or hocObj.exportOptions.isExportAnyStochFuncs():
             names.append('mcu')
         if hocObj.exportOptions.isExportAltRunControl():
-            names.append('mmcrHelper')
+            names.append('mmIcrHelper')
         line = 'objref ' + ', '.join(names)
         lines.append(line)
         
@@ -437,7 +426,7 @@ class GeneratorsForMainHocFile:
         
         # Create number of obfunc-s to prepare "list_ref" for each comp
         # !! BUG: In rare cases, an error "procedure too big" may occur when user loads the exported file.
-        #         This error takes place while sourcing one of obfunc-s named "getListOfSecRefsFor*Comp".
+        #         This error takes place when sourcing one of obfunc-s named "getListOfSecRefsFor*Comp".
         #         The root cause is that the base geometry file imported earlier
         #         created so many sections on the top level, that we cannot create now in the scope of just one obfunc.
         #         To fix this error, we'll have to init all list_ref-s on the top level rather than in the obfunc-s.
@@ -722,6 +711,12 @@ class GeneratorsForMainHocFile:
         
     def _getHocVar(self, varName):
         return getattr(hocObj, varName)
+        """ !!!
+        if '.' not in varName:
+            return getattr(hocObj, varName)
+        else:
+            return eval(f'hocObj.{varName}')    # !!! for the sections owned by custom templates
+        """
         
     def _generateAssignment(self, varName, isIntegerOrDouble):
         value = self._getHocVar(varName)

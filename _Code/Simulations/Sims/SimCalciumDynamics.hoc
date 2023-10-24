@@ -1,12 +1,12 @@
 
-{ load_file("CalciumParameters.hoc") }
+{ load_file("Utils/CalciumParameters.hoc") }
 
 begintemplate SimCalciumDynamics
     
     public show, advance, dismissHandler
     public biophysJsonFileNameOrEmpty, isCustomProcAdvance
     
-    external showCaParameters
+    external showCaParameters, closeFileAndShowCompleteMsg
     external vBoxCadifusParams
     external run, addplot
     external tstop
@@ -17,6 +17,8 @@ begintemplate SimCalciumDynamics
     
     strdef biophysJsonFileNameOrEmpty
     isCustomProcAdvance = -1
+    
+    strdef outTxtFileRelPathName
     
     // UI
     objref vBoxCalciumDynamics, vBoxPlotShapeCai, vBoxGraphDendrites, plotShapeCai, graphDendrites
@@ -35,6 +37,8 @@ begintemplate SimCalciumDynamics
     proc init() {
         biophysJsonFileNameOrEmpty = "SimCalciumDynamics.json"
         isCustomProcAdvance = 1
+        
+        outTxtFileRelPathName = "Text results/Cadynamics.txt"
         
         TotalNUmberGapJunction = 50
         objref inputSt[TotalNUmberGapJunction+2], StimTrigger_SimCalciumDynamics[TotalNUmberGapJunction+2], NetInput1_SimCalciumDynamics[TotalNUmberGapJunction+2]
@@ -59,7 +63,7 @@ begintemplate SimCalciumDynamics
             // !!! this is required when user uses RunControl or AltRunControl for the simulation;
             //     unfortunately, in this case user will have to click "Save results" button manually
             //     because otherwise it's not guaranteed that the last lines are flushed to the file
-            fileCalciumTime.aopen("Text results/Cadynamics.txt")
+            fileCalciumTime.aopen(outTxtFileRelPathName)
         }
         fileCalciumTime.printf("%-6.5g\t%-6.5g\t%-6.5g\n", t, dendrite_ref.o(ActiveDendrite1).sec.cai(0.5), dendrite_ref.o(ActiveDendrite2).sec.cai(0.5))
         
@@ -104,7 +108,7 @@ begintemplate SimCalciumDynamics
         // Remove point processes after simulation
         objref inputSt[TotalNUmberGapJunction+2], StimTrigger_SimCalciumDynamics[TotalNUmberGapJunction+2], NetInput1_SimCalciumDynamics[TotalNUmberGapJunction+2]
         
-        fileCalciumTime.close()
+        closeFileAndShowCompleteMsg(fileCalciumTime)
         */
     }
     
@@ -185,7 +189,7 @@ begintemplate SimCalciumDynamics
     // Runs Calcium Simulation.
     proc runCaDynamics() {
         fileCalciumTime = new File()
-        fileCalciumTime.aopen("Text results/Cadynamics.txt")
+        fileCalciumTime.aopen(outTxtFileRelPathName)
         
         stimulCalcium(BasicStimulus, Interval, ECaresting, Tau1St, Tau2St, NumberStim,Noise1_NoNoise0, NoiseCaBegin, TotalNUmberGapJunction, ActiveDendrite1, ActiveDendrite2)
         run()
@@ -193,7 +197,7 @@ begintemplate SimCalciumDynamics
         // Remove point processes after simulation
         objref inputSt[TotalNUmberGapJunction+2], StimTrigger_SimCalciumDynamics[TotalNUmberGapJunction+2], NetInput1_SimCalciumDynamics[TotalNUmberGapJunction+2]
         
-        fileCalciumTime.close()
+        closeFileAndShowCompleteMsg(fileCalciumTime)
     }
     
     // Sets initial UI and simulation params.
@@ -276,7 +280,7 @@ begintemplate SimCalciumDynamics
             xbutton("Run simulation", "runCaDynamics()")
             // !!! instead of this button, maybe use a Timer with e.g. 1 sec interval to check if simulation is running and, if not, close the file;
             //     alternatively, we'll have to stick to AltRunControl and update it's code to close this file
-            xbutton("Save results*", "fileCalciumTime.close()")
+            xbutton("Save results*", "closeFileAndShowCompleteMsg(fileCalciumTime)")
             xlabel("* If you used RunControl or AltRunControl for the simulation,")
             xlabel("   then click this button once stopped")
             xpanel()

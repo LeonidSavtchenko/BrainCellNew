@@ -27,3 +27,11 @@ iterator eachPointInGrid() { local minValue, maxValue, numPts, step, idx
         $&1 += step     // !! "$&1 = minValue + zero_based_idx * step" would be more accurate, but slower
     }
 }
+
+proc closeFileAndShowCompleteMsg() { localobj outTxtFile
+    strdef msg
+    outTxtFile = $o1
+    sprint(msg, "The results were saved to \"%s%s\"", getcwd(), outTxtFile.getname())
+    outTxtFile.close()
+    mwh.showMessageBox(msg, "Complete")
+}

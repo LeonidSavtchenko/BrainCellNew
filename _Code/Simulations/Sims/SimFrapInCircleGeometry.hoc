@@ -28,7 +28,7 @@ begintemplate SimFrapInCircleGeometry
     public show, dismissHandler
     public biophysJsonFileNameOrEmpty, isCustomProcAdvance
     
-    external setInitialCircleConcentration
+    external setInitialCircleConcentration, closeFileAndShowCompleteMsg
     external run
     external tstop
     external removeItemFromList, unmapIfNotNil
@@ -38,6 +38,8 @@ begintemplate SimFrapInCircleGeometry
     
     strdef biophysJsonFileNameOrEmpty
     isCustomProcAdvance = -1
+    
+    strdef outTxtFileRelPathName
     
     // UI
     objref hBoxFrapCircle, plotShapeFrapioniCircle
@@ -49,6 +51,8 @@ begintemplate SimFrapInCircleGeometry
     proc init() {
         biophysJsonFileNameOrEmpty = ""
         isCustomProcAdvance = 0
+        
+        outTxtFileRelPathName = "Text results/CircularFrapAverage.txt"
         
         randomFrapCircle = rngUtils.getFor_frapCircle()
     }
@@ -65,7 +69,7 @@ begintemplate SimFrapInCircleGeometry
         unmapIfNotNil(hBoxFrapCircle)
         
         /* !!!
-        fileFrapCircle.close()
+        closeFileAndShowCompleteMsg(fileFrapCircle)
         */
     }
     
@@ -101,7 +105,7 @@ begintemplate SimFrapInCircleGeometry
     // $1 - Number of runs.
     proc runFrapCircle() { local i localobj fileFrapCircle, frapCircleSectionsList
         fileFrapCircle = new File()
-        fileFrapCircle.aopen("Text results/CircularFrapAverage.txt")
+        fileFrapCircle.aopen(outTxtFileRelPathName)
         fileFrapCircle.printf("Distance\tFrapRatio\tFrapCon\t\tFrapBasic\n")
         
         for i = 1, $1 {
@@ -117,7 +121,7 @@ begintemplate SimFrapInCircleGeometry
             frapCenterY = randomFrapCircle.uniform(-30, 30) // um
         }
         
-        fileFrapCircle.close()
+        closeFileAndShowCompleteMsg(fileFrapCircle)
     }
     
     // Sets initial UI and simulation params.

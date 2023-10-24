@@ -14,6 +14,16 @@ proc oneZeroToYesNo() { local oneOrZero
     }
 }
 
+// !!! not intermodular actually
+proc oneZeroToEnabledDisabled() { local oneOrZero
+    oneOrZero = $1
+    if (oneOrZero) {
+        $s2 = "ENABLED"
+    } else {
+        $s2 = "DISABLED"
+    }
+}
+
 proc createEmptyPanel() { local numArg, numLabels, labelIdx
     numArg = numarg()
     if (numArg == 0) {

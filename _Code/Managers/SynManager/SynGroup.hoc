@@ -15,8 +15,8 @@ begintemplate SynGroup
     
     external synManagerMainWidget
     external smAllSyns, smAllComps, nanoProximal_ref, nanoDistal_ref
-    external mwh, mth, math, mcu, seh, rngUtils, mmcrHelper
-    external capDiam, stringEmpty, stringsEqual, codeContractViolation
+    external mwh, mth, math, mcu, seh, rngUtils, mmIcrHelper
+    external isDisconnectedDistance, capDiam, stringEmpty, stringsEqual, codeContractViolation
     external eachItemInList
     external enumSynCompIdxs, smEnumSynLoc, smSynLocP
     external spineNeckDiamCache, inhomAndStochLibrary
@@ -87,7 +87,7 @@ begintemplate SynGroup
         isDisconnected = 0
         for eachItemInList(syn, smAllSyns) {
             dist = syn.dist
-            if (dist == 1e20) { // NEURON docs say: If a continuous path does not exist the return value is 1e20
+            if (isDisconnectedDistance(dist)) {
                 isDisconnected = 1
                 break
             }
@@ -147,8 +147,8 @@ begintemplate SynGroup
         
         synManagerMainWidget.onSynLocChangedHandler(distMin, distMax, isReviewAfterApply)
         
-        if (mmcrHelper != nil) {    // !!! can be nil in tests
-            mmcrHelper.scheduleRescan(5)
+        if (mmIcrHelper != nil) {   // !!! can be nil in tests
+            mmIcrHelper.scheduleRescan(5)
         }
     }
     

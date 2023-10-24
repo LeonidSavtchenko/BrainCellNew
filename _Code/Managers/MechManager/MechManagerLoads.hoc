@@ -16,4 +16,4 @@
 
 { load_file("Widgets/MechManagerMainWidget.hoc") }
 
-{ load_file("MechCreateAndRescanHelper.hoc") }
+{ load_file("MechCompImportCreateRescan/MechCompImportCreateRescanHelper.hoc") }

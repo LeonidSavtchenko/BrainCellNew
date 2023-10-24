@@ -3,20 +3,20 @@ begintemplate RoadmapWidget
 
     public show
     
-    external isBaseOrNanoStart, isAstrocyteOrNeuron, isExternalSimStart
+    external isAstrocyteOrNeuron, isBaseOrNanoStart, isExternalSimStart
     external mwh
     external roadmapChosenHandler
     
-    objref mainBox, hintDeck, astrocyteOrNeuronDeck
+    objref mainBox, astrocyteOrNeuronDeck, hintDeck
     
     enumRoadmap = -1
     
     
     proc init() {
+        isAstrocyteOrNeuron = 1
         enumRoadmap = 0             //
         isBaseOrNanoStart = 1       // Keep these 3 in sync
         isExternalSimStart = 0      //
-        isAstrocyteOrNeuron = 1
     }
     
     proc show() { localobj hBox
@@ -26,51 +26,13 @@ begintemplate RoadmapWidget
             xpanel("")
             xlabel("Welcome to BrainCell program!")
             xpanel()
-            hBox = new HBox()
-            hBox.intercept(1)
-            {
-                xpanel("")
-                xlabel("Please choose the input file type:")
-                xlabel("")
-                xradiobutton("Base geometry", "roadmapChangedHandler(0)", enumRoadmap == 0)
-                xradiobutton("Nano geometry", "roadmapChangedHandler(1)", enumRoadmap == 1)
-                xradiobutton("External simulation", "roadmapChangedHandler(2)", enumRoadmap == 2)
-                xpanel()
-                hintDeck = new Deck()
-                hintDeck.intercept(1)
-                {
-                    xpanel("")
-                    xlabel("Use this option when you have a base geometry file")
-                    xlabel("(HOC, SWC, ZIP downloaded from NeuroMorpho.org etc.)")
-                    xlabel("or a bit more advanced HOC file with biophysics or even simulation")
-                    xlabel("(e.g. downloaded from ModelDB.science)")
-                    xlabel("but only if it DOES NOT use its own library \"nrnmech.dll\".")
-                    xbutton("More info", "moreInfoHandler(0)")
-                    xpanel()
-                    xpanel("")
-                    xlabel("Use this option when you have a HOC file")
-                    xlabel("exported by BrainCell program earlier.")
-                    xpanel()
-                    xpanel("")
-                    xlabel("Use this option when you have some advanced HOC file")
-                    xlabel("with biophysics or simulation (e.g. downloaded from ModelDB.science)")
-                    xlabel("if it DOES use its own library \"nrnmech.dll\".")
-                    xbutton("More info", "moreInfoHandler(1)")
-                    xpanel()
-                }
-                hintDeck.intercept(0)
-                hintDeck.map()
-                // hintDeck.flip_to(*)              // Will be done below in roadmapChangedHandler
-            }
-            hBox.intercept(0)
-            hBox.map()
             astrocyteOrNeuronDeck = new Deck()
             astrocyteOrNeuronDeck.intercept(1)
             {
                 xpanel("")
                 xpanel()
                 xpanel("")
-                xlabel("Please choose type of the cell that will be imported and simulated:")
+                xlabel("Please choose a type of the cell that will be imported and simulated:")
                 xradiobutton("Astrocyte", "isAstrocyteOrNeuron = 1", isAstrocyteOrNeuron)
                 xradiobutton("Neuron", "isAstrocyteOrNeuron = 0", !isAstrocyteOrNeuron)
                 xlabel("")
@@ -79,6 +41,46 @@ begintemplate RoadmapWidget
             astrocyteOrNeuronDeck.intercept(0)
             astrocyteOrNeuronDeck.map()
             // astrocyteOrNeuronDeck.flip_to(*)     // Will be done below in roadmapChangedHandler
+            hBox = new HBox()
+            hBox.intercept(1)
+            {
+                xpanel("")
+                xlabel("Please choose the input file type:")
+                xlabel("")
+                xradiobutton("Base Geometry File", "roadmapChangedHandler(0)", enumRoadmap == 0)
+                xradiobutton("BrainCell Export", "roadmapChangedHandler(1)", enumRoadmap == 1)
+                xradiobutton("Advanced HOC File", "roadmapChangedHandler(2)", enumRoadmap == 2)
+                xpanel()
+                hintDeck = new Deck()
+                hintDeck.intercept(1)
+                {
+                    xpanel("")
+                    xlabel("Option 1: Base Geometry File")
+                    xlabel("Select this option if you have a base geometry file")
+                    xlabel("such as HOC, SWC, or ZIP downloaded from NeuroMorpho.org, etc.")
+                    xlabel("or an advanced HOC file with biophysics or simulations.")
+                    xlabel("Make sure it does NOT use its own library \"nrnmech.dll\".")
+                    xbutton("More Info", "moreInfoHandler(0)")
+                    xpanel()
+                    xpanel("")
+                    xlabel("Option 2: BrainCell Export")
+                    xlabel("If you have an HOC file previously exported by the BrainCell program,")
+                    xlabel("use this option to load it.")
+                    xpanel()
+                    xpanel("")
+                    xlabel("Option 3: Advanced HOC File")
+                    xlabel("Select this option if you have an advanced HOC file")
+                    xlabel("with biophysics or simulations, e.g. downloaded from ModelDB.science,")
+                    xlabel("and it does use its own library \"nrnmech.dll\".")
+                    xbutton("More Info", "moreInfoHandler(1)")
+                    xpanel()
+                }
+                hintDeck.intercept(0)
+                hintDeck.map()
+                // hintDeck.flip_to(*)              // Will be done below in roadmapChangedHandler
+            }
+            hBox.intercept(0)
+            hBox.map()
             xpanel("")
             xbutton("Next", "nextHandler()")
             xpanel()
@@ -96,12 +98,12 @@ begintemplate RoadmapWidget
     proc roadmapChangedHandler() {
         enumRoadmap = $1
         
-        hintDeck.flip_to(enumRoadmap)
         isBaseOrNanoStart = (enumRoadmap != 1)
         astrocyteOrNeuronDeck.flip_to(isBaseOrNanoStart)
         if (!isBaseOrNanoStart) {
             isAstrocyteOrNeuron = -1
         }
+        hintDeck.flip_to(enumRoadmap)
         isExternalSimStart = (enumRoadmap == 2)
     }
     
@@ -110,17 +112,22 @@ begintemplate RoadmapWidget
         
         _isExternalSimStart = $1
         
-        line1 = "* We expect that the external simulation doesn't start immediately, but rather shows a button like \"Run\"."
-        line2 = "* You need to prepare a new DLL merging external MOD files with our ones (we'll have a helper PS1-script for this);"
-        line3 = "   this DLL file should be placed in the same folder with the simulation entry point HOC file."
-        line4 = "* After the import, we seed the nanobranches and (in case of neuron cell type) the synapses,"
-        line5 = "   insert \"capacitance\" and \"pas\", edit \"Ra\" and \"nseg\" etc."
-        // !!!!!!! maybe we don't need to insert "capacitance" and "pas", edit "Ra" and "nseg" etc. in the case when we start with external NEURON simulation
+        line1 = "* You need to prepare a new DLL merging external MOD files with our ones (we'll have a helper PS1-script for this);"
+        // !!!!!!! don't forget to create this helper PS1-script
+        line2 = "   this DLL file should be placed in the same folder with the simulation entry point HOC file."
+        line3 = "* We expect that the external simulation doesn't start immediately, but rather waits for a button like \"Run\"."
+        line4 = "* After the import, we seed the nanobranches and (in case of neuron cell type) the synapses%s"
+        if (!_isExternalSimStart) {
+            sprint(line4, line4, ",")
+        } else {
+            sprint(line4, line4, ".")
+        }
+        line5 = "   insert \"capacitance\" and \"pas\", edit \"Ra\" and \"nseg\", set \"celsius\" and \"v_init\" etc."
         title = "Start with external NEURON simulation"
         if (!_isExternalSimStart) {
-            mwh.showMessageBox(line1, line4, line5, title)
+            mwh.showMessageBox(line3, line4, line5, title)
         } else {
-            mwh.showMessageBox(line1, line2, line3, line4, line5, title)
+            mwh.showMessageBox(line1, line2, line3, line4, title)
         }
     }
     

@@ -23,7 +23,7 @@ proc searchCycle() { local isStrongMatching, expNameMarkerIdx, isAnyMatch, actNa
                 isAnyMatch = 1
             }
         }
-        if (isAnyMatch) {
+        if (isAnyMatch && !isStrongMatching) {
             break
         }
     }
@@ -58,19 +58,14 @@ func chooseDefaultSelectedNamesForCompartments() { local numNames, noGuessForSom
     // Reasonable names for soma
     somaStrongNameMarkersLowerCase = new List()
     somaStrongNameMarkersLowerCase.append(new String("soma"))
-    somaStrongNameMarkersLowerCase.append(new String("somata"))
-    somaStrongNameMarkersLowerCase.append(new String("somas"))
     
     searchCycle(allNamesLowerCase, somaStrongNameMarkersLowerCase, defaultSomaNameIdxs, 1)
     
     // Reasonable names for dendrites
     dendriteStrongNameMarkersLowerCase = new List()
-    dendriteStrongNameMarkersLowerCase.append(new String("dendrite"))
-    dendriteStrongNameMarkersLowerCase.append(new String("dendron"))
-    dendriteStrongNameMarkersLowerCase.append(new String("dendrites"))
-    dendriteStrongNameMarkersLowerCase.append(new String("dendrons"))
     dendriteStrongNameMarkersLowerCase.append(new String("dend"))
-    dendriteStrongNameMarkersLowerCase.append(new String("dends"))
+    dendriteStrongNameMarkersLowerCase.append(new String("apic"))
+    dendriteStrongNameMarkersLowerCase.append(new String("basal"))
     
     searchCycle(allNamesLowerCase, dendriteStrongNameMarkersLowerCase, defaultDendriteNameIdxs, 1)
     
@@ -78,9 +73,6 @@ func chooseDefaultSelectedNamesForCompartments() { local numNames, noGuessForSom
         // Reasonable names for axon
         axonStrongNameMarkersLowerCase = new List()
         axonStrongNameMarkersLowerCase.append(new String("axon"))
-        axonStrongNameMarkersLowerCase.append(new String("axone"))
-        axonStrongNameMarkersLowerCase.append(new String("axons"))
-        axonStrongNameMarkersLowerCase.append(new String("axones"))
         
         searchCycle(allNamesLowerCase, axonStrongNameMarkersLowerCase, defaultAxonNameIdxs, 1)
     }

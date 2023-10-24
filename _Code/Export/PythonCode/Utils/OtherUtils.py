@@ -1,5 +1,5 @@
 
-import os
+import os, re
 from OtherInterModularUtils import *
 
 
@@ -7,6 +7,22 @@ indentSize = 4
 stdIndent = ' ' * indentSize
 
 
+def getAllSectionNamesExceptNanogeometry():
+    # Get all names (base geometry, nanogeometry, etc.)
+    # !! it's not optimal because:
+    # (1) there is a lot of nanogeometry sections with known names (no need to use slow "forall")
+    # (2) we already had all base geometry names at some point before (in Import module)
+    allSecNames = hocObj.getAllSectionNames()
+    
+    if len(allSecNames) == 0:
+        codeContractViolation()
+        
+    for secName in allSecNames:
+        createdName = secName.s
+        if createdName.startswith('AstrocyteNanoBranch[') or createdName.startswith('NeuronNanoBranch['):   # !! hardcode
+            continue
+        yield secName
+        
 def getAllLinesFromFile(relFilePathName):
     absFilePathName = os.getcwd() + '\\' + relFilePathName
     with open(absFilePathName, 'r') as inFile:
@@ -28,8 +44,9 @@ def prepareUniqueNameId(name):
     if name == '' or name[0] == ' ' or name[-1] == ' ' or '  ' in name:
         # Keep in sync with hoc:chooseUniqueNameForCompartmentForMechManager
         codeContractViolation()
-    # !! BUG: Two different names "A1" and "A 1" will have the same ID
-    return name.replace(' ', '')
+    # !!! BUG: multiple different names are mapped to the same ID, e.g. "A1", "A 1", "A (1)" etc.
+    # !!! compile the expression once with re.compile and then reuse for better performance
+    return re.sub(r'[^0-9A-Za-z_]', '', name)
     
 def getExposedVarName(exposedVarIdx):
     return f'EXPOSED_VAR_{exposedVarIdx + 1}'

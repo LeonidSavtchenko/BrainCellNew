@@ -51,14 +51,14 @@ begintemplate ExportOptions
         
         // Default options
         isExportDistMechs = 1
-        isExportDistMechAssignedAndState = 1
+        isExportDistMechAssignedAndState = 0
         isExportDistMechInhoms = 1
         isExportDistMechStochs = 1
         isExportSyns = !isAstrocyteOrNeuron
-        isExportSynAssignedAndState = !isAstrocyteOrNeuron
+        isExportSynAssignedAndState = 0
         isExportSynInhoms = !isAstrocyteOrNeuron
         isExportSynStochs = !isAstrocyteOrNeuron
-        isExportECSs = 1
+        // isExportECSs = 0     // The default value will be chosen each time user opens the widget
         isCreateParamsHoc = 0
         isExposeModelVars = 0
         isCreateRunnerHoc = 0

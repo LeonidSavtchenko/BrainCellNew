@@ -2,22 +2,22 @@
 objref soma_ref, axon_ref, endFoot_ref
 { load_file("InterModularErrWarnUtils.hoc") }
 { load_file("InterModularBasicMath.hoc") }
-{ load_file("InterModularSectionUtils.hoc") }
 objref usedNamesForDendrites, nanoBranchesManager, seededDendrites_ref
 { load_file("InterModularPythonUtils.hoc") }
 { load_file("InterModularVectorUtils.hoc") }                    // !! not intermodular yet
 { load_file("InterModularListUtils.hoc") }
+{ load_file("InterModularSectionUtils.hoc") }
 { load_file("InterModularMechSettings.hoc") }
 { load_file("InterModularCellTypeUtils.hoc") }
-{ load_file("InterModularMechsDllUtils.hoc") }
 { load_file("Widgets/MessageWarningHelper.hoc") }
+{ load_file("InterModularMechsDllUtils.hoc") }
 { load_file("InterModularStringUtils.hoc") }
 objref mmAllComps
 iterator findSecArrayOrObjectIterator() { codeContractViolation() }
 { load_file("InterModularUniqueNameUtils.hoc") }
 { load_file("InterModularUniqueListItemUtils.hoc") }
 { load_file("InterModularRNGUtils.hoc") }
-objref smAllComps, mmcrHelper
+objref smAllComps, mmIcrHelper
 proc makeSureSynCompsCreatedOrImported() { codeContractViolation() }
 { load_file("InterModularCompUtils.hoc") }
 { load_file("InterModularUnitsUtils.hoc") }

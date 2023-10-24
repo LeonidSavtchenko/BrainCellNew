@@ -46,7 +46,7 @@ begintemplate SimPotassium
     
     external OnlySingleGluSimulations
     external PotassiumIteration, PotassiumExtra
-    // !!! external vBoxPointProcessWindow
+    external vBoxPointProcessWindow
     external run
     external tstop
     external removeItemFromList, unmapIfNotNil
@@ -77,7 +77,7 @@ begintemplate SimPotassium
     // Opens Potassium simulation window.
     proc show() {
         if (OnlySingleGluSimulations) {
-            load_file(1, "_Code/Simulations/Sims/PointProcessManager.hoc")
+            load_file(1, "_Code/Simulations/Sims/Utils/PointProcessManager.hoc")
         } else {
             print "New trials"
         }
@@ -100,7 +100,7 @@ begintemplate SimPotassium
         unmapIfNotNil(vBoxPlotShapePotassiumIn)
         unmapIfNotNil(vBoxPlotShapePotassiumOut)
         
-        // !!! unmapIfNotNil(vBoxPointProcessWindow)
+        unmapIfNotNil(vBoxPointProcessWindow)
         
         /* !!!
         // Remove point processes after simulation

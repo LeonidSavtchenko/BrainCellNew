@@ -4,8 +4,15 @@
 // !!! direct usage of MaxNumberStalksPerDendrite and MaxNumberSpinesPerDendrite in cycles is deprecated
 // !!! maybe replace MaxNumberStalksPerDendrite and MaxNumberSpinesPerDendrite with one MaxNumberNanoBranchesPerDendrite
 
+// Initial all the cell parameters.
+proc initCell() {
+    if (!isExternalSimStart) {
+        _setSomaDendrCommonParams()
+    }
+}
+
 // Sets default initial params to soma and dendrites which doesn't depend on simulation.
-proc setSomaDendrCommonParams() {
+proc _setSomaDendrCommonParams() {
     for eachSecInList(soma_ref, dendrite_ref) {
         Ra = 100                // Ohm cm
         cm = 0.8                // uF/cm2
@@ -15,9 +22,4 @@ proc setSomaDendrCommonParams() {
         e_pas = -85             // mV
         g_pas = 1/11150         // mS/cm2
     }
-}
-
-// Initial all the cell parameters.
-proc initCell() {
-    setSomaDendrCommonParams()
 }

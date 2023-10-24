@@ -28,4 +28,5 @@ if (isAstrocyteOrNeuron) {
 
 // The default distance centre
 // !!! we set it here and in GeometricalParameters.hoc, but in different way
+// !!! maybe skip this if isExternalSimStart
 soma_ref.o(0).sec distance()

@@ -3,7 +3,7 @@
 
 proc makeSureMechCompsCreatedOrImportedAndRescannedThenShowMechManagerBaseWidget() {
 
-    mmcrHelper.makeSureMechCompsCreatedOrImportedAndRescanned()
+    mmIcrHelper.makeSureMechCompsCreatedOrImportedAndRescanned()
     
     dismissIfNotNil(manageAndRunWidget)
     manageAndRunWidget = new ManageAndRunWidget(0)

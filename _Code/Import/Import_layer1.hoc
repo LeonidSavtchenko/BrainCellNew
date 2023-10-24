@@ -65,6 +65,10 @@ proc importHocFile_layer1() { local isCalledAfterConversion, isSomaInsertedDurin
     // Try to load the HOC file with "load_file" and print some clues if failed
     loadHocFile(inFilePathName)
     
+    if (isNanoCallbackReceived) {
+        return
+    }
+    
     if (!isCalledAfterConversion) {
         isOldStyleAstroHocFile = checkIfThisHocFileIsOfAstroOldStyle(inFilePathName)
         if (isOldStyleAstroHocFile) {

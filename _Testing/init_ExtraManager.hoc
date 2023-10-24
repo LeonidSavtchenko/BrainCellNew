@@ -57,16 +57,15 @@ max_scale_2 = 2
 max_scale_3 = 145
 max_scale_4 = 2     // !!! just to compare GLU "point + on-off" with Ca2+ "point + static" or "point + spike"
 
-// !!! without this, testPlotShape2 will show the nanogeometry sections in grey rather than in colour
-// !!! NOT BUG (just a test feature): start this test and click "Init & Run" (in AltRunControl or RunControl) => codeContractViolation
-//     but no error after clicking "Apply" in "Manager of extracellular sources";
-//     the root cause is that ECDCalcAndConsHelper, if inserted, must be initialized properly
+// Insert all ions into all sections in advance to have no problems with the test PlotShape-s and Graph-s created below
 forall {
     insert ECDCalcAndConsHelper
+    uninsert ECDCalcAndConsHelper
     
-    // !!! just an alternative way to fix the grey sections problem
-    // insert k_ion
-    // insert ca_ion
+    // Just an alternative way to do the same:
+    //  insert na_ion
+    //  insert k_ion
+    //  ...
 }
 
 // Watch extracellular concentration in space

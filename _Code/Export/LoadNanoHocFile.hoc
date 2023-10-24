@@ -22,8 +22,8 @@ func loadNanoHocFile() { local isCancel, status
         return 0
     }
     
-    if (!name_declared("ReducedBasicMath")) {   // Keep in sync with loadHocFile and py:GeneratorsForMainHocFile.getUtils
-        $s1 = "mwh.showWarningBox(\"Invalid Nano geometry file.\", \"Please make sure you don't load a Base geometry file this way.\")"
+    if (!(isNanoCallbackReceived && name_declared("ReducedBasicMath"))) {   // Keep in sync with py:GeneratorsForMainHocFile.getUtils
+        $s1 = "mwh.showWarningBox(\"Invalid Nano geometry file.\", \"Please make sure you don't load a Base geometry file or an External simulation this way.\")"
         deleteAllSections()
         return 0
     }

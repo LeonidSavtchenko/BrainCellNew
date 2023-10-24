@@ -1,4 +1,8 @@
 
+// !!! BUG: errors in custom proc-s "advance" (e.g. "object prefix is NULL") if user opens a simulation and immediately starts it
+//     with RunControl or AltRunControl instead of the dedicated "Run" button; to fix it, we'll have to stick to AltRunControl
+//     and integrate it with SimulationManager to be ready for this scenario
+
 // !!!! maybe call .dismissHandler() for the current sim widget if user closes any its panel
 
 objref simIdxToWidget[10]
@@ -10,7 +14,7 @@ begintemplate SimulationManager
     external isAstrocyteOrNeuron
     external InsertElectricMechanisms, InsertGlutamateMechanisms, InsertPotassiumMechanisms
     external stringEmpty, codeContractViolation
-    external mmcrHelper, beih
+    external mmIcrHelper, beih
     
     external simIdxToWidget
     
@@ -99,7 +103,7 @@ begintemplate SimulationManager
         }
         
         // !!! here we can call some more specialized proc because no need to have them imported or rescanned
-        mmcrHelper.makeSureMechCompsCreatedOrImportedAndRescanned()
+        mmIcrHelper.makeSureMechCompsCreatedOrImportedAndRescanned()
         
         widget = simIdxToWidget[simIdx]
         
@@ -108,6 +112,7 @@ begintemplate SimulationManager
         if (!stringEmpty(biophysJsonFileNameOrEmpty)) {
             isCancel = beih.importForSim(biophysJsonFileNameOrEmpty)
             if (isCancel) {
+                simIdxToLEDState[simIdx] = 0
                 return
             }
         }

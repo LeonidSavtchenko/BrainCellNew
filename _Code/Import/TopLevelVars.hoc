@@ -5,9 +5,6 @@ strdef importCompleteHandler
 // This one is set to 1 after the first import
 isSomethingImported = 0
 
-// This one is set to 1 after the attempt to load a nano file as a base file
-isRestartRequired = 0
-
 // The importer constants (will be assigned just below)
 objref ic
 

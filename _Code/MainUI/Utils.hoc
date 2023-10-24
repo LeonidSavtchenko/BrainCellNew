@@ -1,5 +1,9 @@
 
 proc initVoltage() {
+    if (isExternalSimStart) {
+        return
+    }
+    
     if (isBaseOrNanoStart) {
         if (isAstrocyteOrNeuron) {
             v_init = -85    // mV
@@ -11,6 +15,10 @@ proc initVoltage() {
 }
 
 proc initVoltageAndRunControlParams() {
+    if (isExternalSimStart) {
+        return
+    }
+    
     initVoltage()
     
     if (isBaseOrNanoStart) {

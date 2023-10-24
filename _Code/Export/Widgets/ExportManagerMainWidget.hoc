@@ -3,10 +3,11 @@ begintemplate ExportManagerMainWidget
 
     public show, dismissHandler
     
-    external mwh, compUtils, inhomAndStochLibrary, ecsLibrary, mmcrHelper
-    external saveNanoHocFile, applyExtracellularSources, createEmptyPanel, openDeck, closeDeck, unmapIfNotNil
+    external mwh, compUtils, inhomAndStochLibrary, ecsLibrary, mmIcrHelper
+    external saveNanoHocFile, getExtracellularSourcesStatus, applyExtracellularSources, disableExtracellularSources, createEmptyPanel, openDeck, closeDeck, unmapIfNotNil
     external isAstrocyteOrNeuron
     external exportOptions
+    external pyObj
     
     objref mainBox, deck1, deck2, deck3, deck4, deck5, deck6
     objref childWidgets[1]
@@ -33,10 +34,18 @@ begintemplate ExportManagerMainWidget
         secondColWidth = 450
     }
     
-    proc show() { local slotHeight, numInhomVars, numStochVars, numECSs localobj hBox, deck
-        strdef text
+    proc show() { local isNotImpl, isEcdEnabled, slotHeight, numInhomVars, numStochVars, numECSs localobj hBox, deck
+        strdef templ, text
+        
+        isNotImpl = pyObj.checkForNotImplementedExportScenario()
+        if (isNotImpl) {
+            return
+        }
         
         compUtils.makeSureAllCompsCreatedOrImportedAndRescanned()
+        
+        isEcdEnabled = getExtracellularSourcesStatus()
+        exportOptions.isExportECSs = isEcdEnabled
         
         mainBox = new VBox()
         mainBox.intercept(1)
@@ -96,10 +105,18 @@ begintemplate ExportManagerMainWidget
                 closeDeck(deck, 0, firstColWidth, slotHeight)
                 deck3 = openDeck()
                 {
-                    createEmptyPanel()
-                    xpanel("")
+                    templ = "       They will be %s before the export (%d detected)"
                     numECSs = ecsLibrary.getNumECSs()
-                    sprint(text, "       (%d detected)", numECSs)
+                    if (isEcdEnabled) {
+                        xpanel("")
+                        sprint(text, templ, "disabled", numECSs)
+                        xlabel(text)
+                        xpanel()
+                    } else {
+                        createEmptyPanel()
+                    }
+                    xpanel("")
+                    sprint(text, templ, "applied", numECSs)
                     xlabel(text)
                     xpanel()
                 }
@@ -276,7 +293,7 @@ begintemplate ExportManagerMainWidget
         }
     }
     
-    proc exportHandler() { local isCancel
+    proc exportHandler() { local isCancel, isRescanRequired, wasEcdEnabled
         dismissChilds()
         
         isCancel = exportOptions.validate()
@@ -284,14 +301,22 @@ begintemplate ExportManagerMainWidget
             return
         }
         
+        isRescanRequired = 0
         if (exportOptions.isExportExtracellularLibrary()) {
             // !!! it would be better to skip applying ECSs now and, as a result, skip exporting huge VerbatimDistFuncHelper-s for ions
             //     (the exported file remains fully functional in standalone mode even without them),
             //     but, in order to avoid errors in "start with nano" mode, we need to create the missing models on import
-            //     (somewhere in MechComp.analyzeMechInhomogeneity or MechCreateAndRescanHelper.makeSureMechCompsCreatedOrImportedAndRescanned),
+            //     (somewhere in MechComp.analyzeMechInhomogeneity or MechCompImportCreateRescanHelper.makeSureMechCompsCreatedOrImportedAndRescanned),
             //     and for now this logic is not implemented
             applyExtracellularSources()
-            mmcrHelper.rescanNow(6)
+            isRescanRequired = 1
+        } else {
+            wasEcdEnabled = disableExtracellularSources()
+            isRescanRequired = wasEcdEnabled
+        }
+        
+        if (isRescanRequired) {
+            mmIcrHelper.rescanNow(6)
         }
         
         isCancel = saveNanoHocFile()

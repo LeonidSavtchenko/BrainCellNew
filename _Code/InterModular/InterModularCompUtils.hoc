@@ -6,13 +6,13 @@ begintemplate InterModularCompUtils
     external mmAllComps, smAllComps
     external isAstrocyteOrNeuron
     external makeSureSynCompsCreatedOrImported, stringsEqual, codeContractViolation
-    external mmcrHelper
+    external mmIcrHelper
     external eachItemInList
     
     
     // !! not intermodular actually
     proc makeSureAllCompsCreatedOrImportedAndRescanned() { localobj nil
-        mmcrHelper.makeSureMechCompsCreatedOrImportedAndRescanned()
+        mmIcrHelper.makeSureMechCompsCreatedOrImportedAndRescanned()
         if (!isAstrocyteOrNeuron) {
             makeSureSynCompsCreatedOrImported()
         }
@@ -44,29 +44,27 @@ begintemplate InterModularCompUtils
         return compNames
     }
     
-    // !! not intermodular actually
-    obfunc findDistMechCompByName() { local numArg, compIdx localobj comp
+    func findDistMechCompByName() { local isErrorIfNotFound, compIdx localobj comp, nil
         strdef compName
         
-        numArg = numarg()
-        if (numArg < 1 || numArg > 2) {
-            codeContractViolation()
-        }
-        
         compName = $s1
+        isErrorIfNotFound = $2
         
         for compIdx = 0, getNumDistMechComps() - 1 {
             comp = mmAllComps.o(compIdx)
             if (!stringsEqual(comp.name, compName)) {
                 continue
             }
-            if (numArg == 2) {
-                $&2 = compIdx
-            }
-            return comp
+            $o3 = comp
+            return compIdx
         }
         
-        codeContractViolation()
+        if (isErrorIfNotFound) {
+            codeContractViolation()
+        } else {
+            $o3 = nil
+            return -1
+        }
     }
     
     obfunc getComp() { local isDmOrSynPart, compIdx

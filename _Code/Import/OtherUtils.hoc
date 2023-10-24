@@ -66,8 +66,15 @@ proc loadHocFile() { local wasSomethingImported, status
     mwh.showPleaseWaitBox("Loading geometry file.")
     {
         status = load_file(1, inFilePathName)
+        // !!! BUG: we can have status == 1 here despite the actual error;
+        //          this happens when inFilePathName loads another HOC file which, in turn, raises an error
     }
     mwh.hidePleaseWaitBox()
+    
+    if (isNanoCallbackReceived) {
+        return
+    }
+    
     isSomethingImported = 1
     
     if (!status) {
@@ -79,13 +86,6 @@ proc loadHocFile() { local wasSomethingImported, status
         }
         print ""
         deleteAllSections()
-        execerror("")
-    }
-    
-    isRestartRequired = name_declared("ReducedBasicMath")
-    if (isRestartRequired) {    // Keep in sync with loadNanoHocFile and py:GeneratorsForMainHocFile.getUtils
-        mwh.showWarningBox("Invalid Base geometry file.", "Please restart and make sure you don't load a Nano geometry file this way.")
-        // deleteAllSections()
         execerror("")
     }
 }

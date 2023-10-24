@@ -1,5 +1,5 @@
 
-objref mmcrHelper
+objref mmIcrHelper
 
 begintemplate MechManagerMainWidget
 
@@ -7,7 +7,7 @@ begintemplate MechManagerMainWidget
     
     external dismissIfNotNil
     external mmAllComps
-    external mwh, beih, mmcrHelper
+    external mwh, beih, mmIcrHelper
     
     // !!!! maybe it would be better to encapsulate mmcoWidget into MechManagerMainWidget
     external mmcoWidget, mmmowb
@@ -102,7 +102,10 @@ begintemplate MechManagerMainWidget
     
     proc rescanHandler() { local enumRescanType
         enumRescanType = $1
-        mmcrHelper.rescanNow(enumRescanType)
+        mmIcrHelper.rescanNow(enumRescanType)
+        if (enumRescanType == 1) {
+            compOpSelectHandler(1)
+        }
         updateVisibleMechOpChilds()
     }
     

@@ -1,11 +1,13 @@
 
+isNanoCallbackReceived = 0
+
 begintemplate MechsDllUtils
 
     public ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType, loadDefaultMechsDllDependingOnCellType, loadMechsDllFromThisFolder, isThisMechForIntUseOnly
     public loadedNanoHocFilePathName, loadedDllDirPath
     
-    external isAstrocyteOrNeuron
-    external mechSettings, pyObj
+    external isBaseOrNanoStart, isNanoCallbackReceived
+    external mechSettings, pyObj, mwh
     external checkIfFileMissing, findItemInListByString, getCellTypeName, printMsgAndRaiseError
     
     strdef startDir, loadedNanoHocFilePathName, loadedDllDirPath
@@ -23,7 +25,17 @@ begintemplate MechsDllUtils
     
     // This proc is called from the nanogeometry file when user loads it back into the main program
     proc ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType() { local isMissing
-        strdef dllFilePathName, cellTypeName, line2, dllDirPath
+        strdef dllFilePathName, cellTypeName, line1, line2, line, dllDirPath
+        
+        isNanoCallbackReceived = 1
+        
+        if (isBaseOrNanoStart) {
+            line1 = "Invalid Base geometry file."
+            line2 = "Please restart and make sure you don't load a Nano geometry file this way."
+            mwh.showWarningBox(line1, line2)
+            sprint(line, "%s\n    %s", line1, line2)
+            printMsgAndRaiseError(line)
+        }
         
         dllFilePathName = pyObj.getDllFilePathName(loadedNanoHocFilePathName)
         isMissing = checkIfFileMissing(dllFilePathName)

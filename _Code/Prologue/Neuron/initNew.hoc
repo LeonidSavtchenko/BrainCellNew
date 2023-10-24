@@ -5,11 +5,15 @@
 // Keep this call consistent with defaultChosenSpineGeometry in MainUI/Neuron/NeuronGeometryPanel.hoc
 { nanoBranchesManager.reseedBranches(createVector(0)) }     // 0 means normal distribution by default
 
-access soma_ref.o(0).sec    // !! is that needed? (in any case, must be moved to a common place for astrocyte and neuron)
+// !! is that needed? (in any case, must be moved to a common place for astrocyte and neuron)
+// !!! maybe skip this if isExternalSimStart
+access soma_ref.o(0).sec
 
 { load_file("Biophys.hoc") }
 
 { load_file("AddSynapses.hoc") }
 
-// !!!!
-{ finitialize(v_init) }     // !! Already moved to NanoBranchesManager.hoc
+if (!isExternalSimStart) {
+    // !!!!
+    finitialize(v_init)     // !! Already moved to NanoBranchesManager.hoc
+}

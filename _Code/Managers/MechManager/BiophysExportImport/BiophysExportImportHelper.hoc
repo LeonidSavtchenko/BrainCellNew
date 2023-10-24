@@ -231,8 +231,8 @@ begintemplate BiophysExportImportHelper
         mwh.showWarningBox(line1, missingCompNames, "", line2, "")
     }
     
-    proc showExportOrImportCompleteMsg() { local isExportOrImport, cond localobj options
-        strdef word, Word, line1, line2, line3, line4, line5, line6, line7, msg
+    proc showExportOrImportCompleteMsg() { local isExportOrImport localobj options, bulletedList
+        strdef word, Word, line1, str1, str2, str3, msg
         
         isExportOrImport = $1
         options = $o2
@@ -244,29 +244,30 @@ begintemplate BiophysExportImportHelper
         }
         stringCapitalize(word, Word)
         
+        sprint(line1, "Here is what we don't %s at the moment (the list is incomplete):", word)
+        
+        bulletedList = new List()
+        bulletedList.append(new String("GLOBAL vars of biophys mechs"))
+        str1 = "\"Ra\" variable in the sections (for now it's %s)"
+        if (isExportOrImport) {
+            sprint(str1, str1, "exported only by \"Manager of export\"")
+        } else {
+            sprint(str1, str1, "imported only on the beginning in \"Start with Nano geometry\" mode")
+        }
+        bulletedList.append(new String(str1))
+        if (options.isAnyStochModels()) {   // !!! false positive here when user disables export/import of a specific compartment or ASSIGNED and STATE vars
+            bulletedList.append(new String("states of RNGs"))
+        }
+        
+        getNotImplementedLines(str1, str2)
+        
+        sprint(str3, "Also, please notice that \"%s\" mech is not %sed as a part of biophysics.", mth.morphologyMechName, word)
+        
+        sprint(msg, "%s complete successfully", Word)
+        
         mwh.startIntercepting()
         {
-            sprint(line1, "Here is what we don't %s at the moment (the list is incomplete):", word)
-            line2 = "    * GLOBAL vars of biophys mechs"
-            line3 = "    * \"Ra\" variable in the sections (for now it's %s)"
-            if (isExportOrImport) {
-                sprint(line3, line3, "exported only by \"Manager of export\"")
-            } else {
-                sprint(line3, line3, "imported only on the beginning in \"Start with Nano geometry\" mode")
-            }
-            cond = options.isAnyStochModels()   // !!! false positive here when user disables export/import of a specific compartment or ASSIGNED and STATE vars
-            if (cond) {
-                line4 = "    * states of RNGs"
-            }
-            getNotImplementedLines(line5, line6)
-            sprint(line7, "Also, please notice that \"%s\" mech is not %sed as a part of biophysics.", mth.morphologyMechName, word)
-            if (cond) {
-                mwh.showWarningBox(line1, line2, line3, line4, "", line5, line6, "", line7)
-            } else {
-                mwh.showWarningBox(line1, line2, line3, "", line5, line6, "", line7)
-            }
-            
-            sprint(msg, "%s complete successfully", Word)
+            mwh.showWarningBox(line1, bulletedList, "", str1, str2, "", str3)
             mwh.showMessageBox(msg, "Complete")
         }
         mwh.endIntercepting()

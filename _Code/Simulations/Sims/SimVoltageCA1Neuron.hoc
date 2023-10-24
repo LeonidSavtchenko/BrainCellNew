@@ -1,17 +1,11 @@
 
-// !!!! currently we use the path between soma_ref.o(0).sec(0.5) (the distance centre) and the most proximal segment in dendrite_ref,
-//      but it would be better to implement it in the different way:
-//      * find the most proximal point in "ProxyDendrit" comp;
-//      * find the most proximal point in "DistalDendrite" comp;
-//      * (if no such comps, then fallback to the current algorithm);
-//      * get all sections in the path between these two extreme points using _rangeVarPlot.list;
-//      * create equidistant grid between the points along the path and watch voltage in the grid points;
-//      * add one more special point for soma_ref.o(0).sec(0.5) to watch voltage as well
+// !!! in showMainSubCore, don't call addPointsForVoltageInDendrites like in showFallbackSubCore,
+//     but rather take the equidistant points along the _rangeVarPlot path starting at {sec1_ref, u1} and ending at {sec2_ref, u2}
 
 // !!! add coloured markers on pathPlotShape indicating the observation points
 // !!! add vertical coloured lines on rangeGraph indicating the observation points
 
-// !!! maybe move the file to "Neuron" subfolder?
+// !!! maybe move this file to "Neuron" subfolder?
 
 // !!! keeping it on the top level to be accessible from "execute"-ed HOC command
 objref _rangeVarPlot
@@ -21,8 +15,8 @@ begintemplate SimVoltageCA1Neuron
     public show, dismissHandler
     public biophysJsonFileNameOrEmpty, isCustomProcAdvance
     
-    external getDistRangeGivenSections, addVarToGraph, removeItemFromList, unmapIfNotNil, codeContractViolation
-    external math, mwh
+    external getDistRangeGivenSections, isDisconnectedDistance, secListToListOfSecRef, addVarToGraph, removeItemFromList, unmapIfNotNil, codeContractViolation
+    external math, compUtils, mwh
     external eachPointInGrid, eachSegmInSecList
     external soma_ref, dendrite_ref
     external pyObj
@@ -35,13 +29,25 @@ begintemplate SimVoltageCA1Neuron
     objref timeGraphBox, pathAndRangeBox
     objref timeGraph, rangeGraph
     
+    numDendPts = -1
+    y_min = -1
+    y_max = -1
+    
     
     proc init() {
         biophysJsonFileNameOrEmpty = "SimVoltageCA1Neuron.json"
         isCustomProcAdvance = 0
+        
+        // !!! for numDendPts > 7, we have 2 bad colours and then repetition of colours:
+        //     colourIdx = 10 is white, colourIdx = 11 is black, colourIdx = 12 is red etc.
+        numDendPts = 5
+        y_min = -80     // (mV)
+        y_max = 40      // (mV)
     }
     
     proc show() { localobj pathPlotShape
+        
+        tstop = 100     // (ms)
         
         timeGraphBox = new VBox()
         timeGraphBox.intercept(1)
@@ -75,7 +81,7 @@ begintemplate SimVoltageCA1Neuron
     // All next staff is private
     
     
-    proc showCore() { local colourIdx, numDendPts, dist_max, y_min, y_max localobj pathPlotShape, pyVarsSet, pathSecList
+    proc showCore() { local colourIdx, x_min, x_max, isDisconnected localobj pathPlotShape, pyVarsSet, proxDendCompOrNil, distDendCompOrNil, pathSecList, nil
         strdef var
         
         pathPlotShape = $o1
@@ -90,9 +96,8 @@ begintemplate SimVoltageCA1Neuron
         
         soma_ref.o(0).sec {
             sprint(var, "%s.v(0.5)", secname())
-            pyVarsSet.add(var)
-            _rangeVarPlot.begin(0.5)
         }
+        pyVarsSet.add(var)
         colourIdx = 2   // Red      !!! maybe use Blue here not to confuse with pathPlotShape and rangeGraph palette
         /* !!!!
         getSegmXYZ(secName, 0.5, &x, &y, &z)
@@ -100,42 +105,112 @@ begintemplate SimVoltageCA1Neuron
         */
         addVarToGraph(timeGraph, var, colourIdx)
         colourIdx += 1
-        numDendPts = 5
-        dist_max = addPointsForVoltageInDendrites(pathPlotShape, timeGraph, colourIdx, numDendPts, pyVarsSet)
-        if (dist_max == -1) {
-            return
+        
+        compUtils.findDistMechCompByName("ProxyDendrites", 0, proxDendCompOrNil)
+        compUtils.findDistMechCompByName("DistalDendrites", 0, distDendCompOrNil)
+        
+        if (proxDendCompOrNil != nil && distDendCompOrNil != nil) {
+            isDisconnected = showMainSubCore(pathPlotShape, proxDendCompOrNil.list_ref, distDendCompOrNil.list_ref, pyVarsSet, colourIdx, &x_min, &x_max)
+            if (isDisconnected) {
+                return
+            }
+        } else {
+            // We'll use dendrite_ref
+            x_max = showFallbackSubCore(pathPlotShape, pyVarsSet, colourIdx)
+            if (x_max == -1) {
+                return
+            }
+            x_min = 0
         }
-        y_min = -80
-        y_max = 40
+        
         timeGraph.size(0, tstop, y_min, y_max)
         setXYLabels(timeGraph, "Time (ms)")
         graphList[0].append(timeGraph)
         
         rangeGraph.addobject(_rangeVarPlot, 2, 0)    // Red
-        rangeGraph.size(0, dist_max, y_min, y_max)
+        rangeGraph.size(x_min, x_max, y_min, y_max)
         setXYLabels(rangeGraph, "Distance (um)")
         flush_list.append(rangeGraph)
         
-        // !!!!! how about _rangeVarPlot.origin() ?
-        
         pathSecList = new SectionList()
-        _rangeVarPlot.list(pathSecList)
+        _rangeVarPlot.list(pathSecList)     // !!! we have called this in showMainSubCore - just reuse
         pathPlotShape.color_list(pathSecList, 2)    // Red
     }
     
-    // Here we choose some pretty random points on dendrites equidistantly spaced by "distance" ("numDendPts" points in total);
-    // !!! an alternative implementation may choose "numDendPts" farthest from each other points on dendrites (using the graph theory)
-    // !!! for numDendPts > 7, we have 2 bad colours and then repetition of colours: colourIdx = 10 is white, colourIdx = 11 is black, colourIdx = 12 is red etc.
-    func addPointsForVoltageInDendrites() { local colourIdx, numDendPts, isDisconnected, dist_min, dist_max, u, isFirstPoint, dist localobj pyVarsSet, timeGraph, pathPlotShape
-        strdef sec_name, var, hocCommand
+    func showMainSubCore() { local colourIdx, dist1_best, u1, dist2_best, u2, dist_max localobj pathPlotShape, proxDendSec_list, distDendSec_list, pyVarsSet, sec1_ref, sec2_ref, secList, list_ref
         
         pathPlotShape = $o1
-        timeGraph = $o2
-        colourIdx = $3
-        numDendPts = $4
-        pyVarsSet = $o5
+        proxDendSec_list = $o2
+        distDendSec_list = $o3
+        pyVarsSet = $o4
+        colourIdx = $5
         
-        isDisconnected = getDistRangeGivenSections(dendrite_ref, &dist_min, &dist_max)
+        dist1_best = findMostDistantPointInSections(proxDendSec_list, sec1_ref, &u1)
+        if (isDisconnectedDistance(dist1_best)) {
+            return 1
+        }
+        
+        dist2_best = findMostDistantPointInSections(distDendSec_list, sec2_ref, &u2)
+        if (isDisconnectedDistance(dist2_best)) {
+            return 1
+        }
+        
+        sec1_ref.sec {
+            _rangeVarPlot.begin(u1)
+        }
+        
+        sec2_ref.sec {
+            _rangeVarPlot.end(u2)
+        }
+        
+        secList = new SectionList()
+        _rangeVarPlot.list(secList)
+        list_ref = new List()
+        secListToListOfSecRef(secList, list_ref)
+        
+        // !!!! instead of calling this like in showFallbackSubCore,
+        //      take the equidistant points along the _rangeVarPlot path starting at {sec1_ref, u1} and ending at {sec2_ref, u2}
+        dist_max = addPointsForVoltageInDendrites(list_ref, pathPlotShape, timeGraph, pyVarsSet, colourIdx)
+        if (dist_max == -1) {
+            codeContractViolation()
+        }
+        
+        $&6 = -dist1_best
+        $&7 = dist2_best
+        
+        return 0
+    }
+    
+    func showFallbackSubCore() { local colourIdx, dist_max localobj pathPlotShape, pyVarsSet
+        
+        pathPlotShape = $o1
+        pyVarsSet = $o2
+        colourIdx = $3
+        
+        soma_ref.o(0).sec {
+            _rangeVarPlot.begin(0.5)
+        }
+        
+        dist_max = addPointsForVoltageInDendrites(dendrite_ref, pathPlotShape, timeGraph, pyVarsSet, colourIdx)
+        if (dist_max == -1) {   //
+            return -1           // !!! maybe remove this
+        }                       //
+        
+        return dist_max
+    }
+    
+    // Here we choose some quite random points on dendrites equidistantly spaced by "distance" ("numDendPts" points in total);
+    // !!! an alternative implementation may choose "numDendPts" farthest from each other points on dendrites (using the graph theory)
+    func addPointsForVoltageInDendrites() { local colourIdx, isDisconnected, dist_min, dist_max, u, isFirstPoint, dist localobj list_ref, pathPlotShape, timeGraph, pyVarsSet
+        strdef sec_name, var, hocCommand
+        
+        list_ref = $o1
+        pathPlotShape = $o2
+        timeGraph = $o3
+        pyVarsSet = $o4
+        colourIdx = $5
+        
+        isDisconnected = getDistRangeGivenSections(list_ref, &dist_min, &dist_max)
         if (isDisconnected) {
             mwh.showWarningBox("Cannot proceed with this simulation because at least one dendrite section doesn't have a topological connection with the distance centre.")
             return -1
@@ -146,14 +221,14 @@ begintemplate SimVoltageCA1Neuron
         isFirstPoint = 1
         for eachPointInGrid(&dist, dist_min, dist_max, numDendPts + 1) {
             if (isFirstPoint) {
-                // We have used soma_ref.o(0).sec(0.5) as the first watched point being also the distance centre
+                // We have used soma_ref.o(0).sec(0.5) as the first watched point (the distance centre)
                 isFirstPoint = 0
                 continue
             }
-            u = findSecAndSegmInDendrites(dist, sec_name)
+            findSpecificDistancePointInDendrites(dist, sec_name, &u)
             sprint(var, "%s.v(%g)", sec_name, u)
             if (pyObj.isInPySet(pyVarsSet, var)) {
-                continue    // !!! maybe it would be better to get back to findSecAndSegmInDendrites and find the next candidate
+                continue    // !!! maybe it would be better to get back to findSpecificDistancePointInDendrites and find the next candidate
             }
             /* !!!!
             getSegmXYZ(secName, u, &x, &y, &z)
@@ -175,7 +250,33 @@ begintemplate SimVoltageCA1Neuron
         return dist_max
     }
     
-    func findSecAndSegmInDendrites() { local dist_exp, delta_best, u_best, u, dist, delta
+    func findMostDistantPointInSections() { local dist_best, u_best, u, dist localobj sec_list, sec_ref
+        sec_list = $o1
+        
+        dist_best = -1
+        u_best = -1
+        
+        for eachSegmInSecList(&u, sec_list) {
+            dist = distance(u)
+            if (dist > dist_best) {
+                sec_ref = new SectionRef()
+                u_best = u
+                dist_best = dist
+            }
+        }
+        
+        if (dist_best == -1) {
+            // !!!!!
+            codeContractViolation()
+        }
+        
+        $o2 = sec_ref
+        $&3 = u_best
+        
+        return dist_best
+    }
+    
+    proc findSpecificDistancePointInDendrites() { local dist_exp, delta_best, u_best, u, dist, delta
         strdef sec_name
         
         dist_exp = $1
@@ -199,8 +300,7 @@ begintemplate SimVoltageCA1Neuron
         }
         
         $s2 = sec_name
-        
-        return u_best
+        $&3 = u_best
     }
     
     proc setXYLabels() { localobj graph

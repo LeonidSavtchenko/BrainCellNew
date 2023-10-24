@@ -5,9 +5,9 @@ begintemplate ExtracellularManagerMainWidget
     public show, onCreateHandler, onEditHandler, dismissHandler
     public title
     
-    external mwh, ecsLibrary, mmcrHelper
-    external applyExtracellularSources
-    external isECSUnique, replaceItemInList, deleteSelectedItemFromBrowsedList, openDeck, closeDeck, unmapIfNotNil
+    external mwh, ecsLibrary, mmIcrHelper
+    external applyExtracellularSources, disableExtracellularSources, getExtracellularSourcesStatus
+    external isECSUnique, replaceItemInList, deleteSelectedItemFromBrowsedList, openDeck, closeDeck, oneZeroToEnabledDisabled, unmapIfNotNil, codeContractViolation
     
     objref mainBox, ecsList
     objref oneECSWidget
@@ -18,6 +18,7 @@ begintemplate ExtracellularManagerMainWidget
     slotHeight = -1
     
     strdef title
+    strdef ecdStatusVarLabel
     
     
     proc init() {
@@ -34,6 +35,9 @@ begintemplate ExtracellularManagerMainWidget
     }
     
     proc show() { local spacerIdx localobj hBox, deck
+        
+        updateEcdStatusVarLabel()
+        
         mainBox = new VBox()
         mainBox.intercept(1)
         {
@@ -71,9 +75,19 @@ begintemplate ExtracellularManagerMainWidget
             }
             hBox.intercept(0)
             hBox.map()
-            xpanel("")
-            xbutton("Apply", "applyHandler()")
-            xpanel()
+            hBox = new HBox()
+            hBox.intercept(1)
+            {
+                xpanel("")
+                xbutton("Apply", "applyHandler()")
+                xbutton("Disable", "disableHandler()")
+                xpanel()
+                xpanel("")
+                xvarlabel(ecdStatusVarLabel)
+                xpanel()
+            }
+            hBox.intercept(0)
+            hBox.map()
         }
         mainBox.intercept(0)
         mainBox.dismiss_action("dismissHandler()")
@@ -146,7 +160,7 @@ begintemplate ExtracellularManagerMainWidget
         deleteSelectedItemFromBrowsedList(ecsList)
     }
     
-    proc applyHandler() { localobj nil
+    proc applyHandler() { local wasEnabled, isEnabled localobj nil
         strdef line1, line2, line3, line4, line5
         
         // !!! just so user can watch colormap dynamics on the PlotShape and create new Graph-s from it
@@ -154,11 +168,18 @@ begintemplate ExtracellularManagerMainWidget
         
         // !!! say "No changes" or "All deleted" when that's the case
         
-        // !!!! think about FInitializeHandler
-        applyExtracellularSources()
+        wasEnabled = getExtracellularSourcesStatus()
         
-        if (mmcrHelper != nil) {    // !!! can be nil in tests
-            mmcrHelper.scheduleRescan(6)
+        // !!!! think about FInitializeHandler
+        isEnabled = applyExtracellularSources()
+        
+        if (!isEnabled) {
+            showDisabledMsgAndUpdateStatusVarLabel(wasEnabled)
+            return
+        }
+        
+        if (mmIcrHelper != nil) {   // !!! can be nil in tests
+            mmIcrHelper.scheduleRescan(6)
         }
         
         oneECSWidget.onApplyInParentWidget()
@@ -178,6 +199,7 @@ begintemplate ExtracellularManagerMainWidget
         {
             mwh.showNotImplementedWarning("For the extracellular diffusion, the variable time step \"dt\" is not fully supported.")
             
+            // !!! maybe use an alternative message if !isEnabled
             line1 = "All the changes were applied."
             
             // !!! if RunControl works fine, then we don't need to show AltRunControl together with this widget
@@ -198,6 +220,13 @@ begintemplate ExtracellularManagerMainWidget
             mwh.showMessageBox(line1, line2, "", line3, line4, line5, "Applied")
         }
         mwh.endIntercepting()
+        
+        updateEcdStatusVarLabel(1)
+    }
+    
+    proc disableHandler() { local wasEnabled
+        wasEnabled = disableExtracellularSources()
+        showDisabledMsgAndUpdateStatusVarLabel(wasEnabled)
     }
     
     proc dismissChild() {
@@ -215,6 +244,45 @@ begintemplate ExtracellularManagerMainWidget
         
         $o1 = ecsList.o(selIdx)
         return selIdx
+    }
+    
+    proc updateEcdStatusVarLabel() { local numArg, isEnabled
+        strdef word
+        numArg = numarg()
+        if (numArg == 0) {
+            isEnabled = getExtracellularSourcesStatus()
+        } else if (numArg == 1) {
+            isEnabled = $1
+        } else {
+            codeContractViolation()
+        }
+        oneZeroToEnabledDisabled(isEnabled, word)
+        sprint(ecdStatusVarLabel, "Extracellular diffusion: %s", word)
+    }
+    
+    proc showDisabledMsgAndUpdateStatusVarLabel() { local wasEnabled localobj bulletedList
+        strdef line1, line2, line3, line4
+        
+        wasEnabled = $1
+        
+        if (wasEnabled) {
+            line1 = "The extracellular diffusion was disabled."
+            line2 = "Please be advised:"
+            line3 = "The ions inserted into all the sections earlier cannot be uninserted anymore (NEURON restriction), so they remain."
+            
+            // !!!! maybe user wants to reset them (not only when clicks Disable for all sources, but also when clicks Apply after removal of particular species)
+            line4 = "We don't reset the outer concentrations \"{species}o\" to the default value \"{species}o0_{species}_ion\"."
+            
+            bulletedList = new List()
+            bulletedList.append(new String(line3))
+            bulletedList.append(new String(line4))
+            
+            mwh.showMessageBox(line1, line2, bulletedList, "Disabled")
+            
+            updateEcdStatusVarLabel(0)
+        } else {
+            mwh.showMessageBox("Already disabled.", "Nothing to disable")
+        }
     }
     
 endtemplate ExtracellularManagerMainWidget

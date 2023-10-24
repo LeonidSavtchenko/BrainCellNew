@@ -1,5 +1,5 @@
 
-if (isBaseOrNanoStart) {
+if (isBaseOrNanoStart && !isExternalSimStart) {
     celsius = 34.0
 }
 
@@ -47,25 +47,31 @@ proc Neuron_Biophysics_init() {
     //cm=CmDend
 }
 
-
-forall {
-    Neuron_Biophysics_init()
-}
-
-
-for eachSecInList(soma_ref) {
-    cm = 1
-    Ra=RaSoma
-    g_pas = 1/10000
-    e_pas = -65
-    v = -65         // !!! maybe remove because now it's done in NanoBranchesManager.hoc (but that file uses v_init = -64.65)
+if (!isExternalSimStart) {
+    forall {
+        Neuron_Biophysics_init()
+    }
     
-    e_pas=Vrest
-    g_pas = 1/RmSoma
-    
-    //cm=CmSoma
-    
-    // !!! maybe remove because now it's done in NanoBranchesManager.hoc
-    //     (or at least move below the cycle)
-    finitialize(v)
+    for eachSecInList(soma_ref) {
+        cm = 1
+        Ra=RaSoma
+        g_pas = 1/10000
+        e_pas = -65
+        v = -65         // !!! maybe remove because now it's done in NanoBranchesManager.hoc (but that file uses v_init = -64.65)
+        
+        e_pas=Vrest
+        g_pas = 1/RmSoma
+        
+        //cm=CmSoma
+        
+        // !!! maybe remove because now it's done in NanoBranchesManager.hoc
+        //     (or at least move below the cycle)
+        finitialize(v)
+    }
+} else {
+    // !!! if we created soma_ref or axon_ref rather than imported, then need to add it to this cycle as well
+    for eachSecInList(nanoProximal_ref, nanoDistal_ref) {
+        Neuron_Biophysics_init()
+    }
+    // !!! if we created soma_ref rather than imported, then need to init it like in the first branch of this IF operator
 }

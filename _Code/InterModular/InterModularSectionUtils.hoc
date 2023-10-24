@@ -3,43 +3,46 @@
 
 
 // Get the name of the currently accessed section (either object name or array name)
-// Does not work if the section owned by a template!!
+// Here are some examples:
+//  "secName"                               -> "secName"
+//  "secArrName[12]"                        -> "secArrName"
+//  "secArrName[12][34]"                    -> "secArrName"
+//  "objArrName[12].secName"                -> "objArrName[12].secName"
+//  "objArrName[12][34].secName"            -> "objArrName[12][34].secName"
+//  "objArrName[12].secArrName[34]"         -> "objArrName[12].secArrName"
+//  "objArrName[12].secArrName[34][56]"     -> "objArrName[12].secArrName"
+//  "objArrName[12][34].secArrName[56]"     -> "objArrName[12][34].secArrName"
+//  "objArrName[12][34].secArrName[56][78]" -> "objArrName[12][34].secArrName"
 // $s1 (output) - The section name
-proc getCurrentSecName() { local idx localobj strFunc
-    strdef secName
-    
-    strFunc = new StringFunctions()
-    
-    idx = strFunc.head(secname(), "\\[", secName)
-    if (idx == -1) {
-        // This section is an object rather than array
-        secName = secname()
-    }
-    
-    $s1 = secName
+proc getCurrentSecName() {
+    strdef pyCommand
+    // !!! for better performance, maybe don't use the regular expression here at all
+    //     or, at least, compile it once with re.compile and then reuse
+    sprint(pyCommand, "(exec('import re'), re.sub(r'(\\[\\d+\\])+$', '', '%s'))[1]", secname())
+    $s1 = pyObj.ev(pyCommand)
 }
 
 // Get names of all created sections (either object name or array name)
-// Does not work if there is a section owned by a template!!
 // Returns List of String-s containing all unique names
-obfunc getAllSectionNames() { local idxOrMinus1 localobj secNames
+obfunc getAllSectionNames() { local isFound localobj secNamesHocList, secNamesPySet
     strdef secName
     
-    secNames = new List()
+    secNamesHocList = new List()
+    secNamesPySet = pyObj.set()
     
     forall {
         getCurrentSecName(secName)
         
         // Check if we have found this name before
-        // !! improve performace here using Set in Python
-        idxOrMinus1 = findItemInListByString(secNames, secName)
+        isFound = pyObj.isInPySet(secNamesPySet, secName)
         
-        if (idxOrMinus1 == -1) {
-            secNames.append(new String(secName))
+        if (!isFound) {
+            secNamesHocList.append(new String(secName))
+            secNamesPySet.add(secName)
         }
     }
     
-    return secNames
+    return secNamesHocList
 }
 
 // !!! the range returned by this func depends on the initial segmentation;
@@ -57,7 +60,7 @@ func getDistRangeGivenSections() { local distMin, distMax, isDisconnected, x, di
     for eachSecInList(list_ref) {
         for (x) {
             dist = distance(x)
-            if (dist == 1e20) { // NEURON docs read: "If a continuous path does not exist the return value is 1e20"
+            if (isDisconnectedDistance(dist)) {
                 isDisconnected = 1
                 break
             }
@@ -73,6 +76,11 @@ func getDistRangeGivenSections() { local distMin, distMax, isDisconnected, x, di
     $&3 = distMax
     
     return 0
+}
+
+func isDisconnectedDistance() { local dist
+    dist = $1
+    return (dist == 1e20)   // NEURON docs read: "If a continuous path does not exist the return value is 1e20"
 }
 
 // For all sections from this SectionList, add corresponding SectionRef to the List

@@ -33,7 +33,7 @@ begintemplate SimGlutamate
     
     external OnlySingleGluSimulations
     external GluIteration
-    // !!! external vBoxPointProcessWindow
+    external vBoxPointProcessWindow
     external run
     external tstop
     external removeItemFromList, unmapIfNotNil
@@ -58,7 +58,7 @@ begintemplate SimGlutamate
     // Opens Glutamate simulation window.
     proc show() {
         if (OnlySingleGluSimulations) {
-            load_file(1, "_Code/Simulations/Sims/PointProcessManager.hoc")
+            load_file(1, "_Code/Simulations/Sims/Utils/PointProcessManager.hoc")
             OnlySingleGluSimulations = 0
         } else {
             print "New trials"
@@ -88,7 +88,7 @@ begintemplate SimGlutamate
         unmapIfNotNil(vBoxPlotShapeGluOut)
         unmapIfNotNil(vBoxPlotShapeitrans)
         
-        // !!! unmapIfNotNil(vBoxPointProcessWindow)
+        unmapIfNotNil(vBoxPointProcessWindow)
         
         /* !!!
         // Remove point processes after simulation

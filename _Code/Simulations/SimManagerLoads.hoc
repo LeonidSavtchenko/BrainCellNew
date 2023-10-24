@@ -1,5 +1,6 @@
 
 OnlySingleGluSimulations = 1    // parameter for Glu and Potassium single voltage clamp mechanism
+objref vBoxPointProcessWindow
 
 { load_file("Sims/SimVoltageCA1Neuron.hoc") }
 { load_file("Sims/SimFrapInCircleGeometry.hoc") }

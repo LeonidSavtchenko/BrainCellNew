@@ -1,8 +1,8 @@
 
 // Save nanogeometry HOC file
 // Returns: 0/1 flag indicating that the save operation was canceled by user
-func saveNanoHocFile() { local isCancel, cond
-    strdef outHocFilePathName, line1, line2, line3, line4, line5, line6, line7, line8, line9, line10, line11
+func saveNanoHocFile() { local isCancel, cond localobj bulletedList
+    strdef outHocFilePathName, line1, str1, str2
     
     isCancel = fbh.showSaveFileDialog(pyEnumOutFileTypes.nanoGeometryHoc, outHocFilePathName)
     if (isCancel) {
@@ -19,38 +19,41 @@ func saveNanoHocFile() { local isCancel, cond
     }
     mwh.hidePleaseWaitBox()
     
+    line1 = "Here is what we don't export at the moment (the list is incomplete):"
+    
+    bulletedList = new List()
+    bulletedList.append(new String("\"secondorder\" variable"))
+    str1 = "GLOBAL vars of biophys mechs%s"
+    str2 = "custom PPs/ACs%s (if you add them), but APCount-s are exported"
+    if (isAstrocyteOrNeuron) {
+        sprint(str1, str1, "")
+        sprint(str2, str2, "")
+    } else {
+        sprint(str1, str1, " and synaptic PPs/ACs")
+        sprint(str2, str2, " outside synapses")
+    }
+    bulletedList.append(new String(str1))
+    bulletedList.append(new String(str2))
+    bulletedList.append(new String("custom \"proc advance() { ... }\", e.g. the ones used in the \"Simulations\""))
+    if (isExternalSimStart) {   // !!! maybe add || isBaseOrNanoStart
+        bulletedList.append(new String("overrides for other standard proc-s (e.g. \"init\" and \"run\") that may be imported from external HOC file"))
+    }
+    bulletedList.append(new String("the distance centre location (if you change it)"))
+    cond = exportOptions.isExportAnyStochFuncs()    // !!! false positive here when user disables export of ASSIGNED and STATE vars
+    if (!isAstrocyteOrNeuron) {
+        cond = (cond || smEnumSynLoc == 2)  // smEnumSynLoc is not defined for Astrocyte
+    }
+    if (cond) {
+        bulletedList.append(new String("states of RNGs"))
+    }
+    bulletedList.append(new String("if creating \"runner.hoc\", the results cannot be saved to BIN files (only TXT files are supported)"))
+    bulletedList.append(new String("a new file \"nrnmech.dll\" is not built (only the old one is copied)"))
+    
+    getNotImplementedLines(str1, str2)
+    
     mwh.startIntercepting()
     {
-        line1 = "Here is what we don't export at the moment (the list is incomplete):"
-        line2 = "    * \"secondorder\" variable"
-        // !!! maybe pass a List of String-s to mwh.showWarningBox to show it as a bulleted list
-        line3 = "    * GLOBAL vars of biophys mechs%s"
-        line4 = "    * custom PPs/ACs%s (if you add them), but APCount-s are exported"
-        line5 = "    * custom \"proc advance() { ... }\", e.g. the ones used in the \"Simulations\""
-        if (isAstrocyteOrNeuron) {
-            sprint(line3, line3, "")
-            sprint(line4, line4, "")
-        } else {
-            sprint(line3, line3, " and synaptic PPs/ACs")
-            sprint(line4, line4, " outside synapses")
-        }
-        line6 = "    * the distance centre location (if you change it)"
-        cond = exportOptions.isExportAnyStochFuncs()    // !!! false positive here when user disables export of ASSIGNED and STATE vars
-        if (!isAstrocyteOrNeuron) {
-            cond = (cond || smEnumSynLoc == 2)  // smEnumSynLoc is not defined for Astrocyte
-        }
-        if (cond) {
-            line7 = "    * states of RNGs"
-        }
-        line8 = "    * if creating \"runner.hoc\", the results cannot be saved to BIN files (only TXT files are supported)"
-        line9 = "    * a new file \"nrnmech.dll\" is not built (only the old one is copied)"
-        getNotImplementedLines(line10, line11)
-        if (cond) {
-            mwh.showWarningBox(line1, line2, line3, line4, line5, line6, line7, line8, line9, "", line10, line11)
-        } else {
-            mwh.showWarningBox(line1, line2, line3, line4, line5, line6, line8, line9, "", line10, line11)
-        }
-        
+        mwh.showWarningBox(line1, bulletedList, "", str1, str2)
         mwh.showMessageBox("Export complete successfully", "Complete")
     }
     mwh.endIntercepting()

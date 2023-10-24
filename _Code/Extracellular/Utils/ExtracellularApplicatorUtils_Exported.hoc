@@ -1,6 +1,6 @@
 
 // !!! keeping this proc on the top level rather than inside a template just because we need to use "farall"
-proc applyExtracellularSources() { local numECSs, isInsertOrUninsert, maxNumImpsPerECS, segmIdx_global, u localobj spcLibPackedToVec, ecSrcLibPackedToVec, segm3DSpecificDataMatrix, numImpsSoFarDataVec, impTimesDataMatrix
+func applyExtracellularSources() { local numECSs, isInsertOrUninsert, maxNumImpsPerECS, segmIdx_global, u localobj spcLibPackedToVec, ecSrcLibPackedToVec, segm3DSpecificDataMatrix, numImpsSoFarDataVec, impTimesDataMatrix
 
     numECSs = ecsLibrary.getNumECSs()
     isInsertOrUninsert = (numECSs != 0)
@@ -60,16 +60,40 @@ proc applyExtracellularSources() { local numECSs, isInsertOrUninsert, maxNumImps
         eclDeploymentCache.numImpsSoFarDataVec = numImpsSoFarDataVec
         eclDeploymentCache.impTimesDataMatrix = impTimesDataMatrix
         
-    } else {
-        forall {
-            // No problem here if already uninserted
-            uninsert ECDCalcAndConsHelper
-        }
+        init()
         
-        eclDeploymentCache.removeAll()
+    } else {
+        disableExtracellularSources()
     }
     
+    return isInsertOrUninsert
+}
+
+// !!! keeping this proc on the top level rather than inside a template just because we need to use "farall"
+func disableExtracellularSources() { local wasEnabled
+    
+    wasEnabled = getExtracellularSourcesStatus()
+    if (!wasEnabled) {
+        return 0
+    }
+    
+    forall {
+        // No problem here if already uninserted
+        uninsert ECDCalcAndConsHelper
+    }
+    
+    eclDeploymentCache.removeAll()
+    
     init()
+    
+    return 1
+}
+
+func getExtracellularSourcesStatus() { local isEnabled
+    soma_ref.o(0).sec {
+        isEnabled = ismembrane("ECDCalcAndConsHelper")
+    }
+    return isEnabled
 }
 
 // !!! test this
