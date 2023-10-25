@@ -17,7 +17,7 @@ begintemplate BiophysExportImportOptions
     
     proc init() {
         isGlobals = 1
-        isAssignedAndState = 1
+        isAssignedAndState = 0
         isInhoms = 1
         isStochs = 1
     }
