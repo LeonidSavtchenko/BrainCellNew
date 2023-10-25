@@ -1,0 +1,22 @@
+
+// Load some test nanogeometry file
+{ load_file("CommonPrologueForTests.hoc") }
+
+{ load_file("../_Code/Managers/CommonLoads.hoc") }
+{ load_file("../_Code/Managers/MechManager/MechManager.hoc") }
+{ load_file("../_Code/Simulations/SimManagerLoads.hoc") }
+
+objref simBox
+simBox = new VBox()
+{ simBox.intercept(1) }
+{
+    simManager.createSimulationsPanel()
+}
+{ simBox.intercept(0) }
+{ simBox.map("Scenarios for cell dynamics", 500, 355, -1, -1) }
+
+objref altRunControlWidget
+altRunControlWidget = new AltRunControlWidget()
+{ altRunControlWidget.show() }
+
+{ chdir("..") }     // Without this, getcwd() will return different path compared to the start from "init.hoc"
