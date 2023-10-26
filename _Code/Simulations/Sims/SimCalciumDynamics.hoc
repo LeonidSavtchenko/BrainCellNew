@@ -12,7 +12,7 @@ begintemplate SimCalciumDynamics
     external tstop
     external removeItemFromList, unmapIfNotNil
     external rngUtils
-    external dendrite_ref
+    external /* soma_ref, */ dendrite_ref
     external graphList, fast_flush_list
     
     strdef biophysJsonFileNameOrEmpty

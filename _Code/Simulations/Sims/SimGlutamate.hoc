@@ -37,7 +37,7 @@ begintemplate SimGlutamate
     external run
     external tstop
     external removeItemFromList, unmapIfNotNil
-    external soma_ref   // !!!!???
+    // external soma_ref
     external graphList, fast_flush_list
     
     strdef biophysJsonFileNameOrEmpty

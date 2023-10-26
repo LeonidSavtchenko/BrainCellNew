@@ -13,7 +13,7 @@ begintemplate SimCalciumWave
     external run
     external tstop
     external eachSecInList
-    external soma_ref       // !!!??
+    external soma_ref, dendrite_ref
     external graphList, fast_flush_list
     
     strdef biophysJsonFileNameOrEmpty
