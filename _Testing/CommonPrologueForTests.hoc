@@ -1,5 +1,7 @@
 
-isAstrocyteOrNeuron = -1    // Fixed var name
+isBaseOrNanoStart = 0
+isAstrocyteOrNeuron = -1
+isExternalSimStart = 0
 { load_file("../_Code/InterModular/AllInterModularUtils.hoc") }
 
 objref mechsDllUtils
@@ -7,7 +9,6 @@ mechsDllUtils = new MechsDllUtils("")
 
 { sprint(mechsDllUtils.loadedNanoHocFilePathName, "%s../Nanogeometry/Neuron/cellmorphology+nano.hoc", getcwd()) }
 
-isBaseOrNanoStart = 0       // Fixed var name
 { load_file(mechsDllUtils.loadedNanoHocFilePathName) }
 
 if (!name_declared("dendrite_ref")) {

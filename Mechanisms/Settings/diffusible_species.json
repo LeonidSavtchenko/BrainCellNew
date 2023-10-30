@@ -3,25 +3,25 @@
         "Na": {
             "ionMechName": "na_ion",
             "baseOuterConc (mM)": 140,
-            "Diff (um2/ms)": 1400,
+            "Diff (um2/ms)": 1,
             "baseInnerConc (mM)": 10
         },
         "K": {
             "ionMechName": "k_ion",
             "baseOuterConc (mM)": 2.5,
-            "Diff (um2/ms)": 1500,
+            "Diff (um2/ms)": 1,
             "baseInnerConc (mM)": 54.4
         },
         "Ca": {
             "ionMechName": "ca_ion",
             "baseOuterConc (mM)": 1,
-            "Diff (um2/ms)": 1600,
+            "Diff (um2/ms)": 1,
             "baseInnerConc (mM)": 1e-4
         },
         "Cl": {
             "ionMechName": "cl_ion",
             "baseOuterConc (mM)": 120,
-            "Diff (um2/ms)": -1,
+            "Diff (um2/ms)": 1,
             "baseInnerConc (mM)": 5
         }
     },
@@ -29,19 +29,19 @@
         "ACh": {
             "ionMechName": "ach_ion",
             "baseOuterConc (mM)": 1e-5,
-            "Diff (um2/ms)": -1,
+            "Diff (um2/ms)": 0.5,
             "baseInnerConc (mM)": 1
         },
         "GLU": {
             "ionMechName": "glu_ion",
             "baseOuterConc (mM)": 1e-5,
-            "Diff (um2/ms)": -1,
+            "Diff (um2/ms)": 0.5,
             "baseInnerConc (mM)": 1
         },
         "GABA": {
             "ionMechName": "gaba_ion",
             "baseOuterConc (mM)": 1e-5,
-            "Diff (um2/ms)": -1,
+            "Diff (um2/ms)": 0.5,
             "baseInnerConc (mM)": 1
         }
     },
@@ -49,13 +49,13 @@
         "FRAP": {
             "ionMechName": "frapion_ion",
             "baseOuterConc (mM)": 1,
-            "Diff (um2/ms)": 1700,
+            "Diff (um2/ms)": 1,
             "baseInnerConc (mM)": 1
         },
         "Ins3P": {
             "ionMechName": "ip3_ion",
             "baseOuterConc (mM)": 1,
-            "Diff (um2/ms)": 1800,
+            "Diff (um2/ms)": 1,
             "baseInnerConc (mM)": 1
         }
     },
@@ -63,13 +63,13 @@
         "Extra1Ion": {
             "ionMechName": "extra1_ion",
             "baseOuterConc (mM)": 0,
-            "Diff (um2/ms)": -1,
+            "Diff (um2/ms)": 1,
             "baseInnerConc (mM)": 0
         },
         "Extra2Ion": {
             "ionMechName": "extra2_ion",
             "baseOuterConc (mM)": 0,
-            "Diff (um2/ms)": -1,
+            "Diff (um2/ms)": 1,
             "baseInnerConc (mM)": 0
         }
     },
