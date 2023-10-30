@@ -144,7 +144,7 @@ begintemplate OneExtracellularSourceWidget
         pointCapacityRadius = 25    // um           !!! was: 1
         
         // !!! PotassiumDiffusion.mod ("point" shape, "spike" dynamics)
-        numMolecules = 1e8          //              !!! was: 10000
+        numMolecules = 1e4          //              !!! was: 10000
         
         // !!! (No MOD-file) ("sphere" shape)
         delta_o = 2.3               // mM
@@ -343,8 +343,8 @@ begintemplate OneExtracellularSourceWidget
                                 }
                             }
                             thisDeck.intercept(0)
-                            thisDeck.map("", 0, 0, 1, 138)  // !!!
                             // thisDeck.flip_to(*)      // Will be done below in updateDecks67
+                            thisDeck.map("", 0, 0, 1, 138)  // !!!
                             decks7[thisSpcCatIdx] = thisDeck
                         }
                     }
@@ -535,8 +535,8 @@ begintemplate OneExtracellularSourceWidget
             xpanel()
         }
         deck.intercept(0)
-        deck.map()
         // deck.flip_to(*)  // Will be done downstream in updateDecks34
+        deck.map()
         
         return deck
     }

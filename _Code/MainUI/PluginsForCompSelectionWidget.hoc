@@ -25,7 +25,6 @@ begintemplate PluginForCSW_FromNBM
         // Here is the result of selection
         seededDendrites_ref = selected_ref
         
-        // !! do I need to re-calculate MaxDendriticLength using seededDendrites_ref?
         nanoBranchesManager.reseedBranchesWithLastUsedArgs()
     }
     

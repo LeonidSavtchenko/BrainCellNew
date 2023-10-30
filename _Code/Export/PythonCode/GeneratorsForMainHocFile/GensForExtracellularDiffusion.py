@@ -138,7 +138,7 @@ class GensForExtracellularDiffusion:
             lines.append(f'{{ ecsLibrary.addNewSource({self._getExtracellularSourceCtorArgs(ecs, isSeries)}) }}')
             lines.append('')
             
-        lines.append('applyExtracellularSources()')
+        lines.append('{ applyExtracellularSources() }')
         
         return lines
         

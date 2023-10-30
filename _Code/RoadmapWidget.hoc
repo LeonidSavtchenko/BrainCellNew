@@ -39,8 +39,8 @@ begintemplate RoadmapWidget
                 xpanel()
             }
             astrocyteOrNeuronDeck.intercept(0)
-            astrocyteOrNeuronDeck.map()
             // astrocyteOrNeuronDeck.flip_to(*)     // Will be done below in roadmapChangedHandler
+            astrocyteOrNeuronDeck.map()
             hBox = new HBox()
             hBox.intercept(1)
             {
@@ -76,8 +76,8 @@ begintemplate RoadmapWidget
                     xpanel()
                 }
                 hintDeck.intercept(0)
-                hintDeck.map()
                 // hintDeck.flip_to(*)              // Will be done below in roadmapChangedHandler
+                hintDeck.map()
             }
             hBox.intercept(0)
             hBox.map()

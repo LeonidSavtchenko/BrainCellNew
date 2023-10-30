@@ -16,23 +16,25 @@ class FileDialogUtils:
         baseGeometryHoc = 1
         nanoGeometryHoc = 2
         biophysJson = 3
+        binaryResultsPcl = 4
         """ !!! in the future, we can add support for:
-        distFuncHoc = 4
-        distFuncPy = 5
-        distFuncTxt = 6
-        distFuncXlsx = 7
-        diamDistrFile = 8
+        distFuncHoc = 5
+        distFuncPy = 6
+        distFuncTxt = 7
+        distFuncXlsx = 8
+        diamDistrFile = 9
         """
         
     class EnumOutFileTypes(Enum):
         baseGeometryHoc = 0
         nanoGeometryHoc = 1
         biophysJson = 2
+        binaryResultsPcl = 3
         """ !!! in the future, we can add support for these files saved to "Text results" folder:
-        volumFractionTxt = 3
-        cadynamicsTxt = 4
-        circularFrapAverageTxt = 5
-        timeFRAPTxt = 6
+        volumFractionTxt = 4
+        cadynamicsTxt = 5
+        circularFrapAverageTxt = 6
+        timeFRAPTxt = 7
         """
         
     _inFileTypeToArgsDict = {
@@ -54,7 +56,12 @@ class FileDialogUtils:
             'title': 'Import brain cell biophysics',
             'initialdir': 'Biophysics',
             'filetypes': [('JSON File', '*.json'), ('All Files', '*.*')],
-            'defaultextension': '.json'}
+            'defaultextension': '.json'},
+        EnumInFileTypes.binaryResultsPcl: {
+            'title': 'Load basket cell GABA diffusion animation',
+            'initialdir': 'Binary results',
+            'filetypes': [('PCL File', '*.pcl'), ('All Files', '*.*')],
+            'defaultextension': '.pcl'}
     }
     
     _outFileTypeToArgsDict = {
@@ -72,7 +79,12 @@ class FileDialogUtils:
             'title': 'Export brain cell biophysics',
             'initialdir': 'Biophysics',
             'filetypes': [('JSON File', '*.json'), ('All Files', '*.*')],
-            'defaultextension': '.json'}
+            'defaultextension': '.json'},
+        EnumOutFileTypes.binaryResultsPcl: {
+            'title': 'Save basket cell GABA diffusion animation',
+            'initialdir': 'Binary results',
+            'filetypes': [('PCL File', '*.pcl'), ('All Files', '*.*')],
+            'defaultextension': '.pcl'}
     }
     
     # !!! keep these file names in sync with other code

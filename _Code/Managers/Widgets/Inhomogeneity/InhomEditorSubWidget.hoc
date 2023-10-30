@@ -122,8 +122,9 @@ begintemplate InhomEditorSubWidget
             }
         }
         
-        // The difference between these two values takes place for morphology\diam
+        // The difference between these two values can take place for morphology\diam
         // because it's inhomogen by fact even though its model is not stored in inhomAndStochLibrary
+        // (however, user can apply an explicit inhom model to it making isInhom1 == isInhom2)
         isInhom1 = inhomAndStochLibrary.isInhomEnabledFor(enumDmPpNc, compIdx, mechIdx, varType, varIdx, arrayIndex)
         isInhom2 = comp.isMechVarInhom(mechIdx, varType, varName, arrayIndex)
         
@@ -851,7 +852,7 @@ begintemplate InhomEditorSubWidget
         }
         
         if (isMechOrSynEditor) {
-            if (mth.checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar(mechIdx, varType, varName)) {
+            if (mth.checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar(mechIdx, varType, varName, 1)) {
                 return
             }
         }
@@ -963,9 +964,21 @@ begintemplate InhomEditorSubWidget
     
     proc showInhomStatusMsg() {
         strdef msg, title
-        sprint(msg, "The inhomogeneity was applied to \"%s\" in %s. Now you can review stats curve or colormap.", varNameWithIndex, comp.name)
-        title = "Inhomogeneity applied"
-        mwh.showMessageBox(msg, title)
+        
+        mwh.startIntercepting()
+        {
+            if (isMechOrSynEditor) {                                        // Do not combine into one IF
+                if (mth.isDiamDistMechVar(mechIdx, varType, varName)) {     //
+                    sprint(msg, "When applying an inhomogeneity to \"%s\", the result is not as accurate as for other vars.", mth.diamVarName)
+                    mwh.showWarningBox(msg)
+                }
+            }
+            
+            sprint(msg, "The inhomogeneity was applied to \"%s\" in %s. Now you can review stats curve or colormap.", varNameWithIndex, comp.name)
+            title = "Inhomogeneity applied"
+            mwh.showMessageBox(msg, title)
+        }
+        mwh.endIntercepting()
     }
     
     proc setXYLabels() { localobj graph

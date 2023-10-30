@@ -1,9 +1,9 @@
 
 // These ones will be shared by different neuron nano branches
 objref randomSpineRadius, randomNeckLen, randomNeckDiam
-randomSpineRadius = rngUtils.getFor_spineRadius()
-randomNeckLen = rngUtils.getFor_neckLen()
-randomNeckDiam = rngUtils.getFor_neckDiam()
+randomSpineRadius = rngUtils.getFor_nano_spineRadius()
+randomNeckLen = rngUtils.getFor_nano_neckLen()
+randomNeckDiam = rngUtils.getFor_nano_neckDiam()
 
 // *********************** Set of Parameters for Uniform distribution
 // Spine Head Radius

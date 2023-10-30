@@ -1,0 +1,100 @@
+
+begintemplate SeedingDensityWidget
+    
+    public show, dismissHandler
+    
+    external isAstrocyteOrNeuron
+    external unmapIfNotNil
+    external math, seedingDensityHelper
+    
+    objref mainBox, deck, textEditor
+    
+    isUniform = -1
+    minSeedingDistance = -1
+    
+    
+    proc init() { local veryMinSeedingDistance, inf
+        units(&minSeedingDistance, units("L"))
+        
+        veryMinSeedingDistance = seedingDensityHelper.veryMinSeedingDistance
+        inf = math.inf
+        variable_domain(&minSeedingDistance, veryMinSeedingDistance, inf)
+    }
+    
+    proc show() { local cardIdx localobj vBox
+        strdef oneLinerPyDistFuncBody, word, hint
+        
+        seedingDensityHelper.onShowInSeedingDensityWidget(&isUniform, &minSeedingDistance, oneLinerPyDistFuncBody)
+        
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            xlabel("How to Seed the Nanostructures along dendrites:")
+            xradiobutton("Uniform", "isUniformChangedHandler(1)", isUniform)
+            xradiobutton("Non-uniform, using func(dist)", "isUniformChangedHandler(0)", !isUniform)
+            xlabel("")
+            xpanel()
+            deck = new Deck()
+            deck.intercept(1)
+            {
+                xpanel("")
+                // xlabel("Initial min. distance between stalks/spines is limit value that cannot be reduced using panel.")
+                // xlabel("To decrease this value, increase value - MaxNumberStalksPerDendrite/MaxNumberSpinesPerDendrite")
+                xpvalue("Min distribution over branches", &minSeedingDistance, 1)
+                xpanel()
+                vBox = new VBox()
+                vBox.intercept(1)
+                {
+                    xpanel("")
+                    // !!! keep in sync with CustomCodeDistFuncHelper.selectedHandler
+                    xlabel("Enter Python expression (one-liner) for \"Min distribution over branches\" > 0.")
+                    xlabel("The expression must depend on \"x\". We've done \"from math import *\" for you.")
+                    xpanel()
+                    textEditor = new TextEditor(oneLinerPyDistFuncBody)
+                    textEditor.map()
+                }
+                vBox.intercept(0)
+                vBox.map()
+            }
+            deck.intercept(0)
+            // deck.flip_to(*)  // Will be done below in isUniformChangedHandler
+            deck.map()
+            if (isAstrocyteOrNeuron) {
+                word = "stalks"
+            } else {
+                word = "spines"
+            }
+            xpanel("")
+            sprint(hint, "Hints: The lower value, the higher density of %s;", word)
+            xlabel(hint)
+            sprint(hint, "           the value is capped from below at %g (%s).", seedingDensityHelper.veryMinSeedingDistance, units("L"))
+            xlabel(hint)
+            xbutton("Apply", "applyHandler()")
+            xpanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Min distribution over branches", 250, 250, 370, 210)
+        
+        isUniformChangedHandler(isUniform)
+    }
+    
+    proc dismissHandler() {
+        unmapIfNotNil(mainBox)
+    }
+    
+    // All next staff is private
+    
+    
+    proc isUniformChangedHandler() { local cardIdx
+        isUniform = $1
+        cardIdx = !isUniform
+        deck.flip_to(cardIdx)
+    }
+    
+    proc applyHandler() {
+        seedingDensityHelper.onApplyInSeedingDensityWidget(isUniform, minSeedingDistance, textEditor.text())
+    }
+    
+endtemplate SeedingDensityWidget

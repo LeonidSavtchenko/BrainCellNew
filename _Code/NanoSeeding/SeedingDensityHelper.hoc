@@ -1,0 +1,86 @@
+
+{ makeSureDeclared("addLeaves", "proc addLeaves() { codeContractViolation() }") }
+{ makeSureDeclared("ReseedSpines", "proc ReseedSpines() { codeContractViolation() }") }
+
+
+begintemplate SeedingDensityHelper
+    
+    public applyCore, getMinSeedingDistance, onShowInSeedingDensityWidget, onApplyInSeedingDensityWidget
+    public veryMinSeedingDistance
+    
+    external isAstrocyteOrNeuron
+    external addLeaves, ReseedSpines
+    external math
+    external createVector
+    
+    isUniform = -1
+    minSeedingDistance = -1
+    strdef oneLinerPyDistFuncBody
+    
+    objref distFuncHelper
+    
+    veryMinSeedingDistance = -1
+    strdef oneLinerPyDistFuncName
+    
+    
+    proc init() {
+        // Defaults
+        isUniform = 1
+        minSeedingDistance = 1          // um
+        oneLinerPyDistFuncBody = "1234.5 * exp(-x / 100)"
+        
+        // Constants
+        veryMinSeedingDistance = 0.1    // um
+        oneLinerPyDistFuncName = "minSeedingDistanceOneLinerPyDistFunc"
+    }
+    
+    proc applyCore() {
+        if (isAstrocyteOrNeuron) {
+            addLeaves()     // --> getMinSeedingDistance
+        } else {
+            ReseedSpines()  // --> getMinSeedingDistance
+        }
+    }
+    
+    func getMinSeedingDistance() { local x, dist, _minSeedingDistance
+        x = $1
+        if (isUniform) {
+            return minSeedingDistance
+        } else {
+            dist = distance(x)
+            _minSeedingDistance = distFuncHelper.calculateAt(dist)
+            _minSeedingDistance = math.max(_minSeedingDistance, veryMinSeedingDistance)     // Just to avoid a crash of NEURON
+            return _minSeedingDistance
+        }
+    }
+    
+    proc onShowInSeedingDensityWidget() {
+        $&1 = isUniform
+        $&2 = minSeedingDistance
+        $s3 = oneLinerPyDistFuncBody
+    }
+    
+    proc onApplyInSeedingDensityWidget() { localobj vecOfVals, listOfStrs
+        
+        isUniform = $1
+        minSeedingDistance = $2
+        oneLinerPyDistFuncBody = $s3
+        
+        distFuncHelper = new CustomCodeDistFuncHelper()
+        vecOfVals = createVector(1)     // modelIdx
+        listOfStrs = new List()
+        listOfStrs.append(new String(""))
+        listOfStrs.append(new String(""))
+        listOfStrs.append(new String(oneLinerPyDistFuncName))
+        listOfStrs.append(new String(oneLinerPyDistFuncBody))
+        listOfStrs.append(new String(""))
+        listOfStrs.append(new String(""))
+        distFuncHelper.importParams(vecOfVals, listOfStrs)
+        
+        applyCore()
+    }
+    
+endtemplate SeedingDensityHelper
+
+objref seedingDensityHelper
+seedingDensityHelper = new SeedingDensityHelper()

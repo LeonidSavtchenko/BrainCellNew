@@ -93,7 +93,7 @@ begintemplate MechCompImportCreateRescanHelper
     proc scheduleRescan() { local enumNewRescanType
         enumNewRescanType = $1
         
-        if (enumNewRescanType < 3 || enumNewRescanType > 6) {
+        if (enumNewRescanType < 2 || enumNewRescanType > 6) {
             codeContractViolation()
         }
         

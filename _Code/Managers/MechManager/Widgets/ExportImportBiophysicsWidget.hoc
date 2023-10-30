@@ -129,7 +129,7 @@ begintemplate ExportImportBiophysicsWidget
                         sprint(text, "       (in most cases, you don't need to %s them explicitly, but some MOD files don't init a var", word)
                         xlabel(text)
                         xlabel("        automatically in the INITIAL block expecting that we set a nonzero value from HOC code)")
-                        sprint(text, "Inhom models (%d detected)", numInhomVars)
+                        sprint(text, "Inhom models (%d detected)", numInhomVars)    // !!! maybe skip explicit inhom models for morphology\diam in the counter here
                         xcheckbox(text, &options.isInhoms)
                         sprint(text, "Stoch models (%d detected)", numStochVars)
                         xcheckbox(text, &options.isStochs)

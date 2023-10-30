@@ -269,7 +269,7 @@ begintemplate MechComp
     }
     
     // Keep in sync with ReducedInhomAndStochTarget.applyBiophysInhomogeneity
-    proc applySegmentationAndInhomogeneity() { local varType, arrayIndex, x, dist, y localobj segmentationHelperOrNil, distFuncHelper, mechStd, nil
+    proc applySegmentationAndInhomogeneity() { local varType, arrayIndex, mechIdx, isDiam, x, dist, y localobj segmentationHelperOrNil, distFuncHelper, mechStd, nil
         strdef mechName, varName
         
         segmentationHelperOrNil = $o1
@@ -283,6 +283,9 @@ begintemplate MechComp
             codeContractViolation()
         }
         
+        mechIdx = mth.getMechIdx(enumDmPpNc, mechName)
+        isDiam = mth.isDiamDistMechVar(mechIdx, varType, varName)
+        
         mechStd = new MechanismStandard(mechName, varType)
         
         mwh.showPleaseWaitBox("Applying segmentation and inhomogeneity.")
@@ -295,18 +298,36 @@ begintemplate MechComp
                 
                 distFuncHelper.onJustBeforeNewSection()
                 
-                for (x, 0) {
-                    mechStd.in(x)
-                    
-                    dist = distance(x)
-                    y = distFuncHelper.calculateAt(dist)
-                    
-                    // !! BUG: "variable_domain" used in "MechanismStandard.panel()" is ignored in "MechanismStandard.set()" and "MechanismStandard.out()",
-                    //      so we can use any invalid value here without even a warning
-                    
-                    mechStd.set(varName, y, arrayIndex)
-                    
-                    mechStd.out(x)
+                if (!isDiam) {
+                    for (x, 0) {
+                        mechStd.in(x)
+                        
+                        dist = distance(x)
+                        y = distFuncHelper.calculateAt(dist)
+                        
+                        // !! BUG: "variable_domain" used in "MechanismStandard.panel()" is ignored in "MechanismStandard.set()" and "MechanismStandard.out()",
+                        //      so we can use any invalid value here without even a warning
+                        
+                        mechStd.set(varName, y, arrayIndex)
+                        
+                        mechStd.out(x)
+                    }
+                } else {
+                    for (x, 0) {
+                        // !!! BUG: when applying inhomogeneity to "diam", the result is not as accurate as for other vars;
+                        //          e.g. for the default 2-section axon, after applying a linear model to "diam" with InhomEditorSubWidget,
+                        //          we can see that the red dashes are detached from the blue curve
+                        //          (maybe NEURON interpolates the diameter at section joints or mixes "diam(x)" with "diam3d(i)" somehow)
+                        
+                        dist = distance(x)
+                        y = distFuncHelper.calculateAt(dist)
+                        diam(x) = y
+                        
+                        // !!! very weird NEURON behaviour: uncommenting the next line of code results in a distortion of "diam(x)" making it
+                        //     significantly different from the applied inhom model;
+                        //     moreover, when clicking "Apply" in InhomEditorSubWidget several times, each time it leads to a change of the red dashes
+                        // print diam
+                    }
                 }
             }
         }

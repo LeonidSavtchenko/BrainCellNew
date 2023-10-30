@@ -175,7 +175,6 @@ endtemplate CompSubsetWidget
 proc seededDendritesChangedHandler() {
     if (isAllOrSomeDendritesSeeded) {
         seededDendrites_ref = dendrites_ref
-        // !! do I need to re-calculate MaxDendriticLength using seededDendrites_ref?
         nanoBranchesManager.reseedBranchesWithLastUsedArgs()
     } else {
         // !! after the next operation and before closing cssWidget, interaction with MainUI nanogeometry panels causes an error,

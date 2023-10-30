@@ -1,0 +1,11 @@
+
+// For the current section and all its children subtree, add SectionRef-s to the List
+// $o1 - The List
+proc addThisAndAllChildSecRefsToTheList_deprecated() { localobj list_ref, secList
+    list_ref = $o1
+    
+    secList = new SectionList()
+    secList.subtree()
+    
+    secListToListOfSecRef(secList, list_ref)
+}

@@ -24,6 +24,8 @@ if (isAstrocyteOrNeuron) {
     load_file("../Managers/SynManager/Exported/SpineNeckDiamCache.hoc")
 }
 
+{ load_file("../NanoSeeding/NanoSeedingLoads.hoc") }
+
 
 begintemplate NanoBranchesManager
     
@@ -38,9 +40,9 @@ begintemplate NanoBranchesManager
     public MaxNumberBranchesPerDendrite
     
     external seededDendrite_ref, NumberNanoBranches
-    external isAstrocyteOrNeuron, MinDistance, MaxDendriticLength, isFirstReseeding
-    external mwh, rngUtils, math
-    external eachItemInList
+    external isAstrocyteOrNeuron, isFirstReseeding
+    external mwh, rngUtils, math, seedingDensityHelper
+    external eachSecInList, eachItemInList
     external manageAndRunWidget
     
     external createAstrocyteNanoBranch, createNeuronNanoBranch, createRefsForNanoGeometry_deprecated
@@ -63,7 +65,7 @@ begintemplate NanoBranchesManager
         MaxNumberBranchesPerDendrite = $1
         
         nanoBranches_flat = new List()
-        randomBranchSeeder = rngUtils.getFor_branchSeeder()
+        randomBranchSeeder = rngUtils.getFor_nano_branchSeeder()
         
         inf = math.inf
         variable_domain(&MaxNumberBranchesPerDendrite, 0, inf)
@@ -72,7 +74,7 @@ begintemplate NanoBranchesManager
     // Reseed dendrites with nanobranches
     // $o1 - The Vector of args passed to *NanoBranch template
     // Other inputs: seededDendrite_ref (taken from the top level) etc.
-    proc reseedBranches() { local ControlFactor, NormFactor, slotIdx localobj args, nil, sec_ref
+    proc reseedBranches() { local connectionPoint, minSeedingDistance, ControlFactor, invNormFactor, slotIdx localobj args, nil
         args = $o1
         
         lastUsedArgs = args
@@ -87,16 +89,14 @@ begintemplate NanoBranchesManager
                 deleteBranches()
             }
             
-            ControlFactor=(MinDistance*MaxNumberBranchesPerDendrite)/MaxDendriticLength
-            
-            // !!! maybe use eachSecInList here
-            for eachItemInList(sec_ref, seededDendrite_ref) {
-                NormFactor=ControlFactor*MaxDendriticLength/sec_ref.sec.L
-                
+            for eachSecInList(seededDendrite_ref) {
                 for slotIdx = 0, MaxNumberBranchesPerDendrite - 1 {
-                    
-                    if (randomBranchSeeder.uniform(0,1) < 1/NormFactor) {
-                        createInitAndConnectOneBranch(sec_ref, slotIdx, args)
+                    connectionPoint = slotIdxToConnectionPoint(slotIdx)
+                    minSeedingDistance = seedingDensityHelper.getMinSeedingDistance(connectionPoint)
+                    ControlFactor = minSeedingDistance * MaxNumberBranchesPerDendrite
+                    invNormFactor = L / ControlFactor                           // !!! this can be > 1
+                    if (randomBranchSeeder.uniform(0, 1) < invNormFactor) {     // !!! use .repick() for performance
+                        createInitAndConnectOneBranch(slotIdx, args)
                     }
                 }
             }
@@ -131,7 +131,7 @@ begintemplate NanoBranchesManager
     
     // Update nanobranches geometry without reseeding
     // $o1 - The Vector of args passed to *NanoBranch template
-    proc updateBranches() { localobj args, nil, nanoBranch
+    proc updateBranches() { localobj args, nanoBranch, nil
         args = $o1
         
         if (manageAndRunWidget != nil) {
@@ -163,14 +163,12 @@ begintemplate NanoBranchesManager
     
     
     // Create, initialize and connect to dendrite a new nanobranch
-    // $o1 - The SectionRef of the seeded dendrite
-    // $2 - The index of a slot on that dendrite to connect the new nanobranch
-    // $o3 - The Vector of args passed to *NanoBranch template
+    // $1 - The index of a slot on that dendrite to connect the new nanobranch
+    // $o2 - The Vector of args passed to *NanoBranch template
     // Other inputs: seededDendrite_ref (taken from the top level) etc.
-    proc createInitAndConnectOneBranch() { local slotIdx, connectionPoint localobj sec_ref, args, newBranch
-        sec_ref = $o1
-        slotIdx = $2
-        args = $o3
+    proc createInitAndConnectOneBranch() { local slotIdx, connectionPoint localobj args, newBranch
+        slotIdx = $1
+        args = $o2
         
         // Create and initialize one branch (sections, topology, geometry, biophysics)
         if (isAstrocyteOrNeuron) {
@@ -181,8 +179,13 @@ begintemplate NanoBranchesManager
         nanoBranches_flat.append(newBranch)
         
         // Connect the new branch to this dendrite in this point
-        connectionPoint = (1/MaxNumberBranchesPerDendrite)*slotIdx
-        sec_ref.sec connect newBranch.root_ref.sec(0), connectionPoint
+        connectionPoint = slotIdxToConnectionPoint(slotIdx)
+        connect newBranch.root_ref.sec(0), connectionPoint
+    }
+    
+    func slotIdxToConnectionPoint() { local slotIdx
+        slotIdx = $1
+        return slotIdx / MaxNumberBranchesPerDendrite
     }
     
 endtemplate NanoBranchesManager

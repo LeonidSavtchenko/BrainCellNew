@@ -21,8 +21,7 @@ proc stretch() { local scaleNew, j, d
         }
     }
     
-    // !! uncomment if this proc starts changing "L" (and don't forget to update astrocyte biophysics here because it depends on "L"):
-    // MaxDendriticLength = getMaxDendriticLength()
+    // !! if this proc starts changing "L", don't forget to update astrocyte biophysics here because it depends on "L"
     
     // !!! mmIcrHelper.scheduleRescan(*)
 }

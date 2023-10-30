@@ -2,21 +2,22 @@
 OnlySingleGluSimulations = 1    // parameter for Glu and Potassium single voltage clamp mechanism
 objref vBoxPointProcessWindow
 
-{ load_file("Sims/SimVoltageCA1Neuron.hoc") }
-{ load_file("Sims/SimFrapInCircleGeometry.hoc") }
-{ load_file("Sims/SimFrapLine.hoc") }
-{ load_file("Sims/SimSpatialVoltageDistributions.hoc") }
-{ load_file("Sims/SimConstantElectricalSimulations.hoc") }
-{ load_file("Sims/SimFrequencyElectricalSimulation.hoc") }
-{ load_file("Sims/SimCalciumDynamics.hoc") }
-{ load_file("Sims/SimCalciumWave.hoc") }
-{ load_file("Sims/SimGlutamate.hoc") }
-{ load_file("Sims/SimPotassium.hoc") }
+{ load_file("Sims/Neuron/SimVoltageCA1Neuron.hoc") }
+{ load_file("Sims/Neuron/SimGABADiffusionBasketCell.hoc") }
+{ load_file("Sims/Common/SimFrapInCircleGeometry.hoc") }
+{ load_file("Sims/Common/SimFrapLine.hoc") }
+{ load_file("Sims/Common/SimSpatialVoltageDistributions.hoc") }
+{ load_file("Sims/Common/SimConstantElectricalSimulations.hoc") }
+{ load_file("Sims/Common/SimFrequencyElectricalSimulation.hoc") }
+{ load_file("Sims/Common/SimCalciumDynamics.hoc") }
+{ load_file("Sims/Common/SimCalciumWave.hoc") }
+{ load_file("Sims/Common/SimGlutamate.hoc") }
+{ load_file("Sims/Common/SimPotassium.hoc") }
 
 // !!! deprecated: get rid of this file in favour of BiophysExportImportHelper and JSON files once we:
 //     (1) export/import density_GluTrans inhom model in the same way as for g_pas;
 //     (2) move the GLOBAL vars assigned in "MechanismSwitch_deprecated.hoc" to the loaded JSON file;
-//     (3?) create JSON files for the simulations hidden in UI (simIdx = 1 and 5)
+//     (3?) create JSON files for the simulations hidden in UI (simIdx = 2 and 6)
 { load_file("MechanismSwitch_deprecated.hoc") }
 
 { load_file("SimManager.hoc") }

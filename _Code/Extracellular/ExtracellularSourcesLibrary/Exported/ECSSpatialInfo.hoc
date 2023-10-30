@@ -1,7 +1,7 @@
 
 begintemplate ECSSpatialInfo
 
-    public isEqual, prepareShownString, packToVec
+    public isEqual, prepareShownString, packToVec, createShiftedCopy
     public enumPointSphere, x, y, z, radiusOrMinus1
     
     external codeContractViolation
@@ -76,6 +76,20 @@ begintemplate ECSSpatialInfo
         vec.x(3) = z
         vec.x(4) = radiusOrMinus1
         return vec
+    }
+    
+    obfunc createShiftedCopy() { local x_new, y_new, z_new
+        x_new = $1
+        y_new = $2
+        z_new = $3
+        
+        if (enumPointSphere == 0) {
+            return new ECSSpatialInfo(enumPointSphere, x_new, y_new, z_new)
+        } else if (enumPointSphere == 1) {
+            return new ECSSpatialInfo(enumPointSphere, x_new, y_new, z_new, radiusOrMinus1)
+        } else {
+            codeContractViolation()
+        }
     }
     
 endtemplate ECSSpatialInfo

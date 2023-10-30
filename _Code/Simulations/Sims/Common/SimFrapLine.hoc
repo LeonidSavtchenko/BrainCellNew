@@ -1,0 +1,246 @@
+
+// Finds sections within a line and sets initial FRAP concentration on them.
+// $1 - AlphaX - line equation parameter
+// $2 - Y_Coor - line equation parameter
+// $3 - Line width
+// $4 - Basic concentration. The parameter can modulate the initial concentration of interest.
+// $5 - Alpha - affects speed of the bleaching
+// $6 - DFree
+// Returns: Sections affected by FRAP
+obfunc setInitialLineConcentration() { localobj frapLineSectionsList
+    
+    frapLineSectionsList = new List()
+    
+    forall {
+        frapion0_FRAP = $4      // mM, The concentration of molecules used for the FRAP
+        DFree_FRAP = $6
+        
+        // Find sections within a line
+        if (($1*x3d(1)+$2 < y3d(1)) && (($1*x3d(1)+$2+$3*sqrt(1+$1^2)) > y3d(1))) {
+        //print x3d(1)
+            frapLineSectionsList.append(new SectionRef())
+            
+            Alpha_FRAP = $5*$4
+        }
+    }
+    
+    return frapLineSectionsList
+}
+
+begintemplate SimFrapLine
+    
+    public check, show, advance, dismissHandler
+    public biophysJsonFileNameOrEmpty, isCustomProcAdvance
+    
+    external setInitialLineConcentration, closeFileAndShowCompleteMsg
+    external run
+    external tstop
+    external removeItemFromList, unmapIfNotNil
+    external eachSecInList
+    external dendrite_ref
+    external flush_list, fast_flush_list
+    
+    strdef biophysJsonFileNameOrEmpty
+    isCustomProcAdvance = -1
+    
+    strdef outTxtFileRelPathName
+    
+    // UI
+    objref hBoxFrapLine, graphFrapLine, plotShapeFrapioniLine
+    
+    // Concentration file
+    objref fileFrapLineConcentration
+    
+    // Sections affected by FRAP
+    objref frapLineSectionsList
+    
+    
+    proc init() {
+        biophysJsonFileNameOrEmpty = "SimFrapLine.json"
+        isCustomProcAdvance = 1
+        
+        outTxtFileRelPathName = "Text results/TimeFRAP.txt"
+    }
+    
+    func check() {
+        return 0
+    }
+    
+    // Opens FRAP Line simulation window.
+    proc show() {
+        initParamsFrapLine()
+        showFrapLineUi()
+    }
+    
+    // Switches between bleaching/recovery and writes concentration to file.
+    proc advance() { local cylinderVolume, FraRec, FraBasic, recoveryBleaching
+        fadvance()
+        
+        FraRec = 0
+        FraBasic = 0
+        
+        if (t % (iterationTime*2) == iterationTime) {
+            // Recovery just started
+            recoveryBleaching = 1
+        } else if (t % (iterationTime*2) == 0) {
+            // Bleaching just started
+            recoveryBleaching = 2
+        } else {
+            // In process
+            recoveryBleaching = 0
+        }
+        
+        for eachSecInList(frapLineSectionsList) {
+            cylinderVolume = L*PI*diam^2/4
+            FraRec += frapioni(0.5)*cylinderVolume
+            FraBasic += cylinderVolume
+            
+            // Change Alpha for all sections in line
+            if (recoveryBleaching == 1) {
+                // Recovering every iterationTime
+                Alpha_FRAP = 0
+            } else if (recoveryBleaching == 2) {
+                // Bleaching every other iterationTime
+                Alpha_FRAP = AlphaFRAP*BasicFRAP
+            }
+        }
+        
+        if (!fileFrapLineConcentration.isopen()) {
+            // !!! this is required when user uses RunControl or AltRunControl for the simulation;
+            //     unfortunately, in this case user will have to click "Save results" button manually
+            //     because otherwise it's not guaranteed that the last lines are flushed to the file
+            fileFrapLineConcentration.aopen(outTxtFileRelPathName)
+        }
+        fileFrapLineConcentration.printf("%-6.5g\t%-6.5g\n", t, FraRec/FraBasic)
+        
+        if (t < tstop) {
+            if (recoveryBleaching == 1) {
+                fileFrapLineConcentration.printf("----- RECOVERY STARTED -----\n")
+            } else if (recoveryBleaching == 2) {
+                fileFrapLineConcentration.printf("----- BLEACHING STARTED -----\n")
+            }
+        }
+    }
+    
+    proc dismissHandler() {
+        
+        removeItemFromList(flush_list, graphFrapLine)
+        removeItemFromList(fast_flush_list, plotShapeFrapioniLine)
+        
+        unmapIfNotNil(hBoxFrapLine)
+        
+        /* !!!
+        closeFileAndShowCompleteMsg(fileFrapLineConcentration)
+        */
+    }
+    
+    // All next staff is private
+    
+    
+    // Runs FRAP Line simulation.
+    // Bleaching during iterationTime with a constant Alpha_FRAP and recovery during the same time.
+    proc runFrapLine() {
+        fileFrapLineConcentration = new File()
+        fileFrapLineConcentration.aopen(outTxtFileRelPathName)
+        fileFrapLineConcentration.printf("Time\tConcentration\n")
+        
+        frapLineSectionsList = setInitialLineConcentration(AlphaX, Y_Coor, LineWidth, BasicFRAP, AlphaFRAP, DFreeFRAP)
+        run()
+        
+        closeFileAndShowCompleteMsg(fileFrapLineConcentration)
+    }
+    
+    // Updates simulation time according to the number of iterations and their time.
+    proc updateTstop() {
+        tstop = iterations*iterationTime*2
+    }
+    
+    // Inits UI and simulation parameters.
+    proc initParamsFrapLine() {
+        LineWidth = 1.5     // um, bleaching line width
+        AlphaX = 2          // um, the angle of inclination of a straight line
+        Y_Coor = -20        // y = Alpha*x+ Y_Coor
+        BasicFRAP = 0.2
+        DFreeFRAP = 0.3     // (um2/ms)
+        AlphaFRAP = 0.0001  // mM/ms
+        iterations = 4
+        iterationTime = 1000  // ms, This time parameter is necessary to reproduce the experimental course (Figure 2)
+        updateTstop()
+    }
+    
+    // Shows FRAP Line UI.
+    proc showFrapLineUi() { localobj vBoxFrapLineControls, frapioniPlot
+        hBoxFrapLine = new HBox()
+        hBoxFrapLine.intercept(1)
+        {
+            vBoxFrapLineControls = new VBox()
+            vBoxFrapLineControls.intercept(1)
+            {
+                xpanel("")
+                xlabel("====================== Initial parameters ======================")
+                xlabel("Coordinates of first bleaching linear area are calculated")
+                xlabel("accourding to formula y = Alpha * x + Y_Coor")
+                xlabel("---------------------------------------------------------------------------------------------------------------------")
+                xlabel("Width of linear bleaching area in um")
+                xvalue("Line width (um) ","LineWidth", 1, "", 0, 1)
+                xlabel("Angle of incidence of linear bleaching in tan X-Y coordinate")
+                xvalue("Alpha (um)","AlphaX", 1, "", 0, 1)
+                xlabel("Position of bleaching at x = 0")
+                xvalue("Y-axis intersect, Y(X=0) (um)","Y_Coor", 1, "", 0, 1)
+                xlabel("---------------------------------------------------------------------------------------------------------------------")
+                xlabel("Initial indicator  concentration")
+                xvalue("Indicator concentration (mM)","BasicFRAP", 1, "", 0, 1)
+                xlabel("Photobleaching rate")
+                xvalue("Rate (mM/ms)","AlphaFRAP", 1, "", 0, 1)
+                xvalue("DFree (um2/ms)","DFreeFRAP", 1, "", 0, 1)
+                xlabel("===========================================================")
+                xpanel(0)
+                
+                xpanel("")
+                xlabel("========================== Running ==========================")
+                xvalue("Duration of bleaching (recovery)","iterationTime", 1, "updateTstop()", 0, 1)
+                xvalue("Bleaching-recovery iterations","iterations", 1, "updateTstop()", 0, 1)
+                xlabel("Run simulation. Results are saved to the TimeFRAP.txt")
+                xbutton("Run FRAP", "runFrapLine()")
+                // !!! instead of this button, maybe use a Timer with e.g. 1 sec interval to check if simulation is running and, if not, close the file;
+                //     alternatively, we'll have to stick to AltRunControl and update it's code to close this file
+                xbutton("Save results*", "closeFileAndShowCompleteMsg(fileFrapLineConcentration)")
+                xlabel("* If you used RunControl or AltRunControl for the simulation,")
+                xlabel("   then click this button once stopped")
+                xlabel("===========================================================")
+                xpanel()
+                
+                removeItemFromList(flush_list, graphFrapLine)
+                graphFrapLine = new Graph()
+                flush_list.append(graphFrapLine)
+                graphFrapLine.size(-40, 40, 0.85*BasicFRAP, 1*BasicFRAP)
+                graphFrapLine.xaxis()
+                graphFrapLine.label(0.0340357, 0.94, "Concentration (mM)", 2, 1, 0, 0, 1)
+                 graphFrapLine.label(0.45, 0.01, "Distance (um)", 2, 1, 0, 0, 1)
+                frapioniPlot = new RangeVarPlot("frapioni")
+                dendrite_ref.o(10).sec frapioniPlot.begin(0)
+                dendrite_ref.o(1).sec frapioniPlot.end(1)
+                
+                graphFrapLine.addobject(frapioniPlot, 1, 1, 1, 1)
+            }
+            vBoxFrapLineControls.intercept(0)
+            vBoxFrapLineControls.map()
+            
+            removeItemFromList(fast_flush_list, plotShapeFrapioniLine)
+            plotShapeFrapioniLine = new PlotShape(0)
+            fast_flush_list.append(plotShapeFrapioniLine)
+            plotShapeFrapioniLine.size(-50,50,-50,50)
+            plotShapeFrapioniLine.view(-50, -50, 100, 100, 165, 169, 400.64, 400.32)
+            plotShapeFrapioniLine.exec_menu("Shape Plot")
+            plotShapeFrapioniLine.exec_menu("View = plot")
+            plotShapeFrapioniLine.variable("frapioni")
+            plotShapeFrapioniLine.show(0)
+            plotShapeFrapioniLine.scale(0.8*BasicFRAP, 1.0*BasicFRAP)
+            plotShapeFrapioniLine.label(0.0340357, 0.94, "Concentration (mM)", 2, 1, 0, 0, 1)
+            
+        }
+        hBoxFrapLine.intercept(0)
+        hBoxFrapLine.map("Frap In Line")
+    }
+    
+endtemplate SimFrapLine

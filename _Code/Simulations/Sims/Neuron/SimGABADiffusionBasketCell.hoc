@@ -1,0 +1,224 @@
+
+begintemplate SimGABADiffusionBasketCell
+    
+    public check, show, advance, dismissHandler
+    public biophysJsonFileNameOrEmpty, isCustomProcAdvance
+    
+    external showExtracellularManagerBaseWidget, unmapIfNotNil, dismissIfNotNil
+    external mwh, fbh, math, ecsLibrary, rngUtils, mainUiLocker
+    external pyEnumOutFileTypes, pyEnumInFileTypes
+    external manageAndRunWidget
+    
+    strdef biophysJsonFileNameOrEmpty
+    isCustomProcAdvance = -1
+    
+    objref randomCoord
+    
+    objref mainBox, deck
+    
+    isCreateOrReview = -1
+    numSrc = -1
+    radiusGen = -1
+    
+    strdef pclFilePathName
+    
+    
+    proc init() { local inf
+        biophysJsonFileNameOrEmpty = ""     // !!!
+        isCustomProcAdvance = 1
+        
+        randomCoord = rngUtils.getFor_sim_gabaDiffusion()
+        
+        isCreateOrReview = 1
+        numSrc = 100
+        radiusGen = 200     // um
+        
+        inf = math.inf
+        variable_domain(&numSrc, 1, inf)
+        
+        variable_domain(&radiusGen, float_epsilon, inf)
+        units(&radiusGen, units("L"))
+    }
+    
+    func check() { local isCancel localobj nil
+        if (mainUiLocker != nil) {  // !!! nil in tests
+            isCancel = mainUiLocker.makeSureNanoReseedingLocked()
+            if (isCancel) {
+                return 1
+            }
+        }
+        return 0
+    }
+    
+    proc show() { localobj vBox
+        
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            xlabel("")
+            xradiobutton("Create new animation", "createOrReviewHandler(1)", isCreateOrReview)
+            xradiobutton("Review saved animation", "createOrReviewHandler(0)", !isCreateOrReview)
+            xlabel("")
+            xpanel()
+            deck = new Deck()
+            deck.intercept(1)
+            {
+                vBox = new VBox()
+                vBox.intercept(1)
+                {
+                    xpanel("")
+                    xlabel("1. Create a single source using \"Manager of extracellular sources\".")
+                    xlabel("2. Click \"Generate sources\" to create \"Number of sources - 1\" copies within \"Radius of generation\".")
+                    xlabel("    (The initial source still remains in the centre of this radius.)")
+                    xlabel("    Hint: Checking \"Make a series\" and setting \"noise\" > 0 for the initial source results in")
+                    xlabel("             different behaviour for each copy.")   // !!!!!!!!!!! test this
+                    xlabel("3. Click \"Start simulation\" and specify the output file path and name.")
+                    xpanel()
+                    xpanel("")
+                    xpvalue("Number of sources", &numSrc, 1)
+                    xpvalue("Radius of generation", &radiusGen, 1)
+                    xlabel("")
+                    xbutton("Generate sources", "generateHandler()")
+                    xlabel("Hint: Click \"Edit\" -> \"Show all srcs for this species\" to review the generated sources.")
+                    xpanel()
+                    xpanel("")
+                    xlabel("")
+                    xbutton("Start simulation", "startHandler()")
+                    xlabel("")
+                    xpanel()
+                }
+                vBox.intercept(0)
+                vBox.map()
+                xpanel("")
+                xlabel("")
+                xbutton("Load file", "loadHandler()")
+                xpanel()
+            }
+            deck.intercept(0)
+            // deck.flip_to(*)      // Will be done below in createOrReviewHandler
+            deck.map("", 1, 1, 460, 280)        // !!!
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Basket cell GABA diffusion", 500, 545, -1, -1)
+        
+        createOrReviewHandler(isCreateOrReview)
+    }
+    
+    proc advance() {
+        fadvance()
+        // !!!
+    }
+    
+    proc dismissHandler() {
+        // !!!!!!!!! maybe disable extracellular diffusion
+        unmapIfNotNil(mainBox)
+    }
+    
+    // All next staff is private
+    
+    
+    proc createOrReviewHandler() { local cardIdx
+        isCreateOrReview = $1
+        
+        cardIdx = !isCreateOrReview
+        deck.flip_to(cardIdx)
+        
+        if (isCreateOrReview) {
+            showExtracellularManagerBaseWidget()
+        } else {
+            dismissIfNotNil(manageAndRunWidget)
+        }
+    }
+    
+    proc generateHandler() { local numECSs, isCancel, x_base, y_base, z_base, x_min, x_max, y_min, y_max, z_min, z_max, radiusSqGen, srcIdx, x_new, y_new, z_new, distSq localobj ecsList, baseECS, spatialInfo, newECS
+        
+        ecsList = ecsLibrary.ecsList
+        
+        numECSs = ecsList.count()
+        if (numECSs == 0) {
+            mwh.showWarningBox("Please create a single extracellular source using \"Manager of extracellular sources\".")
+            return
+        } else if (numECSs > 1) {
+            isCancel = !boolean_dialog("There is more than one extracellular source. Can we delete all but the first one before the next step?", "Yes", "No")
+            if (isCancel) {
+                return
+            }
+        }
+        
+        dismissIfNotNil(manageAndRunWidget)     // Just in case
+        
+        baseECS = ecsList.o(0)
+        
+        if (numECSs > 1) {
+            ecsList.remove_all()
+            ecsList.append(baseECS)
+        }
+        
+        spatialInfo = baseECS.spatialInfo
+        x_base = spatialInfo.x
+        y_base = spatialInfo.y
+        z_base = spatialInfo.z
+        
+        x_min = x_base - radiusGen
+        x_max = x_base + radiusGen
+        y_min = y_base - radiusGen
+        y_max = y_base + radiusGen
+        z_min = z_base - radiusGen
+        z_max = z_base + radiusGen
+        
+        radiusSqGen = radiusGen ^ 2
+        
+        for srcIdx = 1, numSrc - 1 {
+            while (1) {
+                x_new = randomCoord.uniform(x_min, x_max)
+                y_new = randomCoord.uniform(y_min, y_max)
+                z_new = randomCoord.uniform(z_min, z_max)
+                
+                distSq = getDistSquareBetweenTwo3DPoints(x_base, y_base, z_base, x_new, y_new, z_new)
+                if (distSq <= radiusSqGen) {
+                    break
+                }
+            }
+            
+            newECS = baseECS.createShiftedCopy(x_new, y_new, z_new)
+            ecsList.append(newECS)
+        }
+        
+        showExtracellularManagerBaseWidget()    // This calls ecsList.select(0)
+    }
+    
+    proc startHandler() { local isCancel
+        isCancel = fbh.showSaveFileDialog(pyEnumOutFileTypes.binaryResultsPcl, pclFilePathName)
+        if (isCancel) {
+            return
+        }
+        
+        // !!!
+        mwh.showNotImplementedWarning()
+        
+        // applyExtracellularSources()      // !!! update status indicator in ExtracellularManagerMainWidget
+        // if (mmIcrHelper != nil) {   // !!! can be nil in tests
+        //     mmIcrHelper.scheduleRescan(6)
+        // }
+        // run()
+        // closeFileAndShowCompleteMsg(...)
+    }
+    
+    proc loadHandler() { local isCancel
+        isCancel = fbh.showLoadFileDialog(pyEnumInFileTypes.binaryResultsPcl, pclFilePathName)
+        if (isCancel) {
+            return
+        }
+        
+        // !!!
+        mwh.showNotImplementedWarning()
+    }
+    
+    // See also: ExtracellularApplicatorUtils_Exported.hoc -> _getDistBetweenTwo3DPoints
+    func getDistSquareBetweenTwo3DPoints() {
+        return ($1 - $4) ^ 2 + ($2 - $5) ^ 2 + ($3 - $6) ^ 2
+    }
+    
+endtemplate SimGABADiffusionBasketCell

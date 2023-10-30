@@ -1,0 +1,12 @@
+
+proc checkPrerequisites() {
+    
+    if (unix_mac_pc() != 3) {
+        // To support other operating systems, get rid of "NLMorphologyConverter.exe" and use "/" everywhere
+        printMsgAndRaiseError("Sorry, BrainCell works only on Windows.")
+    }
+    
+    if (!nrnpython("")) {
+        printMsgAndRaiseError("Sorry, BrainCell requires a Python distribution to be installed first. Anaconda is recommended:\n    https://www.anaconda.com/download")
+    }
+}

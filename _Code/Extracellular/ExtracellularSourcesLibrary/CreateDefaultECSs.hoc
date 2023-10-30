@@ -5,13 +5,13 @@ testSetIdx = 0
 
 if (testSetIdx == 0) {
     ecsLibrary.addNewSource(0, "K+", new ECSSpatialInfo(1, 175, 350, 75, 125), new ECSTemporalInfo(1, 0.5, 1, 0), new ECSCapacityInfo(1, 2))
-    ecsLibrary.addNewSource(0, "K+", new ECSSpatialInfo(0, 140, 30, 60), new ECSTemporalInfo(2, 0.5, 0), new ECSCapacityInfo(0, 2, 1e8))
+    ecsLibrary.addNewSource(0, "K+", new ECSSpatialInfo(0, 140, 30, 60), new ECSTemporalInfo(2, 0.5, 0), new ECSCapacityInfo(0, 2, 1e4))
     
     ecsLibrary.addNewSource(0, "Ca2+", new ECSSpatialInfo(0, 115, 350, -30), new ECSTemporalInfo(0), new ECSCapacityInfo(0, 0, 5, 25))
     ecsLibrary.addNewSource(0, "Ca2+", new ECSSpatialInfo(1, -75, -190, -75, 150), new ECSTemporalInfo(0), new ECSCapacityInfo(1, 3))
     ecsLibrary.addNewSource(0, "Ca2+", new ECSSpatialInfo(1, 40, 140, -75, 100), new ECSTemporalInfo(2, 2, 0), new ECSCapacityInfo(1, 2.5))
     
-    ecsLibrary.addNewSource(0, "Na+", new ECSSpatialInfo(0, 140, 30, 60), new ECSTemporalInfo(2, 0.5, 1), new ECSCapacityInfo(0, 2, 1e8), new ECSSeriesInfo(10, 3, 1, 0))
+    ecsLibrary.addNewSource(0, "Na+", new ECSSpatialInfo(0, 140, 30, 60), new ECSTemporalInfo(2, 0.5, 1), new ECSCapacityInfo(0, 2, 1e4), new ECSSeriesInfo(10, 3, 1, 0))
     ecsLibrary.addNewSource(0, "Na+", new ECSSpatialInfo(1, 40, 140, -75, 100), new ECSTemporalInfo(2, 2, 1), new ECSCapacityInfo(1, 2.5), new ECSSeriesInfo(1, 4, 1, 1))
     ecsLibrary.addNewSource(0, "Na+", new ECSSpatialInfo(1, 175, 350, 75, 125), new ECSTemporalInfo(1, 0.5, 5, 1), new ECSCapacityInfo(1, 2), new ECSSeriesInfo(5, 5, 0, 1))
     

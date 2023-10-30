@@ -2,7 +2,7 @@
 // !!! deprecated: get rid of this file in favour of BiophysExportImportHelper and JSON files once we:
 //     (1) export/import density_GluTrans inhom model in the same way as for g_pas;
 //     (2) move the GLOBAL vars assigned below to the loaded JSON file;
-//     (3?) create JSON files for the simulations hidden in UI (simIdx = 1 and 5)
+//     (3?) create JSON files for the simulations hidden in UI (simIdx = 2 and 6)
 
 
 // Insert FRAP and set its params.

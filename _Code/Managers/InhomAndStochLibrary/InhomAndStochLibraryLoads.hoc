@@ -10,7 +10,7 @@ loadIfNotDeclared("InhomAndStochApplicator", "Exported/InhomAndStochApplicator.h
 { load_file("InhomModels/DistFuncHelpers/PythonUtils/PythonUtilsForDistFuncs.hoc") }
 { load_file("InhomModels/DistFuncHelpers/FileUtilsForDistFuncs.hoc") }
 loadIfNotDeclared("SimpleModelDistFuncHelper", "InhomModels/DistFuncHelpers/Exported/SimpleModelDistFuncHelper.hoc")
-loadIfNotDeclared("CustomCodeDistFuncHelper", "InhomModels/DistFuncHelpers/Exported/CustomCodeDistFuncHelper.hoc")
+loadIfNotDeclared("CustomCodeDistFuncHelper", "InhomModels/DistFuncHelpers/Exported/CustomCodeDistFuncHelper.hoc", 1)
 loadIfNotDeclared("CodeFromFileDistFuncHelper", "InhomModels/DistFuncHelpers/Exported/CodeFromFileDistFuncHelper.hoc")
 loadIfNotDeclared("TablePlusLinInterpDistFuncHelper", "InhomModels/DistFuncHelpers/Exported/TablePlusLinInterpDistFuncHelper.hoc")
 loadIfNotDeclared("ZebraDistFuncHelper", "InhomModels/DistFuncHelpers/Exported/ZebraDistFuncHelper.hoc")

@@ -5,9 +5,10 @@ begintemplate MainUiLockHelper
     public deckNanoReseeding, deckNanoGeomAndBiophys
     
     external isBaseOrNanoStart
-    external findItemInListByString, codeContractViolation
+    external findItemInListByString, dismissIfNotNil, codeContractViolation
     external mmAllComps
     external compUtils
+    external seedingDensityWidget
     
     objref deckNanoReseeding, deckNanoGeomAndBiophys
     
@@ -24,8 +25,12 @@ begintemplate MainUiLockHelper
         reservedNanoCompNames = compUtils.getReservedNanoDistMechCompNames()
     }
     
-    func makeSureNanoReseedingLocked() {
-        return makeSureUiLocked(&isNanoReseedingLocked, deckNanoReseeding, "reseed the nanostructures")
+    func makeSureNanoReseedingLocked() { local isCancel
+        isCancel = makeSureUiLocked(&isNanoReseedingLocked, deckNanoReseeding, "reseed the nanostructures")
+        if (isBaseOrNanoStart && !isCancel) {
+            dismissIfNotNil(seedingDensityWidget)
+        }
+        return isCancel
     }
     
     func makeSureNanoUpdateLocked() {

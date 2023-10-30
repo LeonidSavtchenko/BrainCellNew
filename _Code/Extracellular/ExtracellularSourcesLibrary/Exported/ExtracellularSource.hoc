@@ -1,7 +1,7 @@
 
 begintemplate ExtracellularSource
 
-    public isEqual, packToVec
+    public isEqual, packToVec, createShiftedCopy
     public spcCatIdx, species, spatialInfo, temporalInfo, capacityInfo, seriesInfoOrNil
     public s
     
@@ -74,6 +74,20 @@ begintemplate ExtracellularSource
         // !!! no seriesInfoOrNil.packToVec() here by design
         
         return vec
+    }
+    
+    obfunc createShiftedCopy() { local x_new, y_new, z_new localobj spatialInfo_new, nil
+        x_new = $1
+        y_new = $2
+        z_new = $3
+        
+        spatialInfo_new = spatialInfo.createShiftedCopy(x_new, y_new, z_new)
+        
+        if (seriesInfoOrNil == nil) {
+            return new ExtracellularSource(spcCatIdx, species, spatialInfo_new, temporalInfo, capacityInfo)
+        } else {
+            return new ExtracellularSource(spcCatIdx, species, spatialInfo_new, temporalInfo, capacityInfo, seriesInfoOrNil)
+        }
     }
     
     // All next staff is private

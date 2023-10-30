@@ -198,6 +198,7 @@ proc _interpEachSegmCentreCoordsFromSec3DPointCoords() { local numPts, ptIdx, du
     zSegm_vec.interpolate(uSegm_vec, u3d_vec, z3d_vec)
 }
 
+// See also: SimGABADiffusionBasketCell.getDistSquareBetweenTwo3DPoints
 func _getDistBetweenTwo3DPoints() {
     return sqrt(($1 - $4) ^ 2 + ($2 - $5) ^ 2 + ($3 - $6) ^ 2)
 }

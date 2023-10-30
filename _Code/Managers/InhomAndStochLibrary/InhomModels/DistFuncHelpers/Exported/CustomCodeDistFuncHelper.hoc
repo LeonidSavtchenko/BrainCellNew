@@ -27,7 +27,7 @@ begintemplate CustomCodeDistFuncHelper
         numArg = numarg()
         
         if (numArg == 0) {
-            // Empty by design (we are being created in the exported HOC file or in the process of biophys JSON import,
+            // Empty by design (we are being created in the exported HOC file or in the process of biophys JSON import or from SeedingDensityHelper,
             // so will be inited in proc importParams shortly downstream)
         } else if (numArg == 1) {
             setModelIdx($1)
@@ -79,6 +79,7 @@ begintemplate CustomCodeDistFuncHelper
             }
             defineHocFunction(oneLinerHocDistFuncName, oneLinerHocDistFuncBody)
         } else if (modelIdx == 1) {
+            // !!! keep in sync with SeedingDensityWidget.show
             sprint(text, "Enter Python expression (one-liner).%s We've done \"from math import *\" for you.", hint1)
             isAccept = string_dialog(text, oneLinerPyDistFuncBody)
             if (!isAccept) {

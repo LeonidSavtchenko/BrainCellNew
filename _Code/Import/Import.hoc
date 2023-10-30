@@ -30,17 +30,9 @@ proc importHocOrSwcOrZipOrOtherFile() { local numArg, isCancel localobj pyEnumIn
         printImportFailedMsgAndRaiseError("Please restart and try again")
     }
     
-    if (unix_mac_pc() != 3) {
-        printImportFailedMsgAndRaiseError("The importer works only on Windows")
-    }
-    
-    if (!nrnpython("")) {
-        printImportFailedMsgAndRaiseError("Python is not available")
-    }
-    
     numArg = numarg()
     if (numArg > 2) {
-        printImportFailedMsgAndRaiseError("0, 1 or 2 input arguments expected")
+        codeContractViolation()
     }
     
     if (numArg >= 1) {

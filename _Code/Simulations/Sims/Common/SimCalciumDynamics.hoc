@@ -1,0 +1,316 @@
+
+{ load_file("Utils/CalciumParameters.hoc") }
+
+begintemplate SimCalciumDynamics
+    
+    public check, show, advance, dismissHandler
+    public biophysJsonFileNameOrEmpty, isCustomProcAdvance
+    
+    external showCaParameters, closeFileAndShowCompleteMsg
+    external vBoxCadifusParams
+    external run, addplot
+    external tstop
+    external removeItemFromList, unmapIfNotNil
+    external rngUtils
+    external /* soma_ref, */ dendrite_ref
+    external graphList, fast_flush_list
+    
+    strdef biophysJsonFileNameOrEmpty
+    isCustomProcAdvance = -1
+    
+    strdef outTxtFileRelPathName
+    
+    // UI
+    objref vBoxCalciumDynamics, vBoxPlotShapeCai, vBoxGraphDendrites, plotShapeCai, graphDendrites
+    
+    // Calcium stimulation sets
+    TotalNUmberGapJunction = -1 //Total number of noisy Ca channels
+    objref inputSt[1], StimTrigger_SimCalciumDynamics[1], NetInput1_SimCalciumDynamics[1]
+    
+    // Statistics file
+    objref fileCalciumTime
+    
+    // Random
+    objref randomCalcium
+    
+    
+    proc init() {
+        biophysJsonFileNameOrEmpty = "SimCalciumDynamics.json"
+        isCustomProcAdvance = 1
+        
+        outTxtFileRelPathName = "Text results/Cadynamics.txt"
+        
+        TotalNUmberGapJunction = 50
+        objref inputSt[TotalNUmberGapJunction+2], StimTrigger_SimCalciumDynamics[TotalNUmberGapJunction+2], NetInput1_SimCalciumDynamics[TotalNUmberGapJunction+2]
+        randomCalcium = rngUtils.getFor_sim_calciumDynamics()
+    }
+    
+    func check() {
+        return 0
+    }
+    
+    // Opens Calcium Simulation window.
+    proc show() {
+        initParamsCaDynamics()
+        showCaDynamicsUi()
+        // The set of parameters of Ca stimulations
+        showCaParameters()
+    }
+    
+    // Writes statistics to the file.
+    proc advance() {
+        fadvance()
+        // Update plot view
+        graphDendrites.exec_menu("View = plot")
+        
+        if (!fileCalciumTime.isopen()) {
+            // !!! this is required when user uses RunControl or AltRunControl for the simulation;
+            //     unfortunately, in this case user will have to click "Save results" button manually
+            //     because otherwise it's not guaranteed that the last lines are flushed to the file
+            fileCalciumTime.aopen(outTxtFileRelPathName)
+        }
+        fileCalciumTime.printf("%-6.5g\t%-6.5g\t%-6.5g\n", t, dendrite_ref.o(ActiveDendrite1).sec.cai(0.5), dendrite_ref.o(ActiveDendrite2).sec.cai(0.5))
+        
+        // these data are necessary for calculating Fig. 7 extra
+        // *********************************************************
+        
+        // if ((t > 100) && (t < 100+15000000)) {
+            // for i = 30, 32 {
+                 // dendrite_ref.o(i).sec.ip3i(0.1) = 0.003
+                 // dendrite_ref.o(i).sec.ip3i(0.3) = 0.003
+                 
+                 // dendrite_ref.o(i).sec.ip3i(0.5) = 0.003
+                 // dendrite_ref.o(i).sec.ip3i(0.7) = 0.003
+                 // dendrite_ref.o(i).sec.ip3i(0.8) = 0.003
+                  // dendrite_ref.o(i).sec.ip3i(0.9) = 0.003
+                 // dendrite_ref.o(i).sec.ip3i(1) = 0.003
+            // }
+        
+         //  soma_ref.o(0).sec.ip3i = 0.01
+        // } else {
+            // for i = 1, NumberDendrites {
+                // dendrite_ref.o(i).sec.ip3i = 0.0000001
+            // }
+        
+       //    soma_ref.o(0).sec.ip3i = 0.0000001
+        // }
+        // *************************************************************************************
+    }
+    
+    proc dismissHandler() {
+        
+        removeItemFromList(graphList[0], graphDendrites)
+        removeItemFromList(fast_flush_list, plotShapeCai)
+        
+        unmapIfNotNil(vBoxCalciumDynamics)
+        unmapIfNotNil(vBoxPlotShapeCai)
+        unmapIfNotNil(vBoxGraphDendrites)
+        
+        unmapIfNotNil(vBoxCadifusParams)
+        
+        /* !!!
+        // Remove point processes after simulation
+        objref inputSt[TotalNUmberGapJunction+2], StimTrigger_SimCalciumDynamics[TotalNUmberGapJunction+2], NetInput1_SimCalciumDynamics[TotalNUmberGapJunction+2]
+        
+        closeFileAndShowCompleteMsg(fileCalciumTime)
+        */
+    }
+    
+    // All next staff is private
+    
+    
+    // Procedure of different stimulations.
+    // $1 - BasicStimulus
+    // $2 - Interval
+    // $3 - ECaresting
+    // $4 - Tau1St
+    // $5 - Tau2St
+    // $6 - NumberStim
+    // $7 - Noise1_NoNoise0
+    // $8 - NoiseCaBegin
+    // $9 - TotalNUmberGapJunction
+    // $10 - ActiveDendrite1
+    // $11 - ActiveDendrite2
+    proc stimulCalcium()  { local AmplitudeOfCalcium, BasicCalciumNoise, i 
+        Control = 1
+        AmplitudeOfCalcium = 20 // This amplitude generates maximum Calcium responses
+        
+        for i = 1, $9+1 {
+            inpdata = randomCalcium.uniform(0, 1.001)
+            if (Control == 1) {
+                dendrite_ref.o($10).sec inputSt[i]  = new GapCaSt(inpdata)
+                StimTrigger_SimCalciumDynamics[i] = new NetStim()
+                dendrite_ref.o($10).sec inputSt[$9+1]  = new GapCaSt(0.4)   // 0.4 position on the dendrite
+                StimTrigger_SimCalciumDynamics[$9+1] = new NetStim()
+            } else {
+                dendrite_ref.o($11).sec inputSt[i]  = new GapCaSt(inpdata)
+                StimTrigger_SimCalciumDynamics[i] = new NetStim()
+                dendrite_ref.o($11).sec inputSt[$9]  = new GapCaSt(0.8)     // 0.8 position on the dendrite
+                StimTrigger_SimCalciumDynamics[$9] = new NetStim()
+                
+            }
+            if (Control == 1) {
+                Control = 2
+            } else {
+                Control = 1
+            }
+        }
+        
+        BasicCalciumNoise = $1
+        // spontaneouse Ca entry. TotalNUmberGapJunction points of entry
+        for i = 1, $9-1 {  
+            inpdata = randomCalcium.uniform(0, 1.001)
+            inputSt[i].ECa = 10*$3
+            inputSt[i].tau1 = $4                // ms rise time
+            inputSt[i].tau2 = $5                // ms decay time
+            //Ca big signal in interval $8 and number $6 
+            StimTrigger_SimCalciumDynamics[i].interval = $2
+            StimTrigger_SimCalciumDynamics[i].start = i*$8+$8*(inpdata - 0.5)*2
+            StimTrigger_SimCalciumDynamics[i].number = $6
+            StimTrigger_SimCalciumDynamics[i].noise = $7
+            
+            NetInput1_SimCalciumDynamics[i] = new NetCon(StimTrigger_SimCalciumDynamics[i], inputSt[i], 0, 0, BasicCalciumNoise)
+            
+            // Noise basic
+            StimTrigger_SimCalciumDynamics[$9+1].interval = 200    //ms
+            StimTrigger_SimCalciumDynamics[$9+1].start = 0         //0 ms
+            StimTrigger_SimCalciumDynamics[$9+1].number =  100000
+            StimTrigger_SimCalciumDynamics[$9+1].noise = 1
+            inputSt[$9+1].tau1 = 1              // ms rise time
+            inputSt[$9+1].tau2 = 0.1            // ms decay time
+            NetInput1_SimCalciumDynamics[$9+1] = new NetCon(StimTrigger_SimCalciumDynamics[$9+1], inputSt[$9+1], 0, 0, BasicCalciumNoise*AmplitudeOfCalcium)
+            
+            StimTrigger_SimCalciumDynamics[$9].interval = 200
+            StimTrigger_SimCalciumDynamics[$9].start = 0           // 0 ms
+            StimTrigger_SimCalciumDynamics[$9].number = 100000
+            StimTrigger_SimCalciumDynamics[$9].noise = 1
+            inputSt[$9].tau1 = 1                // ms rise time
+            inputSt[$9].tau2 = 0.1              // ms decay time
+            NetInput1_SimCalciumDynamics[$9] = new NetCon(StimTrigger_SimCalciumDynamics[$9], inputSt[$9], 0, 0, BasicCalciumNoise*AmplitudeOfCalcium)
+        }
+    }
+    
+    // Runs Calcium Simulation.
+    proc runCaDynamics() {
+        fileCalciumTime = new File()
+        fileCalciumTime.aopen(outTxtFileRelPathName)
+        
+        stimulCalcium(BasicStimulus, Interval, ECaresting, Tau1St, Tau2St, NumberStim,Noise1_NoNoise0, NoiseCaBegin, TotalNUmberGapJunction, ActiveDendrite1, ActiveDendrite2)
+        run()
+        
+        // Remove point processes after simulation
+        objref inputSt[TotalNUmberGapJunction+2], StimTrigger_SimCalciumDynamics[TotalNUmberGapJunction+2], NetInput1_SimCalciumDynamics[TotalNUmberGapJunction+2]
+        
+        closeFileAndShowCompleteMsg(fileCalciumTime)
+    }
+    
+    // Sets initial UI and simulation params.
+    proc initParamsCaDynamics() {
+        BasicStimulus = 100         // 0 StrengthOfNetworkStimulus  for Basic calcium responses - noise
+        Interval = 3                // ms, the interval between stimulus in ms for a noisy calcium dynamics
+        ECaresting = 0.0001          // 0.001 mM,  Reverse Calcium concentration
+        Tau1St = 10                 // ms, The Rise time of Ca
+        Tau2St = 0.1                // The time delay Calcium signal in ms
+        NumberStim = 600            // Number of stimulus of noisy Ca 
+        Noise1_NoNoise0 = 1         // 1  is noisy, 0 is constant Ca signal
+        NoiseCaBegin = 7000         // ms, Interval of Ca signal
+        ip3i = 0.00001              // mM,  The ip3 intracellular concentration
+        tstop = 100000
+        ActiveDendrite1 = 30
+        ActiveDendrite2 = 31
+    }
+    
+    // Shows dendrites cai graph.
+    // $1 - Dendrite 1
+    // $2 - Dendrite 2
+    proc showDendritesGraph() {
+        d1=$1
+        d2=$2
+        
+        vBoxGraphDendrites = new VBox()
+        vBoxGraphDendrites.intercept(1)
+        {
+            removeItemFromList(graphList[0], graphDendrites)
+            graphDendrites = new Graph(0) 
+            addplot(graphDendrites,0)
+            graphDendrites.erase_all()
+            //graphDendrites.size(0,50000,0,0.0001)
+            graphDendrites.size(910,50910,-1.86e-005,8.14e-005)
+            //graphDendrites.view(0, 0, 50000, 0.0001, 602, 705, 400, 200)
+            graphDendrites.view(910, -1.86e-005, 50000, 0.0001, 594, 901, 410.4, 344.8)
+            graphDendrites.addvar("dendrite_ref.o(d1).sec.cai(0.5)",1,1,0.6, 0.9,2)
+            graphDendrites.addvar("dendrite_ref.o(d2).sec.cai(0.5)",1,1,0.6, 0.9,2)
+            graphDendrites.label(0.469298, 0.05, "time (ms)", 2, 1, 0, 0, 1)
+            graphDendrites.label(0.0986842, 0.968387, "[Ca2+]in (mM)", 2, 1, 0, 0, 1)
+        }
+        vBoxGraphDendrites.intercept(0)
+        vBoxGraphDendrites.map("!!!", 594, 901, 410.4, 344.8)
+    }
+    
+    // Shows Calcium Simulation UI.
+    proc showCaDynamicsUi() {
+        vBoxCalciumDynamics = new VBox()
+        vBoxCalciumDynamics.intercept(1)
+        {
+            xpanel("")
+            xlabel("Amplitude of calcium flow through single channel,") 
+            xlabel("which is modelled by two-exponential function with rising and decay time")
+            xvalue("Single channel calcium entry flux (uM/sec)","BasicStimulus", 1,"", 0, 1  )
+            xlabel("------------------------------------------------------------------------------------------------------------------------------")
+            xvalue("Mean interval between two calcium channel opening (ms)","Interval", 1,"", 0, 1  )
+            xlabel("------------------------------------------------------------------------------------------------------------------------------")
+            xlabel("Reverse value of  [Ca]in of Ca transmembrane flux (mM)") 
+            xvalue("Ca reverse concentration (mM)","ECaresting", 1,"", 0, 1  )
+            xlabel("------------------------------------------------------------------------------------------------------------------------------")
+            xvalue("Rise time of Ca channel influx (Tau1, ms)","Tau1St", 1,"", 0, 1  )
+            xvalue("Decay time of Ca channel influx (Tau2, ms)","Tau2St", 1,"", 0, 1  )
+            xlabel("------------------------------------------------------------------------------------------------------------------------------")
+            xlabel("Number of Ca open channels in single Ca spike") 
+            xvalue("NumberStim","NumberStim", 1,"", 0, 1  )
+            xlabel("------------------------------------------------------------------------------------------------------------------------------")
+            xlabel("0 - regular Ca channels opening; 1 - stochastic Ca channels opening") 
+            xvalue("Noise1_NoNoise0","Noise1_NoNoise0", 1,"", 0, 1  )
+            xlabel("------------------------------------------------------------------------------------------------------------------------------")
+            xlabel("Offset of first calcium  spike (ms) ") 
+            xvalue("NoiseCaBegin","NoiseCaBegin", 1,"", 0, 1  )
+            xlabel("------------------------------------------------------------------------------------------------------------------------------")
+            // !!! is that correct that we expose a RANGE variable in UI?
+            xvalue("ip3i Concentration (M)", "ip3i", 1)
+            xlabel("------------------------------------------------------------------------------------------------------------------------------")
+            xvalue("Active dendrite 1", "ActiveDendrite1", 1, "showDendritesGraph(ActiveDendrite1, ActiveDendrite2)", 0, 1  )
+            xvalue("Active dendrite 2", "ActiveDendrite2", 1, "showDendritesGraph(ActiveDendrite1, ActiveDendrite2)", 0, 1  )
+            xlabel("------------------------------------------------------------------------------------------------------------------------------")
+            xvalue("Simulation time (ms)","tstop", 1,"", 0, 1  )
+            xbutton("Run simulation", "runCaDynamics()")
+            // !!! instead of this button, maybe use a Timer with e.g. 1 sec interval to check if simulation is running and, if not, close the file;
+            //     alternatively, we'll have to stick to AltRunControl and update it's code to close this file
+            xbutton("Save results*", "closeFileAndShowCompleteMsg(fileCalciumTime)")
+            xlabel("* If you used RunControl or AltRunControl for the simulation,")
+            xlabel("   then click this button once stopped")
+            xpanel()
+        }
+        vBoxCalciumDynamics.intercept(0)
+        vBoxCalciumDynamics.map("Calcium Stimulation parameters", 91, 102, -1, -1)
+        
+        vBoxPlotShapeCai = new VBox()
+        vBoxPlotShapeCai.intercept(1)
+        {
+            removeItemFromList(fast_flush_list, plotShapeCai)
+            plotShapeCai = new PlotShape(0)
+            fast_flush_list.append(plotShapeCai)
+            plotShapeCai.size(-50,50,-50,50)
+            plotShapeCai.view(-50, -49.9003, 100, 100, 601, 102, 400.64, 400.32)
+            plotShapeCai.label(0.0986842, 0.968387, "[Ca2+]in (mM)", 2, 1, 0, 0, 1)
+            plotShapeCai.exec_menu("Shape Plot")
+            plotShapeCai.exec_menu("View = plot")
+            plotShapeCai.variable("cai")
+            plotShapeCai.show(0)
+            plotShapeCai.scale(0,0.00006)    // mV, scale of voltage on 3D plots
+        }
+        vBoxPlotShapeCai.intercept(0)
+        vBoxPlotShapeCai.map("!!!", 601, 102, 400.64, 400.32)
+        
+        showDendritesGraph(ActiveDendrite1, ActiveDendrite2)
+    }
+    
+endtemplate SimCalciumDynamics

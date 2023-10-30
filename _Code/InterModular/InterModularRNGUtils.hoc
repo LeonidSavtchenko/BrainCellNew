@@ -8,14 +8,14 @@
 // Keep in sync with ReducedRNGUtils
 begintemplate RNGUtils
 
-    public getFor_diameters, getFor_calcium, getFor_frapCircle, getFor_diamAndLen, getFor_branchSeeder, getFor_spineRadius, getFor_neckLen, getFor_neckDiam, getFor_synLoc, getFor_stochFunc_withUniqueSeed, getFor_stretch_withCustomSeed, getSeedFor_SEFW
+    public getFor_diameters, getFor_nano_branchSeeder, getFor_nano_diamAndLen, getFor_nano_spineRadius, getFor_nano_neckLen, getFor_nano_neckDiam, getFor_synLoc, getFor_sim_gabaDiffusion, getFor_sim_frapCircle, getFor_sim_calciumDynamics, getFor_stochFunc_withUniqueSeed, getFor_stretch_withCustomSeed, getSeedFor_SEFW
     
     uniqueSeedForHoc = -1
     uniqueSeedForMod = -1
     
     
     proc init() { local minSeedForMod, maxNumSeedsPerRankForMod localobj pc
-        uniqueSeedForHoc = 9    // Keep in sync with the obfunc-s below
+        uniqueSeedForHoc = 10   // Keep in sync with the obfunc-s below
         
         if (!use_mcell_ran4()) {
             minSeedForMod = 0       // HOC and MOD use different RNGs, so we don't care about seeds overlapping
@@ -35,36 +35,40 @@ begintemplate RNGUtils
         return new Random()     // The same as new Random(0)
     }
     
-    obfunc getFor_calcium() {
+    obfunc getFor_nano_branchSeeder() {
         return new Random(1)
     }
     
-    obfunc getFor_frapCircle() {
+    obfunc getFor_nano_diamAndLen() {
         return new Random(2)
     }
     
-    obfunc getFor_diamAndLen() {
+    obfunc getFor_nano_spineRadius() {
         return new Random(3)
     }
     
-    obfunc getFor_branchSeeder() {
+    obfunc getFor_nano_neckLen() {
         return new Random(4)
     }
     
-    obfunc getFor_spineRadius() {
+    obfunc getFor_nano_neckDiam() {
         return new Random(5)
     }
     
-    obfunc getFor_neckLen() {
+    obfunc getFor_synLoc() {
         return new Random(6)
     }
     
-    obfunc getFor_neckDiam() {
+    obfunc getFor_sim_gabaDiffusion() {
         return new Random(7)
     }
     
-    obfunc getFor_synLoc() {
-        return new Random(8)    // Must be equal to uniqueSeedForHoc - 1
+    obfunc getFor_sim_frapCircle() {
+        return new Random(8)
+    }
+    
+    obfunc getFor_sim_calciumDynamics() {
+        return new Random(9)    // Must be equal to uniqueSeedForHoc - 1
     }
     
     obfunc getFor_stochFunc_withUniqueSeed() { localobj rng

@@ -1,0 +1,134 @@
+
+{ load_file("Utils/CalciumParameters.hoc") }
+
+begintemplate SimCalciumWave
+    
+    public check, show, advance, dismissHandler
+    public biophysJsonFileNameOrEmpty, isCustomProcAdvance
+    
+    external showCaParameters
+    external vBoxCadifusParams
+    external addplot
+    external removeItemFromList, unmapIfNotNil
+    external run
+    external tstop
+    external eachSecInList
+    external soma_ref, dendrite_ref
+    external graphList, fast_flush_list
+    
+    strdef biophysJsonFileNameOrEmpty
+    isCustomProcAdvance = -1
+    
+    // UI
+    objref vBoxCaWave, vBoxPlotShapeCaWaveCai, vBoxGraphCaWaveCai, plotShapeCaWaveCai, graphCaWaveCai
+    
+    
+    proc init() {
+        biophysJsonFileNameOrEmpty = "SimCalciumWave.json"
+        isCustomProcAdvance = 1
+    }
+    
+    func check() {
+        return 0
+    }
+    
+    // Opens Calcium Wave window.
+    proc show() {
+        initParamsCaWave()
+        showCaWaveUi()
+        // The set of parameters of Ca stimulations
+        showCaParameters()
+    }
+    
+    // Sets ip3i to soma and dendrites.
+    proc advance() {
+        fadvance()
+        
+        if ((t > TimeDelayCaWave) && (t < TimeDelayCaWave+15000)) {
+            setIp3ToSomaAndDendrites(InitIp3)
+        } else {
+            // setIp3ToSomaAndDendrites(0.0000001)
+        }
+    }
+    
+    proc dismissHandler() {
+        
+        removeItemFromList(graphList[0], graphCaWaveCai)
+        removeItemFromList(fast_flush_list, plotShapeCaWaveCai)
+        
+        unmapIfNotNil(vBoxCaWave)
+        unmapIfNotNil(vBoxPlotShapeCaWaveCai)
+        unmapIfNotNil(vBoxGraphCaWaveCai)
+        
+        unmapIfNotNil(vBoxCadifusParams)
+    }
+    
+    // All next staff is private
+    
+    
+    // Sets initial UI and simulation params.
+    proc initParamsCaWave() {
+        TimeDelayCaWave = 1000
+        InitIp3  = 0.05
+    }
+    
+    // Shows Calcium Wave UI.
+    proc showCaWaveUi() {
+        vBoxCaWave = new VBox()
+        vBoxCaWave.intercept(1)
+        {
+            xpanel("")
+            xlabel("=========== Parameters of waves===========")
+            xvalue("IP3 increase onset (ms)","TimeDelayCaWave", 1,"", 0, 1)
+            xvalue("IP3 peak concentration (mM)","InitIp3", 1,"", 0, 1  )
+            xlabel("=========================================")
+            xvalue("Run time","tstop", 1,"", 0, 1  )
+            xbutton("Run simulation", "run()")
+            xpanel()
+        }
+        vBoxCaWave.intercept(0)
+        vBoxCaWave.map("Ca wave", 283, 102, 235, 133)
+        
+        vBoxGraphCaWaveCai = new VBox()
+        vBoxGraphCaWaveCai.intercept(1)
+        {
+            removeItemFromList(graphList[0], graphCaWaveCai)
+            graphCaWaveCai = new Graph(0)
+            addplot(graphCaWaveCai, 0)
+            graphCaWaveCai.erase_all()
+            graphCaWaveCai.size(0,50000,0,0.0001)
+            graphCaWaveCai.view(0, 0, 50000, 0.0001, 602, 705, 400, 200)
+            graphCaWaveCai.addvar("soma_ref.o(0).sec.cai(0.5)",1,1,0.6, 0.9,2)
+            graphCaWaveCai.fastflush()
+        }
+        vBoxGraphCaWaveCai.intercept(0)
+        vBoxGraphCaWaveCai.map("!!!", 602, 705, 400, 200)
+        
+        vBoxPlotShapeCaWaveCai = new VBox()
+        vBoxPlotShapeCaWaveCai.intercept(1)
+        {
+            removeItemFromList(fast_flush_list, plotShapeCaWaveCai)
+            plotShapeCaWaveCai = new PlotShape(0)
+            fast_flush_list.append(plotShapeCaWaveCai)
+            plotShapeCaWaveCai.size(-50,50,-50,50)
+            plotShapeCaWaveCai.view(-50, -49.9003, 100, 100, 601, 102, 400.64, 400.32)
+            plotShapeCaWaveCai.exec_menu("Shape Plot")
+            plotShapeCaWaveCai.exec_menu("View = plot")
+            plotShapeCaWaveCai.variable("cai")
+            plotShapeCaWaveCai.label(0.12, 0.95, "[Ca2+]i (mM)", 2, 1, 0, 1, 1)
+            plotShapeCaWaveCai.show(0)
+            plotShapeCaWaveCai.scale(0,0.0006)  // mV, scale of voltage on 3D plots
+        }
+        vBoxPlotShapeCaWaveCai.intercept(0)
+        vBoxPlotShapeCaWaveCai.map("!!!", 601, 102, 400.64, 400.32)
+    }
+    
+    proc setIp3ToSomaAndDendrites() { local ip3Value
+        ip3Value = $1
+        
+        for eachSecInList(soma_ref, dendrite_ref) {
+            ip3i = ip3Value
+        }
+    }
+    
+endtemplate SimCalciumWave

@@ -1147,7 +1147,7 @@ begintemplate StochEditorSubWidget
         }
         
         if (isMechOrSynEditor) {
-            if (mth.checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar(mechIdx, varType, varName)) {
+            if (mth.checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar(mechIdx, varType, varName, 0)) {
                 return
             }
         } else {

@@ -276,12 +276,13 @@ begintemplate MechTypeHelper
         }
     }
     
-    func checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar() { local mechIdx, varType
+    func checkIfInhomogeneityOrStochasticityCannotBeAppliedToThisDistMechVar() { local mechIdx, varType, isInhomOrStoch
         strdef varName, mechName, line1
         
         mechIdx = $1
         varType = $2
         varName = $s3
+        isInhomOrStoch = $4
         
         getMechName(0, mechIdx, mechName)
         if (isIon(mechName) && varType == 2) {
@@ -291,8 +292,8 @@ begintemplate MechTypeHelper
             codeContractViolation()
         }
         
-        if (isDiamDistMechVar(mechIdx, varType, varName)) {
-            sprint(line1, "Cannot apply inhomogeneity or stochasticity to \"%s\" in %s.", diamVarName, morphologyMechName)
+        if (!isInhomOrStoch && isDiamDistMechVar(mechIdx, varType, varName)) {
+            sprint(line1, "Cannot apply stochasticity to \"%s\" in %s.", diamVarName, morphologyMechName)
             mwh.showNotImplementedWarning(line1)
             return 1
         }

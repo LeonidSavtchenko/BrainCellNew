@@ -1,6 +1,4 @@
 
-{ load_file("../GetMaxDendriticLength.hoc") }
-
 // 3D modification of Astro geometry reconstructed from real astrocyte
 // File was added at 2 Apr 2018
 proc stretchXY() { local j
@@ -15,8 +13,6 @@ proc stretchXY() { local j
     }
     
     vBoxSelectGeometryReal.unmap()  // !! is that needed? maybe yes (to avoid the cumulative effect)
-    
-    MaxDendriticLength = getMaxDendriticLength()
     
     // !! we don't update astrocyte biophysics here (even though it depends on "L")
     //    because this proc can be called only in Prologue, i.e. before we init astrocyte biophysics

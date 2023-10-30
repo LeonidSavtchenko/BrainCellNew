@@ -108,8 +108,8 @@ begintemplate AddOneInputVarWidget
                 xpanel()
             }
             deck.intercept(0)
-            deck.map()
             // deck.flip_to(*)      // Will be done below in compSelectHandler
+            deck.map()
             xpanel("")
             xbutton("Select", "selectHandler()")
             xpanel()

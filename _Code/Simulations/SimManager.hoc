@@ -5,7 +5,7 @@
 
 // !!!! maybe call .dismissHandler() for the current sim widget if user closes any its panel
 
-objref simIdxToWidget[10]
+objref simIdxToWidget[11]
 
 begintemplate SimulationManager
     
@@ -25,17 +25,18 @@ begintemplate SimulationManager
     
     proc init() {
         simIdxToWidget[0] = new SimVoltageCA1Neuron()
-        simIdxToWidget[1] = new SimFrapInCircleGeometry()           // !!! never called (hidden in UI)
-        simIdxToWidget[2] = new SimFrapLine()
-        simIdxToWidget[3] = new SimSpatialVoltageDistributions()
-        simIdxToWidget[4] = new SimConstantElectricalSimulations()
-        simIdxToWidget[5] = new SimFrequencyElectricalSimulation()  // !!! never called (hidden in UI)
-        simIdxToWidget[6] = new SimCalciumDynamics()
-        simIdxToWidget[7] = new SimCalciumWave()
-        simIdxToWidget[8] = new SimGlutamate()
-        simIdxToWidget[9] = new SimPotassium()
+        simIdxToWidget[1] = new SimGABADiffusionBasketCell()
+        simIdxToWidget[2] = new SimFrapInCircleGeometry()           // !!! never called (hidden in UI)
+        simIdxToWidget[3] = new SimFrapLine()
+        simIdxToWidget[4] = new SimSpatialVoltageDistributions()
+        simIdxToWidget[5] = new SimConstantElectricalSimulations()
+        simIdxToWidget[6] = new SimFrequencyElectricalSimulation()  // !!! never called (hidden in UI)
+        simIdxToWidget[7] = new SimCalciumDynamics()
+        simIdxToWidget[8] = new SimCalciumWave()
+        simIdxToWidget[9] = new SimGlutamate()
+        simIdxToWidget[10] = new SimPotassium()
         
-        double simIdxToLEDState[10]
+        double simIdxToLEDState[11]
         
         lastSimIdxOrMinus1 = -1
     }
@@ -48,40 +49,43 @@ begintemplate SimulationManager
             xlabel("---------------------------------------------------------------------------------------------------------")
             xlabel("Basic voltage simulation of CA1-neuron")
             xstatebutton("CA1-neuron voltage", &simIdxToLEDState[0], "simSelectedHandler(0)")
+            xlabel("---------------------------------------------------------------------------------------------------------")
+            xlabel("GABA diffusion simulation of basket cell interneuron")
+            xstatebutton("Basket cell GABA diffusion", &simIdxToLEDState[1], "simSelectedHandler(1)")
         }
         //xlabel("---------------------------------------------------------------------------------------------------------")
         //xlabel("Simulation of FRAP experiment with round-spot bleaching")
-        //xstatebutton("FRAP with round-spot bleaching", &simIdxToLEDState[1], "simSelectedHandler(1)")
+        //xstatebutton("FRAP with round-spot bleaching", &simIdxToLEDState[2], "simSelectedHandler(2)")
         xlabel("---------------------------------------------------------------------------------------------------------")
         xlabel("Simulation of line-scan FRAP")
-        xstatebutton("Line-scan FRAP", &simIdxToLEDState[2], "simSelectedHandler(2)")
+        xstatebutton("Line-scan FRAP", &simIdxToLEDState[3], "simSelectedHandler(3)")
         xlabel("---------------------------------------------------------------------------------------------------------")
         xlabel("Simulation of spatial distribution of voltage along dendrites") 
-        xstatebutton("Membrane voltage distribution", &simIdxToLEDState[3], "simSelectedHandler(3)")
+        xstatebutton("Membrane voltage distribution", &simIdxToLEDState[4], "simSelectedHandler(4)")
         xlabel("---------------------------------------------------------------------------------------------------------")
         xlabel("Parameters of somatic stimuli")
-        xstatebutton("Constant electric stimuli", &simIdxToLEDState[4], "simSelectedHandler(4)")
+        xstatebutton("Constant electric stimuli", &simIdxToLEDState[5], "simSelectedHandler(5)")
         //xlabel("---------------------------------------------------------------------------------------------------------")
         //xlabel("Parameters of sinusoidal stimulations into soma")
-        //xstatebutton("Variable electric stimuli", &simIdxToLEDState[5], "simSelectedHandler(5)")
+        //xstatebutton("Variable electric stimuli", &simIdxToLEDState[6], "simSelectedHandler(6)")
         xlabel("---------------------------------------------------------------------------------------------------------")
         xlabel("Parameters for microscopic calcium dynamics")
-        xstatebutton("Microscopic calcium dynamics", &simIdxToLEDState[6], "simSelectedHandler(6)")
+        xstatebutton("Microscopic calcium dynamics", &simIdxToLEDState[7], "simSelectedHandler(7)")
         xlabel("---------------------------------------------------------------------------------------------------------")
         xlabel("Calcium Wave simulations")
-        xstatebutton("Calcium Wave", &simIdxToLEDState[7], "simSelectedHandler(7)")
+        xstatebutton("Calcium Wave", &simIdxToLEDState[8], "simSelectedHandler(8)")
         xlabel("---------------------------------------------------------------------------------------------------------")
-        xlabel("Astrocyte model with Glutamate transporters")
-        xstatebutton("Membrane biophysics with glutamate transport", &simIdxToLEDState[8], "simSelectedHandler(8)")
-        xlabel("Astrocyte model with potassium dynamics")
-        xstatebutton("Dynamics of intra and extracellular K+", &simIdxToLEDState[9], "simSelectedHandler(9)")
+        xlabel("Cell model with Glutamate transporters")
+        xstatebutton("Membrane biophysics with glutamate transport", &simIdxToLEDState[9], "simSelectedHandler(9)")
+        xlabel("Cell model with potassium dynamics")
+        xstatebutton("Dynamics of intra and extracellular K+", &simIdxToLEDState[10], "simSelectedHandler(10)")
         xpanel()
     }
     
     // All next staff is private
     
     
-    proc simSelectedHandler() { local simIdx, isCancel localobj widget
+    proc simSelectedHandler() { local simIdx, isCancel, isRescanRequired localobj widget, nil
         strdef biophysJsonFileNameOrEmpty, hocCommand
         
         simIdx = $1
@@ -107,6 +111,12 @@ begintemplate SimulationManager
         
         widget = simIdxToWidget[simIdx]
         
+        isCancel = widget.check()
+        if (isCancel) {
+            simIdxToLEDState[simIdx] = 0
+            return
+        }
+        
         // Import biophysics from JSON file
         biophysJsonFileNameOrEmpty = widget.biophysJsonFileNameOrEmpty
         if (!stringEmpty(biophysJsonFileNameOrEmpty)) {
@@ -120,15 +130,24 @@ begintemplate SimulationManager
         // !!!! deprecated: remove this IF operator in favour of beih.importForSim (called just above) once we:
         //      (1) export/import density_GluTrans inhom model in the same way as for g_pas;
         //      (2) move the GLOBAL vars assigned in "MechanismSwitch_deprecated.hoc" to the loaded JSON file;
-        //      (3?) create JSON files for the simulations hidden in UI (simIdx = 1 and 5)
-        if (simIdx == 2) {
+        //      (3?) create JSON files for the simulations hidden in UI (simIdx = 2 and 6)
+        isRescanRequired = 0
+        if (simIdx == 3) {
             InsertElectricMechanisms(0)
-        } else if (simIdx == 6 || simIdx == 7) {
+            isRescanRequired = 1
+        } else if (simIdx == 7 || simIdx == 8) {
             InsertElectricMechanisms(1)
-        } else if (simIdx == 8) {
-            InsertGlutamateMechanisms()
+            isRescanRequired = 1
         } else if (simIdx == 9) {
+            InsertGlutamateMechanisms()
+            isRescanRequired = 1
+        } else if (simIdx == 10) {
             InsertPotassiumMechanisms()
+            isRescanRequired = 1
+        }
+        
+        if (isRescanRequired && mmIcrHelper != nil) {   // !!! can be nil in tests
+            mmIcrHelper.scheduleRescan(2)
         }
         
         if (widget.isCustomProcAdvance) {
