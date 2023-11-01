@@ -10,9 +10,9 @@
 { load_file("../_Code/Export/ExportCoreLoads.hoc") }
 { load_file("../_Code/Export/Widgets/ExportWidgetsLoads.hoc") }
 
-exportManagerMainWidget = new ExportManagerMainWidget()
-{ exportManagerMainWidget.show() }
-
 { chdir("..") }     // Without this, getcwd() will return different path compared to the start from "init.hoc"
 
 sourcePythonCodeForExport()
+
+exportManagerMainWidget = new ExportManagerMainWidget()
+{ exportManagerMainWidget.show() }

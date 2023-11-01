@@ -38550,7 +38550,7 @@ if (isLoadedFromMainProgram) {
     mechsDllUtils.ifMissingInThisFolderThenLoadDefaultMechsDllDependingOnCellType()
 } else {
     mechType = new MechanismType(0)    // 0: "Distributed Membrane Mechanisms"
-    if (mechType.count() != 34) {
+    if (mechType.count() != 35) {
         printMsgAndRaiseError("Please make sure the correct file \"nrnmech.dll\" is present in the same folder with this HOC file.")
     }
     mechType = new MechanismType(1)    // 1: "Point Processes"
@@ -40824,9 +40824,9 @@ proc addHomogenBiophysInfoToSomaComp() { localobj comp, mechStd
     comp.isMechInserted[2] = 1    // pas
     comp.isMechInserted[5] = 1    // na_ion
     comp.isMechInserted[6] = 1    // k_ion
-    comp.isMechInserted[27] = 1    // kap
-    comp.isMechInserted[28] = 1    // kdr
-    comp.isMechInserted[30] = 1    // na3
+    comp.isMechInserted[28] = 1    // kap
+    comp.isMechInserted[29] = 1    // kdr
+    comp.isMechInserted[31] = 1    // na3
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
     mechStd.set("diam", math.nan)
@@ -40843,15 +40843,15 @@ proc addHomogenBiophysInfoToSomaComp() { localobj comp, mechStd
     
     mechStd = new MechanismStandard("kap", 1)    // PARAMETER
     mechStd.set("gkabar_kap", 0.048)    // (mho/cm2)
-    comp.mechStds[27][0] = mechStd
+    comp.mechStds[28][0] = mechStd
     
     mechStd = new MechanismStandard("kdr", 1)    // PARAMETER
     mechStd.set("gkdrbar_kdr", 0.01)    // (mho/cm2)
-    comp.mechStds[28][0] = mechStd
+    comp.mechStds[29][0] = mechStd
     
     mechStd = new MechanismStandard("na3", 1)    // PARAMETER
     mechStd.set("gbar_na3", 0.032)    // (mho/cm2)
-    comp.mechStds[30][0] = mechStd
+    comp.mechStds[31][0] = mechStd
 }
 
 proc addHomogenBiophysInfoToProxyDendritesComp() { localobj comp, mechStd
@@ -40883,9 +40883,9 @@ proc addHomogenBiophysInfoToDistalDendritesComp() { localobj comp, mechStd
     comp.isMechInserted[2] = 1    // pas
     comp.isMechInserted[5] = 1    // na_ion
     comp.isMechInserted[6] = 1    // k_ion
-    comp.isMechInserted[27] = 1    // kap
-    comp.isMechInserted[28] = 1    // kdr
-    comp.isMechInserted[30] = 1    // na3
+    comp.isMechInserted[28] = 1    // kap
+    comp.isMechInserted[29] = 1    // kdr
+    comp.isMechInserted[31] = 1    // na3
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
     mechStd.set("diam", math.nan)
@@ -40902,15 +40902,15 @@ proc addHomogenBiophysInfoToDistalDendritesComp() { localobj comp, mechStd
     
     mechStd = new MechanismStandard("kap", 1)    // PARAMETER
     mechStd.set("gkabar_kap", 0.048)    // (mho/cm2)
-    comp.mechStds[27][0] = mechStd
+    comp.mechStds[28][0] = mechStd
     
     mechStd = new MechanismStandard("kdr", 1)    // PARAMETER
     mechStd.set("gkdrbar_kdr", 0.01)    // (mho/cm2)
-    comp.mechStds[28][0] = mechStd
+    comp.mechStds[29][0] = mechStd
     
     mechStd = new MechanismStandard("na3", 1)    // PARAMETER
     mechStd.set("gbar_na3", 0.032)    // (mho/cm2)
-    comp.mechStds[30][0] = mechStd
+    comp.mechStds[31][0] = mechStd
 }
 
 proc addHomogenBiophysInfoToAxonComp() { localobj comp, mechStd
@@ -40921,9 +40921,9 @@ proc addHomogenBiophysInfoToAxonComp() { localobj comp, mechStd
     comp.isMechInserted[2] = 1    // pas
     comp.isMechInserted[5] = 1    // na_ion
     comp.isMechInserted[6] = 1    // k_ion
-    comp.isMechInserted[27] = 1    // kap
-    comp.isMechInserted[28] = 1    // kdr
-    comp.isMechInserted[30] = 1    // na3
+    comp.isMechInserted[28] = 1    // kap
+    comp.isMechInserted[29] = 1    // kdr
+    comp.isMechInserted[31] = 1    // na3
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
     mechStd.set("diam", 2.114163398742676)    // (um)
@@ -40936,15 +40936,15 @@ proc addHomogenBiophysInfoToAxonComp() { localobj comp, mechStd
     
     mechStd = new MechanismStandard("kap", 1)    // PARAMETER
     mechStd.set("gkabar_kap", 0.048)    // (mho/cm2)
-    comp.mechStds[27][0] = mechStd
+    comp.mechStds[28][0] = mechStd
     
     mechStd = new MechanismStandard("kdr", 1)    // PARAMETER
     mechStd.set("gkdrbar_kdr", 0.01)    // (mho/cm2)
-    comp.mechStds[28][0] = mechStd
+    comp.mechStds[29][0] = mechStd
     
     mechStd = new MechanismStandard("na3", 1)    // PARAMETER
     mechStd.set("gbar_na3", 0.032)    // (mho/cm2)
-    comp.mechStds[30][0] = mechStd
+    comp.mechStds[31][0] = mechStd
 }
 
 proc addHomogenBiophysInfoToSpineNeckComp() { localobj comp, mechStd
@@ -40955,9 +40955,9 @@ proc addHomogenBiophysInfoToSpineNeckComp() { localobj comp, mechStd
     comp.isMechInserted[2] = 1    // pas
     comp.isMechInserted[5] = 1    // na_ion
     comp.isMechInserted[6] = 1    // k_ion
-    comp.isMechInserted[27] = 1    // kap
-    comp.isMechInserted[28] = 1    // kdr
-    comp.isMechInserted[30] = 1    // na3
+    comp.isMechInserted[28] = 1    // kap
+    comp.isMechInserted[29] = 1    // kdr
+    comp.isMechInserted[31] = 1    // na3
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
     mechStd.set("diam", math.nan)
@@ -40970,15 +40970,15 @@ proc addHomogenBiophysInfoToSpineNeckComp() { localobj comp, mechStd
     
     mechStd = new MechanismStandard("kap", 1)    // PARAMETER
     mechStd.set("gkabar_kap", 0.048)    // (mho/cm2)
-    comp.mechStds[27][0] = mechStd
+    comp.mechStds[28][0] = mechStd
     
     mechStd = new MechanismStandard("kdr", 1)    // PARAMETER
     mechStd.set("gkdrbar_kdr", 0.01)    // (mho/cm2)
-    comp.mechStds[28][0] = mechStd
+    comp.mechStds[29][0] = mechStd
     
     mechStd = new MechanismStandard("na3", 1)    // PARAMETER
     mechStd.set("gbar_na3", 0.032)    // (mho/cm2)
-    comp.mechStds[30][0] = mechStd
+    comp.mechStds[31][0] = mechStd
 }
 
 proc addHomogenBiophysInfoToSpineHeadComp() { localobj comp, mechStd
@@ -40989,9 +40989,9 @@ proc addHomogenBiophysInfoToSpineHeadComp() { localobj comp, mechStd
     comp.isMechInserted[2] = 1    // pas
     comp.isMechInserted[5] = 1    // na_ion
     comp.isMechInserted[6] = 1    // k_ion
-    comp.isMechInserted[27] = 1    // kap
-    comp.isMechInserted[28] = 1    // kdr
-    comp.isMechInserted[30] = 1    // na3
+    comp.isMechInserted[28] = 1    // kap
+    comp.isMechInserted[29] = 1    // kdr
+    comp.isMechInserted[31] = 1    // na3
     
     mechStd = new MechanismStandard("morphology", 1)    // PARAMETER
     mechStd.set("diam", math.nan)
@@ -41004,15 +41004,15 @@ proc addHomogenBiophysInfoToSpineHeadComp() { localobj comp, mechStd
     
     mechStd = new MechanismStandard("kap", 1)    // PARAMETER
     mechStd.set("gkabar_kap", 0.048)    // (mho/cm2)
-    comp.mechStds[27][0] = mechStd
+    comp.mechStds[28][0] = mechStd
     
     mechStd = new MechanismStandard("kdr", 1)    // PARAMETER
     mechStd.set("gkdrbar_kdr", 0.01)    // (mho/cm2)
-    comp.mechStds[28][0] = mechStd
+    comp.mechStds[29][0] = mechStd
     
     mechStd = new MechanismStandard("na3", 1)    // PARAMETER
     mechStd.set("gbar_na3", 0.032)    // (mho/cm2)
-    comp.mechStds[30][0] = mechStd
+    comp.mechStds[31][0] = mechStd
 }
 
 comp = mmAllComps.o(0)

@@ -75,15 +75,33 @@ func findItemInListByStringAndSelect() { local idxOrMinus1 localobj list
     return idxOrMinus1
 }
 
-// Find and remove the item from the List; do nothing if it's not there
+// Find and remove the item from the List; do nothing or raise an error if it's not there
 // $o1 - The List to remove from
 // $o2 - The item to remove
-proc removeItemFromList() { local idxOrMinus1 localobj list, item
+// $3 (optional) - 0/1 flag specifying whether to raise an error if the item is not found; the default is 0
+// !!! remove 3rd arg making it 1 constantly
+proc removeItemFromList() { local numArg, isErrorIfNotFound, idxOrMinus1, isFound localobj list, item
+    
+    numArg = numarg()
+    if (numArg < 2 || numArg > 3) {
+        codeContractViolation()
+    }
+    
     list = $o1
     item = $o2
+    
+    if (numArg == 3) {
+        isErrorIfNotFound = $3
+    } else {
+        isErrorIfNotFound = 0
+    }
+    
     idxOrMinus1 = list.index(item)
-    if (idxOrMinus1 != -1){
+    isFound = (idxOrMinus1 != -1)
+    if (isFound) {
         list.remove(idxOrMinus1)
+    } else if (isErrorIfNotFound) {
+        codeContractViolation()
     }
 }
 

@@ -420,7 +420,7 @@ VERBATIM
                             offsetTime = IMPULSE_TIME(ecsIdx, impIdxOrMinus1);
                         }
                         
-                        // !!! for t == offsetTime, we would have 1/0 in the timeFactor below
+                        // For t == offsetTime, we would have 1/0 in timeFactor below
                         if (t <= offsetTime) {
                             break;
                         }
@@ -432,7 +432,7 @@ VERBATIM
                         
                         double endTime = offsetTime + ptr_ecSrc->temporalInfo.durationOrMinus1;
                         
-                        // !!! for t == endTime, we would have 1/0 in the timeFactor below
+                        // For t == endTime, we would have 1/0 in timeFactor below
                         if (t > endTime) {
                             timeFactor -= erfc(distance / sqrt(diffFactor * (t - endTime)));        // !! make a func and reuse
                             
@@ -455,7 +455,8 @@ VERBATIM
                             delta_t = t - IMPULSE_TIME(ecsIdx, impIdxOrMinus1);
                         }
                         
-                        if (delta_t < 0) {
+                        // For delta_t == 0, we would have 0/0 in delta_o below
+                        if (delta_t <= 0) {
                             break;
                         }
                         

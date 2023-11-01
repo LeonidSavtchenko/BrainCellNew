@@ -8,7 +8,7 @@ begintemplate OneExtracellularSourceWidget
 
     public show, onApplyInParentWidget, dismissHandler
     
-    external stringsEqual, findItemInListByString, getGlobalVarsHint, createEmptyPanel, codeContractViolation
+    external stringsEqual, findItemInListByString, removeItemFromList, getGlobalVarsHint, createEmptyPanel, codeContractViolation
     external mwh, math, ecsLibrary, speciesLibrary, graphUtils
     external eachItemInList
     external soma_ref
@@ -491,17 +491,16 @@ begintemplate OneExtracellularSourceWidget
         
         dismissChilds()
         
-        mainBox.unmap()
-        mainBox = nil
-        
         if (enumPointSphere == 1) {
             // !!!! deleteTempSectionCross()
         }
         
+        removeItemFromList(fast_flush_list, plotShape, 1)
+        
         // !!!! graphUtils.unregister(slotIdx4GraphUtils)
         
-        // !!!! revert fast_flush_list.append(plotShape)
-        //      when user clicks "View..." -> "NewView", does it go into "fast_flush_list" as well?
+        mainBox.unmap()
+        mainBox = nil
     }
     
     // All next staff is private
