@@ -1,4 +1,4 @@
-# BRAINCELL 1.0 - Modeling and Simulating Brain Cells
+# BRAINCELL 1.0. - Modeling and Simulating Brain Cells
 *Explore the Wonders of the Brain*
 
 <p align="center">
