@@ -3,7 +3,7 @@
 //     with RunControl or AltRunControl instead of the dedicated "Run" button; to fix it, we'll have to stick to AltRunControl
 //     and integrate it with SimulationManager to be ready for this scenario
 
-// !!!! maybe call .dismissHandler() for the current sim widget if user closes any its panel
+// !!!! maybe call .dismissHandler() for the current sim widget if user closes its main panel
 
 objref simIdxToWidget[11]
 

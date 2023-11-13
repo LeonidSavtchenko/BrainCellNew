@@ -39,7 +39,7 @@ begintemplate ReducedRNGUtils
     }
     
     proc resetAllSeeds() { localobj pc
-        uniqueSeedForHoc = 10   // Just copied from RNGUtils
+        uniqueSeedForHoc = 11   // Just copied from RNGUtils
         
         pc = new ParallelContext()
         uniqueSeedForMod = minSeedForMod + maxNumSeedsPerRankForMod * pc.id

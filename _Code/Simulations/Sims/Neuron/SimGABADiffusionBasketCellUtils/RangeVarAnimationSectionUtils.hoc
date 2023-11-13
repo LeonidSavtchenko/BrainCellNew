@@ -1,0 +1,15 @@
+
+// Keeping on the top level because it uses "forall"
+obfunc getRecSectsListAndNumSegms() { local numSegms localobj list_ref
+    list_ref = new List()
+    numSegms = 0
+    forall {
+        if (pyObj.isNanoGeometrySection(secname())) {
+            continue
+        }
+        list_ref.append(new SectionRef())
+        numSegms += nseg
+    }
+    $&1 = numSegms
+    return list_ref
+}

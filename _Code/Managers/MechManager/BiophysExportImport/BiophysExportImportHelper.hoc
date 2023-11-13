@@ -3,9 +3,10 @@ begintemplate BiophysExportImportHelper
 
     public export, import, importForSim
     public exportStage2, importStage2, importStage3
+    public showMissingCompNamesWarning
     
     external mmAllComps
-    external stringsEqual, stringCapitalize, getNotImplementedLines, getCellTypeName, printPythonErrMsgAndStop
+    external sourcePythonCode, stringsEqual, stringCapitalize, getNotImplementedLines, getCellTypeName
     external pyObj, fbh, mth, mwh
     external mechManagerMainWidget, mmmowb
     external pyEnumOutFileTypes, pyEnumInFileTypes
@@ -17,15 +18,8 @@ begintemplate BiophysExportImportHelper
     strdef jsonFilePathName     // !!! ?? use two different vars for export and import?
     
     
-    proc init() { local status
-        strdef pyCommand
-        
-        pyCommand = "import sys\nimport os\nsys.path.append(os.getcwd() + '\\PythonCode')\nfrom BiophysJsonFileHelper import BiophysJsonFileHelper"
-        
-        status = nrnpython(pyCommand)
-        if (!status) {
-            printPythonErrMsgAndStop("BiophysExportImportHelper ctor")
-        }
+    proc init() {
+        sourcePythonCode("\\PythonCode", "from BiophysJsonFileHelper import BiophysJsonFileHelper", "BiophysExportImportHelper ctor")
         
         biophysJsonFileHelper = pyObj.BiophysJsonFileHelper()
     }
@@ -178,6 +172,24 @@ begintemplate BiophysExportImportHelper
         return 0
     }
     
+    // !!!! maybe move to some common utils
+    proc showMissingCompNamesWarning() { local isForSim localobj missingCompNames
+        strdef line2Templ, line1, line2
+        
+        missingCompNames = $o1
+        isForSim = $2
+        
+        line2Templ = "(You can %suse \"Rename\" or \"Split\" compartment operations and then repeat%s.)"
+        if (!isForSim) {
+            line1 = "The following compartments are declared in the imported file, but missing in the recipient cell, so cannot be imported:"
+            sprint(line2, line2Templ, "", " the import")
+        } else {
+            line1 = "This simulation requires for the cell to have certain compartments, but in fact the next ones are missing:"
+            sprint(line2, line2Templ, "open \"Manager of biophysics\" and ", "")
+        }
+        mwh.showWarningBox(line1, missingCompNames, "", line2, "")
+    }
+    
     // All next staff is private
     
     
@@ -212,23 +224,6 @@ begintemplate BiophysExportImportHelper
         $o2 = missingCompNames
         $o3 = isBlockThisCompNameVec
         $o4 = isUseThisCompNameVec
-    }
-    
-    proc showMissingCompNamesWarning() { local isForSim localobj missingCompNames
-        strdef line2Templ, line1, line2
-        
-        missingCompNames = $o1
-        isForSim = $2
-        
-        line2Templ = "(You can %suse \"Rename\" or \"Split\" compartment operations and then repeat%s.)"
-        if (!isForSim) {
-            line1 = "The following compartments are declared in the imported file, but missing in the recipient cell, so cannot be imported:"
-            sprint(line2, line2Templ, "", " the import")
-        } else {
-            line1 = "This simulation requires for the cell to have certain compartments, but in fact the next ones are missing:"
-            sprint(line2, line2Templ, "open \"Manager of biophysics\" and ", "")
-        }
-        mwh.showWarningBox(line1, missingCompNames, "", line2, "")
     }
     
     proc showExportOrImportCompleteMsg() { local isExportOrImport localobj options, bulletedList

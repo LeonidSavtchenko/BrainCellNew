@@ -26,6 +26,9 @@ def convertPyIterableOfStrsToHocListOfStrObjs(pyIter):
         hocList.append(h.String(item))
     return hocList
     
+def isNanoGeometrySection(secName):
+    return secName.startswith('AstrocyteNanoBranch[') or secName.startswith('NeuronNanoBranch[')    # !! hardcode
+    
 # Called from both Python and HOC
 # !!!! fragile logic in the callers of this method:
 #      there is no guarantee that user didn't apply, say, liner function to g_pas in LargeGlia and then clicked "Deep rescan" making it verbatim

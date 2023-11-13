@@ -28,10 +28,31 @@ iterator eachPointInGrid() { local minValue, maxValue, numPts, step, idx
     }
 }
 
-proc closeFileAndShowCompleteMsg() { localobj outTxtFile
+proc closeFileAndShowCompleteMsg() { local numArg, isAbsOrRelPath localobj outFile
     strdef msg
-    outTxtFile = $o1
-    sprint(msg, "The results were saved to \"%s%s\"", getcwd(), outTxtFile.getname())
-    outTxtFile.close()
+    
+    numArg = numarg()
+    if (numArg < 1 || numArg > 2) {
+        codeContractViolation()
+    }
+    
+    outFile = $o1
+    if (numArg == 2) {
+        isAbsOrRelPath = $2
+        if (isAbsOrRelPath == 0) {
+            codeContractViolation()
+        }
+    } else {
+        isAbsOrRelPath = 0
+    }
+    
+    if (isAbsOrRelPath) {
+        sprint(msg, "The results were saved to \"%s\"", outFile.getname())
+    } else {
+        sprint(msg, "The results were saved to \"%s%s\"", getcwd(), outFile.getname())
+    }
+    
+    outFile.close()
+    
     mwh.showMessageBox(msg, "Complete")
 }

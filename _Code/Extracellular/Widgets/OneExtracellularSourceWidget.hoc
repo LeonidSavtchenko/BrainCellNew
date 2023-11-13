@@ -161,7 +161,7 @@ begintemplate OneExtracellularSourceWidget
             
             spcCatIdx = oldECS.spcCatIdx
             spcNamesList = spcCatsList.o(spcCatIdx).spcNamesList    // !!!! the same line appears three times in this file
-            speciesIdx = findItemInListByString(spcNamesList, oldECS.species)   // !!! maybe use SpeciesLibrary.getSpeciesInsideCatIdxForColouring
+            speciesIdx = findItemInListByString(spcNamesList, oldECS.species)   // !!! maybe use SpeciesLibrary.getSpeciesInsideCatIdx
             if (speciesIdx == -1) {
                 codeContractViolation()
             }
@@ -1173,7 +1173,7 @@ begintemplate OneExtracellularSourceWidget
         otherSpecies = $s1
         if (1) {
             // !!! other category - same colours
-            otherSpeciesIdx = speciesLibrary.getSpeciesInsideCatIdxForColouring(otherSpecies)
+            otherSpeciesIdx = speciesLibrary.getSpeciesInsideCatIdx(otherSpecies)
             return 2 + otherSpeciesIdx  // 2: Red
         } else {
             // !!! other category - other colours

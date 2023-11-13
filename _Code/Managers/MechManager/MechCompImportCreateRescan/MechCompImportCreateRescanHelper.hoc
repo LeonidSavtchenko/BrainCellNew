@@ -8,7 +8,8 @@ begintemplate MechCompImportCreateRescanHelper
     external isAstrocyteOrNeuron, isBaseOrNanoStart
     external soma_ref, dendrite_ref, endFoot_ref, axon_ref, nanoProximal_ref, nanoDistal_ref
     external mmAllComps
-    external _findAllRemainingSects, replaceItemInList, concatenateTwoLists, printPythonErrMsgAndStop, codeContractViolation
+    external _findAllRemainingSects
+    external sourcePythonCode, replaceItemInList, concatenateTwoLists, codeContractViolation
     external mwh, compUtils, pyObj
     external eachItemInList
     
@@ -29,15 +30,8 @@ begintemplate MechCompImportCreateRescanHelper
     //     * for type 6, we've called "init", so changes in "*o" ion vars could propagate to arbitrary other mech vars
     enumScheduledRescanType = -1
     
-    proc init() { local status
-        strdef pyCommand
-        
-        pyCommand = "import sys\nimport os\nsys.path.append(os.getcwd() + '\\PythonCode')\nfrom MechCompAutoSplitUtils import *"
-        
-        status = nrnpython(pyCommand)
-        if (!status) {
-            printPythonErrMsgAndStop("MechCompImportCreateRescanHelper ctor")
-        }
+    proc init() {
+        sourcePythonCode("\\PythonCode", "from MechCompAutoSplitUtils import *", "MechCompImportCreateRescanHelper ctor")
         
         isConvertedFromReducedMechCompTemplates = 0
         enumScheduledRescanType = 0                     // !!!! maybe assign 1 by default (but must be 0 in "start with nano" mode)

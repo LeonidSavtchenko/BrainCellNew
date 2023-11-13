@@ -1,0 +1,163 @@
+
+begintemplate RangeVarAnimationRecord
+    
+    public onJustAfterRun, loadFromBinFile
+    public varNameWithIndexAndUnits, timeVec, xVec, yVec, zVec, rangeVarVec     // !!! think about Matrix for the latter
+    
+    external _interpEachSegmCentreCoordsFromSec3DPointCoords    // !!! remove "_" in the proc name and move it intermodular utils (it's exported)
+    external getRecSectsListAndNumSegms, closeFileAndShowCompleteMsg, stringEmpty, codeContractViolation
+    external mwh
+    external eachSecInList
+    
+    strdef varNameWithIndexAndUnits
+    objref timeVec, xVec, yVec, zVec, rangeVarVec
+    
+    
+    // !!! just some test data here
+    proc init() { local numFrames, timeStep
+        
+        varNameWithIndexAndUnits = "varName[idx] (units)"   // !!!
+        
+        // !!! remove this call later (added just for test)
+        setStaticData()
+        
+        // Prepare time grid
+        numFrames = 101
+        timeStep = 0.1
+        timeVec = new Vector(numFrames)
+        timeVec.indgen(timeStep)
+    }
+    
+    proc onJustAfterRun() { local isSaveToBinFile, isSaveToTxtFile, isSaveSmth
+        strdef binFilePathNameOrEmpty, txtFilePathNameOrEmpty
+        binFilePathNameOrEmpty = $s1
+        txtFilePathNameOrEmpty = $s2
+        
+        // !!! maybe do it in onJustBeforeRun ?
+        setStaticData()
+        
+        if (rangeVarVec.size() != timeVec.size() * xVec.size()) {
+            codeContractViolation()
+        }
+        
+        isSaveToBinFile = !stringEmpty(binFilePathNameOrEmpty)
+        isSaveToTxtFile = !stringEmpty(txtFilePathNameOrEmpty)
+        
+        isSaveSmth = (isSaveToBinFile || isSaveToTxtFile)
+        if (!isSaveSmth) {
+            return
+        }
+        
+        mwh.startIntercepting()
+        {
+            if (isSaveToBinFile) {
+                saveToBinFile(binFilePathNameOrEmpty)
+            }
+            if (isSaveToTxtFile) {
+                saveToTxtFile(txtFilePathNameOrEmpty)
+            }
+        }
+        mwh.endIntercepting()
+    }
+    
+    proc loadFromBinFile() { local numFrames, numSegms localobj inFile
+        strdef binFilePathName
+        
+        binFilePathName = $s1
+        
+        inFile = new File()
+        inFile.ropen(binFilePathName)
+        inFile.seek(0)      // Required because the first read operation is for a string even though the file is binary
+        inFile.gets(varNameWithIndexAndUnits)
+        inFile.vread(&numFrames)
+        inFile.vread(&numSegms)
+        timeVec = readVectorFromFile(inFile, numFrames)
+        xVec = readVectorFromFile(inFile, numSegms)
+        yVec = readVectorFromFile(inFile, numSegms)
+        zVec = readVectorFromFile(inFile, numSegms)
+        rangeVarVec = readVectorFromFile(inFile, numFrames * numSegms)
+        if (!inFile.eof()) {
+            // !!! replace with a user-friendly error message
+            codeContractViolation()
+        }
+        inFile.close()
+    }
+    
+    // All next staff is private
+    
+    
+    proc setStaticData() { local numSegms, dstStartIdx localobj list_ref, xSegmVec, ySegmVec, zSegmVec
+        
+        // Prepare 3D coordinates of segment centres
+        list_ref = getRecSectsListAndNumSegms(&numSegms)
+        xSegmVec = new Vector()
+        ySegmVec = new Vector()
+        zSegmVec = new Vector()
+        xVec = new Vector(numSegms)
+        yVec = new Vector(numSegms)
+        zVec = new Vector(numSegms)
+        dstStartIdx = 0
+        for eachSecInList(list_ref) {
+            _interpEachSegmCentreCoordsFromSec3DPointCoords(xSegmVec, ySegmVec, zSegmVec)
+            xVec.copy(xSegmVec, dstStartIdx)
+            yVec.copy(ySegmVec, dstStartIdx)
+            zVec.copy(zSegmVec, dstStartIdx)
+            dstStartIdx += nseg
+        }
+        if (dstStartIdx != numSegms) {
+            codeContractViolation()
+        }
+    }
+    
+    proc saveToBinFile() { local numFrames, numSegms localobj outFile
+        strdef binFilePathName
+        
+        binFilePathName = $s1
+        
+        numFrames = timeVec.size()
+        numSegms = xVec.size()
+        
+        outFile = new File()
+        outFile.wopen(binFilePathName)
+        outFile.seek(0)     // Required because the first write operation is for a string even though the file is binary
+        outFile.printf("%s\n", varNameWithIndexAndUnits)    // NEURON doesn't recognize "\0" and just uses "0"
+        outFile.vwrite(&numFrames)
+        outFile.vwrite(&numSegms)
+        timeVec.fwrite(outFile)
+        xVec.fwrite(outFile)
+        yVec.fwrite(outFile)
+        zVec.fwrite(outFile)
+        rangeVarVec.fwrite(outFile)
+        closeFileAndShowCompleteMsg(outFile, 1)
+    }
+    
+    // !!! maybe make it possible to specify colSep (now "\t") and oneValueFormat (now "%g") like we do in "runner.hoc";
+    // !!! maybe optimize for Origin: write "Long Name" to 1st row and "Units" to 2nd row
+    proc saveToTxtFile() { local numFrames, numSegms, frameIdx, segmIdx localobj outFile
+        strdef txtFilePathName
+        
+        txtFilePathName = $s1
+        
+        numFrames = timeVec.size()
+        numSegms = xVec.size()
+        
+        outFile = new File()
+        outFile.wopen(txtFilePathName)
+        outFile.printf("t (ms)\tx (um)\ty (um)\tz (um)\t%s\n", varNameWithIndexAndUnits)
+        for frameIdx = 0, numFrames - 1 {
+            for segmIdx = 0, numSegms - 1 {
+                outFile.printf("%g\t%g\t%g\t%g\t%g\n", timeVec.x[frameIdx], xVec.x[segmIdx], yVec.x[segmIdx], zVec.x[segmIdx], rangeVarVec.x[frameIdx * numSegms + segmIdx])
+            }
+        }
+        closeFileAndShowCompleteMsg(outFile, 1)
+    }
+    
+    obfunc readVectorFromFile() { local vecSize localobj inFile, vec
+        inFile = $o1
+        vecSize = $2
+        vec = new Vector(vecSize)
+        vec.fread(inFile)
+        return vec
+    }
+    
+endtemplate RangeVarAnimationRecord

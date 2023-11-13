@@ -79,6 +79,21 @@ proc createMetaVarHint() {
     xlabel("   but rather used by our program to filter events emitted by \"NetCon\"-s")
 }
 
+proc createRecordingPeriodHint() {
+    xlabel("set \"-1\" to make one record per one iteration;")
+    xlabel("when \"Dt\" is not a multiple of \"dt\", the performance drops;")
+    xlabel("when CVode is ACTIVE, this happens for any \"Dt\" except \"-1\"")
+    xlabel("")
+}
+
+proc createExtracellularGeneratorHintsPanel() {
+    xpanel("")
+    xlabel("Hints: Checking \"Make a series\" and setting \"noise\" > 0 for the initial source results in")
+    xlabel("           different behaviour for each copy;")
+    xlabel("           click \"Edit\" -> \"Show all srcs for this species\" to review the generated sources.")
+    xpanel()
+}
+
 proc dismissIfNotNil() { localobj widget, nil
     widget = $o1
     if (widget != nil) {

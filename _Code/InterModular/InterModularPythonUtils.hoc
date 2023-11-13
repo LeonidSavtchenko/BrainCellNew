@@ -7,6 +7,21 @@ pyObj = new PythonObject()
 { nrnpython("from neuron import h") }
 
 
+proc sourcePythonCode() { local status
+    strdef relDirPath, importPyCommands, callerName, pyCommand
+    
+    relDirPath = $s1
+    importPyCommands = $s2
+    callerName = $s3
+    
+    sprint(pyCommand, "import sys\nimport os\nsys.path.append(os.getcwd() + '%s')\n%s", relDirPath, importPyCommands)
+    
+    status = nrnpython(pyCommand)
+    if (!status) {
+        printPythonErrMsgAndStop(callerName)
+    }
+}
+
 // Convert string to lower case
 // $s1 - The input string
 // $s2 (output) - The lower case string

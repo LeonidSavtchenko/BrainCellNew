@@ -1,7 +1,7 @@
 
 begintemplate SpeciesLibrary
 
-    public validateAndWarnUser, copyGlobalVarsToModParams, packToVec, getSpeciesFlatIdxForModInterface, getSpeciesFlatIdxForColouring, getSpeciesInsideCatIdxForColouring
+    public validateAndWarnUser, copyGlobalVarsToModParams, packToVec, getSpeciesFlatIdxForModInterface, getSpeciesFlatIdxForColouring, getSpeciesInsideCatIdx
     public spcCatsList
     
     external mwh, mechSettings
@@ -130,7 +130,7 @@ begintemplate SpeciesLibrary
     
     // !!! unify with the prev 2 funcs
     // !!! think about moving it to SpeciesCategory or !!! storing spcIdx inside SpeciesListItem
-    func getSpeciesInsideCatIdxForColouring() { local spcCatIdx, spcIdx localobj spcNamesList
+    func getSpeciesInsideCatIdx() { local spcCatIdx, spcIdx localobj spcNamesList
         strdef species
         
         species = $s1

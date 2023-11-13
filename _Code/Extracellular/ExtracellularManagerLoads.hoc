@@ -8,6 +8,7 @@ loadIfNotDeclared("ECLDeploymentCache", "ExtracellularSourcesLibrary/Exported/EC
 
 { load_file("Utils/SpeciesListItem.hoc") }
 { load_file("Utils/ExtracellularApplicatorUtils_Exported.hoc") }
+{ load_file("Utils/ExtracellularApplicatorUtils.hoc") }
 
 { load_file("SpeciesLibrary/SpeciesInfo.hoc") }
 { load_file("SpeciesLibrary/SpeciesCategory.hoc") }
@@ -31,4 +32,5 @@ if (isBaseOrNanoStart || cond) {
 
 { load_file("Widgets/NetStimParamsWidget.hoc") }
 { load_file("Widgets/OneExtracellularSourceWidget.hoc") }
+{ load_file("Widgets/GenerateRandomInSphereWidget.hoc") }
 { load_file("Widgets/ExtracellularManagerMainWidget.hoc") }

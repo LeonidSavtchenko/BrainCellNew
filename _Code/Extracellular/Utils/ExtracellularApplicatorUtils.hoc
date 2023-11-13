@@ -1,0 +1,9 @@
+
+func applyExtracellularSourcesWithWaitBox() { local isEnabled
+    mwh.showPleaseWaitBox("Applying extracellular sources.")    // For the case of hundreds of ECSs
+    {
+        isEnabled = applyExtracellularSources()
+    }
+    mwh.hidePleaseWaitBox()
+    return isEnabled
+}

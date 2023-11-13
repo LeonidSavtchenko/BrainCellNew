@@ -8,7 +8,7 @@ begintemplate MechSettings
     
     external pyObj
     external _numSpeciesInEcdMod
-    external findItemInListByString, stringEndsWith, printPythonErrMsgAndStop, printMsgAndRaiseError
+    external sourcePythonCode, findItemInListByString, stringEndsWith, printMsgAndRaiseError
     external eachItemInList
     
     strdef unrecSpcCatName, ionSuffix
@@ -16,15 +16,8 @@ begintemplate MechSettings
     objref actIonNames
     
     
-    proc init() { local status
-        strdef pyCommand
-        
-        pyCommand = "import sys\nimport os\nsys.path.append(os.getcwd() + '\\PythonCode')\nfrom MechSettings import *"
-        
-        status = nrnpython(pyCommand)
-        if (!status) {
-            printPythonErrMsgAndStop("MechSettings ctor")
-        }
+    proc init() {
+        sourcePythonCode("\\PythonCode", "from MechSettings import *", "MechSettings ctor")
         
         // !!! need to check that JSON file doesn't contain such a category
         unrecSpcCatName = "Unrecognized"

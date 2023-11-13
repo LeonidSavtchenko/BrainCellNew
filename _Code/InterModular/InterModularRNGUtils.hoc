@@ -8,14 +8,14 @@
 // Keep in sync with ReducedRNGUtils
 begintemplate RNGUtils
 
-    public getFor_diameters, getFor_nano_branchSeeder, getFor_nano_diamAndLen, getFor_nano_spineRadius, getFor_nano_neckLen, getFor_nano_neckDiam, getFor_synLoc, getFor_sim_gabaDiffusion, getFor_sim_frapCircle, getFor_sim_calciumDynamics, getFor_stochFunc_withUniqueSeed, getFor_stretch_withCustomSeed, getSeedFor_SEFW
+    public getFor_diameters, getFor_nano_branchSeeder, getFor_nano_diamAndLen, getFor_nano_spineRadius, getFor_nano_neckLen, getFor_nano_neckDiam, getFor_synLoc, getFor_ecd, getFor_sim_gabaDiffusion, getFor_sim_frapCircle, getFor_sim_calciumDynamics, getFor_stochFunc_withUniqueSeed, getFor_stretch_withCustomSeed, getSeedFor_SEFW
     
     uniqueSeedForHoc = -1
     uniqueSeedForMod = -1
     
     
     proc init() { local minSeedForMod, maxNumSeedsPerRankForMod localobj pc
-        uniqueSeedForHoc = 10   // Keep in sync with the obfunc-s below
+        uniqueSeedForHoc = 11   // Keep in sync with the obfunc-s below and ReducedRNGUtils
         
         if (!use_mcell_ran4()) {
             minSeedForMod = 0       // HOC and MOD use different RNGs, so we don't care about seeds overlapping
@@ -59,16 +59,20 @@ begintemplate RNGUtils
         return new Random(6)
     }
     
-    obfunc getFor_sim_gabaDiffusion() {
+    obfunc getFor_ecd() {
         return new Random(7)
     }
     
-    obfunc getFor_sim_frapCircle() {
+    obfunc getFor_sim_gabaDiffusion() {
         return new Random(8)
     }
     
+    obfunc getFor_sim_frapCircle() {
+        return new Random(9)
+    }
+    
     obfunc getFor_sim_calciumDynamics() {
-        return new Random(9)    // Must be equal to uniqueSeedForHoc - 1
+        return new Random(10)   // Must be equal to uniqueSeedForHoc - 1
     }
     
     obfunc getFor_stochFunc_withUniqueSeed() { localobj rng

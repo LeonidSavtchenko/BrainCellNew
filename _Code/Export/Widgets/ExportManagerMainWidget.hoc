@@ -4,7 +4,7 @@ begintemplate ExportManagerMainWidget
     public show, dismissHandler
     
     external mwh, compUtils, inhomAndStochLibrary, ecsLibrary, mmIcrHelper
-    external saveNanoHocFile, getExtracellularSourcesStatus, applyExtracellularSources, disableExtracellularSources, createEmptyPanel, openDeck, closeDeck, unmapIfNotNil
+    external saveNanoHocFile, getExtracellularSourcesStatus, applyExtracellularSourcesWithWaitBox, disableExtracellularSources, createEmptyPanel, openDeck, closeDeck, unmapIfNotNil
     external isAstrocyteOrNeuron
     external exportOptions
     external pyObj
@@ -308,7 +308,7 @@ begintemplate ExportManagerMainWidget
             //     but, in order to avoid errors in "start with nano" mode, we need to create the missing models on import
             //     (somewhere in MechComp.analyzeMechInhomogeneity or MechCompImportCreateRescanHelper.makeSureMechCompsCreatedOrImportedAndRescanned),
             //     and for now this logic is not implemented
-            applyExtracellularSources()
+            applyExtracellularSourcesWithWaitBox()
             isRescanRequired = 1
         } else {
             wasEcdEnabled = disableExtracellularSources()

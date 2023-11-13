@@ -1,66 +1,158 @@
 
+// !!! Ideas:
+//     * update PrerequisitesCheck.hoc to make sure plotly, matplotlib, pandas and numpy are installed
+//     * maybe make it possible to choose more than one watched var (a comma-separated list in the string_dialog)
+//     * maybe make it possible to specify not only watched var, but also watched expression involving any math functions and one or more range vars
+//     * maybe make selection of watchedRangeVarNameWithIndex more convenient: not string_dialog, but a widget with List-s like in Export module
+
+// https://nrn.readthedocs.io/en/latest/example_of_generating_movie.html
+// https://nrn.readthedocs.io/en/latest/python/visualization/plotshapeclass.html
+// https://neuron.yale.edu/phpBB/viewtopic.php?p=19832
+
+{ load_file("SimGABADiffusionBasketCellUtils/RangeVarAnimationSectionUtils.hoc") }
+{ load_file("SimGABADiffusionBasketCellUtils/RangeVarAnimationRecord.hoc") }
+{ load_file("SimGABADiffusionBasketCellUtils/RangeVarAnimationRecorder.hoc") }
+
+
 begintemplate SimGABADiffusionBasketCell
     
     public check, show, advance, dismissHandler
     public biophysJsonFileNameOrEmpty, isCustomProcAdvance
     
-    external showExtracellularManagerBaseWidget, unmapIfNotNil, dismissIfNotNil
-    external mwh, fbh, math, ecsLibrary, rngUtils, mainUiLocker
+    external createExtracellularGeneratorHintsPanel, createRecordingPeriodHint, showExtracellularManagerBaseWidget, applyExtracellularSourcesWithWaitBox
+    external sourcePythonCode, stringEmpty, unmapIfNotNil, dismissIfNotNil
+    external mwh, fbh, math, ecsLibrary, speciesLibrary, compUtils, beih, rngUtils, mainUiLocker, mmIcrHelper
+    external cvode, run
+    external pyObj
     external pyEnumOutFileTypes, pyEnumInFileTypes
     external manageAndRunWidget
     
     strdef biophysJsonFileNameOrEmpty
     isCustomProcAdvance = -1
     
-    objref randomCoord
-    
+    objref rng
+    objref axonCompOrNil
     objref mainBox, deck
     
-    isCreateOrReview = -1
-    numSrc = -1
-    radiusGen = -1
+    isFirstShow = -1
+    isSmthRecordedOrLoaded = -1
     
-    strdef pclFilePathName
+    isCreateOrLoad = -1
+    frontEndIdx = -1
+    numSrcs = -1
+    radiusGen = -1
+    DtOrMinus1 = -1
+    
+    isSaveToBinFile = -1
+    isSaveToTxtFile = -1
+    strdef binFilePathName
+    strdef txtFilePathName
+    
+    objref record, recorder, player
     
     
     proc init() { local inf
+        strdef unitsStr
+        
+        sourcePythonCode("\\Sims\\\\Neuron\\SimGABADiffusionBasketCellUtils\\PythonCode", "from RangeVarAnimationPlayer import RangeVarAnimationPlayer", "SimGABADiffusionBasketCell ctor")
+        
         biophysJsonFileNameOrEmpty = ""     // !!!
         isCustomProcAdvance = 1
         
-        randomCoord = rngUtils.getFor_sim_gabaDiffusion()
+        rng = rngUtils.getFor_sim_gabaDiffusion()
         
-        isCreateOrReview = 1
-        numSrc = 100
-        radiusGen = 200     // um
+        isFirstShow = 1
+        isSmthRecordedOrLoaded = 0
+        
+        isCreateOrLoad = 1
+        frontEndIdx = 0
+        numSrcs = 100
+        radiusGen = 50      // um
+        // DtOrMinus1 will be set in proc show because we adjust "dt" after calling this ctor
+        isSaveToBinFile = 1
+        isSaveToTxtFile = 0
         
         inf = math.inf
-        variable_domain(&numSrc, 1, inf)
+        variable_domain(&numSrcs, 1, inf)
         
         variable_domain(&radiusGen, float_epsilon, inf)
         units(&radiusGen, units("L"))
+        
+        unitsStr = units(&dt)
+        if (!stringEmpty(unitsStr)) {
+            sprint(unitsStr, "in model time, %s", unitsStr)
+        }
+        units(&DtOrMinus1, unitsStr)    // Do not replace with "units(&DtOrMinus1, units(&dt))"
+        
+        record = new RangeVarAnimationRecord()
+        recorder = new RangeVarAnimationRecorder(record)
+        player = pyObj.RangeVarAnimationPlayer(record)
     }
     
-    func check() { local isCancel localobj nil
+    func check() { local isCancel localobj missingCompNames, nil
+        strdef axonCompName
+        
+        axonCompName = "Axon"
+        compUtils.findDistMechCompByName(axonCompName, 0, axonCompOrNil)
+        if (axonCompOrNil == nil) {
+            missingCompNames = new List()
+            missingCompNames.append(new String(axonCompName))
+            beih.showMissingCompNamesWarning(missingCompNames, 1)
+            return 1
+        }
+        
         if (mainUiLocker != nil) {  // !!! nil in tests
             isCancel = mainUiLocker.makeSureNanoReseedingLocked()
             if (isCancel) {
                 return 1
             }
         }
+        
         return 0
     }
     
-    proc show() { localobj vBox
+    proc show() { localobj hBox, vBox
+        
+        if (isFirstShow) {
+            // Default recording period
+            if (!cvode.active()) {
+                DtOrMinus1 = 4 * dt
+            } else {
+                DtOrMinus1 = -1
+            }
+            isFirstShow = 0
+        }
+        
+        // Showing it here rather than in createOrLoadHandler just to have SimGABADiffusionBasketCell in the focus
+        // and ExtracellularManagerMainWidget in the background
+        showExtracellularManagerBaseWidget()
         
         mainBox = new VBox()
         mainBox.intercept(1)
         {
-            xpanel("")
-            xlabel("")
-            xradiobutton("Create new animation", "createOrReviewHandler(1)", isCreateOrReview)
-            xradiobutton("Review saved animation", "createOrReviewHandler(0)", !isCreateOrReview)
-            xlabel("")
-            xpanel()
+            hBox = new HBox()
+            hBox.intercept(1)
+            {
+                xpanel("")
+                xlabel("")
+                xradiobutton("Create new animation", "createOrLoadHandler(1, 0)", isCreateOrLoad)
+                xradiobutton("Play saved animation", "createOrLoadHandler(0, 0)", !isCreateOrLoad)
+                xlabel("")
+                xpanel()
+                xpanel("")
+                xlabel("Animation front end:")
+                xradiobutton("Plotly (browser)", "frontEndIdx = 0", frontEndIdx == 0)
+                xradiobutton("Pyplot (desktop)", "frontEndIdx = 1", frontEndIdx == 1)
+                xradiobutton("Pyplot (browser)", "frontEndIdx = 2", frontEndIdx == 2)
+                xpanel()
+                xpanel("")
+                // !!!!!!!!!!!! just for test
+                xbutton("!!! Show some random test data", "playerTestHandler()")
+                xbutton("Show the last record once again", "showLastHandler()")
+                xpanel()
+            }
+            hBox.intercept(0)
+            hBox.map()
             deck = new Deck()
             deck.intercept(1)
             {
@@ -68,23 +160,25 @@ begintemplate SimGABADiffusionBasketCell
                 vBox.intercept(1)
                 {
                     xpanel("")
-                    xlabel("1. Create a single source using \"Manager of extracellular sources\".")
-                    xlabel("2. Click \"Generate sources\" to create \"Number of sources - 1\" copies within \"Radius of generation\".")
-                    xlabel("    (The initial source still remains in the centre of this radius.)")
-                    xlabel("    Hint: Checking \"Make a series\" and setting \"noise\" > 0 for the initial source results in")
-                    xlabel("             different behaviour for each copy.")   // !!!!!!!!!!! test this
-                    xlabel("3. Click \"Start simulation\" and specify the output file path and name.")
+                    xlabel("1. Create a single source in any location using \"Manager of extracellular sources\".")
+                    xlabel("2. Click \"Generate sources\" (below) to create \"Number of sources\" copies along axon sections")
+                    xlabel("    within \"Radius of generation\" from the sections. The initial source will be deleted.")
+                    xlabel("3. Adjust \"Recording period\", click \"Start simulation\" and specify the output file path and name.")
                     xpanel()
                     xpanel("")
-                    xpvalue("Number of sources", &numSrc, 1)
+                    xpvalue("Number of sources", &numSrcs, 1)
                     xpvalue("Radius of generation", &radiusGen, 1)
                     xlabel("")
                     xbutton("Generate sources", "generateHandler()")
-                    xlabel("Hint: Click \"Edit\" -> \"Show all srcs for this species\" to review the generated sources.")
                     xpanel()
+                    createExtracellularGeneratorHintsPanel()
                     xpanel("")
-                    xlabel("")
+                    xpvalue("Recording period, Dt", &DtOrMinus1, 1, "DtChangedHandler()")
+                    createRecordingPeriodHint()
                     xbutton("Start simulation", "startHandler()")
+                    xcheckbox("Save animation to BIN file", &isSaveToBinFile)
+                    xcheckbox("Save animation to TXT file", &isSaveToTxtFile)
+                    // !!!!!!!!!!!! add "Save results" button and hint like in other sims or stick to AltRunControl
                     xlabel("")
                     xpanel()
                 }
@@ -92,47 +186,69 @@ begintemplate SimGABADiffusionBasketCell
                 vBox.map()
                 xpanel("")
                 xlabel("")
-                xbutton("Load file", "loadHandler()")
+                xbutton("Load BIN file", "loadBinFileHandler()")
                 xpanel()
             }
             deck.intercept(0)
-            // deck.flip_to(*)      // Will be done below in createOrReviewHandler
-            deck.map("", 1, 1, 460, 280)        // !!!
+            // deck.flip_to(*)      // Will be done below in createOrLoadHandler
+            deck.map("", 1, 1, 440, 389)
         }
         mainBox.intercept(0)
         mainBox.dismiss_action("dismissHandler()")
         mainBox.map("Basket cell GABA diffusion", 500, 545, -1, -1)
         
-        createOrReviewHandler(isCreateOrReview)
+        createOrLoadHandler(isCreateOrLoad, 1)
     }
     
     proc advance() {
         fadvance()
-        // !!!
+        recorder.onStep()
     }
     
     proc dismissHandler() {
-        // !!!!!!!!! maybe disable extracellular diffusion
+        // !!! close pyplot desktop window (not only now, but also when showing a new animation)
+        // !!! how about start-stop-start-stop?
+        // !!! delete the recorded vecs
+        // !!! maybe disable extracellular diffusion
         unmapIfNotNil(mainBox)
     }
     
     // All next staff is private
     
     
-    proc createOrReviewHandler() { local cardIdx
-        isCreateOrReview = $1
+    proc createOrLoadHandler() { local isCalledFromShow, cardIdx
+        isCreateOrLoad = $1
+        isCalledFromShow = $2
         
-        cardIdx = !isCreateOrReview
+        cardIdx = !isCreateOrLoad
         deck.flip_to(cardIdx)
         
-        if (isCreateOrReview) {
+        if (isCalledFromShow) {
+            return
+        }
+        
+        if (isCreateOrLoad) {
             showExtracellularManagerBaseWidget()
         } else {
             dismissIfNotNil(manageAndRunWidget)
         }
     }
     
-    proc generateHandler() { local numECSs, isCancel, x_base, y_base, z_base, x_min, x_max, y_min, y_max, z_min, z_max, radiusSqGen, srcIdx, x_new, y_new, z_new, distSq localobj ecsList, baseECS, spatialInfo, newECS
+    // !!!!!!!!!!!!!!!! just for test
+    proc playerTestHandler() {
+        player.play(frontEndIdx, 1)
+    }
+    
+    proc showLastHandler() {
+        if (!isSmthRecordedOrLoaded) {
+            mwh.showWarningBox("Please run the simulation once or load a saved animation file.")
+            return
+        }
+        
+        player.play(frontEndIdx, 0)
+    }
+    
+    proc generateHandler() { local numECSs, isCancel, numSects, srcIdx, secIdx, numPts, ptIdx, x_secPt, y_secPt, z_secPt, radius, theta, phi, x_src, y_src, z_src localobj ecsList, baseECS, list_ref, newECS
         
         ecsList = ecsLibrary.ecsList
         
@@ -151,74 +267,132 @@ begintemplate SimGABADiffusionBasketCell
         
         baseECS = ecsList.o(0)
         
-        if (numECSs > 1) {
-            ecsList.remove_all()
-            ecsList.append(baseECS)
-        }
+        ecsList.remove_all()
         
-        spatialInfo = baseECS.spatialInfo
-        x_base = spatialInfo.x
-        y_base = spatialInfo.y
-        z_base = spatialInfo.z
+        list_ref = axonCompOrNil.list_ref
+        numSects = list_ref.count()
         
-        x_min = x_base - radiusGen
-        x_max = x_base + radiusGen
-        y_min = y_base - radiusGen
-        y_max = y_base + radiusGen
-        z_min = z_base - radiusGen
-        z_max = z_base + radiusGen
-        
-        radiusSqGen = radiusGen ^ 2
-        
-        for srcIdx = 1, numSrc - 1 {
-            while (1) {
-                x_new = randomCoord.uniform(x_min, x_max)
-                y_new = randomCoord.uniform(y_min, y_max)
-                z_new = randomCoord.uniform(z_min, z_max)
-                
-                distSq = getDistSquareBetweenTwo3DPoints(x_base, y_base, z_base, x_new, y_new, z_new)
-                if (distSq <= radiusSqGen) {
-                    break
-                }
+        for srcIdx = 0, numSrcs - 1 {
+            
+            // !!! Very simple implementation, just for demo;
+            //     the placement of the sources is neither uniform by "distance" along axon, nor uniform by volume around axon;
+            //     see also: NanoBranchesManager.reseedBranches
+            
+            secIdx = rng.discunif(0, numSects - 1)
+            list_ref.o(secIdx).sec {
+                numPts = n3d()
+                ptIdx = rng.discunif(0, numPts - 1)
+                x_secPt = x3d(ptIdx)
+                y_secPt = y3d(ptIdx)
+                z_secPt = z3d(ptIdx)
             }
             
-            newECS = baseECS.createShiftedCopy(x_new, y_new, z_new)
+            // !!! some ideas:
+            //     1. to make it uniform by volume rather than uniform by "Radius of generation", implement a new func like "rng.parabola" instead of "rng.uniform"
+            //     2. maybe use minValue = diam3d(ptIdx) / 2
+            radius = rng.uniform(0, radiusGen)
+            
+            theta = rng.uniform(-PI / 2, PI / 2)
+            phi = rng.uniform(0, 2 * PI)
+            x_src = x_secPt + radius * cos(theta) * cos(phi)
+            y_src = y_secPt + radius * cos(theta) * sin(phi)
+            z_src = z_secPt + radius * sin(theta)
+            
+            newECS = baseECS.createShiftedCopy(x_src, y_src, z_src)
             ecsList.append(newECS)
         }
         
         showExtracellularManagerBaseWidget()    // This calls ecsList.select(0)
     }
     
-    proc startHandler() { local isCancel
-        isCancel = fbh.showSaveFileDialog(pyEnumOutFileTypes.binaryResultsPcl, pclFilePathName)
+    proc DtChangedHandler() {
+        if (DtOrMinus1 <= 0) {
+            DtOrMinus1 = -1
+        }
+    }
+    
+    proc startHandler() { local spcInsideCatIdx, isCancel, isEnabled localobj firstECS, nil
+        strdef msg, watchedRangeVarNameWithIndex, binFilePathNameOrEmpty, txtFilePathNameOrEmpty
+        
+        msg = "Cannot proceed without any extracellular sources."
+        
+        // !!! would it make sense to check if "Generate sources" button was clicked?
+        
+        if (ecsLibrary.isEmpty()) {
+            mwh.showWarningBox(msg)
+            return
+        }
+        
+        if (!cvode.active() && DtOrMinus1 != -1 && DtOrMinus1 < dt) {
+            // Just to prevent codeContractViolation in RangeVarAnimationRecord.onJustAfterRun
+            mwh.showNotImplementedWarning("Cannot use \"Dt < dt\" with the fixed time step integration method.")
+            return
+        }
+        
+        firstECS = ecsLibrary.ecsList.o(0)
+        spcInsideCatIdx = speciesLibrary.getSpeciesInsideCatIdx(firstECS.species)
+        watchedRangeVarNameWithIndex = speciesLibrary.spcCatsList.o(firstECS.spcCatIdx).spcNamesList.o(spcInsideCatIdx).rangeVarName
+        
+        isCancel = !string_dialog("Please choose a range variable to record and animate:", watchedRangeVarNameWithIndex)
         if (isCancel) {
             return
         }
         
-        // !!!
-        mwh.showNotImplementedWarning()
+        // !!! validate watchedRangeVarNameWithIndex here like we do for custom exposed/swept vars
         
-        // applyExtracellularSources()      // !!! update status indicator in ExtracellularManagerMainWidget
-        // if (mmIcrHelper != nil) {   // !!! can be nil in tests
-        //     mmIcrHelper.scheduleRescan(6)
-        // }
-        // run()
-        // closeFileAndShowCompleteMsg(...)
+        // !!! if decide not to close ExtracellularManagerMainWidget here, don't forget to update the status indicator in the corner
+        dismissIfNotNil(manageAndRunWidget)
+        
+        if (isSaveToBinFile) {
+            isCancel = fbh.showSaveFileDialog(pyEnumOutFileTypes.binaryResultsBin, binFilePathName)
+            if (isCancel) {
+                return
+            }
+            binFilePathNameOrEmpty = binFilePathName
+        } else {
+            binFilePathNameOrEmpty = ""
+        }
+        
+        if (isSaveToTxtFile) {
+            isCancel = fbh.showSaveFileDialog(pyEnumOutFileTypes.textResultsTxt, txtFilePathName)
+            if (isCancel) {
+                return
+            }
+            txtFilePathNameOrEmpty = txtFilePathName
+        } else {
+            txtFilePathNameOrEmpty = ""
+        }
+        
+        isEnabled = applyExtracellularSourcesWithWaitBox()
+        if (!isEnabled) {
+            mwh.showWarningBox(msg)
+            return
+        }
+        
+        if (mmIcrHelper != nil) {   // !!! can be nil in tests
+            mmIcrHelper.scheduleRescan(6)
+        }
+        
+        recorder.onJustBeforeRun(watchedRangeVarNameWithIndex, DtOrMinus1)
+        
+        run()
+        
+        record.onJustAfterRun(binFilePathNameOrEmpty, txtFilePathNameOrEmpty)
+        isSmthRecordedOrLoaded = 1
+        
+        player.play(frontEndIdx, 0)
     }
     
-    proc loadHandler() { local isCancel
-        isCancel = fbh.showLoadFileDialog(pyEnumInFileTypes.binaryResultsPcl, pclFilePathName)
+    proc loadBinFileHandler() { local isCancel
+        isCancel = fbh.showLoadFileDialog(pyEnumInFileTypes.binaryResultsBin, binFilePathName)
         if (isCancel) {
             return
         }
         
-        // !!!
-        mwh.showNotImplementedWarning()
-    }
-    
-    // See also: ExtracellularApplicatorUtils_Exported.hoc -> _getDistBetweenTwo3DPoints
-    func getDistSquareBetweenTwo3DPoints() {
-        return ($1 - $4) ^ 2 + ($2 - $5) ^ 2 + ($3 - $6) ^ 2
+        record.loadFromBinFile(binFilePathName)
+        isSmthRecordedOrLoaded = 1
+        
+        player.play(frontEndIdx, 0)
     }
     
 endtemplate SimGABADiffusionBasketCell

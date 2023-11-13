@@ -6,11 +6,11 @@ begintemplate ExtracellularManagerMainWidget
     public title
     
     external mwh, ecsLibrary, mmIcrHelper
-    external applyExtracellularSources, disableExtracellularSources, getExtracellularSourcesStatus
+    external applyExtracellularSourcesWithWaitBox, disableExtracellularSources, getExtracellularSourcesStatus
     external isECSUnique, replaceItemInList, deleteSelectedItemFromBrowsedList, openDeck, closeDeck, oneZeroToEnabledDisabled, unmapIfNotNil, codeContractViolation
     
     objref mainBox, ecsList
-    objref oneECSWidget
+    objref oneECSWidget, randomECSsWidget
     objref this
     
     firstColWidth = -1
@@ -24,17 +24,17 @@ begintemplate ExtracellularManagerMainWidget
     proc init() {
         ecsList = ecsLibrary.ecsList
         
-        // !!!
         firstColWidth = 345     // !!! make it wider (test on "ExtraIon" sphere series of 100)
         secondColWidth = 115
-        slotHeight = 190
+        slotHeight = 198
         
         title = "Manager of extracellular sources"
         
         oneECSWidget = new OneExtracellularSourceWidget(this)
+        randomECSsWidget = new GenerateRandomInSphereWidget()
     }
     
-    proc show() { local spacerIdx localobj hBox, deck
+    proc show() { localobj hBox, deck
         
         updateEcdStatusVarLabel()
         
@@ -57,7 +57,7 @@ begintemplate ExtracellularManagerMainWidget
                     }
                     ecsList.accept_action("editHandler()")  // Double click
                 }
-                closeDeck(deck, 0, firstColWidth, secondColWidth)
+                closeDeck(deck, 0, firstColWidth, slotHeight)
                 deck = openDeck()
                 {
                     xpanel("")
@@ -65,9 +65,9 @@ begintemplate ExtracellularManagerMainWidget
                     xbutton("Copy and edit", "copyAndEditHandler()")
                     xlabel("")
                     xbutton("Edit", "editHandler()")
-                    for spacerIdx = 1, 3 {
-                        xlabel("")
-                    }
+                    xlabel("")
+                    xbutton("Generate random", "generateRandomHandler()")
+                    xlabel("")
                     xbutton("Delete", "deleteHandler(0)")
                     xbutton("Delete all", "deleteHandler(1)")
                     xpanel()
@@ -75,7 +75,7 @@ begintemplate ExtracellularManagerMainWidget
                 closeDeck(deck, 0, secondColWidth, slotHeight)
             }
             hBox.intercept(0)
-            hBox.map()
+            hBox.map("", 1, 1, firstColWidth + secondColWidth, slotHeight)
             hBox = new HBox()
             hBox.intercept(1)
             {
@@ -92,7 +92,7 @@ begintemplate ExtracellularManagerMainWidget
         }
         mainBox.intercept(0)
         mainBox.dismiss_action("dismissHandler()")
-        mainBox.map(title, 110, 150, -1, -1)
+        mainBox.map(title, 110, 145, -1, -1)
     }
     
     func onCreateHandler() { local numECSs localobj newECS
@@ -126,7 +126,7 @@ begintemplate ExtracellularManagerMainWidget
     
     proc dismissHandler() {
         // !!! if there is any unapplied changes, then show a warning and ask whether to apply
-        dismissChild()
+        dismissChilds()
         unmapIfNotNil(mainBox)
     }
     
@@ -134,7 +134,7 @@ begintemplate ExtracellularManagerMainWidget
     
     
     proc createNewHandler() {
-        dismissChild()
+        dismissChilds()
         oneECSWidget.show()     // --> onCreateHandler
     }
     
@@ -156,10 +156,15 @@ begintemplate ExtracellularManagerMainWidget
         oneECSWidget.show(oldECS, selIdxOrMinus1)   // --> onEditHandler
     }
     
+    proc generateRandomHandler() {
+        dismissChilds()
+        randomECSsWidget.show()
+    }
+    
     proc deleteHandler() { local isAll
         isAll = $1
         
-        dismissChild()
+        dismissChilds()
         
         if (!isAll) {
             deleteSelectedItemFromBrowsedList(ecsList)
@@ -172,14 +177,15 @@ begintemplate ExtracellularManagerMainWidget
         strdef line1, line2, line3, line4, line5
         
         // !!! just so user can watch colormap dynamics on the PlotShape and create new Graph-s from it
-        // dismissChild()
+        // dismissChilds()
+        randomECSsWidget.dismissHandler()
         
         // !!! say "No changes" or "All deleted" when that's the case
         
         wasEnabled = getExtracellularSourcesStatus()
         
         // !!!! think about FInitializeHandler
-        isEnabled = applyExtracellularSources()
+        isEnabled = applyExtracellularSourcesWithWaitBox()
         
         if (!isEnabled) {
             showDisabledMsgAndUpdateStatusVarLabel(wasEnabled)
@@ -237,13 +243,14 @@ begintemplate ExtracellularManagerMainWidget
         showDisabledMsgAndUpdateStatusVarLabel(wasEnabled)
     }
     
-    proc dismissChild() {
+    proc dismissChilds() {
         // !!! if there is any unapplied changes, then ask whether to apply them
         oneECSWidget.dismissHandler()
+        randomECSsWidget.dismissHandler()
     }
     
     func prologue4Show4NotNew() { local selIdx
-        dismissChild()
+        dismissChilds()
         
         selIdx = ecsList.selected()
         if (selIdx == -1) {

@@ -14,7 +14,7 @@ simBox = new VBox()
     simManager.createSimulationsPanel()
 }
 { simBox.intercept(0) }
-{ simBox.map("Scenarios for cell dynamics", 500, 355, -1, -1) }
+{ simBox.map("Manager of simulations", 500, 355, -1, -1) }
 
 // !!! for SimGABADiffusionBasketCell, we'll have two AltRunControlWidget-s on the screen
 objref altRunControlWidget

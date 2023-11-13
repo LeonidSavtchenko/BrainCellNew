@@ -42,12 +42,12 @@ func applyExtracellularSources() { local numECSs, isInsertOrUninsert, maxNumImps
                 //     and all others should be "GLOBAL POINTER"-s
                 //     but how can we do this with NEURON? it considers illegal even when we try to remove "(u)" below
                 
-                setpointer ptr_spcLibDataVec_ECDCalcAndConsHelper(u), spcLibPackedToVec.x(0)
-                setpointer ptr_ecSrcLibDataVec_ECDCalcAndConsHelper(u), ecSrcLibPackedToVec.x(0)
+                setpointer ptr_spcLibDataVec_ECDCalcAndConsHelper(u), spcLibPackedToVec.x[0]
+                setpointer ptr_ecSrcLibDataVec_ECDCalcAndConsHelper(u), ecSrcLibPackedToVec.x[0]
                 
                 setpointer ptr_segm3DSpecificDataMatRow_ECDCalcAndConsHelper(u), segm3DSpecificDataMatrix.x[segmIdx_global][0]
                 
-                setpointer ptr_numImpsSoFarDataVec_ECDCalcAndConsHelper(u), numImpsSoFarDataVec.x(0)
+                setpointer ptr_numImpsSoFarDataVec_ECDCalcAndConsHelper(u), numImpsSoFarDataVec.x[0]
                 setpointer ptr_impTimesDataMatrix_ECDCalcAndConsHelper(u), impTimesDataMatrix.x[0][0]
                 
                 segmIdx_global += 1
@@ -125,9 +125,9 @@ obfunc _prepareSegm3DSpecificDataMatrix() { local numSegms_global, numECSs, segm
         segmIdx_local = 0
         for (u, 0) {
         
-            xSegm = xSegm_vec.x(segmIdx_local)
-            ySegm = ySegm_vec.x(segmIdx_local)
-            zSegm = zSegm_vec.x(segmIdx_local)
+            xSegm = xSegm_vec.x[segmIdx_local]
+            ySegm = ySegm_vec.x[segmIdx_local]
+            zSegm = zSegm_vec.x[segmIdx_local]
             
             for ecsIdx = 0, numECSs - 1 {
                 
@@ -154,7 +154,8 @@ obfunc _prepareSegm3DSpecificDataMatrix() { local numSegms_global, numECSs, segm
     return segm3DSpecificDataMatrix
 }
 
-proc _interpEachSegmCentreCoordsFromSec3DPointCoords() { local numPts, ptIdx, du, u_start, segmIdx_local localobj xSegm_vec, ySegm_vec, zSegm_vec, x3d_vec, y3d_vec, z3d_vec, u3d_vec, uSegm_vec
+// See also: "%NEURONHOME%\lib\python\neuron\__init__.py" -> _get_3d_pt
+proc _interpEachSegmCentreCoordsFromSec3DPointCoords() { local numPts, ptIdx, du, u_start localobj xSegm_vec, ySegm_vec, zSegm_vec, x3d_vec, y3d_vec, z3d_vec, u3d_vec, uSegm_vec
 
     xSegm_vec = $o1
     ySegm_vec = $o2
@@ -168,37 +169,24 @@ proc _interpEachSegmCentreCoordsFromSec3DPointCoords() { local numPts, ptIdx, du
     u3d_vec = new Vector(numPts)
     
     for ptIdx = 0, numPts - 1 {
-        x3d_vec.x(ptIdx) = x3d(ptIdx)
-        y3d_vec.x(ptIdx) = y3d(ptIdx)
-        z3d_vec.x(ptIdx) = z3d(ptIdx)
-        
-        if (ptIdx == 0) {
-            u3d_vec.x(ptIdx) = 0
-        } else if (ptIdx == numPts - 1) {
-            u3d_vec.x(ptIdx) = 1
-            
-            // !!! testing that the last point that would be calculated by 3rd IF branch is close enough to 1
-            //     print u3d_vec.x(ptIdx - 1) + _getDistBetweenTwo3DPoints(x3d_vec.x(ptIdx - 1), y3d_vec.x(ptIdx - 1), z3d_vec.x(ptIdx - 1), x3d_vec.x(ptIdx), y3d_vec.x(ptIdx), z3d_vec.x(ptIdx)) / L - 1
-            // !!! strange: many 0s, many 1e-16, but sporadic 1e-8
-        } else {
-            u3d_vec.x(ptIdx) = u3d_vec.x(ptIdx - 1) + _getDistBetweenTwo3DPoints(x3d_vec.x(ptIdx - 1), y3d_vec.x(ptIdx - 1), z3d_vec.x(ptIdx - 1), x3d_vec.x(ptIdx), y3d_vec.x(ptIdx), z3d_vec.x(ptIdx)) / L
-        }
+        x3d_vec.x[ptIdx] = x3d(ptIdx)
+        y3d_vec.x[ptIdx] = y3d(ptIdx)
+        z3d_vec.x[ptIdx] = z3d(ptIdx)
+        u3d_vec.x[ptIdx] = arc3d(ptIdx) / L
     }
     
     uSegm_vec = new Vector(nseg)
     
     du = 1 / nseg
     u_start = du / 2
-    for segmIdx_local = 0, nseg - 1 {
-        uSegm_vec.x(segmIdx_local) = u_start + du * segmIdx_local
-    }
+    uSegm_vec.indgen(u_start, du)
     
     xSegm_vec.interpolate(uSegm_vec, u3d_vec, x3d_vec)
     ySegm_vec.interpolate(uSegm_vec, u3d_vec, y3d_vec)
     zSegm_vec.interpolate(uSegm_vec, u3d_vec, z3d_vec)
 }
 
-// See also: SimGABADiffusionBasketCell.getDistSquareBetweenTwo3DPoints
+// See also: GenerateRandomInSphereWidget.getDistSquareBetweenTwo3DPoints
 func _getDistBetweenTwo3DPoints() {
     return sqrt(($1 - $4) ^ 2 + ($2 - $5) ^ 2 + ($3 - $6) ^ 2)
 }

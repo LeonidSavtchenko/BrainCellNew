@@ -18,19 +18,12 @@ begintemplate FileBrowserHelper
     public showLoadFileDialog, showSaveFileDialog
     
     external pyObj
-    external stringEmpty, printPythonErrMsgAndStop
+    external sourcePythonCode, stringEmpty
     external pyEnumInFileTypes, pyEnumOutFileTypes
     
     
-    proc init() { local status
-        strdef pyCommand
-        
-        pyCommand = "import sys\nimport os\nsys.path.append(os.getcwd() + '\\PythonCode')\nfrom FileDialogUtils import FileDialogUtils"
-        
-        status = nrnpython(pyCommand)
-        if (!status) {
-            printPythonErrMsgAndStop("FileBrowserHelper ctor")
-        }
+    proc init() {
+        sourcePythonCode("\\PythonCode", "from FileDialogUtils import FileDialogUtils", "FileBrowserHelper ctor")
         
         pyEnumInFileTypes = pyObj.FileDialogUtils.EnumInFileTypes
         pyEnumOutFileTypes = pyObj.FileDialogUtils.EnumOutFileTypes

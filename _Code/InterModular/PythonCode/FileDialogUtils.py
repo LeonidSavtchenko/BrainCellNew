@@ -16,25 +16,26 @@ class FileDialogUtils:
         baseGeometryHoc = 1
         nanoGeometryHoc = 2
         biophysJson = 3
-        binaryResultsPcl = 4
+        binaryResultsBin = 4
         """ !!! in the future, we can add support for:
-        distFuncHoc = 5
-        distFuncPy = 6
-        distFuncTxt = 7
-        distFuncXlsx = 8
-        diamDistrFile = 9
+        distFuncHoc
+        distFuncPy
+        distFuncTxt
+        distFuncXlsx
+        diamDistrFile
         """
         
     class EnumOutFileTypes(Enum):
         baseGeometryHoc = 0
         nanoGeometryHoc = 1
         biophysJson = 2
-        binaryResultsPcl = 3
+        binaryResultsBin = 3
+        textResultsTxt = 4
         """ !!! in the future, we can add support for these files saved to "Text results" folder:
-        volumFractionTxt = 4
-        cadynamicsTxt = 5
-        circularFrapAverageTxt = 6
-        timeFRAPTxt = 7
+        volumFractionTxt
+        cadynamicsTxt
+        circularFrapAverageTxt
+        timeFRAPTxt
         """
         
     _inFileTypeToArgsDict = {
@@ -57,11 +58,11 @@ class FileDialogUtils:
             'initialdir': 'Biophysics',
             'filetypes': [('JSON File', '*.json'), ('All Files', '*.*')],
             'defaultextension': '.json'},
-        EnumInFileTypes.binaryResultsPcl: {
+        EnumInFileTypes.binaryResultsBin: {
             'title': 'Load basket cell GABA diffusion animation',
             'initialdir': 'Binary results',
-            'filetypes': [('PCL File', '*.pcl'), ('All Files', '*.*')],
-            'defaultextension': '.pcl'}
+            'filetypes': [('BIN File', '*.bin'), ('All Files', '*.*')],
+            'defaultextension': '.bin'}
     }
     
     _outFileTypeToArgsDict = {
@@ -80,11 +81,16 @@ class FileDialogUtils:
             'initialdir': 'Biophysics',
             'filetypes': [('JSON File', '*.json'), ('All Files', '*.*')],
             'defaultextension': '.json'},
-        EnumOutFileTypes.binaryResultsPcl: {
+        EnumOutFileTypes.binaryResultsBin: {
             'title': 'Save basket cell GABA diffusion animation',
             'initialdir': 'Binary results',
-            'filetypes': [('PCL File', '*.pcl'), ('All Files', '*.*')],
-            'defaultextension': '.pcl'}
+            'filetypes': [('BIN File', '*.bin'), ('All Files', '*.*')],
+            'defaultextension': '.bin'},
+        EnumOutFileTypes.textResultsTxt: {
+            'title': 'Save basket cell GABA diffusion animation',
+            'initialdir': 'Text results',
+            'filetypes': [('TXT File', '*.txt'), ('All Files', '*.*')],
+            'defaultextension': '.txt'}
     }
     
     # !!! keep these file names in sync with other code

@@ -5,7 +5,7 @@ begintemplate WatchedVarsAndRecorderSettingsWidget
     
     external exportOptions
     external mwh, pyObj, math
-    external addVarToGraph, unmapIfNotNil
+    external createRecordingPeriodHint, addVarToGraph, unmapIfNotNil
     external eachItemInList
     
     objref mainBox
@@ -50,10 +50,7 @@ begintemplate WatchedVarsAndRecorderSettingsWidget
             xpanel("")
             xlabel("")
             xpvalue("Recording period, Dt", &exportOptions.DtOrMinus1, 1, "DtChangedHandler()")
-            xlabel("set \"-1\" to make one record per one iteration;")
-            xlabel("when \"Dt\" is not a multiple of \"dt\", the performance drops;")
-            xlabel("when CVode is ACTIVE, this happens for any \"Dt\" except \"-1\"")
-            xlabel("")
+            createRecordingPeriodHint()
             apcList = new List("APCount")
             sprint(text, "Record and save spikes info with all APCount-s (%d detected)", apcList.count())
             xcheckbox(text, &exportOptions.isRecordAndSaveWithAPCounts, "recordAndSaveWithAPCountsCheckBoxHandler()")

@@ -62,14 +62,6 @@ proc showRoadmapWidget() { localobj roadmapWidgetCopy
 
 // Don't rename this proc to "init" because NEURON will call it once user clicks "Init & Run"
 proc theEntryPoint() {
-
-    // !! code dupl. with Import.hoc
-    if (unix_mac_pc() != 3) {
-        printMsgAndRaiseError("The importer works only on Windows")
-    }
-    if (!nrnpython("")) {
-        printMsgAndRaiseError("Python is not available")
-    }
     
     load_file("_Code/Export/ExportCoreLoads.hoc")
     

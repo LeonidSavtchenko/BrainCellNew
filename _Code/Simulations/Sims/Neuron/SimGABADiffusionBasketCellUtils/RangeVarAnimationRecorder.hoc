@@ -1,0 +1,99 @@
+
+begintemplate RangeVarAnimationRecorder
+    
+    public onJustBeforeRun, onStep
+    
+    external getRecSectsListAndNumSegms, getGraphedVarUnits, stringEmpty
+    external eachSegmInSecList
+    external cvode
+    external setdt
+    external tstop
+    
+    objref record
+    
+    objref list_ref
+    strdef readRangeVarInSegmHocCommand
+    timeVecSize_old = -1
+    
+    _x = -1
+    _value = -1
+    
+    objref this
+    
+    
+    proc init() {
+        record = $o1
+    }
+    
+    // !!! keep in sync with RunnerHocWatchedVarsUtils.hoc -> setUpVarVecsForRecording
+    proc onJustBeforeRun() { local DtOrMinus1, isFixedTimeStep, numRecsOr0, numSegms
+        strdef watchedRangeVarNameWithIndex, unitsStr
+        
+        watchedRangeVarNameWithIndex = $s1
+        DtOrMinus1 = $2
+        
+        getGraphedVarUnits(watchedRangeVarNameWithIndex, unitsStr)
+        if (!stringEmpty(unitsStr)) {
+            sprint(record.varNameWithIndexAndUnits, "%s (%s)", watchedRangeVarNameWithIndex, unitsStr)
+        } else {
+            record.varNameWithIndexAndUnits = watchedRangeVarNameWithIndex
+        }
+        
+        isFixedTimeStep = !cvode.active()
+        
+        // Estimate the number of records
+        if (DtOrMinus1 != -1) {
+            numRecsOr0 = int(tstop / DtOrMinus1 + 1) + 1
+        } else if (isFixedTimeStep) {
+            // Letting NEURON change "dt" now rather than on start of the simulation
+            setdt()
+            numRecsOr0 = int(tstop / dt + 1) + 1
+        } else {
+            numRecsOr0 = 0      // No estimate
+        }
+        
+        // This will be resized by NEURON to 0 size just after "run()", here we just allocate memory as they recommend
+        record.timeVec = new Vector(numRecsOr0)
+        if (DtOrMinus1 == -1 || (isFixedTimeStep && DtOrMinus1 == dt)) {
+            record.timeVec.record(&t)
+        } else {
+            // We don't use this branch when (isFixedTimeStep && DtOrMinus1 == dt) due to strange NEURON behaviour:
+            // sometimes our "proc onStep" (below) is called two times in a row with the same record.timeVec.size()
+            // and after number of iterations it's called with the size incremented by 2 instead of 1
+            record.timeVec.record(&t, DtOrMinus1)
+        }
+        
+        // Prepare the list of recorded sections and count the number of segments
+        list_ref = getRecSectsListAndNumSegms(&numSegms)
+        
+        record.rangeVarVec = new Vector(numRecsOr0 * numSegms)
+        record.rangeVarVec.resize(0)    // !!!! not sure that the memory remains allocated after this
+        
+        sprint(readRangeVarInSegmHocCommand, "_value = %s(_x)", watchedRangeVarNameWithIndex)
+        
+        // We don't use Vector.record for record.rangeVarVec, so have to make one record for t = 0 now
+        recordRangeVarNow()
+        
+        timeVecSize_old = 1
+    }
+    
+    proc onStep() { local timeVecSize_new
+        timeVecSize_new = record.timeVec.size()
+        if (timeVecSize_new == timeVecSize_old) {
+            return
+        }
+        recordRangeVarNow()
+        timeVecSize_old = timeVecSize_new
+    }
+    
+    // All next staff is private
+    
+    
+    proc recordRangeVarNow() {
+        for eachSegmInSecList(&_x, list_ref) {
+            execute(readRangeVarInSegmHocCommand, this)
+            record.rangeVarVec.append(_value)
+        }
+    }
+    
+endtemplate RangeVarAnimationRecorder

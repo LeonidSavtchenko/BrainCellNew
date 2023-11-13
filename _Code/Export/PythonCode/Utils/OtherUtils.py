@@ -18,8 +18,7 @@ def getAllSectionNamesExceptNanogeometry():
         codeContractViolation()
         
     for secName in allSecNames:
-        createdName = secName.s
-        if createdName.startswith('AstrocyteNanoBranch[') or createdName.startswith('NeuronNanoBranch['):   # !! hardcode
+        if isNanoGeometrySection(secName.s):
             continue
         yield secName
         

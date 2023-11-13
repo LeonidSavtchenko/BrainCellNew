@@ -1,0 +1,127 @@
+
+begintemplate GenerateRandomInSphereWidget
+    
+    public show, dismissHandler
+    
+    external createExtracellularGeneratorHintsPanel, unmapIfNotNil
+    external mwh, math, ecsLibrary, rngUtils
+    
+    objref mainBox
+    objref randomCoord
+    
+    numSrcs = -1
+    radiusGen = -1
+    
+    
+    proc init() { local inf
+        
+        randomCoord = rngUtils.getFor_ecd()
+        
+        numSrcs = 100
+        radiusGen = 200     // um
+        
+        inf = math.inf
+        variable_domain(&numSrcs, 2, inf)
+        
+        variable_domain(&radiusGen, float_epsilon, inf)
+        units(&radiusGen, units("L"))
+    }
+    
+    proc show() {
+        mainBox = new VBox()
+        mainBox.intercept(1)
+        {
+            xpanel("")
+            xlabel("1. Create a single extracellular source.")
+            xlabel("2. Click \"Generate sources\" to create \"Number of sources - 1\" copies within \"Radius of generation\"")
+            // !!! for "sphere" src shape, the generated sources will stick out the "Radius of generation"
+            xlabel("    filling the sphere uniformly (but the initial source will remain in the centre of the sphere).")
+            xpanel()
+            xpanel("")
+            xpvalue("Number of sources", &numSrcs, 1)
+            xpvalue("Radius of generation", &radiusGen, 1)
+            xlabel("")
+            xbutton("Generate sources", "generateHandler()")
+            xpanel()
+            createExtracellularGeneratorHintsPanel()
+        }
+        mainBox.intercept(0)
+        mainBox.dismiss_action("dismissHandler()")
+        mainBox.map("Generate random extracellular sources in sphere", 500, 545, -1, -1)
+    }
+    
+    proc dismissHandler() {
+        unmapIfNotNil(mainBox)
+    }
+    
+    // All next staff is private
+    
+    
+    proc generateHandler() { local numECSs, isCancel, x_base, y_base, z_base, x_min, x_max, y_min, y_max, z_min, z_max, radiusSqGen, srcIdx, x_new, y_new, z_new, distSq localobj ecsList, baseECS, spatialInfo, newECS
+        strdef line1, line2
+        
+        ecsList = ecsLibrary.ecsList
+        
+        numECSs = ecsList.count()
+        if (numECSs == 0) {
+            mwh.showWarningBox("Please create a single extracellular source.")
+            return
+        } else if (numECSs > 1) {
+            isCancel = !boolean_dialog("There is more than one extracellular source. Can we delete all but the first one before the next step?", "Yes", "No")
+            if (isCancel) {
+                return
+            }
+        }
+        
+        baseECS = ecsList.o(0)
+        
+        if (numECSs > 1) {
+            ecsList.remove_all()
+            ecsList.append(baseECS)
+        }
+        
+        spatialInfo = baseECS.spatialInfo
+        x_base = spatialInfo.x
+        y_base = spatialInfo.y
+        z_base = spatialInfo.z
+        
+        x_min = x_base - radiusGen
+        x_max = x_base + radiusGen
+        y_min = y_base - radiusGen
+        y_max = y_base + radiusGen
+        z_min = z_base - radiusGen
+        z_max = z_base + radiusGen
+        
+        radiusSqGen = radiusGen ^ 2
+        
+        for srcIdx = 1, numSrcs - 1 {
+            while (1) {
+                x_new = randomCoord.uniform(x_min, x_max)
+                y_new = randomCoord.uniform(y_min, y_max)
+                z_new = randomCoord.uniform(z_min, z_max)
+                
+                distSq = getDistSquareBetweenTwo3DPoints(x_base, y_base, z_base, x_new, y_new, z_new)
+                if (distSq <= radiusSqGen) {
+                    break
+                }
+            }
+            
+            newECS = baseECS.createShiftedCopy(x_new, y_new, z_new)
+            ecsList.append(newECS)
+        }
+        
+        ecsList.select(0)
+        
+        line1 = "The extracellular sources were generated."
+        line2 = "Don't forget to click \"Apply\" in the parent widget."
+        mwh.showMessageBox(line1, line2, "Generated")
+        
+        dismissHandler()
+    }
+    
+    // See also: ExtracellularApplicatorUtils_Exported.hoc -> _getDistBetweenTwo3DPoints
+    func getDistSquareBetweenTwo3DPoints() {
+        return ($1 - $4) ^ 2 + ($2 - $5) ^ 2 + ($3 - $6) ^ 2
+    }
+    
+endtemplate GenerateRandomInSphereWidget
